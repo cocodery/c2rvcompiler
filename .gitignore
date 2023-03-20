@@ -1,0 +1,13 @@
+.vscode/
+.idea/
+
+build/
+
+src/antlr/*
+!src/antlr/*.g4
+!src/antlr/*.h
+!src/antlr/*.cpp
+
+*.sy
+*.ll
+*.s
