@@ -95,4 +95,6 @@ private:
     
 // support function to parse
     ArrDims getArrDims(std::vector<SysYParser::ConstExpContext *> &);
+
+    BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *node, ArrDims &);
 };

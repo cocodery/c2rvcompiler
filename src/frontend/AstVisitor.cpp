@@ -5,6 +5,8 @@ AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
 
     in_function = false;
     in_loop = false;
+
+    cur_type = NONE;
 }
 
 antlrcpp::Any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
@@ -69,7 +71,9 @@ antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
         auto [name, value] = def_node->accept(this).as<NameValue>();
         value->fixValue(cur_type);
 
-        comp_unit.insertSymbol(name, value);
+        if (!in_function) {
+            comp_unit.insertSymbol(name, value);
+        }
     }
 
     return nullptr;
@@ -85,7 +89,7 @@ antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
 
     BaseValuePtr value = (arr_dims.size() == 0) ? 
                             init_val->accept(this).as<BaseValuePtr>() :
-                            nullptr
+                            parseConstListInit(dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), arr_dims)
                             ;
     
     return std::make_pair(name, value);
@@ -103,20 +107,20 @@ antlrcpp::Any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValCont
 
 antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
     ConstantPtr constant = ctx->number()->accept(this).as<ConstantPtr>();
-    return std::dynamic_pointer_cast<BaseValue>(constant);
+    return std::static_pointer_cast<BaseValue>(constant);
 }
 
 antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
     int32_t number1 = 0;
     parseIntLiteral(ctx->getText().c_str(), &number1);
-    ConstantPtr constant1 = std::make_shared<Constant>(INT | CONST, std::variant<bool, int32_t, float>(number1));
+    ConstantPtr constant1 = Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(number1));
     return constant1;
 }
 
 antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
     float number2 = 0;
     sscanf(ctx->getText().c_str(), "%f", &number2);
-    ConstantPtr constant2 = std::make_shared<Constant>(FLOAT | CONST, std::variant<bool, int32_t, float>(number2));
+    ConstantPtr constant2 = Constant::CreatePtr(FLOAT | CONST, std::variant<bool, int32_t, float>(number2));
     return constant2;
 }
 
@@ -253,9 +257,53 @@ ArrDims AstVisitor::getArrDims(std::vector<SysYParser::ConstExpContext *> &const
 
     ArrDims arr_dims;
     for (auto &&const_exp : constExpVec) {
-
+        BaseValuePtr base_value = const_exp->accept(this).as<BaseValuePtr>();
+        ConstantPtr constant = std::dynamic_pointer_cast<Constant>(base_value);
+        arr_dims.push_back(constant->getValue<int32_t>());
     }
 
     cur_type = last_type;
     return arr_dims;
+}
+
+BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext *node, ArrDims &arr_dims) {
+    ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY, arr_dims, false);
+
+    ConstArr const_arr;
+    const_arr.reserve(list_type->getArrDims());
+
+    std::function<void(SysYParser::ListConstInitValContext *, ArrDims &, ConstArr &)> 
+        function = [&](SysYParser::ListConstInitValContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
+        size_t total_size = 1;
+        for (auto &&dim : arr_dims) {
+            total_size *= dim;
+        }
+        if (total_size == 0) return;
+        size_t cnt = 0;
+        for (auto &&child : node->constInitVal()) {
+            if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarConstInitValContext *>(child)) {
+                ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
+                const_arr.push_back(value);
+                ++cnt;
+            } else {
+                ArrDims child_dims = arr_dims;
+                child_dims.erase(child_dims.begin());
+
+                auto &&list_node = dynamic_cast<SysYParser::ListConstInitValContext *>(child);
+                function(list_node, child_dims, const_arr);
+                cnt += total_size / arr_dims[0];
+            }
+        }
+        while (cnt < total_size) {
+            const_arr.push_back(Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(0)));
+            ++cnt;
+        }
+        return;
+    };
+
+    function(node, arr_dims, const_arr);
+
+    ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
+
+    return std::static_pointer_cast<BaseValue>(value);
 }
