@@ -1,7 +1,7 @@
 #include "constant.hh"
 
 Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_value) {
-    assert(_tid & (INT | FLOAT | CONST));
+    assert((_tid & (CONST | BOOL | INT | FLOAT)) & CONST);
 }
 
 void Constant::fixValue(TypeID _tid) {
@@ -29,12 +29,16 @@ void Constant::fixValue(TypeID _tid) {
     base_type->resetType(_tid);
 } 
 
+std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
+    return std::make_shared<Constant>(_tid, _value);
+}
+
 std::string Constant::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(INT | FLOAT | CONST);
+    base_type->checkType(BOOL | INT | FLOAT | CONST);
     std::stringstream ss;
     ss << base_type->toString();
-    ss << " = ";
+    ss << " -> ";
     ss <<   (   base_type->BoolType()   ?   this->getValue<bool>() :
                 base_type->IntType()    ?   this->getValue<int32_t>() :
                 base_type->FloatType()  ?   this->getValue<float>() :
