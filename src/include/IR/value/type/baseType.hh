@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <stdint.h>
+#include <memory>
 #include <cassert>
 #include <string>
 
