@@ -57,13 +57,11 @@ antlrcpp::Any AstVisitor::visitDecl(SysYParser::DeclContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
-    cur_type = getTypeID(ctx->getText());
-    return nullptr;
+    return getTypeID(ctx->getText());
 }
 
 antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
-    ctx->bType()->accept(this);
-    cur_type |= (CONST | (in_function ? NONE : GLOBAL));
+    cur_type = ctx->bType()->accept(this).as<TypeID>() | (CONST | (in_function ? NONE : GLOBAL));
 
     auto &&const_def = ctx->constDef();
 
@@ -106,8 +104,7 @@ antlrcpp::Any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValCont
 }
 
 antlrcpp::Any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
-    ctx->bType()->accept(this);
-    cur_type |= (VARIABLE | (in_function ? NONE : GLOBAL));
+    cur_type = ctx->bType()->accept(this).as<TypeID>() | (VARIABLE | (in_function ? NONE : GLOBAL));
 
     auto &&var_def = ctx->varDef();
 
@@ -166,6 +163,54 @@ antlrcpp::Any AstVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext *c
 antlrcpp::Any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
     assert(0);
     return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
+    TypeID type_id = ctx->funcType()->accept(this).as<TypeID>();
+    ScalarTypePtr scalar_type = ScalarType::CreatePtr(type_id);
+
+    std::string func_name = ctx->Identifier()->getText();
+
+    auto &&param_node = ctx->funcFParams();
+    ParamList param_list = (param_node == nullptr) ?
+                                ParamList() :
+                                ctx->funcFParams()->accept(this).as<ParamList>()
+                            ;
+
+    FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list);
+
+    comp_unit.insertFunction(func_name, function);
+
+    return function;
+}
+    
+antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
+    return getTypeID(ctx->getText());
+}
+    
+antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
+    ParamList param_list;
+    for (auto &&param_node : ctx->funcFParam()) {
+        param_list.push_back(param_node->accept(this).as<Parameter>());
+    }
+    return param_list;
+}
+    
+antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
+    TypeID param_tid = ctx->bType()->accept(this).as<TypeID>() | PARAM;
+
+    std::string param_name = ctx->Identifier()->getText();
+
+    BaseValuePtr value;
+    if (ctx->getText().find("[") != std::string::npos) {
+        auto &&dims_vec = ctx->constExp();
+        ArrDims arr_dims = getArrDims(dims_vec);
+        value = UnInitVar::CreatePtr(ListType::CreatePtr(param_tid | ARRAY, arr_dims, true));
+    } else {
+        value = UnInitVar::CreatePtr(param_tid);
+    }
+    Parameter param = std::make_pair(param_name, value);
+    return param;
 }
 
 antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
@@ -377,13 +422,10 @@ BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext 
 }
 
 BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *node, ArrDims &arr_dims) {
-    cout << __FILE__ << ' ' << __LINE__ << endl;
     ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY, arr_dims, false);
-    cout << __FILE__ << ' ' << __LINE__ << endl;
 
     ConstArr const_arr;
     const_arr.reserve(list_type->getArrDims());
-    cout << __FILE__ << ' ' << __LINE__ << endl;
 
     std::function<void(SysYParser::ListInitvalContext *, ArrDims &, ConstArr &)> 
         function = [&](SysYParser::ListInitvalContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
@@ -415,10 +457,8 @@ BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *nod
     };
 
     function(node, arr_dims, const_arr);
-    cout << __FILE__ << ' ' << __LINE__ << endl;
 
     ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
-    cout << __FILE__ << ' ' << __LINE__ << endl;
 
     return std::static_pointer_cast<BaseValue>(value);
 }

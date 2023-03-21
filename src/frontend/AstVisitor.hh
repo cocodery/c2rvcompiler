@@ -60,6 +60,14 @@ private:
     virtual antlrcpp::Any visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) override;
 
     virtual antlrcpp::Any visitListInitval(SysYParser::ListInitvalContext *ctx) override;
+    
+    virtual antlrcpp::Any visitFuncDef(SysYParser::FuncDefContext *ctx) override;
+    
+    virtual antlrcpp::Any visitFuncType(SysYParser::FuncTypeContext *ctx) override;
+    
+    virtual antlrcpp::Any visitFuncFParams(SysYParser::FuncFParamsContext *ctx) override;
+    
+    virtual antlrcpp::Any visitFuncFParam(SysYParser::FuncFParamContext *ctx) override;
 
     virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
 

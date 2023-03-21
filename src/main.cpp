@@ -63,6 +63,8 @@ int main(int argc, char *argv[]) {
     visitor.visitCompilationUnit(root);
 
     comp_unit.printGlbTable();
+    cout << endl;
+    comp_unit.printFuncTalbe();
 
     return 0;
 }
