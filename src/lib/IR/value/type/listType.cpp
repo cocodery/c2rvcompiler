@@ -21,6 +21,9 @@ std::string ListType::toString() {
     this->checkType(INT | FLOAT | ARRAY);
 
     std::stringstream ss;
+    if (this->GlobalType()) {
+        ss << "global ";
+    }
     if (this->ConstType()) {
         ss << "const ";
     }

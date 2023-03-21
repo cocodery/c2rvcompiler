@@ -12,6 +12,9 @@ std::string ScalarType::toString() {
     this->checkType(BOOL | INT | FLOAT | VOID); // check here
 
     std::stringstream ss;
+    if (this->GlobalType()) {
+        ss << "global ";
+    }
     if (this->ConstType()) {
         ss << "const ";
     }
