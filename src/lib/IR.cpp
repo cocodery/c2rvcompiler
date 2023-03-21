@@ -13,3 +13,17 @@ void CompilationUnit::printGlbTable() {
         cout << name << ": " << value->toString() << endl;
     }
 }
+
+FunctionTable &CompilationUnit::getFuncTable() {
+    return this->func_talbe;
+}
+
+void CompilationUnit::insertFunction(std::string &_name, FunctionPtr func_ptr) {
+    func_talbe.insertFunction(_name, func_ptr);
+}
+
+void CompilationUnit::printFuncTalbe() {
+    for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {
+        cout << "function -> " << func_ptr->toString() << endl;
+    }
+}
