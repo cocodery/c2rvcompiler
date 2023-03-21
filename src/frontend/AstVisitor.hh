@@ -51,6 +51,18 @@ private:
 
     virtual antlrcpp::Any visitListConstInitVal(SysYParser::ListConstInitValContext *ctx) override;
 
+    virtual antlrcpp::Any visitVarDecl(SysYParser::VarDeclContext *ctx) override;
+
+    virtual antlrcpp::Any visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) override;
+
+    virtual antlrcpp::Any visitInitVarDef(SysYParser::InitVarDefContext *ctx) override;
+
+    virtual antlrcpp::Any visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) override;
+
+    virtual antlrcpp::Any visitListInitval(SysYParser::ListInitvalContext *ctx) override;
+
+    virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
+
     virtual antlrcpp::Any visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) override;
 
     virtual antlrcpp::Any visitNumber1(SysYParser::Number1Context *ctx) override;
@@ -96,5 +108,6 @@ private:
 // support function to parse
     ArrDims getArrDims(std::vector<SysYParser::ConstExpContext *> &);
 
-    BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *node, ArrDims &);
+    BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *, ArrDims &);
+    BaseValuePtr parseGlbVarListInit(SysYParser::ListInitvalContext *, ArrDims &);
 };

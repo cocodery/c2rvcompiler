@@ -105,6 +105,74 @@ antlrcpp::Any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValCont
     return nullptr;
 }
 
+antlrcpp::Any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
+    ctx->bType()->accept(this);
+    cur_type |= (VARIABLE | (in_function ? NONE : GLOBAL));
+
+    auto &&var_def = ctx->varDef();
+
+    for (auto &&def_node : var_def) {
+        auto [name, value] = def_node->accept(this).as<NameValue>();
+        value->fixValue(cur_type);
+
+        if (!in_function) {
+            comp_unit.insertSymbol(name, value);
+        }
+    }
+
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) {
+    std::string name = ctx->Identifier()->getText();
+
+    auto &&dims_vec = ctx->constExp();
+
+    auto &&arr_dims = getArrDims(dims_vec);
+
+    BaseValuePtr value = (arr_dims.size() == 0) ? 
+                            UnInitVar::CreatePtr(cur_type) :
+                            UnInitVar::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false))
+                            ;
+    
+    return std::make_pair(name, value);
+}
+
+antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
+    std::string name = ctx->Identifier()->getText();
+
+    auto &&dims_vec = ctx->constExp();
+    auto &&init_val = ctx->initVal();
+
+    auto &&arr_dims = getArrDims(dims_vec);
+
+    BaseValuePtr value = (arr_dims.size() == 0) ?
+                            init_val->accept(this).as<BaseValuePtr>() :
+                            (
+                                in_function ? 
+                                    init_val->accept(this).as<BaseValuePtr>() :
+                                    parseGlbVarListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), arr_dims)
+                            );
+
+    
+    return std::make_pair(name, value);
+}
+
+antlrcpp::Any AstVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) {
+    BaseValuePtr value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    return value;
+}
+
+antlrcpp::Any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
+    BaseValuePtr value = ctx->condExp()->accept(this).as<BaseValuePtr>();
+    return value;
+}
+
 antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
     ConstantPtr constant = ctx->number()->accept(this).as<ConstantPtr>();
     return std::static_pointer_cast<BaseValue>(constant);
@@ -304,6 +372,53 @@ BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext 
     function(node, arr_dims, const_arr);
 
     ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
+
+    return std::static_pointer_cast<BaseValue>(value);
+}
+
+BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *node, ArrDims &arr_dims) {
+    cout << __FILE__ << ' ' << __LINE__ << endl;
+    ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY, arr_dims, false);
+    cout << __FILE__ << ' ' << __LINE__ << endl;
+
+    ConstArr const_arr;
+    const_arr.reserve(list_type->getArrDims());
+    cout << __FILE__ << ' ' << __LINE__ << endl;
+
+    std::function<void(SysYParser::ListInitvalContext *, ArrDims &, ConstArr &)> 
+        function = [&](SysYParser::ListInitvalContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
+        size_t total_size = 1;
+        for (auto &&dim : arr_dims) {
+            total_size *= dim;
+        }
+        if (total_size == 0) return;
+        size_t cnt = 0;
+        for (auto &&child : node->initVal()) {
+            if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
+                ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
+                const_arr.push_back(value);
+                ++cnt;
+            } else {
+                ArrDims child_dims = arr_dims;
+                child_dims.erase(child_dims.begin());
+
+                auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
+                function(list_node, child_dims, const_arr);
+                cnt += total_size / arr_dims[0];
+            }
+        }
+        while (cnt < total_size) {
+            const_arr.push_back(Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(0)));
+            ++cnt;
+        }
+        return;
+    };
+
+    function(node, arr_dims, const_arr);
+    cout << __FILE__ << ' ' << __LINE__ << endl;
+
+    ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
+    cout << __FILE__ << ' ' << __LINE__ << endl;
 
     return std::static_pointer_cast<BaseValue>(value);
 }
