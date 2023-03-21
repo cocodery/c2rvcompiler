@@ -21,14 +21,16 @@ std::string UnInitVar::toString() {
     
     std::stringstream ss;
     ss << base_tpye->toString();
-    ss << " -> ";
-    if (base_tpye->ArrayType()) {
-        ss << "zeroinitializer";
-    } else {
-        if (base_tpye->IntType()) {
-            ss << "i32 0";
-        } else if (base_tpye->FloatType()) {
-            ss << "float 0";
+    if (!base_tpye->ParamType()) {
+        ss << " -> ";
+        if (base_tpye->ArrayType()) {
+            ss << "zeroinitializer";
+        } else {
+            if (base_tpye->IntType()) {
+                ss << "i32 0";
+            } else if (base_tpye->FloatType()) {
+                ss << "float 0";
+            }
         }
     }
     return ss.str();

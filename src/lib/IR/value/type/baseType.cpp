@@ -35,6 +35,7 @@ bool BaseType::GlobalType()   const { return this->tid & GLOBAL; }
 TypeID getTypeID(std::string name) {
     TypeID tid =  (name == "int")   ? INT
                 : (name == "float") ? FLOAT
+                : (name == "void")  ? VOID
                 : NONE;
     assert(tid != NONE);
     return tid;
