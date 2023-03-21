@@ -7,6 +7,9 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr)
 
 void ConstArray::fixValue(TypeID _tid) {
     assert(this->getBaseType()->getType() == (_tid | ARRAY));
+    if (_tid & GLOBAL) {
+        _tid &= (~GLOBAL);
+    }
     for (auto &&value : const_arr) {
         value->fixValue(_tid);
     }
