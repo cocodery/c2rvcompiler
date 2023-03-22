@@ -41,5 +41,20 @@ std::string ListType::toString() {
 }
 
 std::string ListType::tollvmIR() {
-    return "";
+    // check    
+    std::stringstream ss;
+
+    if (this->ConstType()) {
+        ss << "constant ";
+    } else if (this->GlobalType()) {
+        ss << "global ";
+    }
+    ss << '[' << this->getArrDims() << " x ";
+    ss << ( this->IntType()     ?   "i32" :
+            this->FloatType()   ?   "float" :
+                                    "error"
+            );
+    ss << ']';
+
+    return ss.str();
 }

@@ -22,12 +22,25 @@ std::string ScalarType::toString() {
     ss << ( this->IntType()     ?   "int" :
             this->FloatType()   ?   "float" :
             this->BoolType()    ?   "bool" :
-            this->VoidType()    ?   "void" :
+            this->VoidType()    ?   "void" : // for function define
                                     "error" // un-reachablable, check before
             ); 
     return ss.str();
 }
 
 std::string ScalarType::tollvmIR() {
-    return "";
+    std::stringstream ss;
+
+    if (this->ConstType()) {
+        ss << "constant ";
+    } else if (this->GlobalType()) {
+        ss << "global ";
+    }
+    ss << ( this->IntType()     ?   "i32" :
+            this->FloatType()   ?   "float" :
+            this->BoolType()    ?   "i1" :
+                                    "error"
+            );
+
+    return ss.str();
 }
