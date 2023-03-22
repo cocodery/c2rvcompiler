@@ -27,6 +27,8 @@ public:
 
     void fixValue(TypeID);
 
+    std::shared_ptr<BaseValue> unaryOperate(std::string &);
+
     static std::shared_ptr<Constant> CreatePtr(TypeID, ConstType);
 
     std::string toString();
