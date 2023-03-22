@@ -31,13 +31,18 @@ constexpr TypeID GLOBAL     = (1ul << 0x000A);
 class BaseType {
 private:
     TypeID tid;
+    TypeID getType() const;
+
+    /* to be deleted when then intention is clear and code is refactored */
+    friend ConstArray;
+
 public:
     BaseType(TypeID tid = NONE);
     ~BaseType() = default;
 
-    TypeID getType() const;
+    template<typename... TypeIDs> TypeID getMaskedType(TypeID, TypeIDs...) const;
     void resetType(TypeID);
-    void checkType(TypeID) const;
+    template<typename... TypeIDs> void checkType(TypeIDs...) const;
 
     bool BoolType()     const;
     bool IntType()      const;

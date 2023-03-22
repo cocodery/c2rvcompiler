@@ -17,7 +17,7 @@ public:
     template<typename TypeName>
     TypeName getValue() {
         BaseTypePtr base_type = this->getBaseType();
-        base_type->checkType(BOOL | INT | FLOAT);
+        base_type->checkType(BOOL, INT, FLOAT);
         TypeName ret_value = (base_type->BoolType())    ? TypeName(std::get<bool>(value)) :
                              (base_type->IntType())     ? TypeName(std::get<int32_t>(value)) :
                              (base_type->FloatType())   ? TypeName(std::get<float>(value)) :

@@ -32,7 +32,7 @@ void Constant::fixValue(TypeID _tid) {
 std::shared_ptr<BaseValue> Constant::unaryOperate(std::string &op) {
     BaseTypePtr base_type = this->getBaseType();
     
-    TypeID _tid = base_type->getType() & (INT | FLOAT | CONST);
+    TypeID _tid = base_type->getMaskedType(INT, FLOAT, CONST);
 
     ConstType _value = (op == "-") ? 
                             ((base_type->IntType()) ? -this->getValue<int32_t>() : -this->getValue<float>()) :
@@ -48,7 +48,7 @@ std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
 
 std::string Constant::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(BOOL | INT | FLOAT | CONST);
+    base_type->checkType(BOOL | INT | FLOAT, CONST);
     std::stringstream ss;
     ss << base_type->toString();
     ss << " -> ";

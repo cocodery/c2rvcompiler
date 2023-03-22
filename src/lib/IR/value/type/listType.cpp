@@ -18,7 +18,7 @@ std::shared_ptr<ListType> ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool 
 }
 
 std::string ListType::toString() {
-    this->checkType(INT | FLOAT | ARRAY);
+    this->checkType(INT | FLOAT, ARRAY);
 
     std::stringstream ss;
     if (this->GlobalType()) {
