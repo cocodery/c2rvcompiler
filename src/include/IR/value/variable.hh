@@ -7,4 +7,6 @@ public:
     void fixValue(TypeID) { return; }
     
     std::string toString() { return ""; }
+
+    std::string tollvmIR() { return ""; }
 };

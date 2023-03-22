@@ -35,3 +35,23 @@ std::string UnInitVar::toString() {
     }
     return ss.str();
 }
+
+std::string UnInitVar::tollvmIR() {
+    BaseTypePtr base_type = this->getBaseType();
+
+    std::stringstream ss;
+
+    ss << base_type->tollvmIR() << ' ';
+
+    if (base_type->ArrayType()) {
+        ss << "zeroinitializer";
+    } else if (base_type->IntType()) {
+        ss << "i32 0";
+    } else if (base_type->FloatType()) {
+        ss << "float 0x0000000000000000";
+    } else {
+        assert(0);
+    }
+    
+    return ss.str();
+}

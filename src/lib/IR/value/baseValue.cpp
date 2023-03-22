@@ -11,3 +11,8 @@ BaseValue::BaseValue(ListTypePtr btptr) {
 BaseTypePtr BaseValue::getBaseType() {
     return this->base_type;
 }
+
+std::ostream &operator<<(std::ostream &os, std::shared_ptr<BaseValue> value) {
+    os << value->tollvmIR();
+    return os;
+}

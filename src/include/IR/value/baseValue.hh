@@ -20,4 +20,8 @@ public:
     virtual void fixValue(TypeID) = 0;
 
     virtual std::string toString() = 0;
+
+    virtual std::string tollvmIR() = 0;
 };
+
+std::ostream &operator<<(std::ostream &, std::shared_ptr<BaseValue>);

@@ -19,4 +19,6 @@ public:
     static std::shared_ptr<ConstArray> CreatePtr(ListTypePtr, ConstArr &);
 
     std::string toString();
+
+    std::string tollvmIR();
 };

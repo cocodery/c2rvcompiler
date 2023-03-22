@@ -46,3 +46,25 @@ std::string Constant::toString() {
             );
     return ss.str();
 }
+
+std::string Constant::tollvmIR() {
+    BaseTypePtr base_type = this->getBaseType();
+
+    std::stringstream ss;
+
+    ss << base_type->tollvmIR() << ' ';
+
+    if (base_type->BoolType()) {
+        ss << this->getValue<bool>();
+    } else if (base_type->IntType()) {
+        ss << this->getValue<int32_t>();
+    } else if (base_type->FloatType()) {
+        double float_value = double(this->getValue<float>());
+        uint64_t uint64_value = reinterpret_cast<uint64_t &>(float_value);
+        ss << "0x" << std::hex << std::setw(16) << std::setfill('0') << uint64_value;
+    } else {
+        assert(0);
+    }
+
+    return ss.str();
+}

@@ -13,4 +13,6 @@ public:
     static std::shared_ptr<UnInitVar> CreatePtr(ListTypePtr);
     
     std::string toString();
+
+    std::string tollvmIR();
 };

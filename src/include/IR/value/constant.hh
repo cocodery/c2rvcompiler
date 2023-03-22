@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iomanip>
 #include <variant>
 
 #include "baseValue.hh"
@@ -29,6 +30,8 @@ public:
     static std::shared_ptr<Constant> CreatePtr(TypeID, ConstType);
 
     std::string toString();
+
+    std::string tollvmIR();
 };
 
 using ConstantPtr = std::shared_ptr<Constant>;
