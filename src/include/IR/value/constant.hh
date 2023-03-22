@@ -14,6 +14,13 @@ public:
     Constant(TypeID, ConstType);
     ~Constant() = default;
 
+    template<typename T> void convert() {
+        std::visit([&value](auto &&arg) { value = static_cast<T>(arg); }, value);
+    }
+    void fixValue(TypeID);
+
+
+    /* to be removed later */
     template<typename TypeName>
     TypeName getValue() {
         BaseTypePtr base_type = this->getBaseType();
@@ -25,9 +32,7 @@ public:
         return ret_value;
     }
 
-    void fixValue(TypeID);
-
-    std::shared_ptr<BaseValue> unaryOperate(std::string &);
+    std::shared_ptr<BaseValue> unaryOperate(const std::string &);
 
     static std::shared_ptr<Constant> CreatePtr(TypeID, ConstType);
 

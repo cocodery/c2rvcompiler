@@ -5,38 +5,24 @@ Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_valu
 }
 
 void Constant::fixValue(TypeID _tid) {
-    BaseTypePtr base_type = this->getBaseType();
-
-    if (_tid & BOOL) {
-        if (base_type->IntType()) {
-            value = bool(this->getValue<int32_t>());
-        } else if (base_type->FloatType()) {
-            value = bool(this->getValue<float>());
-        }
-    } else if (_tid & INT) {
-        if (base_type->BoolType()) {
-            value = int32_t(this->getValue<bool>());
-        } else if (base_type->FloatType()) {
-            value = int32_t(this->getValue<float>());
-        }
-    } else if (_tid & FLOAT) {
-        if (base_type->BoolType()) {
-            value = float(this->getValue<bool>());
-        } else if (base_type->IntType()) {
-            value = float(this->getValue<int32_t>());
-        }
+    BaseTypePtr base_type = this->getBaseType(); 
+    switch (this->getBaseType()->getMaskedType(BOOL, INT, FLOAT)) {
+        case BOOL:  convert<bool>();  break;
+        case INT:   convert<int>();   break;
+        case FLOAT: convert<float>(); break;
+        default:    assert(false);
     }
     base_type->resetType(_tid);
 } 
 
-std::shared_ptr<BaseValue> Constant::unaryOperate(std::string &op) {
+std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
     BaseTypePtr base_type = this->getBaseType();
     
     TypeID _tid = base_type->getMaskedType(INT, FLOAT, CONST);
 
     ConstType _value = (op == "-") ? 
-                            ((base_type->IntType()) ? -this->getValue<int32_t>() : -this->getValue<float>()) :
-                            ((base_type->IntType()) ? !this->getValue<int32_t>() : !this->getValue<float>())
+                            std::visit([](auto &&arg) { return -arg; }, value) :
+                            std::visit([](auto &&arg) { return !arg; }, value)
                         ;
 
     return CreatePtr(_tid, _value);
@@ -52,11 +38,7 @@ std::string Constant::toString() {
     std::stringstream ss;
     ss << base_type->toString();
     ss << " -> ";
-    ss <<   (   base_type->BoolType()   ?   this->getValue<bool>() :
-                base_type->IntType()    ?   this->getValue<int32_t>() :
-                base_type->FloatType()  ?   this->getValue<float>() :
-                0
-            );
+    std::visit([&ss](auto &&arg) { ss << arg; }, value);
     return ss.str();
 }
 
