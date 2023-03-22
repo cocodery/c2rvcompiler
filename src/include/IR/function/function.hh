@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "../valueHeader.hh"
+#include "basicblock.hh"
 
 using Parameter = std::pair<std::string, BaseValuePtr>;
 using ParamList = std::vector<Parameter>;

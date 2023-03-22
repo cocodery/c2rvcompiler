@@ -218,6 +218,11 @@ antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
     return value;
 }
 
+antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
+    BaseValuePtr value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    return value;
+}
+
 antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
     ConstantPtr constant = ctx->number()->accept(this).as<ConstantPtr>();
     return std::static_pointer_cast<BaseValue>(constant);
@@ -240,6 +245,17 @@ antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
 antlrcpp::Any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
     BaseValuePtr value = ctx->primaryExp()->accept(this).as<BaseValuePtr>();
     return value;
+}
+
+antlrcpp::Any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
+    std::string unary_op = ctx->unaryOp()->getText();
+    BaseValuePtr value   = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+    return Value::unaryOperate(unary_op, value, cur_block);
+}
+
+antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
+    assert(0);
+    return nullptr;
 }
 
 antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {

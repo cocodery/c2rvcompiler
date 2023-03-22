@@ -23,6 +23,7 @@ private:
     bool in_loop;
 
     TypeID cur_type;
+    BlockPtr cur_block;
 public:
     AstVisitor(CompilationUnit &);
     
@@ -71,6 +72,8 @@ private:
 
     virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
 
+    virtual antlrcpp::Any visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) override;
+
     virtual antlrcpp::Any visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) override;
 
     virtual antlrcpp::Any visitNumber1(SysYParser::Number1Context *ctx) override;
@@ -78,6 +81,10 @@ private:
     virtual antlrcpp::Any visitNumber2(SysYParser::Number2Context *ctx) override;
 
     virtual antlrcpp::Any visitUnary1(SysYParser::Unary1Context *ctx) override;
+
+    virtual antlrcpp::Any visitUnary3(SysYParser::Unary3Context *ctx) override;
+
+    virtual antlrcpp::Any visitUnaryOp(SysYParser::UnaryOpContext *ctx) override;
 
     virtual antlrcpp::Any visitMulExp(SysYParser::MulExpContext *ctx) override;
 
