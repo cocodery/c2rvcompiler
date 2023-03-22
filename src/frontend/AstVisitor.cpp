@@ -229,16 +229,12 @@ antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) 
 }
 
 antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
-    int32_t number1 = 0;
-    parseIntLiteral(ctx->getText().c_str(), &number1);
-    ConstantPtr constant1 = Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(number1));
+    ConstantPtr constant1 = Constant::CreatePtr(INT | CONST, ConstType(std::stoi(ctx->getText())));
     return constant1;
 }
 
 antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    float number2 = 0;
-    sscanf(ctx->getText().c_str(), "%f", &number2);
-    ConstantPtr constant2 = Constant::CreatePtr(FLOAT | CONST, std::variant<bool, int32_t, float>(number2));
+    ConstantPtr constant2 = Constant::CreatePtr(FLOAT | CONST, ConstType(std::stof(ctx->getText())));
     return constant2;
 }
 
