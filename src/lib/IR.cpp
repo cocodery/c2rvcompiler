@@ -27,3 +27,14 @@ void CompilationUnit::printFuncTalbe() {
         cout << "function -> " << func_ptr->toString() << endl;
     }
 }
+
+void CompilationUnit::generatellvmIR(std::string &irfile) {
+    std::ofstream llir;
+    llir.open(irfile, std::ios_base::out);
+    if (llir.is_open() == false) {
+        assert(0);
+    }
+    for (auto [name, value] : glb_table.getNameValueMap()) {
+        llir << '@' << name << " = " << value << ", align 4" << endl;
+    }
+}

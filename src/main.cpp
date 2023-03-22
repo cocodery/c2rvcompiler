@@ -66,5 +66,7 @@ int main(int argc, char *argv[]) {
     cout << endl;
     comp_unit.printFuncTalbe();
 
+    comp_unit.generatellvmIR(irfile);
+
     return 0;
 }

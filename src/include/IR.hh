@@ -26,4 +26,6 @@ public:
     FunctionTable &getFuncTable();
     void insertFunction(std::string &, FunctionPtr);
     void printFuncTalbe();
+
+    void generatellvmIR(std::string &irile);
 };
