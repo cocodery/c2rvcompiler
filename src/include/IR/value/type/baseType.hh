@@ -13,7 +13,7 @@ using TypeID = uint64_t;
 
 constexpr TypeID NONE       = (0ul << 0x0000);
 
-constexpr TypeID BOOL       = (0ul << 0x0001);
+constexpr TypeID BOOL       = (1ul << 0x0001);
 constexpr TypeID INT        = (1ul << 0x0002);
 constexpr TypeID FLOAT      = (1ul << 0x0003);
 constexpr TypeID VOID       = (1ul << 0x0004);
@@ -32,10 +32,6 @@ class BaseType {
 private:
     TypeID tid;
     TypeID getType() const;
-
-    /* to be deleted when then intention is clear and code is refactored */
-    friend ConstArray;
-
 public:
     BaseType(TypeID tid = NONE);
     ~BaseType() = default;

@@ -6,13 +6,11 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr)
 }
 
 void ConstArray::fixValue(TypeID _tid) {
-    assert(this->getBaseType()->getType() == (_tid | ARRAY));
-    if (_tid & GLOBAL) {
-        _tid &= (~GLOBAL);
-    }
-    if (_tid & CONST) {
-        _tid &= (~CONST);
-    }
+    BaseTypePtr base_type = this->getBaseType();
+    base_type->checkType(INT | FLOAT, CONST, ARRAY);
+
+    _tid &= ~(GLOBAL | CONST);
+    
     for (auto &&value : const_arr) {
         value->fixValue(_tid);
     }
