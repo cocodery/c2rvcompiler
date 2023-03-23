@@ -6,10 +6,11 @@ Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_valu
 
 void Constant::fixValue(TypeID _tid) {
     BaseTypePtr base_type = this->getBaseType(); 
-    switch (base_type->getMaskedType(BOOL, INT, FLOAT)) {
-        case BOOL:  convert<bool>();  break;
-        case INT:   convert<int32_t>();   break;
-        case FLOAT: convert<float>(); break;
+    base_type->checkType(BOOL | INT | FLOAT, CONST);
+    switch (_tid & (BOOL | INT | FLOAT)) {
+        case BOOL:  convert<bool>();    break;
+        case INT:   convert<int32_t>(); break;
+        case FLOAT: convert<float>();   break;
         default:    assert(false);
     }
     base_type->resetType(_tid);
@@ -59,7 +60,7 @@ std::string Constant::tollvmIR() {
             double double_value = arg;
             uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
             char buf[20];
-            sprintf(buf, "0x%16lx", uint64_value);
+            sprintf(buf, "0x%016lx", uint64_value);
             ss << buf;
         } else {
             ss << arg;
