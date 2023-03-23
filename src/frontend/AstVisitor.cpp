@@ -434,7 +434,7 @@ BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext 
 }
 
 BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *node, ArrDims &arr_dims) {
-    ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY, arr_dims, false);
+    ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY | CONST, arr_dims, false);
 
     ConstArr const_arr;
     const_arr.reserve(list_type->getArrDims());

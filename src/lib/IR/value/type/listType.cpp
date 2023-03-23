@@ -2,7 +2,7 @@
 
 ListType::ListType(TypeID _tid, ArrDims &_dims, bool _omit) 
     : BaseType(_tid), dims(_dims), omit(_omit) {
-
+    this->checkType(INT | FLOAT, ARRAY);
 }
 
 size_t ListType::getArrDims() const {

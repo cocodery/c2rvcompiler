@@ -31,10 +31,11 @@ std::string ScalarType::toString() {
 std::string ScalarType::tollvmIR() {
     std::stringstream ss;
 
+    if (this->GlobalType()) {
+        ss << "global ";
+    }
     if (this->ConstType()) {
         ss << "constant ";
-    } else if (this->GlobalType()) {
-        ss << "global ";
     }
     ss << ( this->IntType()     ?   "i32" :
             this->FloatType()   ?   "float" :
