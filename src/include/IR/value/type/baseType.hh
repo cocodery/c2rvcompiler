@@ -36,9 +36,23 @@ public:
     BaseType(TypeID tid = NONE);
     ~BaseType() = default;
 
-    template<typename... TypeIDs> TypeID getMaskedType(TypeID, TypeIDs...) const;
     void resetType(TypeID);
-    template<typename... TypeIDs> void checkType(TypeIDs...) const;
+
+    template<typename... TypeIDs>
+    TypeID getMaskedType(TypeID first, TypeIDs... rest) const {
+        TypeID res = getType() & first;
+        for (auto tid : std::initializer_list<TypeID>{rest...}) {
+            res |= getType() & tid;
+        }
+        return res;
+    }
+
+    template<typename... TypeIDs>
+    void checkType(TypeIDs... _tids) const {
+        for (auto tid : std::initializer_list<TypeID>{_tids...}) {
+            assert(__builtin_popcountll(getMaskedType(tid)) == 1);
+        }
+    }
 
     bool BoolType()     const;
     bool IntType()      const;

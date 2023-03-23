@@ -8,25 +8,9 @@ TypeID BaseType::getType() const {
     return this->tid;
 }
 
-template<typename... TypeIDs>
-TypeID BaseType::getMaskedType(TypeID first, TypeIDs... rest) const {
-    TypeID res = getType() & first;
-    for (const auto &tid : {rest...}) {
-        res |= getType() & tid;
-    }
-    return res;
-}
-
 void BaseType::resetType(TypeID _tid) {
     checkType(BOOL | INT | FLOAT | VOID);
     tid = _tid;
-}
-
-template<typename... TypeIDs>
-void BaseType::checkType(TypeIDs... _tids) const {
-    for (const auto &tid : {_tids...}) {
-        assert(__builtin_popcountll(getMaskedType(tid)) == 1);
-    }
 }
 
 bool BaseType::BoolType()     const { return this->tid & BOOL; }

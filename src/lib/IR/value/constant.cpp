@@ -20,10 +20,15 @@ std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
     
     TypeID _tid = base_type->getMaskedType(INT, FLOAT, CONST);
 
-    ConstType _value = (op == "-") ? 
-                            std::visit([](auto &&arg) { return -arg; }, value) :
-                            std::visit([](auto &&arg) { return !arg; }, value)
-                        ;
+    ConstType _value;
+
+    if (op == "-") {
+        std::visit([&_value](auto &&arg) { _value = -arg; }, value);
+    } else if (op == "!") {
+        std::visit([&_value](auto &&arg) { _value = !arg; }, value);
+    } else {
+        assert(false);
+    }
 
     return CreatePtr(_tid, _value);
 }

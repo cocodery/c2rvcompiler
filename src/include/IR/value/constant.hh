@@ -15,7 +15,7 @@ public:
     ~Constant() = default;
 
     template<typename T> void convert() {
-        std::visit([&value](auto &&arg) { value = static_cast<T>(arg); }, value);
+        std::visit([this](auto &&arg) { value = static_cast<T>(arg); }, value);
     }
     void fixValue(TypeID);
 
