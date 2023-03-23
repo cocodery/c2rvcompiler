@@ -384,7 +384,7 @@ ArrDims AstVisitor::getArrDims(std::vector<SysYParser::ConstExpContext *> &const
     for (auto &&const_exp : constExpVec) {
         BaseValuePtr base_value = const_exp->accept(this).as<BaseValuePtr>();
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(base_value);
-        arr_dims.push_back(constant->getValue<int32_t>());
+        arr_dims.push_back(std::get<int32_t>(constant->value));
     }
 
     cur_type = last_type;

@@ -10,6 +10,9 @@ using ConstType = std::variant<bool, int32_t, float>;
 class Constant : public BaseValue {
 private:
     ConstType value;
+
+    /* to allow access from AstVisitor::getArrDims() */
+    friend class AstVisitor;
 public:
     Constant(TypeID, ConstType);
     ~Constant() = default;
@@ -18,19 +21,6 @@ public:
         std::visit([this](auto &&arg) { value = static_cast<T>(arg); }, value);
     }
     void fixValue(TypeID);
-
-
-    /* to be removed later */
-    template<typename TypeName>
-    TypeName getValue() {
-        BaseTypePtr base_type = this->getBaseType();
-        base_type->checkType(BOOL, INT, FLOAT);
-        TypeName ret_value = (base_type->BoolType())    ? TypeName(std::get<bool>(value)) :
-                             (base_type->IntType())     ? TypeName(std::get<int32_t>(value)) :
-                             (base_type->FloatType())   ? TypeName(std::get<float>(value)) :
-                             TypeName(0);
-        return ret_value;
-    }
 
     std::shared_ptr<BaseValue> unaryOperate(const std::string &);
 

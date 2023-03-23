@@ -6,7 +6,7 @@ Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_valu
 
 void Constant::fixValue(TypeID _tid) {
     BaseTypePtr base_type = this->getBaseType(); 
-    switch (this->getBaseType()->getMaskedType(BOOL, INT, FLOAT)) {
+    switch (base_type->getMaskedType(BOOL, INT, FLOAT)) {
         case BOOL:  convert<bool>();  break;
         case INT:   convert<int>();   break;
         case FLOAT: convert<float>(); break;
@@ -49,22 +49,22 @@ std::string Constant::toString() {
 
 std::string Constant::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
-
+    base_type->checkType(BOOL | INT | FLOAT, CONST);
     std::stringstream ss;
-
     ss << base_type->tollvmIR() << ' ';
 
-    if (base_type->BoolType()) {
-        ss << this->getValue<bool>();
-    } else if (base_type->IntType()) {
-        ss << this->getValue<int32_t>();
-    } else if (base_type->FloatType()) {
-        double float_value = double(this->getValue<float>());
-        uint64_t uint64_value = reinterpret_cast<uint64_t &>(float_value);
-        ss << "0x" << std::hex << std::setw(16) << std::setfill('0') << uint64_value;
-    } else {
-        assert(0);
-    }
+    std::visit([&ss](auto &&arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, float>) {
+            double double_value = arg;
+            uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
+            char buf[20];
+            sprintf(buf, "0x%16lx", uint64_value);
+            ss << buf;
+        } else {
+            ss << arg;
+        }
+    }, value);
 
     return ss.str();
 }
