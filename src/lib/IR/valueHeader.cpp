@@ -2,7 +2,7 @@
 
 bool Value::isConstant(BaseValuePtr value) {
     BaseTypePtr base_type = value->getBaseType();
-    return (base_type->ConstType() && !base_type->ArrayType());
+    return (base_type->ConstantType() && !base_type->ArrayType());
 }
 
 bool Value::bothConstant(BaseValuePtr value1, BaseValuePtr value2) {

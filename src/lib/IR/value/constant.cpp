@@ -1,28 +1,30 @@
 #include "constant.hh"
 
 Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_value) {
-    assert((_tid & (CONST | BOOL | INT | FLOAT)) & CONST);
+    this->getBaseType()->checkType(INT | FLOAT, CONSTANT);
 }
 
 void Constant::fixValue(TypeID _tid) {
-    BaseTypePtr base_type = this->getBaseType(); 
-    base_type->checkType(BOOL | INT | FLOAT, CONST);
+    BaseTypePtr base_type = this->getBaseType();
     switch (_tid & (BOOL | INT | FLOAT)) {
         case BOOL:  convert<bool>();    break;
         case INT:   convert<int32_t>(); break;
         case FLOAT: convert<float>();   break;
         default:    assert(false);
     }
-    base_type->resetType(_tid);
+    // _tid has checked above
+    // append CONSTANT
+    base_type->resetType(_tid | CONSTANT);
+    // no need to checkType
 } 
 
 std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
     BaseTypePtr base_type = this->getBaseType();
     
-    TypeID _tid = base_type->getMaskedType(INT, FLOAT, CONST);
+    // when return this value to a global constant, will do fixValue
+    TypeID _tid = base_type->getMaskedType(INT | FLOAT, CONSTANT);
 
     ConstType _value;
-
     if (op == "-") {
         std::visit([&_value](auto &&arg) { _value = -arg; }, value);
     } else if (op == "!") {
@@ -40,20 +42,22 @@ std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
 
 std::string Constant::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(BOOL | INT | FLOAT);
+    base_type->checkType(INT | FLOAT, CONSTANT);
+
     std::stringstream ss;
     ss << base_type->toString();
     ss << " -> ";
     std::visit([&ss](auto &&arg) { ss << arg; }, value);
+
     return ss.str();
 }
 
 std::string Constant::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(BOOL | INT | FLOAT, CONST);
+    base_type->checkType(INT | FLOAT, CONSTANT);
+
     std::stringstream ss;
     ss << base_type->tollvmIR() << ' ';
-
     std::visit([&ss](auto &&arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, float>) {

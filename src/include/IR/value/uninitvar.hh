@@ -2,6 +2,10 @@
 
 #include "baseValue.hh"
 
+// UnInitVar only exsit in
+//  1 -> Global UnInitialized Variable
+//  2 -> Function Argument
+// and only have type in { INT, FLOAT }
 class UnInitVar : public BaseValue {
 public:
     UnInitVar(TypeID);

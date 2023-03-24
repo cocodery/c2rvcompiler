@@ -9,8 +9,9 @@ void ConstArray::fixValue(TypeID _tid) {
     BaseTypePtr base_type = this->getBaseType();
     base_type->checkType(INT | FLOAT, CONST, ARRAY);
 
+    // un-set GLOBAL and CONST bit
+    // which can emit extra type qualifier in array-value 
     _tid &= ~(GLOBAL | CONST);
-    
     for (auto &&value : const_arr) {
         value->fixValue(_tid);
     }
@@ -22,7 +23,8 @@ std::shared_ptr<ConstArray> ConstArray::CreatePtr(ListTypePtr list_type, ConstAr
 
 std::string ConstArray::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(INT | FLOAT, CONST, ARRAY);
+    base_type->checkType(INT | FLOAT, ARRAY, CONST);
+
     std::stringstream ss;
     ss << base_type->toString();
     ss << " -> { ";
@@ -35,11 +37,10 @@ std::string ConstArray::toString() {
 
 std::string ConstArray::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
+    base_type->checkType(INT | FLOAT, ARRAY, CONST);
 
     std::stringstream ss;
-
     ss << base_type->tollvmIR() << ' ';
-    
     ss << '[';
     size_t size = const_arr.size();
     ss << const_arr[0]->tollvmIR();

@@ -229,12 +229,12 @@ antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) 
 }
 
 antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
-    ConstantPtr constant1 = Constant::CreatePtr(INT | CONST, ConstType(std::stoi(ctx->getText())));
+    ConstantPtr constant1 = Constant::CreatePtr(INT | CONSTANT, ConstType(std::stoi(ctx->getText())));
     return constant1;
 }
 
 antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    ConstantPtr constant2 = Constant::CreatePtr(FLOAT | CONST, ConstType(std::stof(ctx->getText())));
+    ConstantPtr constant2 = Constant::CreatePtr(FLOAT | CONSTANT, ConstType(std::stof(ctx->getText())));
     return constant2;
 }
 
@@ -416,7 +416,7 @@ BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext 
             }
         }
         while (cnt < total_size) {
-            const_arr.push_back(Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(0)));
+            const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
             ++cnt;
         }
         return;
@@ -458,7 +458,7 @@ BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *nod
             }
         }
         while (cnt < total_size) {
-            const_arr.push_back(Constant::CreatePtr(INT | CONST, std::variant<bool, int32_t, float>(0)));
+            const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
             ++cnt;
         }
         return;
