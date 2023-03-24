@@ -1,7 +1,7 @@
 #include "constant.hh"
 
 Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_value) {
-    assert(this->getBaseType()->checkType(INT | FLOAT, CONSTANT));
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
 }
 
 ConstType &Constant::getValue() {
