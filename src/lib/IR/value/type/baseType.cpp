@@ -2,7 +2,7 @@
 
 BaseType::BaseType(TypeID _tid) : tid(_tid) {
     // must have a type
-    checkType(BOOL | INT | FLOAT | VOID);
+    assert(checkType(BOOL | INT | FLOAT | VOID));
 }
 
 TypeID BaseType::getType() const {
@@ -11,7 +11,7 @@ TypeID BaseType::getType() const {
 
 void BaseType::resetType(TypeID _tid) {
     // must have a type
-    checkType(BOOL | INT | FLOAT | VOID);
+    assert(checkType(BOOL | INT | FLOAT | VOID));
     tid = _tid;
 }
 

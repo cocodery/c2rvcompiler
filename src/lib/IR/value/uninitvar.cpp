@@ -1,11 +1,11 @@
 #include "uninitvar.hh"
 
 UnInitVar::UnInitVar(TypeID _tid) : BaseValue(_tid) {
-    this->getBaseType()->checkType(INT | FLOAT);
+    assert(this->getBaseType()->checkType(INT | FLOAT));
 }
 
 UnInitVar::UnInitVar(ListTypePtr list_type) : BaseValue(list_type) {
-    // list_type->checkType(INT | FLOAT, ARRAY);
+    // assert(list_type->checkType(INT | FLOAT, ARRAY));
     // have checked when create ListType
 }
 
@@ -19,7 +19,7 @@ std::shared_ptr<UnInitVar> UnInitVar::CreatePtr(ListTypePtr list_type) {
 
 std::string UnInitVar::toString() {
     BaseTypePtr base_tpye = this->getBaseType();
-    base_tpye->checkType(INT | FLOAT); 
+    assert(base_tpye->checkType(INT | FLOAT)); 
     
     std::stringstream ss;
     ss << base_tpye->toString();
@@ -37,7 +37,7 @@ std::string UnInitVar::toString() {
 
 std::string UnInitVar::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(INT | FLOAT);
+    assert(base_type->checkType(INT | FLOAT));
 
     std::stringstream ss;
     ss << base_type->tollvmIR() << ' ';

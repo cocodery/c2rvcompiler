@@ -2,7 +2,7 @@
 
 ListType::ListType(TypeID _tid, ArrDims &_dims, bool _omit) 
     : BaseType(_tid), dims(_dims), omit(_omit) {
-    this->checkType(INT | FLOAT, ARRAY);
+    assert(this->checkType(INT | FLOAT, ARRAY));
 }
 
 size_t ListType::getArrDims() const {
@@ -18,7 +18,7 @@ std::shared_ptr<ListType> ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool 
 }
 
 std::string ListType::toString() {
-    this->checkType(INT | FLOAT, ARRAY);
+    assert(this->checkType(INT | FLOAT, ARRAY));
 
     std::stringstream ss;
     if (this->GlobalType()) {
@@ -40,7 +40,7 @@ std::string ListType::toString() {
 }
 
 std::string ListType::tollvmIR() {
-    this->checkType(INT | FLOAT, ARRAY);
+    assert(this->checkType(INT | FLOAT, ARRAY));
 
     std::stringstream ss;
     // when is CONST, ignroe GLOBAL in llvm-IR

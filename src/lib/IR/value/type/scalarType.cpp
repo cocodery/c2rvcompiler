@@ -1,7 +1,7 @@
 #include "scalarType.hh"
 
 ScalarType::ScalarType(TypeID _tid) : BaseType(_tid) {
-    // this->checkType(BOOL | INT | FLOAT | VOID);
+    // assert(this->checkType(BOOL | INT | FLOAT | VOID));
     // will do same check in BaseType::BaseType
 }
 
@@ -10,7 +10,7 @@ std::shared_ptr<ScalarType> ScalarType::CreatePtr(TypeID _tid) {
 }
 
 std::string ScalarType::toString() {
-    this->checkType(BOOL | INT | FLOAT | VOID);
+    assert(this->checkType(BOOL | INT | FLOAT | VOID));
 
     std::stringstream ss;
     if (this->GlobalType()) {
@@ -30,7 +30,7 @@ std::string ScalarType::toString() {
 }
 
 std::string ScalarType::tollvmIR() {
-    this->checkType(BOOL | INT | FLOAT | VOID);
+    assert(this->checkType(BOOL | INT | FLOAT | VOID));
 
     std::stringstream ss;
     // when is CONST, ignroe GLOBAL in llvm-IR

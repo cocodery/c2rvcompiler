@@ -1,7 +1,7 @@
 #include "constant.hh"
 
 Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_value) {
-    this->getBaseType()->checkType(INT | FLOAT, CONSTANT);
+    assert(this->getBaseType()->checkType(INT | FLOAT, CONSTANT));
 }
 
 ConstType &Constant::getValue() {
@@ -26,7 +26,7 @@ void Constant::fixValue(TypeID _tid) {
 // Constant who do unaryOperate
 // must have type in { BOOL, INT, FLOAT }
 std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
-    this->getBaseType()->checkType(BOOL | INT | FLOAT);
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT));
     
     // when return this value to a global constant, will do fixValue
     TypeID _tid;
@@ -57,8 +57,8 @@ std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
 // Constant who do unaryOperate
 // must have type in { INT, FLOAT }
 std::shared_ptr<BaseValue> Constant::binaryOperate(const std::string &op, const std::shared_ptr<Constant> rhs) {
-    this->getBaseType()->checkType(BOOL | INT | FLOAT);
-    rhs ->getBaseType()->checkType(BOOL | INT | FLOAT);
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT));
+    assert(rhs ->getBaseType()->checkType(BOOL | INT | FLOAT));
 
     TypeID _tid;
     ConstType _value;
@@ -100,7 +100,7 @@ std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
 
 std::string Constant::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(INT | FLOAT, CONSTANT);
+    assert(base_type->checkType(INT | FLOAT, CONSTANT));
 
     std::stringstream ss;
     ss << base_type->toString();
@@ -112,7 +112,7 @@ std::string Constant::toString() {
 
 std::string Constant::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
-    base_type->checkType(INT | FLOAT, CONSTANT);
+    assert(base_type->checkType(INT | FLOAT, CONSTANT));
 
     std::stringstream ss;
     ss << base_type->tollvmIR() << ' ';

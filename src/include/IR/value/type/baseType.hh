@@ -5,6 +5,7 @@
 #include <memory>
 #include <cassert>
 #include <string>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -49,10 +50,9 @@ public:
     }
 
     template<typename... TypeIDs>
-    void checkType(TypeIDs... _tids) const {
-        for (auto tid : std::initializer_list<TypeID>{_tids...}) {
-            assert(__builtin_popcountll(getMaskedType(tid)) == 1);
-        }
+    bool checkType(TypeIDs... _tids) const {
+        auto &&tids = {_tids...};
+        return std::all_of(tids.begin(), tids.end(), [this](auto tid){ return __builtin_popcountll(getMaskedType(tid)) == 1; });
     }
 
     bool BoolType()     const;
