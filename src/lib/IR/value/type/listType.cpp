@@ -27,7 +27,6 @@ std::string ListType::toString() {
     if (this->ConstType()) {
         ss << "const ";
     }
-    
     ss << ( this->IntType()     ?   "int" :
             this->FloatType()   ?   "float" :
                                     "error" // un-reachablable, check before
@@ -41,9 +40,10 @@ std::string ListType::toString() {
 }
 
 std::string ListType::tollvmIR() {
-    // check    
-    std::stringstream ss;
+    this->checkType(INT | FLOAT, ARRAY);
 
+    std::stringstream ss;
+    // when is CONST, ignroe GLOBAL in llvm-IR
     if (this->ConstType()) {
         ss << "constant ";
     } else if (this->GlobalType()) {

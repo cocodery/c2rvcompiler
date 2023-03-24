@@ -12,21 +12,22 @@ using std::endl;
 using TypeID = uint64_t;
 
 constexpr TypeID NONE       = (0ul << 0x0000);
-
+// type of value
 constexpr TypeID BOOL       = (1ul << 0x0001);
 constexpr TypeID INT        = (1ul << 0x0002);
 constexpr TypeID FLOAT      = (1ul << 0x0003);
 constexpr TypeID VOID       = (1ul << 0x0004);
-
+// type qualifier
 constexpr TypeID CONST      = (1ul << 0x0005);
-constexpr TypeID VARIABLE   = (1ul << 0x0006);
+// contained-value attribute
+constexpr TypeID CONSTANT   = (1ul << 0x0006);
+constexpr TypeID VARIABLE   = (1ul << 0x0007);
+constexpr TypeID PARAM      = (1ul << 0x0008);
 
-constexpr TypeID PARAM      = (1ul << 0x0007);
-
-constexpr TypeID ARRAY      = (1ul << 0x0008);
-constexpr TypeID POINTER    = (1ul << 0x0009);
-
-constexpr TypeID GLOBAL     = (1ul << 0x000A);
+constexpr TypeID ARRAY      = (1ul << 0x0009);
+constexpr TypeID POINTER    = (1ul << 0x000A);
+// global attribute
+constexpr TypeID GLOBAL     = (1ul << 0x000B);
 
 class BaseType {
 private:
@@ -60,8 +61,9 @@ public:
     bool VoidType()     const;
 
     bool ConstType()    const;
-    bool VarType()      const;
 
+    bool ConstantType() const;
+    bool VariableType() const;
     bool ParamType()    const;
 
     bool ArrayType()    const;
