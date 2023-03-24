@@ -24,6 +24,6 @@ bool bothConstant(BaseValuePtr, BaseValuePtr);
 
 BaseValuePtr unaryOperate(std::string &, BaseValuePtr, BlockPtr);
 
-BaseValuePtr binaryOperate(std::string &, BaseValuePtr, BaseTypePtr, BlockPtr);
+BaseValuePtr binaryOperate(std::string &, BaseValuePtr, BaseValuePtr, BlockPtr);
 
 }

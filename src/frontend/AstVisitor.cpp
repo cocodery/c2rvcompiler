@@ -258,13 +258,21 @@ antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
     auto &&unary_exp = ctx->unaryExp();
     auto &&mul_op    = ctx->mulOp();
 
-    BaseValuePtr lhs = unary_exp[0]->accept(this).as<BaseValuePtr>(), *rhs = nullptr;
-    // assert(lhs != nullptr);
+    BaseValuePtr lhs = unary_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
+
+    size_t size = unary_exp.size();
+    for (size_t idx = 1; idx < size; ++idx) {
+        std::string op = mul_op[idx]->getText();
+        rhs = unary_exp[idx]->accept(this).as<BaseValuePtr>();
+        // lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
+    }
+
     return lhs;
 }
 
 antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
-    return visitChildren(ctx);
+    assert(0);
+    return nullptr;
 }
 
 antlrcpp::Any AstVisitor::visitAddExp(SysYParser::AddExpContext *ctx) {

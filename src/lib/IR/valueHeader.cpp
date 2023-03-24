@@ -18,3 +18,12 @@ BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr b
     }
     assert(0);
 }
+
+BaseValuePtr Value::binaryOperate(std::string &op, BaseValuePtr lhs, BaseValuePtr rhs, BlockPtr block) {
+    if (bothConstant(lhs, rhs)) {
+        ConstantPtr constant1 = std::dynamic_pointer_cast<Constant>(lhs);
+        ConstantPtr constant2 = std::dynamic_pointer_cast<Constant>(rhs);
+        return constant1->binaryOperate(op, constant2);
+    }
+    assert(0);
+}
