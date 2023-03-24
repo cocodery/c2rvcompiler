@@ -9,39 +9,49 @@ ConstType &Constant::getValue() {
 }
 
 void Constant::fixValue(TypeID _tid) {
-    BaseTypePtr base_type = this->getBaseType();
-    switch (_tid & (BOOL | INT | FLOAT)) {
-        case BOOL:  convert<bool>();    break;
-        case INT:   convert<int32_t>(); break;
-        case FLOAT: convert<float>();   break;
-        default:    assert(false);
-    }
+    std::visit([&_value = this->value, tid = _tid & (BOOL | INT | FLOAT)](auto &&arg) {
+        switch (tid) {
+            case BOOL:  _value = static_cast<bool>(arg);    return;
+            case INT:   _value = static_cast<int32_t>(arg); return;
+            case FLOAT: _value = static_cast<float>(arg);   return;
+            default:    assert(false);
+        }
+    }, value);
     // _tid has checked above
     // append CONSTANT
-    base_type->resetType(_tid | CONSTANT);
+    this->getBaseType()->resetType(_tid | CONSTANT);
     // no need to checkType
 } 
 
 // Constant who do unaryOperate
 // must have type in { BOOL, INT, FLOAT }
 std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
-    BaseTypePtr base_type = getBaseType();
-    base_type->checkType(BOOL | INT | FLOAT);
+    this->getBaseType()->checkType(BOOL | INT | FLOAT);
     
     // when return this value to a global constant, will do fixValue
-    TypeID _tid = base_type->getMaskedType(BOOL | INT | FLOAT, CONSTANT);
-
+    TypeID _tid;
     ConstType _value;
-    if (op == "-") {
-        assert(!base_type->BoolType()); // omit single minus to bool type value
-        std::visit([&_value](auto &&arg) { _value = -arg; }, value);
-        return CreatePtr(_tid, _value);
-    } else if (op == "!") {
-        std::visit([&_value](auto &&arg) { _value = !arg; }, value);
-        return CreatePtr(BOOL | CONSTANT, _value);
-    } else {
-        assert(false);
-    }
+
+    std::visit([&_tid, &_value, oper = op[0]](auto &&arg) {
+        switch (oper) {
+            case '-':
+                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, float>) {
+                    _tid = FLOAT | CONSTANT;
+                } else {
+                    _tid = INT | CONSTANT;
+                }
+                _value = -arg;
+                return;
+            case '!':
+                _tid = BOOL | CONSTANT;
+                _value = !arg;
+                return;
+            default:
+                assert(false);
+        }
+    }, value);
+
+    return CreatePtr(_tid, _value);
 }
 
 // Constant who do unaryOperate
@@ -49,40 +59,40 @@ std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
 std::shared_ptr<BaseValue> Constant::binaryOperate(const std::string &op, const std::shared_ptr<Constant> rhs) {
     this->getBaseType()->checkType(BOOL | INT | FLOAT);
     rhs ->getBaseType()->checkType(BOOL | INT | FLOAT);
-    // if (op == "+") {
-    //     return std::make_shared<Constant>(*this + *rhs);
-    // } else if (op == "-") {
-    //     return std::make_shared<Constant>(*this - *rhs);
-    // } else if (op == "*") {
-    //     return std::make_shared<Constant>(*this * *rhs);
-    // } else if (op == "/") {
-    //     return std::make_shared<Constant>(*this / *rhs);
-    // } else if (op == "%") {
-    //     return std::make_shared<Constant>(*this % *rhs);
-    // } 
-    assert(0);
+
+    TypeID _tid;
+    ConstType _value;
+
+    std::visit([&_tid, &_value, oper = op[0]](auto &&l, auto &&r) {
+        using type_l = std::decay_t<decltype(l)>;
+        using type_r = std::decay_t<decltype(r)>;
+
+        constexpr bool returns_float = std::is_same_v<type_l, float> || std::is_same_v<type_r, float>;
+
+        if constexpr (returns_float) {
+            _tid = FLOAT | CONSTANT;
+        } else {
+            _tid = INT | CONSTANT;
+        }
+
+        switch (oper) {
+            case '+': _value = l + r; return;
+            case '-': _value = l - r; return;
+            case '*': _value = l * r; return;
+            case '/': _value = l / r; return;
+            case '%':
+                if constexpr (returns_float) {
+                    assert(false);
+                } else {
+                    _value = l % r;
+                }
+                return;
+            default: assert(false);
+        }
+    }, value, rhs->value);
+
+    return CreatePtr(_tid, _value);
 }
-
-// Constant *Constant::operator+(Constant rhs) {
-
-// }
-
-// Constant *Constant::operator-(Constant rhs) {
-
-// }
-
-// Constant *Constant::operator*(Constant rhs) {
-
-// }
-
-// Constant *Constant::operator/(Constant rhs) {
-
-// }
-
-// Constant *Constant::operator%(Constant rhs) {
-
-// }
-
 
 std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
     return std::make_shared<Constant>(_tid, _value);
