@@ -9,6 +9,10 @@ NameValueMap &SymbolTable::getNameValueMap() {
     return this->sym_table;
 }
 
+SymbolTable *SymbolTable::getParentTable() {
+    return this->parent;
+}
+
 void SymbolTable::insertSymbol(std::string &name, BaseValuePtr value) {
     sym_table.insert({name, value});
 }

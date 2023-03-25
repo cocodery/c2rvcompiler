@@ -7,6 +7,7 @@ AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
     in_loop = false;
 
     cur_type = NONE;
+    cur_table = nullptr;
 }
 
 antlrcpp::Any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
@@ -178,6 +179,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
                             ;
 
     FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list);
+    cur_func = function;
 
     comp_unit.insertFunction(func_name, function);
 
@@ -213,13 +215,53 @@ antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     return param;
 }
 
+antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
+    SymbolTable *last_table = this->cur_table;
+    SymbolTable *new_table  = this->newLocalTable(last_table);
+    this->cur_table = new_table;
+
+    // create basic-blcok here
+    if (ctx->blockItemList() != nullptr) {
+        ctx->blockItemList()->accept(this);
+    }
+
+    this->cur_table = last_table;
+    
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *ctx) {
+    return nullptr;
+}
+
 antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
     BaseValuePtr value = ctx->condExp()->accept(this).as<BaseValuePtr>();
     return value;
 }
 
+antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
+    std::string name = ctx->Identifier()->getText();
+    
+    BaseValuePtr value = resolveTable(name);
+    BaseTypePtr base_type = value->getBaseType();
+
+    if (!base_type->ArrayType()) {
+        if (base_type->ConstantType()) {
+            return value;
+        }
+    }
+    assert(0);
+
+    return nullptr;
+}
+
 antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
     BaseValuePtr value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    return value;
+}
+
+antlrcpp::Any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) {
+    BaseValuePtr value = ctx->lVal()->accept(this).as<BaseValuePtr>();
     return value;
 }
 
@@ -403,86 +445,42 @@ ArrDims AstVisitor::getArrDims(std::vector<SysYParser::ConstExpContext *> &const
     return arr_dims;
 }
 
-template <typename Type, typename ListType>
-std::vector<Type> getInitVal(ListType &in) {
-    if constexpr (std::is_same_v<ListType, SysYParser::ListConstInitValContext *>) {
-        return in -> constInitVal();
-    } else if constexpr (std::is_same_v<ListType, SysYParser::ListInitvalContext *>) {
-        return in -> initVal();
-    } else {
-        assert(0);
-    }
-}
-
-template <typename Type, typename ListType, typename ScalarType>
-void ListInit(ListType node, ArrDims &arr_dims, ConstArr &const_arr, AstVisitor *_this) {
-    size_t total_size = 1;
-    for (auto &&dim : arr_dims) {
-        total_size *= dim;
-    }
-    if (total_size == 0) return;
-    size_t cnt = 0;
-    auto &&initVal = getInitVal<Type, ListType>(node);
-    for (auto &&child : initVal) {
-        if (auto &&scalar_node = dynamic_cast<ScalarType>(child)) {
-            ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(_this).template as<BaseValuePtr>());
-            const_arr.push_back(value);
-            ++cnt;
-        } else {
-            ArrDims child_dims = arr_dims;
-            child_dims.erase(child_dims.begin());
-
-            auto &&list_node = dynamic_cast<ListType>(child);
-            ListInit<Type, ListType, ScalarType>(list_node, child_dims, const_arr, _this);
-            cnt += total_size / arr_dims[0];
-        }
-    }
-    while (cnt < total_size) {
-        const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
-        ++cnt;
-    }
-    return;
-}
-
 BaseValuePtr AstVisitor::parseConstListInit(SysYParser::ListConstInitValContext *node, ArrDims &arr_dims) {
     ListTypePtr list_type = ListType::CreatePtr(cur_type | ARRAY, arr_dims, false);
 
     ConstArr const_arr;
     const_arr.reserve(list_type->getArrDims());
 
-    ListInit<SysYParser::ListConstInitValContext *, SysYParser::ConstInitValContext *, SysYParser::ScalarConstInitValContext *>
-        (node, arr_dims, const_arr, this);
+    std::function<void(SysYParser::ListConstInitValContext *, ArrDims &, ConstArr &)> 
+        function = [&](SysYParser::ListConstInitValContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
+        size_t total_size = 1;
+        for (auto &&dim : arr_dims) {
+            total_size *= dim;
+        }
+        if (total_size == 0) return;
+        size_t cnt = 0;
+        for (auto &&child : node->constInitVal()) {
+            if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarConstInitValContext *>(child)) {
+                ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
+                const_arr.push_back(value);
+                ++cnt;
+            } else {
+                ArrDims child_dims = arr_dims;
+                child_dims.erase(child_dims.begin());
 
-    // std::function<void(SysYParser::ListConstInitValContext *, ArrDims &, ConstArr &)> 
-    //     function = [&](SysYParser::ListConstInitValContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
-    //     size_t total_size = 1;
-    //     for (auto &&dim : arr_dims) {
-    //         total_size *= dim;
-    //     }
-    //     if (total_size == 0) return;
-    //     size_t cnt = 0;
-    //     for (auto &&child : node->constInitVal()) {
-    //         if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarConstInitValContext *>(child)) {
-    //             ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
-    //             const_arr.push_back(value);
-    //             ++cnt;
-    //         } else {
-    //             ArrDims child_dims = arr_dims;
-    //             child_dims.erase(child_dims.begin());
+                auto &&list_node = dynamic_cast<SysYParser::ListConstInitValContext *>(child);
+                function(list_node, child_dims, const_arr);
+                cnt += total_size / arr_dims[0];
+            }
+        }
+        while (cnt < total_size) {
+            const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
+            ++cnt;
+        }
+        return;
+    };
 
-    //             auto &&list_node = dynamic_cast<SysYParser::ListConstInitValContext *>(child);
-    //             function(list_node, child_dims, const_arr);
-    //             cnt += total_size / arr_dims[0];
-    //         }
-    //     }
-    //     while (cnt < total_size) {
-    //         const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
-    //         ++cnt;
-    //     }
-    //     return;
-    // };
-
-    // function(node, arr_dims, const_arr);
+    function(node, arr_dims, const_arr);
 
     ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
 
@@ -495,41 +493,74 @@ BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *nod
     ConstArr const_arr;
     const_arr.reserve(list_type->getArrDims());
 
-    ListInit<SysYParser::ListInitvalContext *, SysYParser::InitValContext *, SysYParser::ScalarInitValContext *>
-        (node, arr_dims, const_arr, this);
+    std::function<void(SysYParser::ListInitvalContext *, ArrDims &, ConstArr &)> 
+        function = [&](SysYParser::ListInitvalContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
+        size_t total_size = 1;
+        for (auto &&dim : arr_dims) {
+            total_size *= dim;
+        }
+        if (total_size == 0) return;
+        size_t cnt = 0;
+        for (auto &&child : node->initVal()) {
+            if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
+                ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
+                const_arr.push_back(value);
+                ++cnt;
+            } else {
+                ArrDims child_dims = arr_dims;
+                child_dims.erase(child_dims.begin());
 
-    // std::function<void(SysYParser::ListInitvalContext *, ArrDims &, ConstArr &)> 
-    //     function = [&](SysYParser::ListInitvalContext *node, ArrDims &arr_dims, ConstArr &const_arr) {
-    //     size_t total_size = 1;
-    //     for (auto &&dim : arr_dims) {
-    //         total_size *= dim;
-    //     }
-    //     if (total_size == 0) return;
-    //     size_t cnt = 0;
-    //     for (auto &&child : node->initVal()) {
-    //         if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
-    //             ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(this).as<BaseValuePtr>());
-    //             const_arr.push_back(value);
-    //             ++cnt;
-    //         } else {
-    //             ArrDims child_dims = arr_dims;
-    //             child_dims.erase(child_dims.begin());
+                auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
+                function(list_node, child_dims, const_arr);
+                cnt += total_size / arr_dims[0];
+            }
+        }
+        while (cnt < total_size) {
+            const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
+            ++cnt;
+        }
+        return;
+    };
 
-    //             auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
-    //             function(list_node, child_dims, const_arr);
-    //             cnt += total_size / arr_dims[0];
-    //         }
-    //     }
-    //     while (cnt < total_size) {
-    //         const_arr.push_back(Constant::CreatePtr(INT | CONSTANT, std::variant<bool, int32_t, float>(0)));
-    //         ++cnt;
-    //     }
-    //     return;
-    // };
-
-    // function(node, arr_dims, const_arr);
+    function(node, arr_dims, const_arr);
 
     ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
 
     return std::static_pointer_cast<BaseValue>(value);
+}
+
+SymbolTable *AstVisitor::newLocalTable(SymbolTable *parent) {
+    SymbolTable *table = new SymbolTable(parent);
+    this->table_list.push_back(table);
+    return table;
+}
+
+void AstVisitor::clearTableList() {
+    for (auto &&table : this->table_list) {
+        delete table;
+    }
+    this->table_list.clear();
+}
+
+BaseValuePtr AstVisitor::resolveTable(std::string &name) {
+    SymbolTable *itre_table = this->cur_table;
+    while (itre_table != nullptr) {
+        auto &&sym_table = itre_table->getNameValueMap();
+        if (sym_table.find(name) != sym_table.end()) {
+            return sym_table[name];
+        }
+        itre_table = itre_table->getParentTable();
+    }
+    if (this->cur_func != nullptr) {
+        for (auto [pname, pvalue] : this->cur_func->getParamList()) {
+            if (pname == name) {
+                return pvalue;
+            }
+        }
+    }
+    auto &&glb_talbe = this->comp_unit.getGlbTable().getNameValueMap();
+    if (glb_talbe.find(name) != glb_talbe.end()) {
+        return glb_talbe[name];
+    }
+    assert(0);
 }
