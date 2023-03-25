@@ -7,6 +7,7 @@ AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
     in_loop = false;
 
     cur_type = NONE;
+    cur_table = nullptr;
 }
 
 antlrcpp::Any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
@@ -178,6 +179,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
                             ;
 
     FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list);
+    cur_func = function;
 
     comp_unit.insertFunction(func_name, function);
 
@@ -213,13 +215,53 @@ antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     return param;
 }
 
+antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
+    SymbolTable *last_table = this->cur_table;
+    SymbolTable *new_table  = this->newLocalTable(last_table);
+    this->cur_table = new_table;
+
+    // create basic-blcok here
+    if (ctx->blockItemList() != nullptr) {
+        ctx->blockItemList()->accept(this);
+    }
+
+    this->cur_table = last_table;
+    
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *ctx) {
+    return nullptr;
+}
+
 antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
     BaseValuePtr value = ctx->condExp()->accept(this).as<BaseValuePtr>();
     return value;
 }
 
+antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
+    std::string name = ctx->Identifier()->getText();
+    
+    BaseValuePtr value = resolveTable(name);
+    BaseTypePtr base_type = value->getBaseType();
+
+    if (!base_type->ArrayType()) {
+        if (base_type->ConstantType()) {
+            return value;
+        }
+    }
+    assert(0);
+
+    return nullptr;
+}
+
 antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
     BaseValuePtr value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    return value;
+}
+
+antlrcpp::Any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) {
+    BaseValuePtr value = ctx->lVal()->accept(this).as<BaseValuePtr>();
     return value;
 }
 
@@ -485,4 +527,40 @@ BaseValuePtr AstVisitor::parseGlbVarListInit(SysYParser::ListInitvalContext *nod
     ConstArrayPtr value = ConstArray::CreatePtr(list_type, const_arr);
 
     return std::static_pointer_cast<BaseValue>(value);
+}
+
+SymbolTable *AstVisitor::newLocalTable(SymbolTable *parent) {
+    SymbolTable *table = new SymbolTable(parent);
+    this->table_list.push_back(table);
+    return table;
+}
+
+void AstVisitor::clearTableList() {
+    for (auto &&table : this->table_list) {
+        delete table;
+    }
+    this->table_list.clear();
+}
+
+BaseValuePtr AstVisitor::resolveTable(std::string &name) {
+    SymbolTable *itre_table = this->cur_table;
+    while (itre_table != nullptr) {
+        auto &&sym_table = itre_table->getNameValueMap();
+        if (sym_table.find(name) != sym_table.end()) {
+            return sym_table[name];
+        }
+        itre_table = itre_table->getParentTable();
+    }
+    if (this->cur_func != nullptr) {
+        for (auto [pname, pvalue] : this->cur_func->getParamList()) {
+            if (pname == name) {
+                return pvalue;
+            }
+        }
+    }
+    auto &&glb_talbe = this->comp_unit.getGlbTable().getNameValueMap();
+    if (glb_talbe.find(name) != glb_talbe.end()) {
+        return glb_talbe[name];
+    }
+    assert(0);
 }

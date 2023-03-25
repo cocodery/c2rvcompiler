@@ -24,6 +24,10 @@ private:
 
     TypeID cur_type;
     BlockPtr cur_block;
+    FunctionPtr cur_func;
+    
+    SymbolTable *cur_table;
+    SymTableList table_list;
 public:
     AstVisitor(CompilationUnit &);
     
@@ -70,9 +74,17 @@ private:
     
     virtual antlrcpp::Any visitFuncFParam(SysYParser::FuncFParamContext *ctx) override;
 
+    virtual antlrcpp::Any visitBlock(SysYParser::BlockContext *ctx) override;
+
+    virtual antlrcpp::Any visitBlockItemList(SysYParser::BlockItemListContext *ctx) override;
+
     virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
 
+    virtual antlrcpp::Any visitLVal(SysYParser::LValContext *ctx) override;
+
     virtual antlrcpp::Any visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) override;
+
+    virtual antlrcpp::Any visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) override;
 
     virtual antlrcpp::Any visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) override;
 
@@ -125,4 +137,9 @@ private:
 
     BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *, ArrDims &);
     BaseValuePtr parseGlbVarListInit(SysYParser::ListInitvalContext *, ArrDims &);
+
+    SymbolTable *newLocalTable(SymbolTable *);
+    void clearTableList();
+
+    BaseValuePtr resolveTable(std::string &name);
 };
