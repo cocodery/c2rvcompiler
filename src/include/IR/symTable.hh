@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <unordered_map>
 
 #include "valueHeader.hh"
@@ -15,5 +16,10 @@ public:
     SymbolTable(SymbolTable *_p = nullptr);
 
     NameValueMap &getNameValueMap();
+
+    SymbolTable *getParentTable();
+
     void insertSymbol(std::string &, BaseValuePtr);
 };
+
+using SymTableList = std::vector<SymbolTable *>;

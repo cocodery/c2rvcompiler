@@ -5,6 +5,10 @@ Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list)
 
 }
 
+ParamList &Function::getParamList() {
+    return this->param_list;
+}
+
 std::shared_ptr<Function> Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
     return std::make_shared<Function>(_type, _name, _list);
 }

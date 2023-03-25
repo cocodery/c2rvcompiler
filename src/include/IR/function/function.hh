@@ -17,6 +17,8 @@ public:
     Function(ScalarTypePtr, std::string &, ParamList &);
     ~Function() = default;
 
+    ParamList &getParamList();
+
     static std::shared_ptr<Function> CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 
     std::string toString();
