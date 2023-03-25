@@ -57,8 +57,8 @@ std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
 // Constant who do unaryOperate
 // must have type in { INT, FLOAT }
 std::shared_ptr<BaseValue> Constant::binaryOperate(const std::string &op, const std::shared_ptr<Constant> rhs) {
-    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT));
-    assert(rhs ->getBaseType()->checkType(BOOL | INT | FLOAT));
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
+    assert(rhs ->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
 
     TypeID _tid;
     ConstType _value;
