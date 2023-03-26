@@ -317,29 +317,8 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
-    std::string name = ctx->Identifier()->getText();
-    
-    BaseValuePtr value = resolveTable(name);
-    BaseTypePtr base_type = value->getBaseType();
-
-    if (!base_type->ArrayType()) {
-        if (base_type->ConstantType()) {
-            return value;
-        }
-    }
-    assert(0);
-
-    return nullptr;
-}
-
 antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
     BaseValuePtr value = ctx->exp()->accept(this).as<BaseValuePtr>();
-    return value;
-}
-
-antlrcpp::Any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) {
-    BaseValuePtr value = ctx->lVal()->accept(this).as<BaseValuePtr>();
     return value;
 }
 

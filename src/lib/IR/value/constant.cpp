@@ -100,7 +100,7 @@ std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
 
 std::string Constant::toString() {
     BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT, CONSTANT));
+    assert(base_type->checkType(BOOL | INT | FLOAT, CONSTANT));
 
     std::stringstream ss;
     ss << base_type->toString();
@@ -112,7 +112,7 @@ std::string Constant::toString() {
 
 std::string Constant::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT, CONSTANT));
+    assert(base_type->checkType(BOOL | INT | FLOAT, CONSTANT));
 
     std::stringstream ss;
     ss << base_type->tollvmIR() << ' ';
