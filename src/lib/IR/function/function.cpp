@@ -1,7 +1,7 @@
 #include "function.hh"
 
 Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : ret_type(_type), func_name(_name), param_list(_list) {
+    : ret_type(_type), func_name(_name), param_list(_list), block(nullptr) {
 
 }
 

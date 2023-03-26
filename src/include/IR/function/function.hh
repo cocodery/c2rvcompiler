@@ -13,6 +13,7 @@ private:
     ScalarTypePtr ret_type;
     std::string func_name;
     ParamList param_list;
+    BlockPtr block;
 public:
     Function(ScalarTypePtr, std::string &, ParamList &);
     ~Function() = default;
