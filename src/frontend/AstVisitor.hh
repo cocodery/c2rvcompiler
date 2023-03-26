@@ -78,6 +78,10 @@ private:
 
     virtual antlrcpp::Any visitBlockItemList(SysYParser::BlockItemListContext *ctx) override;
 
+    virtual antlrcpp::Any visitMemoryDecl(SysYParser::MemoryDeclContext *ctx) override;
+
+    virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *ctx) override;
+
     virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
 
     virtual antlrcpp::Any visitLVal(SysYParser::LValContext *ctx) override;

@@ -122,6 +122,9 @@ antlrcpp::Any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
+    // Whatever the ConstDecl is 
+    // local or global, Constant or ConstArray
+    // don't generate any calculation IR
     cur_type = ctx->bType()->accept(this).as<TypeID>() | (CONST | (in_function ? NONE : GLOBAL));
 
     auto &&const_def = ctx->constDef();
@@ -131,7 +134,15 @@ antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
         value->fixValue(cur_type);
 
         if (!in_function) {
+            // global Constant or ConstArray insert inyo global-table directly
             comp_unit.insertSymbol(name, value);
+        } else {
+            //  local Constant or ConstArray insert inyo local -talbe for `resolveTable`
+            cur_table->insertSymbol(name, value);
+            //  local ConstArray insert twice into global-table for init in `.data-section`
+            if (value->getBaseType()->ArrayType()) {
+                comp_unit.insertSymbol(name, value);
+            }
         }
     }
 
@@ -229,6 +240,8 @@ antlrcpp::Any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) 
 }
 
 antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
+    this->in_function = true;
+
     TypeID type_id = ctx->funcType()->accept(this).as<TypeID>();
     ScalarTypePtr scalar_type = ScalarType::CreatePtr(type_id);
 
@@ -243,7 +256,11 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list);
     cur_func = function;
 
+    ctx->block()->accept(this);
+
     comp_unit.insertFunction(func_name, function);
+
+    this->in_function = false;
 
     return function;
 }
@@ -293,6 +310,18 @@ antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *ctx) {
+    visitChildren(ctx);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitMemoryDecl(SysYParser::MemoryDeclContext *ctx) {
+    ctx->decl()->accept(this);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
+    // ctx->stmt()->accept(this);
+    assert(0); // don;t visit Stmt-Node currently
     return nullptr;
 }
 

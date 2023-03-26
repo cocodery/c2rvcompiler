@@ -18,7 +18,7 @@ void BasicBlock::insertInst(InstPtr inst) {
     this->inst_list.push_back(inst);
 }
 
-BlockPtr BasicBlock::CreateBlock() {
+BlockPtr BasicBlock::CreatePtr() {
     return std::make_shared<BasicBlock>();
 }
 

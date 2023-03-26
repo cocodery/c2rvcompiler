@@ -26,6 +26,6 @@ public:
 
     void insertInst(InstPtr);
 
-    static BlockPtr CreateBlock();
+    static BlockPtr CreatePtr();
     static void resetBlkIdx();
 };
