@@ -135,8 +135,8 @@ private:
 // support function to parse
     ArrDims getArrDims(std::vector<SysYParser::ConstExpContext *> &);
 
-    BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *, ArrDims &);
-    BaseValuePtr parseGlbVarListInit(SysYParser::ListInitvalContext *, ArrDims &);
+    [[ deprecated ]] BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *, ArrDims &);
+    [[ deprecated ]] BaseValuePtr parseGlbVarListInit(SysYParser::ListInitvalContext *, ArrDims &);
 
     SymbolTable *newLocalTable(SymbolTable *);
     void clearTableList();
