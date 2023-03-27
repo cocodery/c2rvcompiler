@@ -25,7 +25,7 @@ void Constant::fixValue(TypeID _tid) {
 
 // Constant who do unaryOperate
 // must have type in { BOOL, INT, FLOAT }
-std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
+BaseValuePtr Constant::unaryOperate(const std::string &op) {
     assert(this->getBaseType()->checkType(BOOL | INT | FLOAT));
     
     // when return this value to a global constant, will do fixValue
@@ -56,7 +56,7 @@ std::shared_ptr<BaseValue> Constant::unaryOperate(const std::string &op) {
 
 // Constant who do unaryOperate
 // must have type in { INT, FLOAT }
-std::shared_ptr<BaseValue> Constant::binaryOperate(const std::string &op, const std::shared_ptr<Constant> rhs) {
+BaseValuePtr Constant::binaryOperate(const std::string &op, const ConstantPtr rhs) {
     assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
     assert(rhs ->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
 
@@ -94,7 +94,7 @@ std::shared_ptr<BaseValue> Constant::binaryOperate(const std::string &op, const 
     return CreatePtr(_tid, _value);
 }
 
-std::shared_ptr<Constant> Constant::CreatePtr(TypeID _tid, ConstType _value) {
+ConstantPtr Constant::CreatePtr(TypeID _tid, ConstType _value) {
     return std::make_shared<Constant>(_tid, _value);
 }
 

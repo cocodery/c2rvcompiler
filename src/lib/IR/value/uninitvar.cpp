@@ -9,11 +9,11 @@ UnInitVar::UnInitVar(ListTypePtr list_type) : BaseValue(list_type) {
     // have checked when create ListType
 }
 
-std::shared_ptr<UnInitVar> UnInitVar::CreatePtr(TypeID _tid) {
+UnInitVarPtr UnInitVar::CreatePtr(TypeID _tid) {
     return std::make_shared<UnInitVar>(_tid);
 }
 
-std::shared_ptr<UnInitVar> UnInitVar::CreatePtr(ListTypePtr list_type) {
+UnInitVarPtr UnInitVar::CreatePtr(ListTypePtr list_type) {
     return std::make_shared<UnInitVar>(list_type);
 }
 

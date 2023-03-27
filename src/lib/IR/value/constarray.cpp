@@ -19,7 +19,7 @@ void ConstArray::fixValue(TypeID _tid) {
     }
 }
 
-std::shared_ptr<ConstArray> ConstArray::CreatePtr(ListTypePtr list_type, ConstArr &_arr) {
+ConstArrayPtr ConstArray::CreatePtr(ListTypePtr list_type, ConstArr &_arr) {
     return std::make_shared<ConstArray>(list_type, _arr);
 }
 

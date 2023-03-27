@@ -5,6 +5,8 @@
 #include "baseValue.hh"
 #include "constant.hh"
 
+class ConstArray;
+using ConstArrayPtr = std::shared_ptr<ConstArray>;
 using ConstArr = std::vector<ConstantPtr>;
 
 // both global-const-array or local-const-array
@@ -21,7 +23,7 @@ public:
 
     void fixValue(TypeID);
 
-    static std::shared_ptr<ConstArray> CreatePtr(ListTypePtr, ConstArr &);
+    static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);
 
     std::string toString();
 

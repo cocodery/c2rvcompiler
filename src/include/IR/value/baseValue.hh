@@ -6,6 +6,9 @@
 
 #include "typeHeader.hh"
 
+class BaseValue;
+using BaseValuePtr = std::shared_ptr<BaseValue>;
+
 class BaseValue {
 private:
     BaseTypePtr base_type;
@@ -24,4 +27,4 @@ public:
     virtual std::string tollvmIR() = 0;
 };
 
-std::ostream &operator<<(std::ostream &, std::shared_ptr<BaseValue>);
+std::ostream &operator<<(std::ostream &, BaseValuePtr);

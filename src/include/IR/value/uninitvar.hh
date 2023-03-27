@@ -2,6 +2,9 @@
 
 #include "baseValue.hh"
 
+class UnInitVar;
+using UnInitVarPtr = std::shared_ptr<UnInitVar>;
+
 // UnInitVar only exsit in
 //  1 -> Global UnInitialized Variable
 //  2 -> Function Argument
@@ -13,8 +16,8 @@ public:
 
     void fixValue(TypeID) { return; }
 
-    static std::shared_ptr<UnInitVar> CreatePtr(TypeID);
-    static std::shared_ptr<UnInitVar> CreatePtr(ListTypePtr);
+    static UnInitVarPtr CreatePtr(TypeID);
+    static UnInitVarPtr CreatePtr(ListTypePtr);
     
     std::string toString();
 

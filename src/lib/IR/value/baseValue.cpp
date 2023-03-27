@@ -12,7 +12,7 @@ BaseTypePtr BaseValue::getBaseType() {
     return this->base_type;
 }
 
-std::ostream &operator<<(std::ostream &os, std::shared_ptr<BaseValue> value) {
+std::ostream &operator<<(std::ostream &os, BaseValuePtr value) {
     os << value->tollvmIR();
     return os;
 }
