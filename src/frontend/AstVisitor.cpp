@@ -200,10 +200,25 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
 
     auto &&arr_dims = getArrDims(dims_vec);
 
-    BaseValuePtr value = (arr_dims.size() == 0) ? 
-                            UnInitVar::CreatePtr(cur_type) :
-                            UnInitVar::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false))
-                            ;
+    BaseValuePtr value = nullptr;
+
+    if (!in_function) { // insert into global-table
+        if (arr_dims.size() == 0) { // global scalar un-init variable
+            value = UnInitVar::CreatePtr(cur_type);
+        } else { // global list un-init variable
+            value = UnInitVar::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false));
+        }
+    } else { // insert into current-table / local-table
+        if (arr_dims.size() == 0) { // local scalar un-init variable
+            value = Variable::CreatePtr(cur_type);
+            InstPtr alloca_inst = AllocaInst::CreatePtr(cur_type, value);
+            cur_block->insertInst(alloca_inst);
+        } else { // local list un-init variable
+            value = Variable::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false));
+            InstPtr alloca_inst = AllocaInst::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false), value);
+            cur_block->insertInst(alloca_inst);
+        }
+    }
     
     return std::make_pair(name, value);
 }
@@ -253,7 +268,10 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
                                 ctx->funcFParams()->accept(this).as<ParamList>()
                             ;
 
-    FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list);
+    BlockPtr first_block = BasicBlock::CreatePtr();
+    cur_block = first_block;
+
+    FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list, first_block);
     cur_func = function;
 
     ctx->block()->accept(this);
@@ -299,7 +317,6 @@ antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
     SymbolTable *new_table  = this->newLocalTable(last_table);
     this->cur_table = new_table;
 
-    // create basic-blcok here
     if (ctx->blockItemList() != nullptr) {
         ctx->blockItemList()->accept(this);
     }
