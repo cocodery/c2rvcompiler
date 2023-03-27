@@ -15,14 +15,12 @@ private:
     ParamList param_list;
     BlockPtr block; // point to first block of function
 public:
-    Function(ScalarTypePtr, std::string &, ParamList &);
+    Function(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
     ~Function() = default;
 
     ParamList &getParamList();
 
-    void setBlock(BlockPtr);
-
-    static std::shared_ptr<Function> CreatePtr(ScalarTypePtr, std::string &, ParamList &);
+    static std::shared_ptr<Function> CreatePtr(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
 
     std::string toString();
 };

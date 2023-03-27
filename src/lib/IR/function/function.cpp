@@ -1,7 +1,7 @@
 #include "function.hh"
 
-Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : ret_type(_type), func_name(_name), param_list(_list), block(nullptr) {
+Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block)
+    : ret_type(_type), func_name(_name), param_list(_list), block(_block) {
 
 }
 
@@ -9,12 +9,8 @@ ParamList &Function::getParamList() {
     return this->param_list;
 }
 
-void Function::setBlock(BlockPtr block) {
-    this->block = block;
-}
-
-std::shared_ptr<Function> Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
-    return std::make_shared<Function>(_type, _name, _list);
+std::shared_ptr<Function> Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block) {
+    return std::make_shared<Function>(_type, _name, _list, _block);
 }
 
 std::string Function::toString() {
