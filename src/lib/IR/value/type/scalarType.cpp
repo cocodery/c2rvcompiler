@@ -25,6 +25,9 @@ std::string ScalarType::toString() {
             this->VoidType()    ?   "void" : // for function define
                                     "error" // un-reachablable, check before
             ); 
+    if (this->PoniterType()) {
+        ss << "*";
+    } 
 
     return ss.str();
 }

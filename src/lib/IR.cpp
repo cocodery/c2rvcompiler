@@ -35,7 +35,15 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
         assert(0);
     }
     for (auto [name, value] : glb_table.getNameValueMap()) {
-        llir << '@' << name << " = " << value << ", align 4" << endl;
+        BaseTypePtr &&type = value->getBaseType();
+        // there is no need to emit global-constant llvmIR
+        if (type->ConstType() && type->ConstantType()) {
+            continue;
+        }
+        llir << '@' << name << " = " << value->getBaseType();
+        // as a '\b' to eat '*', on need to explict output '*' for global declaration
+        llir.seekp(-1, std::ios::end);
+        llir << " " << value << ", align 4" << endl;
     }
     llir << endl;
     for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {

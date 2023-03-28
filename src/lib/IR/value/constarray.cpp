@@ -13,7 +13,7 @@ void ConstArray::fixValue(TypeID _tid) {
 
     // un-set GLOBAL and CONST bit
     // which can emit extra type qualifier in array-value 
-    _tid &= ~(GLOBAL | CONST);
+    _tid &= ~(GLOBAL | CONST | POINTER);
     for (auto &&value : const_arr) {
         value->fixValue(_tid);
     }
