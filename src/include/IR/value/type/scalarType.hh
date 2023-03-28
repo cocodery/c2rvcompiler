@@ -2,6 +2,9 @@
 
 #include "baseType.hh"
 
+class ScalarType;
+using ScalarTypePtr = std::shared_ptr<ScalarType>;
+
 class ScalarType : public BaseType {
 private:
 public:

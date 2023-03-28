@@ -30,6 +30,9 @@ constexpr TypeID POINTER    = (1ul << 0x000A);
 // global attribute
 constexpr TypeID GLOBAL     = (1ul << 0x000B);
 
+class BaseType;
+using BaseTypePtr = std::shared_ptr<BaseType>;
+
 class BaseType {
 private:
     TypeID tid;
@@ -39,6 +42,8 @@ public:
     ~BaseType() = default;
 
     void resetType(TypeID);
+
+    void appendType(TypeID);
 
     template<typename... TypeIDs>
     TypeID getMaskedType(TypeID first, TypeIDs... rest) const {
@@ -76,3 +81,5 @@ public:
 };
 
 TypeID getTypeID(std::string);
+
+std::ostream &operator<<(std::ostream &, BaseTypePtr);

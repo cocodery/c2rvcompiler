@@ -5,7 +5,7 @@ ScalarType::ScalarType(TypeID _tid) : BaseType(_tid) {
     // will do same check in BaseType::BaseType
 }
 
-std::shared_ptr<ScalarType> ScalarType::CreatePtr(TypeID _tid) {
+ScalarTypePtr ScalarType::CreatePtr(TypeID _tid) {
     return std::make_shared<ScalarType>(_tid);
 }
 
@@ -44,6 +44,9 @@ std::string ScalarType::tollvmIR() {
             this->BoolType()    ?   "i1" :
                                     "error"
             );
+    if (this->PoniterType()) {
+        ss << "*";
+    }
 
     return ss.str();
 }

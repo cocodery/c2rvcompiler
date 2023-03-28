@@ -13,7 +13,7 @@ size_t ListType::getArrDims() const {
     return size;
 }
 
-std::shared_ptr<ListType> ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool _omit) {
+ListTypePtr ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool _omit) {
     return std::make_shared<ListType>(_tid, _dims, _omit);
 }
 
@@ -55,6 +55,9 @@ std::string ListType::tollvmIR() {
                                     "error"
             );
     ss << ']';
+    if (this->PoniterType()) {
+        ss << "*";
+    }
 
     return ss.str();
 }

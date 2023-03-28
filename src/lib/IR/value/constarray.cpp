@@ -42,12 +42,11 @@ std::string ConstArray::tollvmIR() {
     assert(base_type->checkType(INT | FLOAT, ARRAY, CONST | VARIABLE));
 
     std::stringstream ss;
-    ss << base_type->tollvmIR() << ' ';
     ss << '[';
     size_t size = const_arr.size();
-    ss << const_arr[0]->tollvmIR();
+    ss << const_arr[0]->getBaseType()->tollvmIR() << ' ' << const_arr[0]->tollvmIR();
     for (size_t idx = 1; idx < size; ++idx) {
-        ss << ", " << const_arr[idx]->tollvmIR();
+        ss << ", " << const_arr[idx]->getBaseType()->tollvmIR() << ' ' << const_arr[idx]->tollvmIR();
     }
     ss << ']';
 

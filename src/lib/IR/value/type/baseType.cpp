@@ -9,6 +9,10 @@ TypeID BaseType::getType() const {
     return this->tid;
 }
 
+void BaseType::appendType(TypeID _tid) {
+    this->tid |= _tid;
+}
+
 void BaseType::resetType(TypeID _tid) {
     // must have a type
     assert(checkType(BOOL | INT | FLOAT | VOID));
@@ -38,4 +42,9 @@ TypeID getTypeID(std::string name) {
                 : NONE;
     assert(tid != NONE);
     return tid;
+}
+
+std::ostream &operator<<(std::ostream &os, BaseTypePtr type) {
+    os << type->tollvmIR();
+    return os;
 }

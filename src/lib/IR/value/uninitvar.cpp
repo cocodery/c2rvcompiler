@@ -22,7 +22,6 @@ std::string UnInitVar::toString() {
     assert(base_tpye->checkType(INT | FLOAT)); 
     
     std::stringstream ss;
-    ss << base_tpye->toString();
     if (!base_tpye->ParamType()) {
         ss << " -> ";
         if (base_tpye->ArrayType()) {
@@ -40,7 +39,6 @@ std::string UnInitVar::tollvmIR() {
     assert(base_type->checkType(INT | FLOAT));
 
     std::stringstream ss;
-    ss << base_type->tollvmIR() << ' ';
     if (base_type->ArrayType()) {
         ss << "zeroinitializer";
     } else if (base_type->IntType()) {

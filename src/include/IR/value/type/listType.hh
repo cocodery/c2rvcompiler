@@ -4,6 +4,8 @@
 
 #include "baseType.hh"
 
+class ListType;
+using ListTypePtr = std::shared_ptr<ListType>;
 using ArrDims = std::vector<size_t>;
 
 class ListType : public BaseType {
@@ -15,7 +17,7 @@ public:
 
     size_t getArrDims() const;
 
-    static std::shared_ptr<ListType> CreatePtr(TypeID, ArrDims &, bool);
+    static ListTypePtr CreatePtr(TypeID, ArrDims &, bool);
 
     std::string toString();
     std::string tollvmIR();
