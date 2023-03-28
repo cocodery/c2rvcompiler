@@ -159,8 +159,11 @@ antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
 
     BaseValuePtr value = (arr_dims.size() == 0) ? 
                             init_val->accept(this).as<BaseValuePtr>() :
-                            parseListInit<SysYParser::ConstInitValContext, SysYParser::ListConstInitValContext, SysYParser::ScalarConstInitValContext>
-                                (dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), arr_dims, cur_type, this)
+                            parseListInit<
+                                SysYParser::ConstInitValContext, 
+                                SysYParser::ListConstInitValContext, 
+                                SysYParser::ScalarConstInitValContext
+                            > (dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), arr_dims, cur_type, this)
                             ;
     
     return std::make_pair(name, value);
@@ -211,14 +214,17 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
     } else { // insert into current-table / local-table
         if (arr_dims.size() == 0) { // local scalar un-init variable
             value = Variable::CreatePtr(cur_type);
-            InstPtr alloca_inst = AllocaInst::CreatePtr(cur_type, value);
+            InstPtr alloca_inst = AllocaInst::CreatePtr(cur_type | POINTER, value);
             cur_block->insertInst(alloca_inst);
+            cout << alloca_inst->tollvmIR() << endl;
         } else { // local list un-init variable
-            value = Variable::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false));
+            value = Variable::CreatePtr(ListType::CreatePtr(cur_type | ARRAY | POINTER, arr_dims, false));
             InstPtr alloca_inst = AllocaInst::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false), value);
             cur_block->insertInst(alloca_inst);
+            cout << alloca_inst->tollvmIR() << endl;
         }
     }
+    assert(value != nullptr);
     
     return std::make_pair(name, value);
 }
@@ -231,15 +237,32 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
 
     auto &&arr_dims = getArrDims(dims_vec);
 
-    BaseValuePtr value = (arr_dims.size() == 0) ?
-                            init_val->accept(this).as<BaseValuePtr>() :
-                            (
-                                in_function ? 
-                                    init_val->accept(this).as<BaseValuePtr>() :
-                                    parseListInit<SysYParser::InitValContext, SysYParser::ListInitvalContext, SysYParser::ScalarInitValContext>
-                                        (dynamic_cast<SysYParser::ListInitvalContext *>(init_val), arr_dims, cur_type, this)
-                            );
+    BaseValuePtr value = nullptr;
 
+    if (!in_function) {
+        if (arr_dims.size() == 0) {
+            value = init_val->accept(this).as<BaseValuePtr>();
+        } else {
+            value = parseListInit<
+                        SysYParser::InitValContext, 
+                        SysYParser::ListInitvalContext, 
+                        SysYParser::ScalarInitValContext
+                    > (dynamic_cast<SysYParser::ListInitvalContext *>(init_val), arr_dims, cur_type, this);
+        }
+    } else {
+        if (arr_dims.size() == 0) { // local scalar un-init variable
+            value = Variable::CreatePtr(cur_type);
+            InstPtr alloca_inst = AllocaInst::CreatePtr(cur_type | POINTER, value);
+            cur_block->insertInst(alloca_inst);
+            cout << alloca_inst->tollvmIR() << endl;
+        } else { // local list un-init variable
+            value = Variable::CreatePtr(ListType::CreatePtr(cur_type | ARRAY | POINTER, arr_dims, false));
+            InstPtr alloca_inst = AllocaInst::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false), value);
+            cur_block->insertInst(alloca_inst);
+            cout << alloca_inst->tollvmIR() << endl;
+        }
+    }
+    assert(value != nullptr);
     
     return std::make_pair(name, value);
 }
