@@ -5,8 +5,10 @@
 #include "../valueHeader.hh"
 #include "basicblock.hh"
 
+class Function;
 using Parameter = std::pair<std::string, BaseValuePtr>;
 using ParamList = std::vector<Parameter>;
+using FunctionPtr = std::shared_ptr<Function>;
 
 class Function {
 private:
@@ -20,9 +22,11 @@ public:
 
     ParamList &getParamList();
 
-    static std::shared_ptr<Function> CreatePtr(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
+    static FunctionPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
 
     std::string toString();
+
+    std::string tollvmIR();
 };
 
-using FunctionPtr = std::shared_ptr<Function>;
+std::ostream &operator<<(std::ostream &, FunctionPtr);

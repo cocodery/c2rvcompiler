@@ -17,6 +17,5 @@ public:
     static AllocaInstPtr CreatePtr(TypeID, BaseValuePtr);
     static AllocaInstPtr CreatePtr(ListTypePtr, BaseValuePtr);
 
-    std::string toString();
     std::string tollvmIR();
 };

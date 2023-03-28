@@ -23,3 +23,9 @@ VariablePtr Variable::CreatePtr(TypeID _tid) {
 VariablePtr Variable::CreatePtr(ListTypePtr list_type) {
     return std::make_shared<Variable>(list_type);
 }
+
+std::string Variable::tollvmIR() {
+    std::stringstream ss;
+    ss << "%Reg_" << this->idx;
+    return ss.str();
+}

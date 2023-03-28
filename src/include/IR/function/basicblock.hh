@@ -28,4 +28,6 @@ public:
 
     static BlockPtr CreatePtr();
     static void resetBlkIdx();
+
+    std::string tollvmIR();
 };

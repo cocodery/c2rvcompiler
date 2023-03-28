@@ -24,5 +24,5 @@ public:
     
     std::string toString() { return ""; }
 
-    std::string tollvmIR() { return ""; }
+    std::string tollvmIR();
 };

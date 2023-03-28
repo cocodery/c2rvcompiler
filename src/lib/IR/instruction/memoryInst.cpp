@@ -17,10 +17,8 @@ AllocaInstPtr AllocaInst::CreatePtr(ListTypePtr list_type, BaseValuePtr value) {
     return std::make_shared<AllocaInst>(list_type, value);
 }
 
-std::string AllocaInst::toString() {
-    return "alloca";
-}
-
 std::string AllocaInst::tollvmIR() {
-    return "alloca";
+    std::stringstream ss;
+    ss << alloca_addr->tollvmIR() << " = alloca " << alloca_type->tollvmIR() << ", align 4";
+    return ss.str();
 }

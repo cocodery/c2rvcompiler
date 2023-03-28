@@ -9,7 +9,7 @@ ParamList &Function::getParamList() {
     return this->param_list;
 }
 
-std::shared_ptr<Function> Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block) {
+FunctionPtr Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block) {
     return std::make_shared<Function>(_type, _name, _list, _block);
 }
 
@@ -24,4 +24,20 @@ std::string Function::toString() {
     ss << ')';
 
     return ss.str();
+}
+
+std::string Function::tollvmIR() {
+    std::stringstream ss;
+
+    ss << "define " << ret_type->tollvmIR() << " @" << func_name;
+    ss << "(" << ")" << " {" << endl;
+    ss << block->tollvmIR() << endl;
+    ss << "}" << endl;
+
+    return ss.str();
+}
+
+std::ostream &operator<<(std::ostream &os, FunctionPtr func) {
+    os << func->tollvmIR();
+    return os;
 }

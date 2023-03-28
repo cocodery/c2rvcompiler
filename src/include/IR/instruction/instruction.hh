@@ -1,7 +1,9 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <memory>
+#include <sstream>
 
 #include "../value/typeHeader.hh"
 #include "../value/baseValue.hh"
@@ -15,6 +17,5 @@ public:
     Instruction() = default;
     ~Instruction() = default;
 
-    virtual std::string toString() = 0;
     virtual std::string tollvmIR() = 0;
 };

@@ -37,4 +37,8 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
     for (auto [name, value] : glb_table.getNameValueMap()) {
         llir << '@' << name << " = " << value << ", align 4" << endl;
     }
+    llir << endl;
+    for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {
+        llir << func_ptr << endl;
+    }
 }
