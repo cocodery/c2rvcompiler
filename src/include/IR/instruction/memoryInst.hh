@@ -19,3 +19,18 @@ public:
 
     std::string tollvmIR();
 };
+
+class StoreInst;
+using StoreInstPtr = std::shared_ptr<StoreInst>;
+
+class StoreInst : public Instruction {
+private:
+    BaseValuePtr store_addr;
+    BaseValuePtr store_value;
+public:
+    StoreInst(BaseValuePtr, BaseValuePtr);
+
+    static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+
+    std::string tollvmIR();
+};

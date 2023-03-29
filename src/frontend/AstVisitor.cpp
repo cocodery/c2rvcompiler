@@ -255,6 +255,9 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
             value = Variable::CreatePtr(cur_type | POINTER);
             InstPtr alloca_inst = AllocaInst::CreatePtr(cur_type, value);
             cur_block->insertInst(alloca_inst);
+            BaseValuePtr store_value = ctx->initVal()->accept(this).as<BaseValuePtr>();
+            InstPtr store_inst  = StoreInst::CreatePtr(value, store_value);
+            cur_block->insertInst(store_inst);
         } else { // local list un-init variable
             value = Variable::CreatePtr(ListType::CreatePtr(cur_type | ARRAY | POINTER, arr_dims, false));
             InstPtr alloca_inst = AllocaInst::CreatePtr(ListType::CreatePtr(cur_type | ARRAY, arr_dims, false), value);
