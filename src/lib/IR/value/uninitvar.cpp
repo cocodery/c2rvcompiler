@@ -1,20 +1,11 @@
 #include "uninitvar.hh"
 
-UnInitVar::UnInitVar(TypeID _tid) : BaseValue(_tid) {
-    assert(this->getBaseType()->checkType(INT | FLOAT));
+UnInitVar::UnInitVar(BaseTypePtr _type) 
+    : BaseValue(_type) {
 }
 
-UnInitVar::UnInitVar(ListTypePtr list_type) : BaseValue(list_type) {
-    // assert(list_type->checkType(INT | FLOAT, ARRAY));
-    // have checked when create ListType
-}
-
-UnInitVarPtr UnInitVar::CreatePtr(TypeID _tid) {
-    return std::make_shared<UnInitVar>(_tid);
-}
-
-UnInitVarPtr UnInitVar::CreatePtr(ListTypePtr list_type) {
-    return std::make_shared<UnInitVar>(list_type);
+UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
+    return std::make_shared<UnInitVar>(_type);
 }
 
 std::string UnInitVar::toString() {

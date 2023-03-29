@@ -7,6 +7,7 @@
 #include "value/constarray.hh"
 #include "value/uninitvar.hh"
 #include "value/variable.hh"
+#include "value/globalvalue.hh"
 
 #include "function/basicblock.hh"
 

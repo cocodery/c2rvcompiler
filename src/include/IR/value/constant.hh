@@ -17,7 +17,7 @@ private:
     /* to allow access from AstVisitor::getArrDims() */
     friend class AstVisitor;
 public:
-    Constant(TypeID, ConstType);
+    Constant(ScalarTypePtr, ConstType);
     ~Constant() = default;
 
     ConstType &getValue();
@@ -28,7 +28,7 @@ public:
 
     BaseValuePtr binaryOperate(const std::string &, const ConstantPtr);
 
-    static ConstantPtr CreatePtr(TypeID, ConstType);
+    static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 
     std::string toString();
 

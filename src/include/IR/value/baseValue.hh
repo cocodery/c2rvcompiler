@@ -14,8 +14,8 @@ class BaseValue {
 private:
     BaseTypePtr base_type;
 public:
-    BaseValue(TypeID);
-    BaseValue(ListTypePtr);
+    BaseValue() { assert(0); };
+    BaseValue(BaseTypePtr);
 
     ~BaseValue() = default;
 

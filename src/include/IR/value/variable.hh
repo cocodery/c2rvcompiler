@@ -11,16 +11,14 @@ private:
 
     static size_t var_idx;
 public:
-    Variable(TypeID);
-    Variable(ListTypePtr);
+    Variable(BaseTypePtr);
     ~Variable() = default;
 
     void fixValue(TypeID) { return; }
 
     void resetVarIdx();
 
-    static VariablePtr CreatePtr(TypeID);
-    static VariablePtr CreatePtr(ListTypePtr);
+    static VariablePtr CreatePtr(BaseTypePtr);
     
     std::string toString() { return ""; }
 

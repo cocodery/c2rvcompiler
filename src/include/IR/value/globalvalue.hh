@@ -1,0 +1,22 @@
+#pragma once
+
+#include "baseValue.hh"
+
+class GlobalValue;
+using GlobalValuePtr = std::shared_ptr<GlobalValue>;
+
+class GlobalValue : public BaseValue {
+private:
+    size_t idx;
+    BaseValuePtr init_value;
+
+    static size_t glb_idx;
+public:
+    GlobalValue(BaseTypePtr, BaseValuePtr);
+
+    static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
+    
+    std::string toString() { return ""; }
+
+    std::string tollvmIR();
+};

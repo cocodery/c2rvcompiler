@@ -11,13 +11,11 @@ using UnInitVarPtr = std::shared_ptr<UnInitVar>;
 // and only have type in { INT, FLOAT }
 class UnInitVar : public BaseValue {
 public:
-    UnInitVar(TypeID);
-    UnInitVar(ListTypePtr);
+    UnInitVar(BaseTypePtr);
 
     void fixValue(TypeID) { return; }
-
-    static UnInitVarPtr CreatePtr(TypeID);
-    static UnInitVarPtr CreatePtr(ListTypePtr);
+    
+    static UnInitVarPtr CreatePtr(BaseTypePtr);
     
     std::string toString();
 

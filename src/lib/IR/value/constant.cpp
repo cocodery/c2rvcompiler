@@ -1,6 +1,6 @@
 #include "constant.hh"
 
-Constant::Constant(TypeID _tid, ConstType _value) : BaseValue(_tid), value(_value) {
+Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), value(_value) {
     assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
 }
 
@@ -51,7 +51,7 @@ BaseValuePtr Constant::unaryOperate(const std::string &op) {
         }
     }, value);
 
-    return CreatePtr(_tid, _value);
+    return CreatePtr(ScalarType::CreatePtr(_tid), _value);
 }
 
 // Constant who do unaryOperate
@@ -91,11 +91,11 @@ BaseValuePtr Constant::binaryOperate(const std::string &op, const ConstantPtr rh
         }
     }, value, rhs->value);
 
-    return CreatePtr(_tid, _value);
+    return CreatePtr(ScalarType::CreatePtr(_tid), _value);
 }
 
-ConstantPtr Constant::CreatePtr(TypeID _tid, ConstType _value) {
-    return std::make_shared<Constant>(_tid, _value);
+ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {
+    return std::make_shared<Constant>(_type, _value);
 }
 
 std::string Constant::toString() {
