@@ -14,7 +14,11 @@ private:
 public:
     GlobalValue(BaseTypePtr, BaseValuePtr);
 
+    BaseValuePtr getInitValue();
+
     static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
+
+    void fixValue(TypeID);
     
     std::string toString() { return ""; }
 

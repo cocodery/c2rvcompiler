@@ -3,7 +3,7 @@
 size_t Variable::var_idx = 1;
 
 Variable::Variable(BaseTypePtr _type) 
-    : BaseValue(_type) {
+    : idx(var_idx++), BaseValue(_type) {
 }
 
 void Variable::resetVarIdx() {

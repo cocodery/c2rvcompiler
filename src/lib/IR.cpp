@@ -34,16 +34,16 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
     if (llir.is_open() == false) {
         assert(0);
     }
-    for (auto [name, value] : glb_table.getNameValueMap()) {
-        BaseTypePtr &&type = value->getBaseType();
-        // there is no need to emit global-constant llvmIR
+    for (auto [name, glb_value] : glb_table.getNameValueMap()) {
+        BaseTypePtr &&type = glb_value->getBaseType();
+        // // there is no need to emit global-constant llvmIR
         if (type->ConstType() && type->ConstantType()) {
+            llir << "; @" << name << " = " << type << ' ' << glb_value << ", align 4" << endl; 
             continue;
         }
-        llir << '@' << name << " = " << value->getBaseType();
-        // as a '\b' to eat '*', on need to explict output '*' for global declaration
-        llir.seekp(-1, std::ios::end);
-        llir << " " << value << ", align 4" << endl;
+        llir << glb_value->tollvmIR() << " = ";
+        BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
+        llir << init_value->getBaseType() << " " << init_value << ", align 4" << endl;
     }
     llir << endl;
     for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {
