@@ -38,12 +38,13 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->ConstType() && type->ConstantType()) {
-            llir << "; @" << name << " = " << type << ' ' << glb_value << ", align 4" << endl; 
-            continue;
+            llir << "; @" << name << " = " << type << ' ' << glb_value << ", align 4"; 
+        } else {
+            llir << glb_value->tollvmIR() << " = ";
+            BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
+            llir << init_value->getBaseType() << " " << init_value << ", align 4";
         }
-        llir << glb_value->tollvmIR() << " = ";
-        BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
-        llir << init_value->getBaseType() << " " << init_value << ", align 4" << endl;
+        llir << "; " << name << ' ' << glb_value->getBaseType() << endl;
     }
     llir << endl;
     for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {

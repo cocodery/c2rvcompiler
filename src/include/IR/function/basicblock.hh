@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vector>
+#include <list>
 #include <memory>
 
-#include "../instHeader.hh"
+#include "../instruction/instruction.hh"
 
 class BasicBlock;
 
-using InstListType = std::vector<InstPtr>;
+using InstListType = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
 class BasicBlock {

@@ -7,6 +7,7 @@
 #include "valueHeader.hh"
 #include "symTable.hh"
 #include "funcTable.hh"
+#include "instHeader.hh"
 
 using std::cout;
 using std::endl;
