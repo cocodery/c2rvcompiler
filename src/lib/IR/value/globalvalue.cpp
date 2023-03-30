@@ -4,6 +4,7 @@ size_t GlobalValue::glb_idx = 1;
 
 GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value) 
     : idx(glb_idx++), init_value(_value), BaseValue(_type) {
+    assert(_type->checkType(INT | FLOAT, POINTER, GLOBAL));
 }
 
 BaseValuePtr GlobalValue::getInitValue() {

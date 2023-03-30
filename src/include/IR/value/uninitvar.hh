@@ -5,9 +5,7 @@
 class UnInitVar;
 using UnInitVarPtr = std::shared_ptr<UnInitVar>;
 
-// UnInitVar only exsit in
-//  1 -> Global UnInitialized Variable
-//  2 -> Function Argument
+// UnInitVar only exsit in Global UnInitialized Variable
 // and only have type in { INT, FLOAT }
 class UnInitVar : public BaseValue {
 public:

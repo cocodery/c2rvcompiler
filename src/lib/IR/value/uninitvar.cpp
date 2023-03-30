@@ -1,7 +1,7 @@
 #include "uninitvar.hh"
 
-UnInitVar::UnInitVar(BaseTypePtr _type) 
-    : BaseValue(_type) {
+UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
+    assert(_type->checkType(INT | FLOAT, GLOBAL, CONST | VARIABLE));
 }
 
 UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {

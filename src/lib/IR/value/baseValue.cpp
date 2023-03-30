@@ -1,7 +1,7 @@
 #include "baseValue.hh"
 
-BaseValue::BaseValue(BaseTypePtr _type) 
-    : base_type(_type) {
+BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type) {
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT));
 }
 
 BaseTypePtr BaseValue::getBaseType() {

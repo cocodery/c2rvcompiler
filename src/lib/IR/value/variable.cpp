@@ -2,8 +2,8 @@
 
 size_t Variable::var_idx = 1;
 
-Variable::Variable(BaseTypePtr _type) 
-    : idx(var_idx++), BaseValue(_type) {
+Variable::Variable(BaseTypePtr _type) : idx(var_idx++), BaseValue(_type) {
+    assert(_type->checkType(INT | FLOAT, VARIABLE | PARAM));
 }
 
 void Variable::resetVarIdx() {

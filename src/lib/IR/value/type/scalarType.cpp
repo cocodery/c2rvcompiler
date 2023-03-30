@@ -45,6 +45,7 @@ std::string ScalarType::tollvmIR() {
     ss << ( this->IntType()     ?   "i32" :
             this->FloatType()   ?   "float" :
             this->BoolType()    ?   "i1" :
+            this->VoidType()    ?   "void " :
                                     "error"
             );
     if (this->PoniterType()) {
