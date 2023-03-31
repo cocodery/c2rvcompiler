@@ -23,7 +23,7 @@ std::string IBinaryInst::tollvmIR() {
         case '+': ss << "add" ; break;
         case '-': ss << "sub" ; break;
         case '*': ss << "mul" ; break;
-        case '/': ss << "sdi "; break;
+        case '/': ss << "sdiv"; break;
         case '%': ss << "srem"; break;
         default : assert(0)   ; break;
     }

@@ -1,9 +1,7 @@
 #include "constarray.hh"
 
-size_t ConstArray::arr_idx = 1;
-
 ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr)
-    : const_arr(_arr), idx(arr_idx++), BaseValue(list_type) {
+    : const_arr(_arr), BaseValue(list_type) {
     // no need to checkType
     assert(const_arr.size() == list_type->getArrDims());
 }

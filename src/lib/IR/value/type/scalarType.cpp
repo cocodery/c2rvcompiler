@@ -36,12 +36,6 @@ std::string ScalarType::tollvmIR() {
     assert(this->checkType(BOOL | INT | FLOAT | VOID));
 
     std::stringstream ss;
-    // when is CONST, ignroe GLOBAL in llvm-IR
-    if (this->ConstType()) {
-        ss << "constant ";
-    } else if (this->GlobalType()) {
-        ss << "global ";
-    }
     ss << ( this->IntType()     ?   "i32" :
             this->FloatType()   ?   "float" :
             this->BoolType()    ?   "i1" :

@@ -41,6 +41,11 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
             llir << "; @" << name << " = " << type << ' ' << glb_value << ", align 4"; 
         } else {
             llir << glb_value->tollvmIR() << " = ";
+            if (type->ConstType()) {
+                llir << "constant ";
+            } else if (type->GlobalType()) {
+                llir << "global ";
+            }
             BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
             llir << init_value->getBaseType() << " " << init_value << ", align 4";
         }

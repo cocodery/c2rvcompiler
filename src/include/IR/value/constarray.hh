@@ -14,9 +14,6 @@ using ConstArr = std::vector<ConstantPtr>;
 class ConstArray : public BaseValue {
 private:
     ConstArr const_arr;
-    size_t idx; // to distinguish const-array in different scope with same name
-
-    static size_t arr_idx;
 public:
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;

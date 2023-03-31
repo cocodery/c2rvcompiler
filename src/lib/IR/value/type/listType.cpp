@@ -43,12 +43,6 @@ std::string ListType::tollvmIR() {
     assert(this->checkType(INT | FLOAT, ARRAY));
 
     std::stringstream ss;
-    // when is CONST, ignroe GLOBAL in llvm-IR
-    if (this->ConstType()) {
-        ss << "constant ";
-    } else if (this->GlobalType()) {
-        ss << "global ";
-    }
     ss << '[' << this->getArrDims() << " x ";
     ss << ( this->IntType()     ?   "i32" :
             this->FloatType()   ?   "float" :
