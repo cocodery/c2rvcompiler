@@ -8,6 +8,7 @@
 #include "value/uninitvar.hh"
 #include "value/variable.hh"
 #include "value/globalvalue.hh"
+#include "instHeader.hh"
 
 #include "function/basicblock.hh"
 
