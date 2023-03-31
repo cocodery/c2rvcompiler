@@ -2,7 +2,10 @@
 
 Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block)
     : ret_type(_type), func_name(_name), param_list(_list), block(_block) {
+}
 
+ScalarTypePtr Function::getReturnType() {
+    return this->ret_type;
 }
 
 ParamList &Function::getParamList() {

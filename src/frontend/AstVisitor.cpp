@@ -59,6 +59,7 @@ BaseValuePtr parseListInit(_ListType *node, ArrDims &arr_dims, TypeID cur_type, 
 
 void parseLocalListInit(SysYParser::ListInitvalContext *ctx, BaseValuePtr addr, BlockPtr cur_block) {
     // TODO
+    assert(0);
 }
 
 }
@@ -90,20 +91,6 @@ antlrcpp::Any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContex
 
 antlrcpp::Any AstVisitor::visitTranslationUnit(SysYParser::TranslationUnitContext *ctx) {
     visitChildren(ctx);
-    return nullptr;
-}
-
-antlrcpp::Any AstVisitor::visitGlobalDecl(SysYParser::GlobalDeclContext *ctx) {
-    ctx->decl()->accept(this);
-    return nullptr;
-}
-
-antlrcpp::Any AstVisitor::visitGlobalFunc(SysYParser::GlobalFuncContext *ctx) {
-    ctx->funcDef()->accept(this);
-    return nullptr;
-}
-
-antlrcpp::Any AstVisitor::visitStray(SysYParser::StrayContext *ctx) {
     return nullptr;
 }
 
@@ -370,14 +357,63 @@ antlrcpp::Any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *c
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitMemoryDecl(SysYParser::MemoryDeclContext *ctx) {
-    ctx->decl()->accept(this);
+antlrcpp::Any AstVisitor::visitBlockItem(SysYParser::BlockItemContext *ctx) {
+    visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
-    // ctx->stmt()->accept(this);
-    assert(0); // don;t visit Stmt-Node currently
+antlrcpp::Any AstVisitor::visitStmt(SysYParser::StmtContext *ctx) {
+    visitChildren(ctx);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitAssignOp(SysYParser::AssignOpContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitDoWhileLoop(SysYParser::DoWhileLoopContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
+    assert(0);
+    return nullptr;
+}
+
+antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
+    ScalarTypePtr ret_type = cur_func->getReturnType();
+    BaseValuePtr ret_value = ctx->exp()->accept(this);
+
+    RetInstPtr ret_inst = ReturnInst::CreatePtr(ret_type, ret_value);
+    cur_block->insertInst(ret_inst);
+
     return nullptr;
 }
 

@@ -20,6 +20,8 @@ public:
     Function(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
     ~Function() = default;
 
+    ScalarTypePtr getReturnType();
+
     ParamList &getParamList();
 
     static FunctionPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &, BlockPtr);

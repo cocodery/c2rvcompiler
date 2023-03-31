@@ -37,12 +37,6 @@ private:
     virtual antlrcpp::Any visitChildren(antlr4::tree::ParseTree *ctx) override;
     
     virtual antlrcpp::Any visitTranslationUnit(SysYParser::TranslationUnitContext *ctx) override;
-    
-    virtual antlrcpp::Any visitGlobalDecl(SysYParser::GlobalDeclContext *ctx) override;
-
-    virtual antlrcpp::Any visitGlobalFunc(SysYParser::GlobalFuncContext *ctx) override;
-    
-    virtual antlrcpp::Any visitStray(SysYParser::StrayContext *ctx) override;
 
     virtual antlrcpp::Any visitDecl(SysYParser::DeclContext *ctx) override;
 
@@ -78,9 +72,27 @@ private:
 
     virtual antlrcpp::Any visitBlockItemList(SysYParser::BlockItemListContext *ctx) override;
 
-    virtual antlrcpp::Any visitMemoryDecl(SysYParser::MemoryDeclContext *ctx) override;
+    virtual antlrcpp::Any visitBlockItem(SysYParser::BlockItemContext *ctx) override;
 
-    virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *ctx) override;
+    virtual antlrcpp::Any visitStmt(SysYParser::StmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitAssignStmt(SysYParser::AssignStmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitAssignOp(SysYParser::AssignOpContext *ctx) override;
+
+    virtual antlrcpp::Any visitExpStmt(SysYParser::ExpStmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *ctx) override;
+
+    virtual antlrcpp::Any visitDoWhileLoop(SysYParser::DoWhileLoopContext *ctx) override;
+
+    virtual antlrcpp::Any visitContinueStmt(SysYParser::ContinueStmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitBreakStmt(SysYParser::BreakStmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitReturnStmt(SysYParser::ReturnStmtContext *ctx) override;
 
     virtual antlrcpp::Any visitExp(SysYParser::ExpContext *ctx) override;
 
