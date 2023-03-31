@@ -29,14 +29,14 @@ public:
     RuleDecl = 3, RuleConstDecl = 4, RuleBType = 5, RuleConstDef = 6, RuleConstInitVal = 7, 
     RuleVarDecl = 8, RuleVarDef = 9, RuleInitVal = 10, RuleFuncDef = 11, 
     RuleFuncType = 12, RuleFuncFParams = 13, RuleFuncFParam = 14, RuleBlock = 15, 
-    RuleBlockItemList = 16, RuleBlockItem = 17, RuleStmt = 18, RuleAssignOp = 19, 
-    RuleExpStmt = 20, RuleSeleStmt = 21, RuleLoopStmt = 22, RuleJumpStmt = 23, 
-    RuleExp = 24, RuleConstExp = 25, RuleLVal = 26, RulePrimaryExp = 27, 
-    RuleNumber = 28, RuleFuncRParams = 29, RuleFuncRParam = 30, RuleUnaryExp = 31, 
-    RuleUnaryOp = 32, RuleMulExp = 33, RuleMulOp = 34, RuleAddExp = 35, 
-    RuleAddOp = 36, RuleShiftExp = 37, RuleShiftOp = 38, RuleRelExp = 39, 
-    RuleRelOp = 40, RuleEqExp = 41, RuleEqOp = 42, RuleAndExp = 43, RuleExOrExp = 44, 
-    RuleInOrExp = 45, RuleLAndExp = 46, RuleLOrExp = 47, RuleCondExp = 48
+    RuleBlockItemList = 16, RuleBlockItem = 17, RuleStmt = 18, RuleAssignStmt = 19, 
+    RuleAssignOp = 20, RuleExpStmt = 21, RuleSeleStmt = 22, RuleLoopStmt = 23, 
+    RuleJumpStmt = 24, RuleExp = 25, RuleConstExp = 26, RuleLVal = 27, RulePrimaryExp = 28, 
+    RuleNumber = 29, RuleFuncRParams = 30, RuleFuncRParam = 31, RuleUnaryExp = 32, 
+    RuleUnaryOp = 33, RuleMulExp = 34, RuleMulOp = 35, RuleAddExp = 36, 
+    RuleAddOp = 37, RuleShiftExp = 38, RuleShiftOp = 39, RuleRelExp = 40, 
+    RuleRelOp = 41, RuleEqExp = 42, RuleEqOp = 43, RuleAndExp = 44, RuleExOrExp = 45, 
+    RuleInOrExp = 46, RuleLAndExp = 47, RuleLOrExp = 48, RuleCondExp = 49
   };
 
   SysYParser(antlr4::TokenStream *input);
@@ -68,6 +68,7 @@ public:
   class BlockItemListContext;
   class BlockItemContext;
   class StmtContext;
+  class AssignStmtContext;
   class AssignOpContext;
   class ExpStmtContext;
   class SeleStmtContext;
@@ -130,41 +131,14 @@ public:
   class  ExternalDeclarationContext : public antlr4::ParserRuleContext {
   public:
     ExternalDeclarationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-   
-    ExternalDeclarationContext() = default;
-    void copyFrom(ExternalDeclarationContext *context);
-    using antlr4::ParserRuleContext::copyFrom;
-
     virtual size_t getRuleIndex() const override;
-
-   
-  };
-
-  class  StrayContext : public ExternalDeclarationContext {
-  public:
-    StrayContext(ExternalDeclarationContext *ctx);
-
+    DeclContext *decl();
+    FuncDefContext *funcDef();
     antlr4::tree::TerminalNode *Semicolon();
 
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-  };
-
-  class  GlobalDeclContext : public ExternalDeclarationContext {
-  public:
-    GlobalDeclContext(ExternalDeclarationContext *ctx);
-
-    DeclContext *decl();
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-  };
-
-  class  GlobalFuncContext : public ExternalDeclarationContext {
-  public:
-    GlobalFuncContext(ExternalDeclarationContext *ctx);
-
-    FuncDefContext *funcDef();
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
   };
 
   ExternalDeclarationContext* externalDeclaration();
@@ -475,32 +449,13 @@ public:
   class  BlockItemContext : public antlr4::ParserRuleContext {
   public:
     BlockItemContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-   
-    BlockItemContext() = default;
-    void copyFrom(BlockItemContext *context);
-    using antlr4::ParserRuleContext::copyFrom;
-
     virtual size_t getRuleIndex() const override;
-
-   
-  };
-
-  class  MemoryDeclContext : public BlockItemContext {
-  public:
-    MemoryDeclContext(BlockItemContext *ctx);
-
     DeclContext *decl();
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-  };
-
-  class  BlockStmtContext : public BlockItemContext {
-  public:
-    BlockStmtContext(BlockItemContext *ctx);
-
     StmtContext *stmt();
 
+
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
   };
 
   BlockItemContext* blockItem();
@@ -509,10 +464,7 @@ public:
   public:
     StmtContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    LValContext *lVal();
-    AssignOpContext *assignOp();
-    ExpContext *exp();
-    antlr4::tree::TerminalNode *Semicolon();
+    AssignStmtContext *assignStmt();
     ExpStmtContext *expStmt();
     BlockContext *block();
     SeleStmtContext *seleStmt();
@@ -525,6 +477,22 @@ public:
   };
 
   StmtContext* stmt();
+
+  class  AssignStmtContext : public antlr4::ParserRuleContext {
+  public:
+    AssignStmtContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    LValContext *lVal();
+    AssignOpContext *assignOp();
+    ExpContext *exp();
+    antlr4::tree::TerminalNode *Semicolon();
+
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  AssignStmtContext* assignStmt();
 
   class  AssignOpContext : public antlr4::ParserRuleContext {
   public:
@@ -565,22 +533,9 @@ public:
    
   };
 
-  class  IfStmt1Context : public SeleStmtContext {
+  class  IfStmtContext : public SeleStmtContext {
   public:
-    IfStmt1Context(SeleStmtContext *ctx);
-
-    antlr4::tree::TerminalNode *If();
-    antlr4::tree::TerminalNode *Lparen();
-    CondExpContext *condExp();
-    antlr4::tree::TerminalNode *Rparen();
-    StmtContext *stmt();
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-  };
-
-  class  IfStmt2Context : public SeleStmtContext {
-  public:
-    IfStmt2Context(SeleStmtContext *ctx);
+    IfStmtContext(SeleStmtContext *ctx);
 
     antlr4::tree::TerminalNode *If();
     antlr4::tree::TerminalNode *Lparen();

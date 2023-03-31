@@ -9,9 +9,9 @@ translationUnit
     ;
 
 externalDeclaration
-    :   decl # globalDecl
-    |   funcDef # globalFunc
-    |   ';' # stray
+    :   decl
+    |   funcDef
+    |   ';'
     ;
 
 decl
@@ -78,17 +78,21 @@ blockItemList
     ;
 
 blockItem
-    :   decl # MemoryDecl
-    |   stmt # BlockStmt
+    :   decl
+    |   stmt
     ;
 
 stmt
-    :   lVal assignOp exp ';'
+    :   assignStmt
     |   expStmt
     |   block
     |   seleStmt
     |   loopStmt
     |   jumpStmt
+    ;
+
+assignStmt
+    :   lVal assignOp exp ';'
     ;
 
 
@@ -101,8 +105,7 @@ expStmt
     ;
 
 seleStmt
-    :   If '(' condExp ')' stmt # ifStmt1
-    |   If '(' condExp ')' stmt (Else stmt)? # ifStmt2
+    :   If '(' condExp ')' stmt (Else stmt)? # ifStmt
     ;
 
 loopStmt

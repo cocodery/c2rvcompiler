@@ -23,11 +23,7 @@ public:
 
     virtual antlrcpp::Any visitTranslationUnit(SysYParser::TranslationUnitContext *context) = 0;
 
-    virtual antlrcpp::Any visitGlobalDecl(SysYParser::GlobalDeclContext *context) = 0;
-
-    virtual antlrcpp::Any visitGlobalFunc(SysYParser::GlobalFuncContext *context) = 0;
-
-    virtual antlrcpp::Any visitStray(SysYParser::StrayContext *context) = 0;
+    virtual antlrcpp::Any visitExternalDeclaration(SysYParser::ExternalDeclarationContext *context) = 0;
 
     virtual antlrcpp::Any visitDecl(SysYParser::DeclContext *context) = 0;
 
@@ -63,19 +59,17 @@ public:
 
     virtual antlrcpp::Any visitBlockItemList(SysYParser::BlockItemListContext *context) = 0;
 
-    virtual antlrcpp::Any visitMemoryDecl(SysYParser::MemoryDeclContext *context) = 0;
-
-    virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *context) = 0;
+    virtual antlrcpp::Any visitBlockItem(SysYParser::BlockItemContext *context) = 0;
 
     virtual antlrcpp::Any visitStmt(SysYParser::StmtContext *context) = 0;
+
+    virtual antlrcpp::Any visitAssignStmt(SysYParser::AssignStmtContext *context) = 0;
 
     virtual antlrcpp::Any visitAssignOp(SysYParser::AssignOpContext *context) = 0;
 
     virtual antlrcpp::Any visitExpStmt(SysYParser::ExpStmtContext *context) = 0;
 
-    virtual antlrcpp::Any visitIfStmt1(SysYParser::IfStmt1Context *context) = 0;
-
-    virtual antlrcpp::Any visitIfStmt2(SysYParser::IfStmt2Context *context) = 0;
+    virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *context) = 0;
 
     virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *context) = 0;
 

@@ -23,15 +23,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitGlobalDecl(SysYParser::GlobalDeclContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitGlobalFunc(SysYParser::GlobalFuncContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitStray(SysYParser::StrayContext *ctx) override {
+  virtual antlrcpp::Any visitExternalDeclaration(SysYParser::ExternalDeclarationContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -103,15 +95,15 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitMemoryDecl(SysYParser::MemoryDeclContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *ctx) override {
+  virtual antlrcpp::Any visitBlockItem(SysYParser::BlockItemContext *ctx) override {
     return visitChildren(ctx);
   }
 
   virtual antlrcpp::Any visitStmt(SysYParser::StmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual antlrcpp::Any visitAssignStmt(SysYParser::AssignStmtContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -123,11 +115,7 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitIfStmt1(SysYParser::IfStmt1Context *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitIfStmt2(SysYParser::IfStmt2Context *ctx) override {
+  virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *ctx) override {
     return visitChildren(ctx);
   }
 
