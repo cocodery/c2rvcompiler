@@ -6,8 +6,9 @@
 
 AllocaInst::AllocaInst(BaseTypePtr _type, BaseValuePtr _value) 
     : alloca_type(_type), alloca_addr(_value) {
-    // create alloca_addr and alloca_inst sequentially
-    // so don't need to check for alloca_inst
+    TypeID id_type = _type ->getMaskedType(INT | FLOAT, ARRAY);
+    TypeID id_addr = _value->getBaseType()->getMaskedType(INT | FLOAT, ARRAY, POINTER);
+    assert((id_type | POINTER) == id_addr);
 }
 
 AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _type, BaseValuePtr _value) {
@@ -36,7 +37,9 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value) {
 }
 
 StoreInstPtr StoreInst::StoreValue2Mem(BaseValuePtr addr, BaseValuePtr value, BlockPtr block) {
-    return StoreInst::CreatePtr(addr, value);
+    // for store, only two target type, `INT` and `FLOAT`
+    BaseValuePtr convertee = scalarTypeConvert(addr->getBaseType()->getMaskedType(INT | FLOAT), value, block);
+    return StoreInst::CreatePtr(addr, convertee);
 }
 
 std::string StoreInst::tollvmIR() {
@@ -64,7 +67,6 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
 
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;
-    // %20 = load i32, i32* @f, align 4
     ss << load_value->tollvmIR() << " = load " << load_value->getBaseType()->tollvmIR();
     ss << ", " << load_addr->getBaseType()->tollvmIR() << ' ' << load_addr->tollvmIR();
     ss << ", align 4";

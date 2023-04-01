@@ -2,6 +2,7 @@
 
 #include "../function/basicblock.hh"
 #include "instruction.hh"
+#include "typeconvert.hh"
 
 class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
@@ -30,6 +31,7 @@ private:
     static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
 public:
     StoreInst(BaseValuePtr, BaseValuePtr);
+    ~StoreInst() = default;
 
     static StoreInstPtr StoreValue2Mem(BaseValuePtr, BaseValuePtr, BlockPtr);
 
@@ -45,6 +47,7 @@ private:
     BaseValuePtr load_addr;
 public:
     LoadInst(BaseValuePtr, BaseValuePtr);
+    ~LoadInst() = default;
 
     static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
 

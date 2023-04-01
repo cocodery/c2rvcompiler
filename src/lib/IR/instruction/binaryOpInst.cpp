@@ -6,6 +6,9 @@
 
 IBinaryInst::IBinaryInst(BaseValuePtr _res, char _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : i_result(_res), i_op(_op), i_lhs(_lhs), i_rhs(_rhs) {
+    assert(i_result->getBaseType()->checkType(INT));
+    assert(i_lhs   ->getBaseType()->checkType(INT));
+    assert(i_rhs   ->getBaseType()->checkType(INT));
 }
 
 IBinaryInstPtr IBinaryInst::CreatePtr(BaseValuePtr _res, char _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {
@@ -13,10 +16,6 @@ IBinaryInstPtr IBinaryInst::CreatePtr(BaseValuePtr _res, char _op, BaseValuePtr 
 }
 
 std::string IBinaryInst::tollvmIR() {
-    assert(i_result->getBaseType()->checkType(INT));
-    assert(i_lhs   ->getBaseType()->checkType(INT));
-    assert(i_rhs   ->getBaseType()->checkType(INT));
-
     std::stringstream ss;
     ss << i_result->tollvmIR() << " = ";
     switch (i_op) {
@@ -37,6 +36,9 @@ std::string IBinaryInst::tollvmIR() {
 
 FBinaryInst::FBinaryInst(BaseValuePtr _res, char _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : f_result(_res), f_op(_op), f_lhs(_lhs), f_rhs(_rhs) {
+    assert(f_result->getBaseType()->checkType(FLOAT));
+    assert(f_lhs   ->getBaseType()->checkType(FLOAT));
+    assert(f_rhs   ->getBaseType()->checkType(FLOAT));
 }
 
 FBinaryInstPtr FBinaryInst::CreatePtr(BaseValuePtr _res, char _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {
@@ -44,10 +46,6 @@ FBinaryInstPtr FBinaryInst::CreatePtr(BaseValuePtr _res, char _op, BaseValuePtr 
 }
 
 std::string FBinaryInst::tollvmIR() {
-    assert(f_result->getBaseType()->checkType(FLOAT));
-    assert(f_lhs   ->getBaseType()->checkType(FLOAT));
-    assert(f_rhs   ->getBaseType()->checkType(FLOAT));
-
     std::stringstream ss;
     ss << f_result->tollvmIR() << " = ";
     switch (f_op) {
