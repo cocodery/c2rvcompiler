@@ -20,7 +20,7 @@ public:
     Constant(ScalarTypePtr, ConstType);
     ~Constant() = default;
 
-    ConstType &getValue();
+    ConstType getValue();
 
     void fixValue(TypeID);
 
