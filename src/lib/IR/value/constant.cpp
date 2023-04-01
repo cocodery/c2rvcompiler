@@ -4,7 +4,7 @@ Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), va
     assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
 }
 
-ConstType Constant::getValue() {
+const ConstType &Constant::getValue() const {
     return this->value;
 }
 

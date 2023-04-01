@@ -13,14 +13,11 @@ using ConstType = std::variant<bool, int32_t, float>;
 class Constant : public BaseValue {
 private:
     ConstType value;
-
-    /* to allow access from AstVisitor::getArrDims() */
-    friend class AstVisitor;
 public:
     Constant(ScalarTypePtr, ConstType);
     ~Constant() = default;
 
-    ConstType getValue();
+    const ConstType &getValue() const;
 
     void fixValue(TypeID);
 
