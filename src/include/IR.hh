@@ -25,6 +25,7 @@ public:
     void printGlbTable();
 
     FunctionTable &getFuncTable();
+    FunctionPtr getFunction(std::string &);
     void insertFunction(std::string &, FunctionPtr);
     void printFuncTalbe();
 

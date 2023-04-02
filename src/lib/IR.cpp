@@ -18,6 +18,16 @@ FunctionTable &CompilationUnit::getFuncTable() {
     return this->func_talbe;
 }
 
+FunctionPtr CompilationUnit::getFunction(std::string &name) {
+    NameFuncMap func_table = this->getFuncTable().getFunctionTable();
+    for (auto [func_name, func_ptr] : func_table) {
+        if (name == func_name) {
+            return func_ptr;
+        }
+    }
+    assert(0);
+}
+
 void CompilationUnit::insertFunction(std::string &_name, FunctionPtr func_ptr) {
     func_talbe.insertFunction(_name, func_ptr);
 }
