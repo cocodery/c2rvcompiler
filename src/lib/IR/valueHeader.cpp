@@ -23,7 +23,7 @@ BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr b
             ConstantPtr constant_lhs = Constant::CreatePtr(ScalarType::CreatePtr(id_type | CONSTANT), 0);
             return binaryOperate(op, constant_lhs, value, block);
         } else {
-
+            return scalarTypeConvert(BOOL, value, block);
         }
     }
     assert(0);

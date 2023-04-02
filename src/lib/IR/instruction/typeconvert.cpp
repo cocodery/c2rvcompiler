@@ -78,8 +78,8 @@ BaseValuePtr scalarTypeConvert(TypeID tid, BaseValuePtr convertee, BlockPtr bloc
     if (tid == tid_convertee) {
         return convertee;
     }
-    // make sure target type is `INT` or `FLOAT`
-    assert((tid == INT) || (tid == FLOAT));
+    // make sure target type is `BOOL` or `INT` or `FLOAT`
+    assert((tid == BOOL) || (tid == INT) || (tid == FLOAT));
     // if convertee is `CONSTANT`, use `fixType` to convert
     if (type_convertee->checkType(INT | FLOAT | BOOL, CONSTANT)) {
         ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
@@ -99,9 +99,19 @@ BaseValuePtr scalarTypeConvert(TypeID tid, BaseValuePtr convertee, BlockPtr bloc
             InstPtr fptosi_inst = FptoSiInst::CreatePtr(convert_value, convertee);
             block->insertInst(fptosi_inst);
         } else if (tid_convertee == BOOL) {
-            // convert i32 to i32
+            // convert i1 to i32
             InstPtr zext_inst = ZextInst::CreatePtr(convert_value, convertee);
             block->insertInst(zext_inst);
+        }
+    } else {
+        if (tid_convertee == INT) {
+            ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), (int32_t)0);
+            InstPtr icmp_inst = ICmpInst::CreatePtr(convert_value, COND_NEQ, convertee, constant_zero);
+            block->insertInst(icmp_inst);
+        } else if (tid_convertee == FLOAT) {
+            ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT | CONSTANT), (float)0);
+            InstPtr fcmp_inst = FCmpInst::CreatePtr(convert_value, COND_NEQ, convertee, constant_zero);
+            block->insertInst(fcmp_inst);
         }
     }
     return convert_value;

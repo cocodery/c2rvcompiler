@@ -3,6 +3,7 @@
 #include "valueHeader.hh"
 #include "../function/basicblock.hh"
 #include "instruction.hh"
+#include "compareInst.hh"
 
 class SitoFpInst;
 using SitoFpInstPtr = std::shared_ptr<SitoFpInst>;
