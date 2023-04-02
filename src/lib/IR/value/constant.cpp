@@ -1,7 +1,8 @@
 #include "constant.hh"
 
 Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), value(_value) {
-    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT));
+    assert(this->getBaseType()->checkType(BOOL | INT | FLOAT, CONSTANT)); 
+    fixValue(_type->getMaskedType(BOOL | INT | FLOAT));
 }
 
 const ConstType &Constant::getValue() const {

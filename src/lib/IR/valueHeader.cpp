@@ -15,6 +15,16 @@ BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr b
     if (isConstant(value)) {
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
         return constant->unaryOperate(op);
+    } else {
+        TypeID id_type = value->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
+        if (op == "-") {
+            // value may be any type of { BOOL, INT, FLOAT }
+            // when bool do single minus, binaryOperate trans to 2 integer
+            ConstantPtr constant_lhs = Constant::CreatePtr(ScalarType::CreatePtr(id_type | CONSTANT), 0);
+            return binaryOperate(op, constant_lhs, value, block);
+        } else {
+
+        }
     }
     assert(0);
 }
@@ -29,10 +39,18 @@ BaseValuePtr Value::binaryOperate(std::string &op, BaseValuePtr lhs, BaseValuePt
         BaseValuePtr i_rhs = rhs, f_rhs = rhs;
 
         TypeID lhs_type = lhs->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
-        TypeID rhs_type = lhs->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
+        TypeID rhs_type = rhs->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
 
         if ((lhs_type != rhs_type) || (lhs_type & rhs_type == BOOL)) {
-            // TODO: type-convert
+            if (lhs_type == FLOAT || rhs_type == FLOAT) {
+                f_lhs = scalarTypeConvert(FLOAT, f_lhs, block);
+                f_rhs = scalarTypeConvert(FLOAT, f_rhs, block);
+                lhs_type = rhs_type = FLOAT;
+            } else {
+                i_lhs = scalarTypeConvert(INT, i_lhs, block);
+                i_rhs = scalarTypeConvert(INT, i_rhs, block);
+                lhs_type = rhs_type = INT;
+            }
         } 
         assert(lhs_type == rhs_type);
         if (lhs_type == INT) {
@@ -42,7 +60,7 @@ BaseValuePtr Value::binaryOperate(std::string &op, BaseValuePtr lhs, BaseValuePt
             return i_result;
         } else {
             VariablePtr f_result = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT | VARIABLE));
-            InstPtr fbin_inst = IBinaryInst::CreatePtr(f_result, op[0], f_lhs, f_rhs);
+            InstPtr fbin_inst = FBinaryInst::CreatePtr(f_result, op[0], f_lhs, f_rhs);
             block->insertInst(fbin_inst);
             return f_result;
         }
