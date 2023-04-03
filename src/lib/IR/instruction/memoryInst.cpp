@@ -38,6 +38,10 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value) {
 
 StoreInstPtr StoreInst::StoreValue2Mem(BaseValuePtr addr, BaseValuePtr value, BlockPtr block) {
     // for store, only two target type, `INT` and `FLOAT`
+    if (value->getBaseType()->checkType(POINTER)) {
+        value = LoadInst::LoadValuefromMem(value, block);
+    }
+
     BaseValuePtr convertee = scalarTypeConvert(addr->getBaseType()->getMaskedType(INT | FLOAT), value, block);
     return StoreInst::CreatePtr(addr, convertee);
 }

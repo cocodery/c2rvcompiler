@@ -10,6 +10,7 @@
 #include "value/globalvalue.hh"
 #include "instHeader.hh"
 
+#include "instruction/memoryInst.hh"
 #include "function/basicblock.hh"
 
 namespace Value {

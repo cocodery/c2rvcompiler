@@ -10,6 +10,9 @@ bool Value::bothConstant(BaseValuePtr value1, BaseValuePtr value2) {
 }
 
 BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr block) {
+    if (value->getBaseType()->checkType(POINTER)) {
+        value = LoadInst::LoadValuefromMem(value, block);
+    }
     if (op == "+") return value;
 
     if (isConstant(value)) {
@@ -30,6 +33,12 @@ BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr b
 }
 
 BaseValuePtr Value::binaryOperate(std::string &op, BaseValuePtr lhs, BaseValuePtr rhs, BlockPtr block) {
+    if (lhs->getBaseType()->checkType(POINTER)) {
+        lhs = LoadInst::LoadValuefromMem(lhs, block);
+    }
+    if (rhs->getBaseType()->checkType(POINTER)) {
+        rhs = LoadInst::LoadValuefromMem(rhs, block);
+    }
     if (bothConstant(lhs, rhs)) {
         ConstantPtr constant1 = std::dynamic_pointer_cast<Constant>(lhs);
         ConstantPtr constant2 = std::dynamic_pointer_cast<Constant>(rhs);
