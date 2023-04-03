@@ -282,6 +282,8 @@ antlrcpp::Any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) 
 
 antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     this->in_function = true;
+    BasicBlock::resetBlkIdx();
+    Variable::resetVarIdx();
 
     TypeID type_id = ctx->funcType()->accept(this).as<TypeID>();
     ScalarTypePtr scalar_type = ScalarType::CreatePtr(type_id);
@@ -291,7 +293,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     auto &&param_node = ctx->funcFParams();
     ParamList param_list = (param_node == nullptr) ?
                                 ParamList() :
-                                ctx->funcFParams()->accept(this).as<ParamList>()
+                                param_node->accept(this).as<ParamList>()
                             ;
 
     BlockPtr first_block = BasicBlock::CreatePtr();
@@ -306,7 +308,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     this->in_function = false;
 
-    return function;
+    return nullptr;
 }
     
 antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
@@ -322,19 +324,17 @@ antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) 
 }
     
 antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
-    TypeID param_tid = ctx->bType()->accept(this).as<TypeID>() | PARAM;
+    TypeID param_tid = ctx->bType()->accept(this).as<TypeID>() | VARIABLE;
 
     std::string param_name = ctx->Identifier()->getText();
 
-    BaseValuePtr value;
     if (ctx->getText().find("[") != std::string::npos) {
-        auto &&dims_vec = ctx->constExp();
-        ArrDims arr_dims = getArrDims(dims_vec);
-        value = Variable::CreatePtr(ListType::CreatePtr(param_tid | ARRAY, arr_dims, true));
-    } else {
-        value = Variable::CreatePtr(ScalarType::CreatePtr(param_tid));
+        param_tid |= POINTER;
     }
+    
+    BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(param_tid));
     Parameter param = std::make_pair(param_name, value);
+
     return param;
 }
 
@@ -368,7 +368,11 @@ antlrcpp::Any AstVisitor::visitStmt(SysYParser::StmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
-    assert(0);
+    BaseValuePtr store_addr  = ctx->lVal()->accept(this);
+    BaseValuePtr store_value = ctx->exp()->accept(this);
+    // in SysY, only care about '='
+    StoreInstPtr store_inst = StoreInst::StoreValue2Mem(store_addr, store_value, cur_block);
+    cur_block->insertInst(store_inst);
     return nullptr;
 }
 
@@ -378,7 +382,9 @@ antlrcpp::Any AstVisitor::visitAssignOp(SysYParser::AssignOpContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
-    assert(0);
+    if (ctx->exp() != nullptr) {
+        ctx->exp()->accept(this).as<BaseValuePtr>();
+    }
     return nullptr;
 }
 
@@ -408,8 +414,10 @@ antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
-    ScalarTypePtr ret_type = cur_func->getReturnType();
-    BaseValuePtr ret_value = ctx->exp()->accept(this);
+    ScalarTypePtr ret_type  = cur_func->getReturnType();
+    BaseValuePtr  ret_value = ctx->exp() ? ctx->exp()->accept(this).as<BaseValuePtr>() : nullptr;
+    
+    ret_value = scalarTypeConvert(ret_type->getMaskedType(VOID | INT | FLOAT), ret_value, cur_block);
 
     RetInstPtr ret_inst = ReturnInst::CreatePtr(ret_type, ret_value);
     cur_block->insertInst(ret_inst);
@@ -435,19 +443,6 @@ antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) 
 
 antlrcpp::Any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) {
     BaseValuePtr value = ctx->lVal()->accept(this).as<BaseValuePtr>();
-    BaseTypePtr base_type = value->getBaseType();
-
-    if (base_type->ArrayType() == false) {
-        if (base_type->ConstantType() == false) {
-            VariablePtr load_value = Variable::CreatePtr(ScalarType::CreatePtr(base_type->getMaskedType(INT | FLOAT, VARIABLE)));
-            LoadInstPtr load_inst = LoadInst::CreatePtr(load_value, value);
-            cur_block->insertInst(load_inst);
-            value = load_value;
-        }
-    } else {
-        assert(0);
-    }
-
     return value;
 }
 
@@ -466,9 +461,70 @@ antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
     return constant2;
 }
 
+antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
+    RParamList rparam_list;
+
+    auto &&rparam_node = ctx->funcRParam();
+    auto &&fparam_list = callee_func->getParamList();
+    size_t rparam_size = rparam_node.size();
+
+    assert(rparam_size == fparam_list.size());
+    rparam_list.reserve(rparam_size);
+
+    for (size_t idx = 0; idx < rparam_size; ++idx) {
+        BaseValuePtr rparam = rparam_node[idx]->accept(this).as<BaseValuePtr>();
+        auto [name, fparam] = fparam_list[idx];
+
+        TypeID tid_rparam = rparam->getBaseType()->getMaskedType(BOOL | INT | FLOAT, POINTER);
+        TypeID tid_fparam = fparam->getBaseType()->getMaskedType(       INT | FLOAT, POINTER);
+
+        if (tid_rparam & POINTER) { // if param from parser is Pointer
+            if (tid_fparam & POINTER) { // if fparam is Pointer
+                assert(tid_rparam == tid_fparam); // check they have same TypeID
+            } else {
+                // fparam is Scalar, load from addr(rparam), and then do scalarTypeConvert
+                rparam = scalarTypeConvert(tid_fparam, LoadInst::LoadValuefromMem(rparam, cur_block), cur_block);
+            }
+        } else {
+            // do scalarTypeConvert
+            rparam = scalarTypeConvert(tid_fparam, rparam, cur_block);
+        }
+
+        rparam_list.push_back(rparam);
+    }
+
+    return rparam_list;
+}
+
+antlrcpp::Any AstVisitor::visitFuncRParam(SysYParser::FuncRParamContext *ctx) {
+    return ctx->exp()->accept(this).as<BaseValuePtr>();
+}
+
 antlrcpp::Any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
     BaseValuePtr value = ctx->primaryExp()->accept(this).as<BaseValuePtr>();
     return value;
+}
+
+antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
+    std::string callee_name = ctx->Identifier()->getText();
+    this->callee_func = comp_unit.getFunction(callee_name);
+
+    ScalarTypePtr ret_type = this->callee_func->getReturnType();
+
+    auto &&rparam_node = ctx->funcRParams();
+    RParamList rparam_list = (rparam_node == nullptr) ? 
+                                RParamList() :
+                                rparam_node->accept(this).as<RParamList>();
+
+    BaseValuePtr ret_value = ret_type->VoidType() ? 
+                                (BaseValuePtr)(nullptr) :
+                                Variable::CreatePtr(ScalarType::CreatePtr(ret_type->getMaskedType(INT | FLOAT) | VARIABLE))
+                                ;
+    
+    CallInstPtr call_inst = CallInst::CreatePtr(ret_type, ret_value, callee_name, rparam_list);
+    cur_block->insertInst(call_inst);
+
+    return ret_value;
 }
 
 antlrcpp::Any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
@@ -485,7 +541,6 @@ antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
 antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
     auto &&unary_exp = ctx->unaryExp();
     auto &&mul_op    = ctx->mulOp();
-
     BaseValuePtr lhs = unary_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
 
     size_t size = unary_exp.size();
@@ -626,7 +681,7 @@ ArrDims AstVisitor::getArrDims(std::vector<SysYParser::ConstExpContext *> &const
         BaseValuePtr base_value = const_exp->accept(this).as<BaseValuePtr>();
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(base_value);
         constant->fixValue(INT | CONST);
-        arr_dims.push_back(std::get<int32_t>(constant->value));
+        arr_dims.push_back(std::get<int32_t>(constant->getValue()));
     }
     return arr_dims;
 }

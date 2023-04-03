@@ -7,7 +7,7 @@ Variable::Variable(BaseTypePtr _type) : idx(var_idx++), BaseValue(_type) {
 }
 
 void Variable::resetVarIdx() {
-    this->var_idx = 1;
+    var_idx = 1;
 }
 
 VariablePtr Variable::CreatePtr(BaseTypePtr _type) {

@@ -16,7 +16,7 @@ public:
 
     void fixValue(TypeID) { return; }
 
-    void resetVarIdx();
+    static void resetVarIdx();
 
     static VariablePtr CreatePtr(BaseTypePtr);
     

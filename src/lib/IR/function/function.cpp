@@ -33,7 +33,18 @@ std::string Function::tollvmIR() {
     std::stringstream ss;
 
     ss << "define " << ret_type->tollvmIR() << " @" << func_name;
-    ss << "(" << ")" << " {" << endl;
+    ss << "(";
+
+    size_t fparam_size = param_list.size();
+    if (fparam_size > 0) {
+        size_t idx = 0;
+        ss << param_list[idx].second->getBaseType()->tollvmIR() << ' ' << param_list[idx].second->tollvmIR();
+        for (idx = 1; idx < fparam_size; ++idx) {
+            ss << ", " << param_list[idx].second->getBaseType()->tollvmIR() << ' ' << param_list[idx].second->tollvmIR();
+        }
+    }
+    
+    ss << ")" << " {" << endl;
     ss << block->tollvmIR() << endl;
     ss << "}" << endl;
 

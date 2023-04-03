@@ -24,7 +24,9 @@ private:
 
     TypeID cur_type;
     BlockPtr cur_block;
+
     FunctionPtr cur_func;
+    FunctionPtr callee_func;
     
     SymbolTable *cur_table;
     SymTableList table_list;
@@ -108,7 +110,13 @@ private:
 
     virtual antlrcpp::Any visitNumber2(SysYParser::Number2Context *ctx) override;
 
+    virtual antlrcpp::Any visitFuncRParams(SysYParser::FuncRParamsContext *ctx) override;
+
+    virtual antlrcpp::Any visitFuncRParam(SysYParser::FuncRParamContext *ctx) override;
+
     virtual antlrcpp::Any visitUnary1(SysYParser::Unary1Context *ctx) override;
+
+    virtual antlrcpp::Any visitUnary2(SysYParser::Unary2Context *ctx) override;
 
     virtual antlrcpp::Any visitUnary3(SysYParser::Unary3Context *ctx) override;
 
