@@ -28,7 +28,6 @@ bool BaseType::ConstType()    const { return this->tid & CONST; }
 
 bool BaseType::ConstantType() const { return this->tid & CONSTANT; }
 bool BaseType::VariableType() const { return this->tid & VARIABLE; }
-bool BaseType::ParamType()    const { return this->tid & PARAM; }
 
 bool BaseType::ArrayType()    const { return this->tid & ARRAY; }
 bool BaseType::PoniterType()  const { return this->tid & POINTER; }

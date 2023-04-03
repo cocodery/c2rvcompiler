@@ -23,7 +23,6 @@ constexpr TypeID CONST      = (1ul << 0x0005);
 // contained-value attribute
 constexpr TypeID CONSTANT   = (1ul << 0x0006);
 constexpr TypeID VARIABLE   = (1ul << 0x0007);
-constexpr TypeID PARAM      = (1ul << 0x0008);
 
 constexpr TypeID ARRAY      = (1ul << 0x0009);
 constexpr TypeID POINTER    = (1ul << 0x000A);
@@ -69,7 +68,6 @@ public:
 
     bool ConstantType() const;
     bool VariableType() const;
-    bool ParamType()    const;
 
     bool ArrayType()    const;
     bool PoniterType()  const;

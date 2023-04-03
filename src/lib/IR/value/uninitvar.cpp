@@ -13,13 +13,11 @@ std::string UnInitVar::toString() {
     assert(base_tpye->checkType(INT | FLOAT)); 
     
     std::stringstream ss;
-    if (!base_tpye->ParamType()) {
-        ss << " -> ";
-        if (base_tpye->ArrayType()) {
-            ss << "zeroinitializer";
-        } else {
-            ss << "0";
-        }
+    ss << " -> ";
+    if (base_tpye->ArrayType()) {
+        ss << "zeroinitializer";
+    } else {
+        ss << "0";
     }
 
     return ss.str();
