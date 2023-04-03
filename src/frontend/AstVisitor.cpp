@@ -71,7 +71,7 @@ AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
     in_loop = false;
 
     cur_type = NONE;
-    cur_table = nullptr;
+    cur_table = &comp_unit.getGlbTable();
 }
 
 antlrcpp::Any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
@@ -302,11 +302,15 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list, first_block);
     cur_func = function;
 
+    SymbolTable *last_table = this->cur_table;
+    this->cur_table = initParamList(first_block, last_table);
+
     ctx->block()->accept(this);
 
     comp_unit.insertFunction(func_name, function);
 
     this->in_function = false;
+    this->cur_table = last_table;
 
     return nullptr;
 }
@@ -416,6 +420,10 @@ antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
 antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     ScalarTypePtr ret_type  = cur_func->getReturnType();
     BaseValuePtr  ret_value = ctx->exp() ? ctx->exp()->accept(this).as<BaseValuePtr>() : nullptr;
+
+    if (ret_value != nullptr && ret_value->getBaseType()->checkType(POINTER)) {
+        ret_value = LoadInst::LoadValuefromMem(ret_value, cur_block);
+    }
     
     ret_value = scalarTypeConvert(ret_type->getMaskedType(VOID | INT | FLOAT), ret_value, cur_block);
 
@@ -452,7 +460,7 @@ antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) 
 }
 
 antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
-    ConstantPtr constant1 = Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), ConstType(std::stoi(ctx->getText())));
+    ConstantPtr constant1 = Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), ConstType(std::stoi(ctx->getText(), nullptr, 0)));
     return constant1;
 }
 
@@ -792,16 +800,26 @@ BaseValuePtr AstVisitor::resolveTable(std::string &name) {
         }
         itre_table = itre_table->getParentTable();
     }
-    if (this->cur_func != nullptr) {
-        for (auto [pname, pvalue] : this->cur_func->getParamList()) {
-            if (pname == name) {
-                return pvalue;
-            }
+    assert(0);
+}
+
+SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent) {
+    SymbolTable *new_table = newLocalTable(parent);
+
+    auto &&param_list = this->cur_func->getParamList();
+    for (auto [name, param] : param_list) {
+        if (param->getBaseType()->PoniterType()) {
+            new_table->insertSymbol(name, param);
+        } else {
+            TypeID tid = param->getBaseType()->getMaskedType(INT | FLOAT | VARIABLE);
+            BaseValuePtr  alloca_addr = Variable::CreatePtr(ScalarType::CreatePtr(tid | POINTER));
+            AllocaInstPtr alloca_inst = AllocaInst::CreatePtr(ScalarType::CreatePtr(tid), alloca_addr);
+            first_block->insertInst(alloca_inst);
+            StoreInstPtr store_inst = StoreInst::StoreValue2Mem(alloca_addr, param, first_block);
+            first_block->insertInst(store_inst);
+            new_table->insertSymbol(name, alloca_addr);
         }
     }
-    auto &&glb_talbe = this->comp_unit.getGlbTable().getNameValueMap();
-    if (glb_talbe.find(name) != glb_talbe.end()) {
-        return glb_talbe[name];
-    }
-    assert(0);
+
+    return new_table;
 }

@@ -166,4 +166,6 @@ private:
     void clearTableList();
 
     BaseValuePtr resolveTable(std::string &name);
+
+    SymbolTable *initParamList(BlockPtr, SymbolTable *);
 };
