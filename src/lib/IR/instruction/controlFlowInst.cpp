@@ -27,3 +27,38 @@ std::string ReturnInst::tollvmIR() {
     }
     return ss.str();
 }
+
+//===-----------------------------------------------------------===//
+//                     CallInst Implementation
+//===-----------------------------------------------------------===//
+
+CallInst::CallInst(ScalarTypePtr _type, BaseValuePtr _ret, std::string &_name, RParamList &_list)
+    : ret_type(_type), ret_value(_ret), callee_name(_name), rparam_list(_list) {
+    if (_type->VoidType()) {
+        assert(_ret == nullptr);
+    }
+    // param-type have been checked at `visitFuncRParams`
+}
+
+CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _ret, std::string &_name, RParamList &_list) {
+    return std::make_shared<CallInst>(_type, _ret, _name, _list);
+}
+
+std::string CallInst::tollvmIR() {
+    std::stringstream ss;
+    if (ret_value != nullptr) {
+        ss << ret_value->tollvmIR() << " = ";
+    }
+    ss << "call " << ret_type->tollvmIR() << " @" << callee_name;
+    ss << "(";
+    size_t rparam_size = rparam_list.size();
+    if (rparam_size > 0) {
+        size_t idx = 0;
+        ss << rparam_list[idx]->getBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
+        for (idx = 1; idx < rparam_size; ++idx) {
+            ss << ", " << rparam_list[idx]->getBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
+        }
+    }
+    ss << ")";
+    return ss.str();
+}
