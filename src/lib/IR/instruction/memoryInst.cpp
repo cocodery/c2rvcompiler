@@ -65,6 +65,14 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
     return std::make_shared<LoadInst>(value, addr);
 }
 
+BaseValuePtr LoadInst::LoadValuefromMem(BaseValuePtr addr, BlockPtr block) {
+    TypeID value_tid = addr->getBaseType()->getMaskedType(INT | FLOAT);
+    BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(value_tid | VARIABLE));
+    LoadInstPtr load_inst = CreatePtr(value, addr);
+    block->insertInst(load_inst);
+    return value;
+}
+
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;
     ss << load_value->tollvmIR() << " = load " << load_value->getBaseType()->tollvmIR();

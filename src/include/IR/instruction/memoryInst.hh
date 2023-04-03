@@ -45,11 +45,13 @@ class LoadInst : public Instruction {
 private:
     BaseValuePtr load_value;
     BaseValuePtr load_addr;
+
+    static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
 public:
     LoadInst(BaseValuePtr, BaseValuePtr);
     ~LoadInst() = default;
 
-    static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static BaseValuePtr LoadValuefromMem(BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
