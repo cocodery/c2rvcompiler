@@ -99,18 +99,6 @@ ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {
     return std::make_shared<Constant>(_type, _value);
 }
 
-std::string Constant::toString() {
-    BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(BOOL | INT | FLOAT, CONSTANT));
-
-    std::stringstream ss;
-    ss << base_type->toString();
-    ss << " -> ";
-    std::visit([&ss](auto &&arg) { ss << arg; }, value);
-
-    return ss.str();
-}
-
 std::string Constant::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
     assert(base_type->checkType(BOOL | INT | FLOAT, CONSTANT));

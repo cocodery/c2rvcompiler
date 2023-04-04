@@ -22,7 +22,5 @@ public:
 
     static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);
 
-    std::string toString();
-
     std::string tollvmIR();
 };

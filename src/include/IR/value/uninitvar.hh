@@ -14,8 +14,6 @@ public:
     void fixValue(TypeID) { return; }
     
     static UnInitVarPtr CreatePtr(BaseTypePtr);
-    
-    std::string toString();
 
     std::string tollvmIR();
 };

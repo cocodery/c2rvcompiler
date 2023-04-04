@@ -19,8 +19,6 @@ public:
     static void resetVarIdx();
 
     static VariablePtr CreatePtr(BaseTypePtr);
-    
-    std::string toString() { return ""; }
 
     std::string tollvmIR();
 };

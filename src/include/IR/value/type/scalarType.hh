@@ -12,6 +12,5 @@ public:
 
     static std::shared_ptr<ScalarType> CreatePtr(TypeID);
 
-    std::string toString();
     std::string tollvmIR();
 };

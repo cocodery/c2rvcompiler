@@ -19,8 +19,6 @@ public:
     static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
 
     void fixValue(TypeID);
-    
-    std::string toString() { return ""; }
 
     std::string tollvmIR();
 };

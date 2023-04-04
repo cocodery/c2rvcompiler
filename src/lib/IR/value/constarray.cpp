@@ -22,20 +22,6 @@ ConstArrayPtr ConstArray::CreatePtr(ListTypePtr list_type, ConstArr &_arr) {
     return std::make_shared<ConstArray>(list_type, _arr);
 }
 
-std::string ConstArray::toString() {
-    BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT, ARRAY, CONST | VARIABLE));
-
-    std::stringstream ss;
-    ss << base_type->toString();
-    ss << " -> { ";
-    for (auto &&value : const_arr) {
-        ss << value->toString() << ' ';
-    }
-    ss << "}";
-    return ss.str();
-}
-
 std::string ConstArray::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
     assert(base_type->checkType(INT | FLOAT, ARRAY, CONST | VARIABLE));

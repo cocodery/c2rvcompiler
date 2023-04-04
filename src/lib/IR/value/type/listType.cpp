@@ -17,28 +17,6 @@ ListTypePtr ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool _omit) {
     return std::make_shared<ListType>(_tid, _dims, _omit);
 }
 
-std::string ListType::toString() {
-    assert(this->checkType(INT | FLOAT, ARRAY));
-
-    std::stringstream ss;
-    if (this->GlobalType()) {
-        ss << "global ";
-    }
-    if (this->ConstType()) {
-        ss << "const ";
-    }
-    ss << ( this->IntType()     ?   "int" :
-            this->FloatType()   ?   "float" :
-                                    "error" // un-reachablable, check before
-            ); 
-    if (this->omit) ss << "[]";
-    for (auto &&dim : dims) {
-        ss << '[' << dim << ']';
-    }
-
-    return ss.str();
-}
-
 std::string ListType::tollvmIR() {
     assert(this->checkType(INT | FLOAT, ARRAY));
 

@@ -62,10 +62,6 @@ int main(int argc, char *argv[]) {
 
     visitor.visitCompilationUnit(root);
 
-    // comp_unit.printGlbTable();
-    // cout << endl;
-    // comp_unit.printFuncTalbe();
-
     comp_unit.generatellvmIR(irfile);
 
     return 0;

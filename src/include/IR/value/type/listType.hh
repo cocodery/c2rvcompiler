@@ -19,6 +19,5 @@ public:
 
     static ListTypePtr CreatePtr(TypeID, ArrDims &, bool);
 
-    std::string toString();
     std::string tollvmIR();
 };

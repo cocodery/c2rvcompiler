@@ -74,7 +74,6 @@ public:
 
     bool GlobalType()   const;
 
-    virtual std::string toString() = 0;
     virtual std::string tollvmIR() = 0;
 };
 

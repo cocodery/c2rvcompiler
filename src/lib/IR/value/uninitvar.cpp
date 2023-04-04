@@ -8,21 +8,6 @@ UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
     return std::make_shared<UnInitVar>(_type);
 }
 
-std::string UnInitVar::toString() {
-    BaseTypePtr base_tpye = this->getBaseType();
-    assert(base_tpye->checkType(INT | FLOAT)); 
-    
-    std::stringstream ss;
-    ss << " -> ";
-    if (base_tpye->ArrayType()) {
-        ss << "zeroinitializer";
-    } else {
-        ss << "0";
-    }
-
-    return ss.str();
-}
-
 std::string UnInitVar::tollvmIR() {
     BaseTypePtr base_type = this->getBaseType();
     assert(base_type->checkType(INT | FLOAT));

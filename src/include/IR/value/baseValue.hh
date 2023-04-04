@@ -16,14 +16,11 @@ private:
 public:
     BaseValue() { assert(0); };
     BaseValue(BaseTypePtr);
-
     ~BaseValue() = default;
 
     BaseTypePtr getBaseType();
 
     virtual void fixValue(TypeID) = 0;
-
-    virtual std::string toString() = 0;
 
     virtual std::string tollvmIR() = 0;
 };

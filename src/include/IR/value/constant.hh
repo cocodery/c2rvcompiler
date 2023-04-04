@@ -27,7 +27,5 @@ public:
 
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 
-    std::string toString();
-
     std::string tollvmIR();
 };
