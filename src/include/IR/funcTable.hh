@@ -4,16 +4,18 @@
 
 #include "function.hh"
 
-using NameFunc    = std::pair<std::string, FunctionPtr>;
-using NameFuncMap = std::vector<NameFunc>;
+using FuncMap = std::vector<BaseFuncPtr>;
 
 class FunctionTable {
 private:
-    NameFuncMap func_table;
+    FuncMap libfunc_table;
+    FuncMap usrfunc_table;
 public:
-    FunctionTable() = default;
+    FunctionTable();
 
-    NameFuncMap &getFunctionTable();
+    BaseFuncPtr getFunction(std::string &);
 
-    void insertFunction(std::string &, FunctionPtr);
+    void insertFunction(BaseFuncPtr);
+
+    friend std::ostream &operator<<(std::ostream &, FunctionTable);
 };

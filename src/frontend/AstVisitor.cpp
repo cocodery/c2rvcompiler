@@ -291,23 +291,23 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     std::string func_name = ctx->Identifier()->getText();
 
     auto &&param_node = ctx->funcFParams();
-    ParamList param_list = (param_node == nullptr) ?
-                                ParamList() :
-                                param_node->accept(this).as<ParamList>()
-                            ;
+    auto &&[param_name, param_list] = (param_node == nullptr) ?
+                                        std::make_pair(std::vector<std::string>(), ParamList()) :
+                                        param_node->accept(this).as<std::pair<std::vector<std::string>, ParamList>>()
+                                    ;
 
-    BlockPtr first_block = BasicBlock::CreatePtr();
-    cur_block = first_block;
-
-    FunctionPtr function = Function::CreatePtr(scalar_type, func_name, param_list, first_block);
+    NormalFuncPtr function = NormalFunction::CreatePtr(scalar_type, func_name, param_list);
     cur_func = function;
 
+    cur_block = cur_func->createBB();
+
+    // create a local-table layer for func-parameter to convenient resolveTable
     SymbolTable *last_table = this->cur_table;
-    this->cur_table = initParamList(first_block, last_table);
+    this->cur_table = initParamList(cur_block, last_table, param_name); 
 
     ctx->block()->accept(this);
 
-    comp_unit.insertFunction(func_name, function);
+    comp_unit.insertFunction(function);
 
     this->in_function = false;
     this->cur_table = last_table;
@@ -320,11 +320,14 @@ antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
 }
     
 antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
+    std::vector<std::string> param_name;
     ParamList param_list;
     for (auto &&param_node : ctx->funcFParam()) {
-        param_list.push_back(param_node->accept(this).as<Parameter>());
+        auto [name, param] = param_node->accept(this).as<std::pair<std::string, BaseValuePtr>>();
+        param_name.push_back(name);
+        param_list.push_back(param);
     }
-    return param_list;
+    return std::make_pair(param_name, param_list);
 }
     
 antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
@@ -337,9 +340,8 @@ antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     }
     
     BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(param_tid));
-    Parameter param = std::make_pair(param_name, value);
 
-    return param;
+    return std::make_pair(param_name, value);
 }
 
 antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
@@ -481,7 +483,7 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
 
     for (size_t idx = 0; idx < rparam_size; ++idx) {
         BaseValuePtr rparam = rparam_node[idx]->accept(this).as<BaseValuePtr>();
-        auto [name, fparam] = fparam_list[idx];
+        BaseValuePtr fparam = fparam_list[idx];
 
         TypeID tid_rparam = rparam->getBaseType()->getMaskedType(BOOL | INT | FLOAT, POINTER);
         TypeID tid_fparam = fparam->getBaseType()->getMaskedType(       INT | FLOAT, POINTER);
@@ -803,11 +805,14 @@ BaseValuePtr AstVisitor::resolveTable(std::string &name) {
     assert(0);
 }
 
-SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent) {
+SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent, std::vector<std::string> param_name) {
     SymbolTable *new_table = newLocalTable(parent);
 
+    size_t size = param_name.size();
     auto &&param_list = this->cur_func->getParamList();
-    for (auto [name, param] : param_list) {
+    for (size_t idx = 0; idx < size; ++idx) {
+        auto &&name  = param_name[idx];
+        auto &&param = param_list[idx];
         if (param->getBaseType()->PoniterType()) {
             new_table->insertSymbol(name, param);
         } else {

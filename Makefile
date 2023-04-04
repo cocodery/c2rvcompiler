@@ -53,7 +53,7 @@ build:
 .PHONY: run
 run:
 	@cd $(BUILD_DIR); ./$(TOPNAME) -S -o ../main.s -l ../main.ll ../main.sy ; cd ..
-# @$(LLVM_LINK) sylib.ll main.ll -S -o run.ll
+	@$(LLVM_LINK) sylib.ll main.ll -S -o run.ll
 
 .PHONY: test
 test:

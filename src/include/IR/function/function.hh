@@ -5,30 +5,57 @@
 #include "../valueHeader.hh"
 #include "basicblock.hh"
 
-class Function;
-using Parameter = std::pair<std::string, BaseValuePtr>;
-using ParamList = std::vector<Parameter>;
-using FunctionPtr = std::shared_ptr<Function>;
+class BaseFunction;
+using BaseFuncPtr = std::shared_ptr<BaseFunction>;
+using ParamList = std::vector<BaseValuePtr>;
 
-class Function {
-private:
+class BaseFunction {
+protected:
     ScalarTypePtr ret_type;
     std::string func_name;
     ParamList param_list;
-    BlockPtr block; // point to first block of function
 public:
-    Function(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
-    ~Function() = default;
+    BaseFunction(ScalarTypePtr, std::string &, ParamList &);
+    ~BaseFunction() = default;
 
     ScalarTypePtr getReturnType();
 
+    std::string &getFuncName();
+
     ParamList &getParamList();
 
-    static FunctionPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &, BlockPtr);
+    virtual std::string tollvmIR() = 0;
+};
 
-    std::string toString();
+class NormalFunction;
+using NormalFuncPtr = std::shared_ptr<NormalFunction>;
+using BlockList     = std::list<BlockPtr>;
+
+class NormalFunction : public BaseFunction {
+private:
+    BlockList block_list;
+public:
+    NormalFunction(ScalarTypePtr, std::string &, ParamList &);
+    ~NormalFunction() = default;
+
+    BlockPtr createBB();
+
+    static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 
     std::string tollvmIR();
 };
 
-std::ostream &operator<<(std::ostream &, FunctionPtr);
+class LibraryFunction;
+using LibFuncPtr = std::shared_ptr<LibraryFunction>;
+
+class LibraryFunction : public BaseFunction {
+public:
+    LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
+    ~LibraryFunction() = default;
+
+    static LibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &);
+
+    std::string tollvmIR();
+};
+
+std::ostream &operator<<(std::ostream &, BaseFuncPtr);

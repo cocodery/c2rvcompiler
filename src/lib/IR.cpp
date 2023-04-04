@@ -8,34 +8,16 @@ void CompilationUnit::insertSymbol(std::string &name, BaseValuePtr value) {
     glb_table.insertSymbol(name, value);
 }
 
-void CompilationUnit::printGlbTable() {
-    for (auto [name, value] : glb_table.getNameValueMap()) {
-        cout << name << ": " << value->toString() << endl;
-    }
-}
-
 FunctionTable &CompilationUnit::getFuncTable() {
     return this->func_talbe;
 }
 
-FunctionPtr CompilationUnit::getFunction(std::string &name) {
-    NameFuncMap func_table = this->getFuncTable().getFunctionTable();
-    for (auto [func_name, func_ptr] : func_table) {
-        if (name == func_name) {
-            return func_ptr;
-        }
-    }
-    assert(0);
+BaseFuncPtr CompilationUnit::getFunction(std::string &name) {
+    return this->func_talbe.getFunction(name);
 }
 
-void CompilationUnit::insertFunction(std::string &_name, FunctionPtr func_ptr) {
-    func_talbe.insertFunction(_name, func_ptr);
-}
-
-void CompilationUnit::printFuncTalbe() {
-    for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {
-        cout << "function -> " << func_ptr->toString() << endl;
-    }
+void CompilationUnit::insertFunction(BaseFuncPtr func_ptr) {
+    func_talbe.insertFunction(func_ptr);
 }
 
 void CompilationUnit::generatellvmIR(std::string &irfile) {
@@ -48,7 +30,7 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->ConstType() && type->ConstantType()) {
-            llir << "; @" << name << " = " << type << ' ' << glb_value << ", align 4"; 
+            llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4"; 
         } else {
             llir << glb_value->tollvmIR() << " = ";
             if (type->ConstType()) {
@@ -57,12 +39,9 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
                 llir << "global ";
             }
             BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
-            llir << init_value->getBaseType() << " " << init_value << ", align 4";
+            llir << init_value->getBaseType()->tollvmIR() << " " << init_value->tollvmIR() << ", align 4";
         }
-        llir << "; " << name << ' ' << glb_value->getBaseType() << endl;
+        llir << "; " << name << ' ' << glb_value->getBaseType()->tollvmIR() << endl;
     }
-    llir << endl;
-    for (auto [name, func_ptr] : func_talbe.getFunctionTable()) {
-        llir << func_ptr << endl;
-    }
+    llir << endl << this->func_talbe << endl;
 }

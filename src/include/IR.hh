@@ -22,12 +22,10 @@ public:
 
     SymbolTable &getGlbTable();
     void insertSymbol(std::string &, BaseValuePtr);
-    void printGlbTable();
 
     FunctionTable &getFuncTable();
-    FunctionPtr getFunction(std::string &);
-    void insertFunction(std::string &, FunctionPtr);
-    void printFuncTalbe();
+    BaseFuncPtr getFunction(std::string &);
+    void insertFunction(BaseFuncPtr);
 
     void generatellvmIR(std::string &irile);
 };

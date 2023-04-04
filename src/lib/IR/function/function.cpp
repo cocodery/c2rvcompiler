@@ -1,57 +1,95 @@
 #include "function.hh"
 
-Function::Function(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block)
-    : ret_type(_type), func_name(_name), param_list(_list), block(_block) {
+//===-----------------------------------------------------------===//
+//                     BaseFunction Implementation
+//===-----------------------------------------------------------===//
+
+BaseFunction::BaseFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list) 
+    : ret_type(_type), func_name(_name), param_list(_list) {
 }
 
-ScalarTypePtr Function::getReturnType() {
+ScalarTypePtr BaseFunction::getReturnType() {
     return this->ret_type;
 }
 
-ParamList &Function::getParamList() {
+std::string &BaseFunction::getFuncName() {
+    return this->func_name;
+}
+
+ParamList &BaseFunction::getParamList() {
     return this->param_list;
 }
 
-FunctionPtr Function::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, BlockPtr _block) {
-    return std::make_shared<Function>(_type, _name, _list, _block);
+//===-----------------------------------------------------------===//
+//                     NormalFunction Implementation
+//===-----------------------------------------------------------===//
+
+NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : BaseFunction(_type, _name, _list) {
 }
 
-std::string Function::toString() {
-    std::stringstream ss;
-
-    ss << ret_type->toString() << ' ' << func_name;
-    ss << "( ";
-    for (auto &&param : param_list) {
-        ss << param.first << ": " << param.second->toString() << ' ';
-    }
-    ss << ')';
-
-    return ss.str();
+BlockPtr NormalFunction::createBB() {
+    BlockPtr block = BasicBlock::CreatePtr();
+    this->block_list.push_back(block);
+    return block;
 }
 
-std::string Function::tollvmIR() {
+NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
+    return std::make_shared<NormalFunction>(_type, _name, _list);
+}
+
+std::string NormalFunction::tollvmIR() {
     std::stringstream ss;
 
-    ss << "define " << ret_type->tollvmIR() << " @" << func_name;
-    ss << "(";
-
-    size_t fparam_size = param_list.size();
-    if (fparam_size > 0) {
+    ss << "define " << ret_type->tollvmIR() << " @" << func_name << "(";
+    size_t param_size = param_list.size();
+    if (param_size > 0) {
         size_t idx = 0;
-        ss << param_list[idx].second->getBaseType()->tollvmIR() << ' ' << param_list[idx].second->tollvmIR();
-        for (idx = 1; idx < fparam_size; ++idx) {
-            ss << ", " << param_list[idx].second->getBaseType()->tollvmIR() << ' ' << param_list[idx].second->tollvmIR();
+        ss << param_list[idx]->getBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
+        for (idx = 1; idx < param_size; ++idx) {
+            ss << ", " << param_list[idx]->getBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
         }
     }
     
     ss << ")" << " {" << endl;
-    ss << block->tollvmIR() << endl;
+    for (auto &&block : block_list) {
+        ss << block->tollvmIR() << endl;
+    }
     ss << "}" << endl;
 
     return ss.str();
 }
 
-std::ostream &operator<<(std::ostream &os, FunctionPtr func) {
+//===-----------------------------------------------------------===//
+//                     LibraryFunction Implementation
+//===-----------------------------------------------------------===//
+
+LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list) 
+    : BaseFunction(_type, _name, _list) {
+}
+
+LibFuncPtr LibraryFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list)  {
+    return std::make_shared<LibraryFunction>(_type, _name, _list);
+}
+
+std::string LibraryFunction::tollvmIR() {
+    std::stringstream ss;
+
+    ss << "declare " << ret_type->tollvmIR() << " @" << func_name << "(";
+    size_t param_size = param_list.size();
+    if (param_size > 0) {
+        size_t idx = 0;
+        ss << param_list[idx]->getBaseType()->tollvmIR();
+        for (idx = 1; idx < param_size; ++idx) {
+            ss << ", " << param_list[idx]->getBaseType()->tollvmIR();
+        }
+    }
+    ss << ")";
+
+    return ss.str();
+}
+
+std::ostream &operator<<(std::ostream &os, BaseFuncPtr func) {
     os << func->tollvmIR();
     return os;
 }

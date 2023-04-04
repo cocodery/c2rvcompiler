@@ -25,8 +25,8 @@ private:
     TypeID cur_type;
     BlockPtr cur_block;
 
-    FunctionPtr cur_func;
-    FunctionPtr callee_func;
+    NormalFuncPtr cur_func;
+    BaseFuncPtr callee_func;
     
     SymbolTable *cur_table;
     SymTableList table_list;
@@ -167,5 +167,5 @@ private:
 
     BaseValuePtr resolveTable(std::string &name);
 
-    SymbolTable *initParamList(BlockPtr, SymbolTable *);
+    SymbolTable *initParamList(BlockPtr, SymbolTable *, std::vector<std::string>);
 };
