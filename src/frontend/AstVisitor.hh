@@ -84,6 +84,8 @@ private:
 
     virtual antlrcpp::Any visitExpStmt(SysYParser::ExpStmtContext *ctx) override;
 
+    virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *ctx) override;
+
     virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *ctx) override;
 
     virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *ctx) override;

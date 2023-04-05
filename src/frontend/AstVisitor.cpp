@@ -345,16 +345,7 @@ antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
-    SymbolTable *last_table = this->cur_table;
-    SymbolTable *new_table  = this->newLocalTable(last_table);
-    this->cur_table = new_table;
-
-    if (ctx->blockItemList() != nullptr) {
-        ctx->blockItemList()->accept(this);
-    }
-
-    this->cur_table = last_table;
-    
+    visitChildren(ctx);
     return nullptr;
 }
 
@@ -394,8 +385,49 @@ antlrcpp::Any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
     return nullptr;
 }
 
+antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
+    SymbolTable *last_table = this->cur_table;
+    SymbolTable *new_table  = this->newLocalTable(last_table);
+    this->cur_table = new_table;
+    ctx->block()->accept(this);
+    this->cur_table = last_table;
+    return nullptr;
+}
+
 antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
-    assert(0);
+    BaseValuePtr cond = ctx->condExp()->accept(this).as<BaseValuePtr>();
+    cond = scalarTypeConvert(BOOL, cond, cur_block);
+    BlockPtr last_block = this->cur_block;
+
+    SymbolTable *last_table  = this->cur_table;
+    SymbolTable *table_true  = newLocalTable(last_table);
+    SymbolTable *table_false = newLocalTable(last_table);
+
+    BlockPtr bb_true = cur_func->createBB();
+    this->cur_table = table_true;
+    this->cur_block = bb_true;
+    ctx->stmt(0)->accept(this);
+    BlockPtr true_end = this->cur_block;
+
+    BlockPtr bb_false = cur_func->createBB();
+    this->cur_table = table_false;
+    this->cur_block = bb_false;
+    if (ctx->Else() != nullptr) {
+        ctx->stmt(1)->accept(this);
+    }
+    BlockPtr false_end = this->cur_block;
+
+    BranchInstPtr branch_inst = BranchInst::CreatePtr(cond, bb_true, bb_false);
+    last_block->insertInst(branch_inst);
+
+    BlockPtr branch_out = cur_func->createBB();
+    this->cur_table = last_table;
+    this->cur_block = branch_out;
+
+    JumpInstPtr jump_inst = JumpInst::CreatePtr(branch_out);
+    true_end ->insertInst(jump_inst);
+    false_end->insertInst(jump_inst);
+
     return nullptr;
 }
 
@@ -476,8 +508,8 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
 
     auto &&rparam_node = ctx->funcRParam();
     auto &&fparam_list = callee_func->getParamList();
-    size_t rparam_size = rparam_node.size();
 
+    size_t rparam_size = rparam_node.size();
     assert(rparam_size == fparam_list.size());
     rparam_list.reserve(rparam_size);
 
@@ -517,14 +549,18 @@ antlrcpp::Any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
 
 antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     std::string callee_name = ctx->Identifier()->getText();
+    RParamList rparam_list;
+
     this->callee_func = comp_unit.getFunction(callee_name);
 
-    ScalarTypePtr ret_type = this->callee_func->getReturnType();
+    if (callee_name == "starttime" || callee_name == "stoptime") {
+        callee_name = (callee_name == "starttime") ? "_sysy_starttime" : "_sysy_stoptime";
+        rparam_list.push_back(Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), static_cast<int32_t>(ctx->start->getLine())));
+    } else if (ctx->funcRParams() != nullptr) {
+        rparam_list = ctx->funcRParams()->accept(this).as<RParamList>();
+    }
 
-    auto &&rparam_node = ctx->funcRParams();
-    RParamList rparam_list = (rparam_node == nullptr) ? 
-                                RParamList() :
-                                rparam_node->accept(this).as<RParamList>();
+    ScalarTypePtr ret_type = this->callee_func->getReturnType();
 
     BaseValuePtr ret_value = ret_type->VoidType() ? 
                                 (BaseValuePtr)(nullptr) :
@@ -674,9 +710,9 @@ antlrcpp::Any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
     auto &&cond_exp = ctx->condExp();
 
     if (exp_node == nullptr) {
-
         return lor_exp->accept(this).as<BaseValuePtr>();
     }
+    assert(0);
     return visitChildren(ctx);
 }
 
