@@ -21,11 +21,11 @@ public:
 
     void fixValue(TypeID);
 
-    BaseValuePtr unaryOperate(const std::string &);
-
-    BaseValuePtr binaryOperate(const std::string &, const ConstantPtr);
-
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 
     std::string tollvmIR();
 };
+
+static ConstantPtr zero_int32 = Constant::CreatePtr(ScalarType::CreatePtr(INT   | CONSTANT), static_cast<int32_t>(0));
+static ConstantPtr zero_float = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT | CONSTANT), static_cast<float>(0));
+static ConstantPtr zero_bool  = Constant::CreatePtr(ScalarType::CreatePtr(BOOL  | CONSTANT), static_cast<bool>(0));
