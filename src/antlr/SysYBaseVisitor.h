@@ -115,6 +115,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *ctx) override {
     return visitChildren(ctx);
   }

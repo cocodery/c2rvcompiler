@@ -30,13 +30,14 @@ public:
     RuleVarDecl = 8, RuleVarDef = 9, RuleInitVal = 10, RuleFuncDef = 11, 
     RuleFuncType = 12, RuleFuncFParams = 13, RuleFuncFParam = 14, RuleBlock = 15, 
     RuleBlockItemList = 16, RuleBlockItem = 17, RuleStmt = 18, RuleAssignStmt = 19, 
-    RuleAssignOp = 20, RuleExpStmt = 21, RuleSeleStmt = 22, RuleLoopStmt = 23, 
-    RuleJumpStmt = 24, RuleExp = 25, RuleConstExp = 26, RuleLVal = 27, RulePrimaryExp = 28, 
-    RuleNumber = 29, RuleFuncRParams = 30, RuleFuncRParam = 31, RuleUnaryExp = 32, 
-    RuleUnaryOp = 33, RuleMulExp = 34, RuleMulOp = 35, RuleAddExp = 36, 
-    RuleAddOp = 37, RuleShiftExp = 38, RuleShiftOp = 39, RuleRelExp = 40, 
-    RuleRelOp = 41, RuleEqExp = 42, RuleEqOp = 43, RuleAndExp = 44, RuleExOrExp = 45, 
-    RuleInOrExp = 46, RuleLAndExp = 47, RuleLOrExp = 48, RuleCondExp = 49
+    RuleAssignOp = 20, RuleExpStmt = 21, RuleBlockStmt = 22, RuleSeleStmt = 23, 
+    RuleLoopStmt = 24, RuleJumpStmt = 25, RuleExp = 26, RuleConstExp = 27, 
+    RuleLVal = 28, RulePrimaryExp = 29, RuleNumber = 30, RuleFuncRParams = 31, 
+    RuleFuncRParam = 32, RuleUnaryExp = 33, RuleUnaryOp = 34, RuleMulExp = 35, 
+    RuleMulOp = 36, RuleAddExp = 37, RuleAddOp = 38, RuleShiftExp = 39, 
+    RuleShiftOp = 40, RuleRelExp = 41, RuleRelOp = 42, RuleEqExp = 43, RuleEqOp = 44, 
+    RuleAndExp = 45, RuleExOrExp = 46, RuleInOrExp = 47, RuleLAndExp = 48, 
+    RuleLOrExp = 49, RuleCondExp = 50
   };
 
   SysYParser(antlr4::TokenStream *input);
@@ -71,6 +72,7 @@ public:
   class AssignStmtContext;
   class AssignOpContext;
   class ExpStmtContext;
+  class BlockStmtContext;
   class SeleStmtContext;
   class LoopStmtContext;
   class JumpStmtContext;
@@ -466,7 +468,7 @@ public:
     virtual size_t getRuleIndex() const override;
     AssignStmtContext *assignStmt();
     ExpStmtContext *expStmt();
-    BlockContext *block();
+    BlockStmtContext *blockStmt();
     SeleStmtContext *seleStmt();
     LoopStmtContext *loopStmt();
     JumpStmtContext *jumpStmt();
@@ -519,6 +521,19 @@ public:
   };
 
   ExpStmtContext* expStmt();
+
+  class  BlockStmtContext : public antlr4::ParserRuleContext {
+  public:
+    BlockStmtContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    BlockContext *block();
+
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  BlockStmtContext* blockStmt();
 
   class  SeleStmtContext : public antlr4::ParserRuleContext {
   public:

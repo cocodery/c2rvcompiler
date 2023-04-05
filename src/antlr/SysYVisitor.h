@@ -69,6 +69,8 @@ public:
 
     virtual antlrcpp::Any visitExpStmt(SysYParser::ExpStmtContext *context) = 0;
 
+    virtual antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext *context) = 0;
+
     virtual antlrcpp::Any visitIfStmt(SysYParser::IfStmtContext *context) = 0;
 
     virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *context) = 0;

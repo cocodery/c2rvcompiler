@@ -85,7 +85,7 @@ blockItem
 stmt
     :   assignStmt
     |   expStmt
-    |   block
+    |   blockStmt
     |   seleStmt
     |   loopStmt
     |   jumpStmt
@@ -102,6 +102,10 @@ assignOp
 
 expStmt
     :   (exp)? ';'
+    ;
+
+blockStmt
+    :   block
     ;
 
 seleStmt
