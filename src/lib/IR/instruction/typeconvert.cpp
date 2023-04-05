@@ -68,8 +68,9 @@ std::string ZextInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 BaseValuePtr scalarTypeConvert(TypeID tid, BaseValuePtr convertee, BlockPtr block) {
-    if (tid & (POINTER | ARRAY)) {
-        assert(0);
+    assert(!convertee->getBaseType()->checkType(ARRAY));
+    if (convertee->getBaseType()->checkType(POINTER)) {
+        convertee = LoadInst::LoadValuefromMem(convertee, block);
     }
     // if ret_type is `VOID`, return nullpre directly
     if (tid == VOID) {

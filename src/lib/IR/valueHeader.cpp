@@ -26,7 +26,22 @@ BaseValuePtr Value::unaryOperate(std::string &op, BaseValuePtr value, BlockPtr b
             ConstantPtr constant_lhs = Constant::CreatePtr(ScalarType::CreatePtr(id_type | CONSTANT), 0);
             return binaryOperate(op, constant_lhs, value, block);
         } else {
-            return scalarTypeConvert(BOOL, value, block);
+            TypeID tid = value->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
+            BaseValuePtr value_bool = Variable::CreatePtr(ScalarType::CreatePtr(BOOL | VARIABLE));
+            if (tid == INT) {
+                ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), (int32_t)0);
+                InstPtr icmp_inst = ICmpInst::CreatePtr(value_bool, COND_EQU, value, constant_zero);
+                block->insertInst(icmp_inst);
+            } else if (tid == FLOAT) {
+                ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT | CONSTANT), (float)0);
+                InstPtr fcmp_inst = FCmpInst::CreatePtr(value_bool, COND_EQU, value, constant_zero);
+                block->insertInst(fcmp_inst);
+            } else {
+                ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(BOOL | CONSTANT), (bool)0);
+                InstPtr icmp_inst = ICmpInst::CreatePtr(value_bool, COND_EQU, value, constant_zero);
+                block->insertInst(icmp_inst);
+            }
+            return value_bool;
         }
     }
     assert(0);
@@ -50,7 +65,7 @@ BaseValuePtr Value::binaryOperate(std::string &op, BaseValuePtr lhs, BaseValuePt
         TypeID lhs_type = lhs->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
         TypeID rhs_type = rhs->getBaseType()->getMaskedType(BOOL | INT | FLOAT);
 
-        if ((lhs_type != rhs_type) || (lhs_type & rhs_type == BOOL)) {
+        if ((lhs_type != rhs_type) || ((lhs_type & rhs_type) == BOOL)) {
             if (lhs_type == FLOAT || rhs_type == FLOAT) {
                 f_lhs = scalarTypeConvert(FLOAT, f_lhs, block);
                 f_rhs = scalarTypeConvert(FLOAT, f_rhs, block);

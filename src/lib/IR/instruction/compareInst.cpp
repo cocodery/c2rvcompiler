@@ -7,8 +7,8 @@
 ICmpInst::ICmpInst(BaseValuePtr _res, CondCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
     assert(_res->getBaseType()->checkType(BOOL, VARIABLE));
-    assert(_lhs->getBaseType()->checkType(INT));
-    assert(_rhs->getBaseType()->checkType(INT));
+    assert(_lhs->getBaseType()->checkType(BOOL | INT));
+    assert(_rhs->getBaseType()->checkType(BOOL | INT));
 }
 
 ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, CondCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs) {
@@ -27,7 +27,7 @@ std::string ICmpInst::tollvmIR() {
     } else if (cond == COND_NEQ) {
         ss << "ne";
     } else { assert(0); }
-    ss << " i32 " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
+    ss << " " << lhs->getBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     return ss.str();
 }
 
