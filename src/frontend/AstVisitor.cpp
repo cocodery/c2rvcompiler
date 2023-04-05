@@ -44,7 +44,13 @@ BaseValuePtr parseListInit(_ListType *node, ArrDims &arr_dims, TypeID cur_type, 
             }
         }
         while (cnt < total_size) {
-            const_arr.push_back(Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), std::variant<bool, int32_t, float>(0)));
+            if ((cur_type & INT) == INT) {
+                const_arr.push_back(zero_int32);
+            } else if ((cur_type & FLOAT) == FLOAT) {
+                const_arr.push_back(zero_float);
+            } else {
+                assert(0);
+            }
             ++cnt;
         }
         return;
@@ -514,8 +520,8 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
     rparam_list.reserve(rparam_size);
 
     for (size_t idx = 0; idx < rparam_size; ++idx) {
-        BaseValuePtr rparam = rparam_node[idx]->accept(this).as<BaseValuePtr>();
         BaseValuePtr fparam = fparam_list[idx];
+        BaseValuePtr rparam = rparam_node[idx]->accept(this).as<BaseValuePtr>();
 
         TypeID tid_rparam = rparam->getBaseType()->getMaskedType(BOOL | INT | FLOAT, POINTER);
         TypeID tid_fparam = fparam->getBaseType()->getMaskedType(       INT | FLOAT, POINTER);
@@ -574,14 +580,22 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
-    std::string unary_op = ctx->unaryOp()->getText();
+    OpCode unary_op = ctx->unaryOp()->accept(this).as<OpCode>();
     BaseValuePtr value   = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
     return Value::unaryOperate(unary_op, value, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
-    assert(0);
-    return nullptr;
+    std::string op = ctx->getText();
+    if (op == "+") {
+        return OP_ADD;
+    } else if (op == "-") {
+        return OP_MINUS;
+    } else if (op == "!") {
+        return OP_NOT;
+    } else {
+        assert(0);
+    }
 }
 
 antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
@@ -591,7 +605,7 @@ antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
 
     size_t size = unary_exp.size();
     for (size_t idx = 1; idx < size; ++idx) {
-        std::string op = mul_op[idx - 1]->getText();
+        OpCode op = mul_op[idx-1]->accept(this).as<OpCode>();
         rhs = unary_exp[idx]->accept(this).as<BaseValuePtr>();
         lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
     }
@@ -600,8 +614,16 @@ antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
-    assert(0);
-    return nullptr;
+    std::string op = ctx->getText();
+    if (op == "*") {
+        return OP_MUL;
+    } else if (op == "/") {
+        return OP_DIV;
+    } else if (op == "%") {
+        return OP_REM;
+    } else {
+        assert(0);
+    }
 }
 
 antlrcpp::Any AstVisitor::visitAddExp(SysYParser::AddExpContext *ctx) {
@@ -612,7 +634,7 @@ antlrcpp::Any AstVisitor::visitAddExp(SysYParser::AddExpContext *ctx) {
     
     size_t size = mul_exp.size();
     for (size_t idx = 1; idx < size; ++idx) {
-        std::string op = add_op[idx - 1]->getText();
+        OpCode op = add_op[idx-1]->accept(this).as<OpCode>();
         rhs = mul_exp[idx]->accept(this).as<BaseValuePtr>();
         lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
     }
@@ -621,8 +643,14 @@ antlrcpp::Any AstVisitor::visitAddExp(SysYParser::AddExpContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
-    assert(0);
-    return nullptr;
+    std::string op = ctx->getText();
+    if (op == "+") {
+        return OP_ADD;
+    } else if (op == "-") {
+        return OP_SUB;
+    } else {
+        assert(0);
+    }
 }
 
 antlrcpp::Any AstVisitor::visitShiftExp(SysYParser::ShiftExpContext *ctx) {
@@ -643,12 +671,30 @@ antlrcpp::Any AstVisitor::visitRelExp(SysYParser::RelExpContext *ctx) {
     auto &&rel_op    = ctx->relOp();
 
     BaseValuePtr lhs = shift_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
+
+    size_t size = shift_exp.size();
+    for (size_t idx = 1; idx < size; ++idx) {
+        OpCode op = rel_op[idx-1]->accept(this).as<OpCode>();
+        rhs = shift_exp[idx]->accept(this).as<BaseValuePtr>();
+        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
+    }
     // assert(lhs != nullptr);
     return lhs;
 }
 
 antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
-    return visitChildren(ctx);
+    std::string op = ctx->getText();
+    if (op == "<") {
+        return OP_LTH;
+    } else if (op == ">") {
+        return OP_GTH;
+    } else if (op == "<=") {
+        return OP_LEQ;
+    } else if (op == ">=") {
+        return OP_GEQ;
+    } else  {
+        assert(0);
+    }
 }
 
 antlrcpp::Any AstVisitor::visitEqExp(SysYParser::EqExpContext *ctx) {
@@ -656,12 +702,26 @@ antlrcpp::Any AstVisitor::visitEqExp(SysYParser::EqExpContext *ctx) {
     auto &&eq_op   = ctx->eqOp();
 
     BaseValuePtr lhs = rel_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
+
+    size_t size = rel_exp.size();
+    for (size_t idx = 1; idx < size; ++idx) {
+        OpCode op = eq_op[idx-1]->accept(this).as<OpCode>();
+        rhs = rel_exp[idx]->accept(this).as<BaseValuePtr>();
+        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
+    }
     // assert(lhs != nullptr);
     return lhs;
 }
 
 antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
-    return visitChildren(ctx);
+    std::string op = ctx->getText();
+    if (op == "==") {
+        return OP_EQU;
+    } else if (op == "!=") {
+        return OP_NEQ;
+    } else {
+        assert(0);
+    }
 }
 
 antlrcpp::Any AstVisitor::visitAndExp(SysYParser::AndExpContext *ctx) {
