@@ -19,8 +19,12 @@ bool isConstant(BaseValuePtr);
 
 bool bothConstant(BaseValuePtr, BaseValuePtr);
 
-BaseValuePtr unaryOperate(std::string &, BaseValuePtr, BlockPtr);
+BaseValuePtr unaryOperate(const OpCode, const ConstantPtr);
 
-BaseValuePtr binaryOperate(std::string &, BaseValuePtr, BaseValuePtr, BlockPtr);
+BaseValuePtr binaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);
+
+BaseValuePtr unaryOperate(const OpCode, BaseValuePtr, BlockPtr);
+
+BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
 
 }
