@@ -8,14 +8,14 @@ using IBinaryInstPtr = std::shared_ptr<IBinaryInst>;
 class IBinaryInst : public Instruction {
 private:
     BaseValuePtr i_result;
-    char         i_op;
+    OpCode       i_op;
     BaseValuePtr i_lhs;
     BaseValuePtr i_rhs;
 public:
-    IBinaryInst(BaseValuePtr, char, BaseValuePtr, BaseValuePtr);
+    IBinaryInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~IBinaryInst() = default;
 
-    static IBinaryInstPtr CreatePtr(BaseValuePtr, char, BaseValuePtr, BaseValuePtr);
+    static IBinaryInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
 };
@@ -26,14 +26,14 @@ using FBinaryInstPtr = std::shared_ptr<FBinaryInst>;
 class FBinaryInst : public Instruction {
 private:
     BaseValuePtr f_result;
-    char         f_op;
+    OpCode       f_op;
     BaseValuePtr f_lhs;
     BaseValuePtr f_rhs;
 public:
-    FBinaryInst(BaseValuePtr, char, BaseValuePtr, BaseValuePtr);
+    FBinaryInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~FBinaryInst() = default;
 
-    static FBinaryInstPtr CreatePtr(BaseValuePtr, char, BaseValuePtr, BaseValuePtr);
+    static FBinaryInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
 };

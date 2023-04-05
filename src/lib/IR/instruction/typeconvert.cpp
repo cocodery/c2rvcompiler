@@ -109,12 +109,10 @@ BaseValuePtr scalarTypeConvert(TypeID tid, BaseValuePtr convertee, BlockPtr bloc
         }
     } else {
         if (tid_convertee == INT) {
-            ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(INT | CONSTANT), (int32_t)0);
-            InstPtr icmp_inst = ICmpInst::CreatePtr(convert_value, COND_NEQ, convertee, constant_zero);
+            InstPtr icmp_inst = ICmpInst::CreatePtr(convert_value, OP_NEQ, convertee, zero_int32);
             block->insertInst(icmp_inst);
         } else if (tid_convertee == FLOAT) {
-            ConstantPtr constant_zero = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT | CONSTANT), (float)0);
-            InstPtr fcmp_inst = FCmpInst::CreatePtr(convert_value, COND_NEQ, convertee, constant_zero);
+            InstPtr fcmp_inst = FCmpInst::CreatePtr(convert_value, OP_NEQ, convertee, zero_float);
             block->insertInst(fcmp_inst);
         }
     }
