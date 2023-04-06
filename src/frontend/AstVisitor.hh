@@ -38,6 +38,8 @@ private:
     using RetInstList = std::list<JumpInstPtr>;
     RetInstList return_list;
 
+    BlockPtr target_continue;
+
     using BreakInstList = std::list<JumpInstPtr>;
     BreakInstList break_list;
 
