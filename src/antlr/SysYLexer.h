@@ -14,14 +14,13 @@ public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
-    T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
-    Int = 21, Void = 22, Const = 23, Return = 24, If = 25, Else = 26, While = 27, 
-    For = 28, Do = 29, Break = 30, Continue = 31, Lparen = 32, Rparen = 33, 
-    Lbrkt = 34, Rbrkt = 35, Lbrace = 36, Rbrace = 37, Comma = 38, Semicolon = 39, 
-    Minus = 40, Addition = 41, Exclamation = 42, Multiplication = 43, Division = 44, 
-    Modulo = 45, LAND = 46, LOR = 47, EQ = 48, NEQ = 49, LT = 50, LE = 51, 
-    GT = 52, GE = 53, IntLiteral = 54, FloatLiteral = 55, Identifier = 56, 
-    Whitespace = 57, Newline = 58, BlockComment = 59, LineComment = 60
+    Int = 15, Void = 16, Const = 17, Return = 18, If = 19, Else = 20, While = 21, 
+    For = 22, Do = 23, Break = 24, Continue = 25, Lparen = 26, Rparen = 27, 
+    Lbrkt = 28, Rbrkt = 29, Lbrace = 30, Rbrace = 31, Comma = 32, Semicolon = 33, 
+    Minus = 34, Addition = 35, Exclamation = 36, Multiplication = 37, Division = 38, 
+    Modulo = 39, LAND = 40, LOR = 41, EQ = 42, NEQ = 43, LT = 44, LE = 45, 
+    GT = 46, GE = 47, IntLiteral = 48, FloatLiteral = 49, Identifier = 50, 
+    Whitespace = 51, Newline = 52, BlockComment = 53, LineComment = 54
   };
 
   SysYLexer(antlr4::CharStream *input);

@@ -75,8 +75,6 @@ public:
 
     virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *context) = 0;
 
-    virtual antlrcpp::Any visitDoWhileLoop(SysYParser::DoWhileLoopContext *context) = 0;
-
     virtual antlrcpp::Any visitContinueStmt(SysYParser::ContinueStmtContext *context) = 0;
 
     virtual antlrcpp::Any visitBreakStmt(SysYParser::BreakStmtContext *context) = 0;
@@ -119,10 +117,6 @@ public:
 
     virtual antlrcpp::Any visitAddOp(SysYParser::AddOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitShiftExp(SysYParser::ShiftExpContext *context) = 0;
-
-    virtual antlrcpp::Any visitShiftOp(SysYParser::ShiftOpContext *context) = 0;
-
     virtual antlrcpp::Any visitRelExp(SysYParser::RelExpContext *context) = 0;
 
     virtual antlrcpp::Any visitRelOp(SysYParser::RelOpContext *context) = 0;
@@ -130,12 +124,6 @@ public:
     virtual antlrcpp::Any visitEqExp(SysYParser::EqExpContext *context) = 0;
 
     virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *context) = 0;
-
-    virtual antlrcpp::Any visitAndExp(SysYParser::AndExpContext *context) = 0;
-
-    virtual antlrcpp::Any visitExOrExp(SysYParser::ExOrExpContext *context) = 0;
-
-    virtual antlrcpp::Any visitInOrExp(SysYParser::InOrExpContext *context) = 0;
 
     virtual antlrcpp::Any visitLAndExp(SysYParser::LAndExpContext *context) = 0;
 

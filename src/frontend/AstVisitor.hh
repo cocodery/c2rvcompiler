@@ -93,8 +93,6 @@ private:
 
     virtual antlrcpp::Any visitWhileLoop(SysYParser::WhileLoopContext *ctx) override;
 
-    virtual antlrcpp::Any visitDoWhileLoop(SysYParser::DoWhileLoopContext *ctx) override;
-
     virtual antlrcpp::Any visitContinueStmt(SysYParser::ContinueStmtContext *ctx) override;
 
     virtual antlrcpp::Any visitBreakStmt(SysYParser::BreakStmtContext *ctx) override;
@@ -135,10 +133,6 @@ private:
 
     virtual antlrcpp::Any visitAddOp(SysYParser::AddOpContext *ctx) override;
 
-    virtual antlrcpp::Any visitShiftExp(SysYParser::ShiftExpContext *ctx) override;
-
-    virtual antlrcpp::Any visitShiftOp(SysYParser::ShiftOpContext *ctx) override;
-
     virtual antlrcpp::Any visitRelExp(SysYParser::RelExpContext *ctx) override;
 
     virtual antlrcpp::Any visitRelOp(SysYParser::RelOpContext *ctx) override;
@@ -146,12 +140,6 @@ private:
     virtual antlrcpp::Any visitEqExp(SysYParser::EqExpContext *ctx) override;
 
     virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *ctx) override;
-
-    virtual antlrcpp::Any visitAndExp(SysYParser::AndExpContext *ctx) override;
-
-    virtual antlrcpp::Any visitExOrExp(SysYParser::ExOrExpContext *ctx) override;
-
-    virtual antlrcpp::Any visitInOrExp(SysYParser::InOrExpContext *ctx) override;
 
     virtual antlrcpp::Any visitLAndExp(SysYParser::LAndExpContext *ctx) override;
 

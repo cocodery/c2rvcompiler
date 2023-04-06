@@ -114,7 +114,6 @@ seleStmt
 
 loopStmt
     :   While '(' condExp ')' stmt # whileLoop
-    |   Do stmt While '(' condExp ')' ';' #DoWhileLoop
     ;
 
 jumpStmt    
@@ -124,11 +123,11 @@ jumpStmt
     ;
 
 exp
-    :   condExp
+    :   addExp
     ;
 
 constExp
-    :   condExp 
+    :   addExp 
     ;
 
 lVal
@@ -178,18 +177,10 @@ addExp
 
 addOp
     :   '+' | '-'
-    ;    
-
-shiftExp
-    :   addExp (shiftOp addExp)*
-    ;
-
-shiftOp
-    :   '<<' | '>>'
     ;
 
 relExp
-    :   shiftExp (relOp shiftExp)*
+    :   addExp (relOp addExp)*
     ;
 
 relOp
@@ -204,20 +195,8 @@ eqOp
     :   '==' | '!='
     ;
 
-andExp
-    :   eqExp ('&' eqExp)*
-    ;
-
-exOrExp
-    :   andExp ('^' andExp)*
-    ;
-
-inOrExp
-    :   exOrExp ('|' exOrExp)*
-    ;
-
 lAndExp
-    :   inOrExp ('&&' inOrExp)*
+    :   eqExp ('&&' eqExp)*
     ;
 
 lOrExp
@@ -225,7 +204,7 @@ lOrExp
     ;
 
 condExp
-    :   lOrExp ('?' exp ':' condExp)?
+    :   lOrExp
     ;
 
 // keyword

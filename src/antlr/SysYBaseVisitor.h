@@ -127,10 +127,6 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitDoWhileLoop(SysYParser::DoWhileLoopContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
   virtual antlrcpp::Any visitContinueStmt(SysYParser::ContinueStmtContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -215,14 +211,6 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitShiftExp(SysYParser::ShiftExpContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitShiftOp(SysYParser::ShiftOpContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
   virtual antlrcpp::Any visitRelExp(SysYParser::RelExpContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -236,18 +224,6 @@ public:
   }
 
   virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitAndExp(SysYParser::AndExpContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitExOrExp(SysYParser::ExOrExpContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
-  virtual antlrcpp::Any visitInOrExp(SysYParser::InOrExpContext *ctx) override {
     return visitChildren(ctx);
   }
 
