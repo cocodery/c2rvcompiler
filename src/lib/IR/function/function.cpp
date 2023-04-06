@@ -28,9 +28,11 @@ NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamLis
     : BaseFunction(_type, _name, _list) {
 }
 
-BlockPtr NormalFunction::createBB() {
+BlockPtr NormalFunction::createBB(bool insertable) {
     BlockPtr block = BasicBlock::CreatePtr();
-    this->block_list.push_back(block);
+    if (insertable) {
+        this->block_list.push_back(block);
+    }
     return block;
 }
 

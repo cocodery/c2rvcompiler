@@ -38,7 +38,7 @@ public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
 
-    BlockPtr createBB();
+    BlockPtr createBB(bool insertalbe = true);
 
     static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 

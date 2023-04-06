@@ -19,6 +19,9 @@ private:
 
     bool have_main_func;
 
+    VariablePtr ret_addr;
+    BlockPtr ret_block;
+
     bool in_function;
     bool in_loop;
 

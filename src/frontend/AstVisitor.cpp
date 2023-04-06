@@ -73,6 +73,9 @@ void parseLocalListInit(SysYParser::ListInitvalContext *ctx, BaseValuePtr addr, 
 AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
     have_main_func = false;
 
+    ret_addr = nullptr;
+    ret_block = nullptr;
+
     in_function = false;
     in_loop = false;
 
@@ -292,7 +295,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     Variable::resetVarIdx();
 
     TypeID type_id = ctx->funcType()->accept(this).as<TypeID>();
-    ScalarTypePtr scalar_type = ScalarType::CreatePtr(type_id);
+    ScalarTypePtr ret_type = ScalarType::CreatePtr(type_id);
 
     std::string func_name = ctx->Identifier()->getText();
 
@@ -302,16 +305,29 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
                                         param_node->accept(this).as<std::pair<std::vector<std::string>, ParamList>>()
                                     ;
 
-    NormalFuncPtr function = NormalFunction::CreatePtr(scalar_type, func_name, param_list);
+    NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
     cur_func = function;
 
     cur_block = cur_func->createBB();
+    ret_block = cur_func->createBB();
 
     // create a local-table layer for func-parameter to convenient resolveTable
     SymbolTable *last_table = this->cur_table;
     this->cur_table = initParamList(cur_block, last_table, param_name); 
 
+    if (type_id != VOID) {
+        ret_addr = Variable::CreatePtr(ScalarType::CreatePtr(type_id | VARIABLE | POINTER));
+        cur_block->insertInst(AllocaInst::CreatePtr(ret_type, ret_addr));
+    }
+
     ctx->block()->accept(this);
+    cur_block->insertInst(JumpInst::CreatePtr(ret_block));
+    if (type_id == VOID) {
+        ret_block->insertInst(ReturnInst::CreatePtr(ret_type, nullptr));
+    } else {
+        BaseValuePtr func_ret_value = LoadInst::LoadValuefromMem(ret_addr, ret_block);
+        ret_block->insertInst(ReturnInst::CreatePtr(ret_type, func_ret_value));
+    }
 
     comp_unit.insertFunction(function);
 
@@ -459,16 +475,17 @@ antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
 
 antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     ScalarTypePtr ret_type  = cur_func->getReturnType();
-    BaseValuePtr  ret_value = ctx->exp() ? ctx->exp()->accept(this).as<BaseValuePtr>() : nullptr;
-
-    if (ret_value != nullptr && ret_value->getBaseType()->checkType(POINTER)) {
-        ret_value = LoadInst::LoadValuefromMem(ret_value, cur_block);
+    if (ret_type->VoidType()) {
+        assert(ctx->exp() == nullptr);
+        cur_block->insertInst(JumpInst::CreatePtr(ret_block));
+    } else {
+        assert(ctx->exp() != nullptr);
+        BaseValuePtr ret_value = scalarTypeConvert(ret_type->getMaskedType(VOID | INT | FLOAT), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
+        cur_block->insertInst(StoreInst::StoreValue2Mem(ret_addr, ret_value, cur_block));
+        cur_block->insertInst(JumpInst::CreatePtr(ret_block));
     }
-    
-    ret_value = scalarTypeConvert(ret_type->getMaskedType(VOID | INT | FLOAT), ret_value, cur_block);
 
-    RetInstPtr ret_inst = ReturnInst::CreatePtr(ret_type, ret_value);
-    cur_block->insertInst(ret_inst);
+    cur_block = cur_func->createBB(false);
 
     return nullptr;
 }
