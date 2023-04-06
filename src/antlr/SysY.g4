@@ -196,11 +196,13 @@ eqOp
     ;
 
 lAndExp
-    :   eqExp ('&&' eqExp)*
+    : eqExp # lAnd1
+    | lAndExp '&&' eqExp # lAnd2
     ;
 
 lOrExp
-    :   lAndExp ('||' lAndExp)*
+    : lAndExp # lOr1
+    | lOrExp '||' lAndExp # lOr2
     ;
 
 condExp

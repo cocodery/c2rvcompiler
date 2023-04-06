@@ -970,35 +970,73 @@ public:
   class  LAndExpContext : public antlr4::ParserRuleContext {
   public:
     LAndExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    std::vector<EqExpContext *> eqExp();
-    EqExpContext* eqExp(size_t i);
-    std::vector<antlr4::tree::TerminalNode *> LAND();
-    antlr4::tree::TerminalNode* LAND(size_t i);
+   
+    LAndExpContext() = default;
+    void copyFrom(LAndExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
 
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  LAnd2Context : public LAndExpContext {
+  public:
+    LAnd2Context(LAndExpContext *ctx);
+
+    LAndExpContext *lAndExp();
+    antlr4::tree::TerminalNode *LAND();
+    EqExpContext *eqExp();
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-   
+  };
+
+  class  LAnd1Context : public LAndExpContext {
+  public:
+    LAnd1Context(LAndExpContext *ctx);
+
+    EqExpContext *eqExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
   LAndExpContext* lAndExp();
-
+  LAndExpContext* lAndExp(int precedence);
   class  LOrExpContext : public antlr4::ParserRuleContext {
   public:
     LOrExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    LOrExpContext() = default;
+    void copyFrom(LOrExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
-    std::vector<LAndExpContext *> lAndExp();
-    LAndExpContext* lAndExp(size_t i);
-    std::vector<antlr4::tree::TerminalNode *> LOR();
-    antlr4::tree::TerminalNode* LOR(size_t i);
 
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
    
   };
 
-  LOrExpContext* lOrExp();
+  class  LOr1Context : public LOrExpContext {
+  public:
+    LOr1Context(LOrExpContext *ctx);
 
+    LAndExpContext *lAndExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  LOr2Context : public LOrExpContext {
+  public:
+    LOr2Context(LOrExpContext *ctx);
+
+    LOrExpContext *lOrExp();
+    antlr4::tree::TerminalNode *LOR();
+    LAndExpContext *lAndExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  LOrExpContext* lOrExp();
+  LOrExpContext* lOrExp(int precedence);
   class  CondExpContext : public antlr4::ParserRuleContext {
   public:
     CondExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1012,6 +1050,10 @@ public:
 
   CondExpContext* condExp();
 
+
+  virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+  bool lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex);
+  bool lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex);
 
 private:
   static std::vector<antlr4::dfa::DFA> _decisionToDFA;

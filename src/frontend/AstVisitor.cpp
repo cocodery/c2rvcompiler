@@ -309,7 +309,6 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_func = function;
 
     cur_block = cur_func->createBB();
-    ret_block = cur_func->createBB();
 
     // create a local-table layer for func-parameter to convenient resolveTable
     SymbolTable *last_table = this->cur_table;
@@ -321,7 +320,13 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     }
 
     ctx->block()->accept(this);
+
+    ret_block = cur_func->createBB();
     cur_block->insertInst(JumpInst::CreatePtr(ret_block));
+
+    for (auto &&ret_inst : return_list) {
+        ret_inst->setTarget(ret_block);
+    }
     if (type_id == VOID) {
         ret_block->insertInst(ReturnInst::CreatePtr(ret_type, nullptr));
     } else {
@@ -333,6 +338,10 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     this->in_function = false;
     this->cur_table = last_table;
+
+    lAnd_list.clear();
+    lOr_list.clear();
+    return_list.clear();
 
     return nullptr;
 }
@@ -417,8 +426,12 @@ antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
+    BranchInstList last_lOr_list  = lOr_list;
+    BranchInstList last_lAnd_list = lAnd_list;
+    lOr_list  = BranchInstList();
+    lAnd_list = BranchInstList(); 
     BaseValuePtr cond = ctx->condExp()->accept(this).as<BaseValuePtr>();
-    cond = scalarTypeConvert(BOOL, cond, cur_block);
+
     BlockPtr last_block = this->cur_block;
 
     SymbolTable *last_table  = this->cur_table;
@@ -438,6 +451,15 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
         ctx->stmt(1)->accept(this);
     }
     BlockPtr false_end = this->cur_block;
+
+    for (auto &&lAnd_inst : lAnd_list) {
+        lAnd_inst->setFalseTarget(bb_false);
+    }
+    for (auto &&lOr_inst  : lOr_list) {
+        lOr_inst->setTrueTarget(bb_true);
+    }
+    lAnd_list = last_lAnd_list;
+    lOr_list  = last_lOr_list;
 
     BranchInstPtr branch_inst = BranchInst::CreatePtr(cond, bb_true, bb_false);
     last_block->insertInst(branch_inst);
@@ -472,13 +494,15 @@ antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     ScalarTypePtr ret_type  = cur_func->getReturnType();
     if (ret_type->VoidType()) {
         assert(ctx->exp() == nullptr);
-        cur_block->insertInst(JumpInst::CreatePtr(ret_block));
     } else {
         assert(ctx->exp() != nullptr);
         BaseValuePtr ret_value = scalarTypeConvert(ret_type->getMaskedType(VOID | INT | FLOAT), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
         cur_block->insertInst(StoreInst::StoreValue2Mem(ret_addr, ret_value, cur_block));
-        cur_block->insertInst(JumpInst::CreatePtr(ret_block));
     }
+
+    JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr);
+    cur_block->insertInst(ret_inst);
+    return_list.push_back(ret_inst);
 
     cur_block = cur_func->createBB(false);
 
@@ -570,6 +594,7 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     RParamList rparam_list;
 
     this->callee_func = comp_unit.getFunction(callee_name);
+    ScalarTypePtr ret_type = this->callee_func->getReturnType();
 
     if (callee_name == "starttime" || callee_name == "stoptime") {
         callee_name = (callee_name == "starttime") ? "_sysy_starttime" : "_sysy_stoptime";
@@ -577,8 +602,6 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     } else if (ctx->funcRParams() != nullptr) {
         rparam_list = ctx->funcRParams()->accept(this).as<RParamList>();
     }
-
-    ScalarTypePtr ret_type = this->callee_func->getReturnType();
 
     BaseValuePtr ret_value = ret_type->VoidType() ? 
                                 (BaseValuePtr)(nullptr) :
@@ -678,7 +701,7 @@ antlrcpp::Any AstVisitor::visitRelExp(SysYParser::RelExpContext *ctx) {
         lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
     }
     // assert(lhs != nullptr);
-    return lhs;
+    return scalarTypeConvert(BOOL, lhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
@@ -709,7 +732,7 @@ antlrcpp::Any AstVisitor::visitEqExp(SysYParser::EqExpContext *ctx) {
         lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
     }
     // assert(lhs != nullptr);
-    return lhs;
+    return scalarTypeConvert(BOOL, lhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
@@ -723,24 +746,50 @@ antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
     }
 }
 
-antlrcpp::Any AstVisitor::visitLAndExp(SysYParser::LAndExpContext *ctx) {
-    auto &&eq_exp = ctx->eqExp();
-    if (eq_exp.size() == 1) {
-        return eq_exp[0]->accept(this).as<BaseValuePtr>();
-    }
-    return visitChildren(ctx);
+antlrcpp::Any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
+    return ctx->eqExp()->accept(this).as<BaseValuePtr>();
 }
 
-antlrcpp::Any AstVisitor::visitLOrExp(SysYParser::LOrExpContext *ctx) {
-    auto &&land_exp = ctx->lAndExp();
-    if (land_exp.size() == 1) {
-        return land_exp[0]->accept(this).as<BaseValuePtr>();
+antlrcpp::Any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
+    BaseValuePtr lAnd_node = scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
+    BlockPtr lAnd_true = cur_func->createBB();
+    
+    BranchInstPtr br_inst = BranchInst::CreatePtr(lAnd_node, lAnd_true, nullptr);
+    cur_block->insertInst(br_inst);
+    lAnd_list.push_back(br_inst);
+
+    cur_block = lAnd_true;
+    return ctx->eqExp()->accept(this).as<BaseValuePtr>();
+}
+
+antlrcpp::Any AstVisitor::visitLOr1(SysYParser::LOr1Context *ctx) {
+    return ctx->lAndExp()->accept(this).as<BaseValuePtr>();
+}
+
+antlrcpp::Any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
+    BranchInstList last_lAnd_list = lAnd_list;
+    lAnd_list = BranchInstList();
+
+    BaseValuePtr lOr_node = ctx->lOrExp()->accept(this).as<BaseValuePtr>();
+    BlockPtr lOr_false = cur_func->createBB();
+
+    for (auto &&lAnd_inst : lAnd_list) {
+        lAnd_inst->setFalseTarget(lOr_false);
     }
-    return visitChildren(ctx);
+    lAnd_list = last_lAnd_list;
+
+    BranchInstPtr br_inst = BranchInst::CreatePtr(lOr_node, nullptr, lOr_false);
+    cur_block->insertInst(br_inst);
+    lOr_list.push_back(br_inst);
+
+    cur_block = lOr_false;
+    return ctx->lAndExp()->accept(this).as<BaseValuePtr>();
 }
 
 antlrcpp::Any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
-    return ctx->lOrExp()->accept(this).as<BaseValuePtr>();
+    // do scalarTypeConvert here for ifStmt / whileStmt
+    BaseValuePtr condition = scalarTypeConvert(BOOL, ctx->lOrExp()->accept(this).as<BaseValuePtr>(), cur_block);
+    return condition;
 }
 
 antlrcpp::Any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {

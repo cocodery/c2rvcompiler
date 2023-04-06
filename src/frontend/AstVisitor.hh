@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <list>
 #include <vector>
 #include <string>
 #include <cstdio>
@@ -33,6 +34,16 @@ private:
     
     SymbolTable *cur_table;
     SymTableList table_list;
+
+    using RetInstList = std::list<JumpInstPtr>;
+    RetInstList return_list;
+
+    using BreakInstList = std::list<JumpInstPtr>;
+    BreakInstList break_list;
+
+    using BranchInstList = std::list<BranchInstPtr>;
+    BranchInstList lOr_list;
+    BranchInstList lAnd_list;
 public:
     AstVisitor(CompilationUnit &);
     
@@ -141,9 +152,13 @@ private:
 
     virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *ctx) override;
 
-    virtual antlrcpp::Any visitLAndExp(SysYParser::LAndExpContext *ctx) override;
+    virtual antlrcpp::Any visitLAnd1(SysYParser::LAnd1Context *ctx) override;
 
-    virtual antlrcpp::Any visitLOrExp(SysYParser::LOrExpContext *ctx) override;
+    virtual antlrcpp::Any visitLAnd2(SysYParser::LAnd2Context *ctx) override;
+
+    virtual antlrcpp::Any visitLOr1(SysYParser::LOr1Context *ctx) override;
+
+    virtual antlrcpp::Any visitLOr2(SysYParser::LOr2Context *ctx) override;
 
     virtual antlrcpp::Any visitCondExp(SysYParser::CondExpContext *ctx) override;
 

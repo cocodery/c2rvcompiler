@@ -125,9 +125,13 @@ public:
 
     virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitLAndExp(SysYParser::LAndExpContext *context) = 0;
+    virtual antlrcpp::Any visitLAnd2(SysYParser::LAnd2Context *context) = 0;
 
-    virtual antlrcpp::Any visitLOrExp(SysYParser::LOrExpContext *context) = 0;
+    virtual antlrcpp::Any visitLAnd1(SysYParser::LAnd1Context *context) = 0;
+
+    virtual antlrcpp::Any visitLOr1(SysYParser::LOr1Context *context) = 0;
+
+    virtual antlrcpp::Any visitLOr2(SysYParser::LOr2Context *context) = 0;
 
     virtual antlrcpp::Any visitCondExp(SysYParser::CondExpContext *context) = 0;
 
