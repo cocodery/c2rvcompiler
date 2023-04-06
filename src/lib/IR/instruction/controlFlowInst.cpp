@@ -73,6 +73,10 @@ JumpInstPtr JumpInst::CreatePtr(BlockPtr _dest) {
     return std::make_shared<JumpInst>(_dest);
 }
 
+void JumpInst::setTarget(BlockPtr _dest) {
+    this->dest = _dest;
+}
+
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
     ss << "br label %Block_" << dest->getBlockIdx();
@@ -90,6 +94,15 @@ BranchInst::BranchInst(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2)
 
 BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2) {
     return std::make_shared<BranchInst>(_cond, _br1, _br2);
+}
+
+
+void BranchInst::setTrueTarget(BlockPtr _iftrue) {
+    this->iftrue = _iftrue;
+}
+
+void BranchInst::setFalseTarget(BlockPtr _iffalse) {
+    this->iffalse = _iffalse;
 }
 
 std::string BranchInst::tollvmIR() {

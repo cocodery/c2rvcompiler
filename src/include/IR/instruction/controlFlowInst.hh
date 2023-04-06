@@ -51,6 +51,8 @@ public:
 
     static JumpInstPtr CreatePtr(BlockPtr);
 
+    void setTarget(BlockPtr);
+
     std::string tollvmIR();
 };
 
@@ -67,6 +69,9 @@ public:
     ~BranchInst() = default;
 
     static BranchInstPtr CreatePtr(BaseValuePtr, BlockPtr, BlockPtr);
+    
+    void setTrueTarget(BlockPtr);
+    void setFalseTarget(BlockPtr);
 
     std::string tollvmIR();
 };
