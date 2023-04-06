@@ -77,7 +77,6 @@ AstVisitor::AstVisitor(CompilationUnit &comp_unit) : comp_unit(comp_unit) {
     ret_block = nullptr;
 
     in_function = false;
-    in_loop = false;
 
     cur_type = NONE;
     cur_table = &comp_unit.getGlbTable();
@@ -308,6 +307,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
                                     ;
 
     NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
+    comp_unit.insertFunction(function);
     cur_func = function;
 
     cur_block = cur_func->createBB();
@@ -335,8 +335,6 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
         BaseValuePtr func_ret_value = LoadInst::LoadValuefromMem(ret_addr, ret_block);
         ret_block->insertInst(ReturnInst::CreatePtr(ret_type, func_ret_value));
     }
-
-    comp_unit.insertFunction(function);
 
     in_function = false;
     cur_table = last_table;

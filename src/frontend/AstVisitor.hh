@@ -24,7 +24,6 @@ private:
     BlockPtr ret_block;
 
     bool in_function;
-    bool in_loop;
 
     TypeID cur_type;
     BlockPtr cur_block;

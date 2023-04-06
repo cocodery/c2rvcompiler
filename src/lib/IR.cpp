@@ -26,6 +26,7 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
     if (llir.is_open() == false) {
         assert(0);
     }
+    llir << "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"" << endl;
     for (auto [name, glb_value] : glb_table.getNameValueMap()) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
