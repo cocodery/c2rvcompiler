@@ -177,4 +177,8 @@ private:
     BaseValuePtr resolveTable(std::string &name);
 
     SymbolTable *initParamList(BlockPtr, SymbolTable *, std::vector<std::string>);
+
+    void parseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, BlockPtr);
+
+    void temp(SysYParser::ListInitvalContext *, ArrDims, ListTypePtr, BaseValuePtr, BlockPtr);
 };

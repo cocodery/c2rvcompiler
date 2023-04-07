@@ -55,3 +55,23 @@ public:
 
     std::string tollvmIR();
 };
+
+class GetElementPtrInst;
+using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
+
+class GetElementPtrInst : public Instruction {
+private:
+    BaseValuePtr target_ptr;
+    BaseTypePtr  base_type;
+    BaseValuePtr base_addr;
+    BaseValuePtr offset;
+
+    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, BaseValuePtr);
+public:
+    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, BaseValuePtr);
+    ~GetElementPtrInst() = default;
+
+    static BaseValuePtr GepFromBaseAddr(BaseTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
+
+    std::string tollvmIR();
+};

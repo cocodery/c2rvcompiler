@@ -13,6 +13,10 @@ size_t ListType::getArrDims() const {
     return size;
 }
 
+ArrDims ListType::getDimArray() const {
+    return this->dims;
+}
+
 ListTypePtr ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool _omit) {
     return std::make_shared<ListType>(_tid, _dims, _omit);
 }

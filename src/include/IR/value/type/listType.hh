@@ -17,6 +17,8 @@ public:
 
     size_t getArrDims() const;
 
+    ArrDims getDimArray() const;
+
     static ListTypePtr CreatePtr(TypeID, ArrDims &, bool);
 
     std::string tollvmIR();

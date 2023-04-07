@@ -84,3 +84,32 @@ std::string LoadInst::tollvmIR() {
     ss << ", align 4";
     return ss.str();
 }
+
+GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off)
+    : target_ptr(_ptr), base_type(_type), base_addr(_addr), offset(_off) {
+    assert(_ptr->getBaseType()->getMaskedType(INT | FLOAT) == _type->getMaskedType(INT | FLOAT));
+    assert(_type->ArrayType());
+    BaseTypePtr addr_type = _addr->getBaseType();
+    assert(addr_type->ArrayType());
+    ListTypePtr list1 = std::static_pointer_cast<ListType>(_type);
+    ListTypePtr list2 = std::static_pointer_cast<ListType>(addr_type);
+    assert(list1->getArrDims() == list2->getArrDims());
+}
+
+GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off) {
+    return std::make_shared<GetElementPtrInst>(_ptr ,_type, _addr, _off);
+}
+
+BaseValuePtr GetElementPtrInst::GepFromBaseAddr(BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
+    BaseValuePtr _ptr = Variable::CreatePtr(ScalarType::CreatePtr(_type->getMaskedType(INT |FLOAT) | VARIABLE | POINTER));
+    block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
+    return _ptr;
+}
+
+std::string GetElementPtrInst::tollvmIR() {
+    std::stringstream ss;
+    ss << target_ptr->tollvmIR() << " = getelementptr inbounds " << base_type->tollvmIR();
+    ss << ", " << base_addr->getBaseType()->tollvmIR() << ' ' << base_addr->tollvmIR();
+    ss << ", i32 0, " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
+    return ss.str();
+}
