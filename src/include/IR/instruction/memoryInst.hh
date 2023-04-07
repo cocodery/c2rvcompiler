@@ -9,13 +9,15 @@ using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 
 class AllocaInst : public Instruction {
 private:
-    BaseTypePtr  alloca_type;
-    BaseValuePtr alloca_addr;
+    BaseTypePtr  type_stored;
+    BaseValuePtr addr_alloca;
+
+    static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr);
 public:
     AllocaInst(BaseTypePtr, BaseValuePtr);
     ~AllocaInst() = default;
 
-    static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr);
+    static BaseValuePtr AllocaAddress(BaseTypePtr, BaseTypePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -33,7 +35,7 @@ public:
     StoreInst(BaseValuePtr, BaseValuePtr);
     ~StoreInst() = default;
 
-    static StoreInstPtr StoreValue2Mem(BaseValuePtr, BaseValuePtr, BlockPtr);
+    static void StoreValue2Mem(BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
