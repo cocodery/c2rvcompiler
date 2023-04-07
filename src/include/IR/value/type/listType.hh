@@ -11,15 +11,14 @@ using ArrDims = std::vector<size_t>;
 class ListType : public BaseType {
 private:
     ArrDims dims;
-    bool omit;
 public:
-    ListType(TypeID, ArrDims &, bool);
+    ListType(BaseType, ArrDims &);
 
     size_t getArrDims() const;
 
     ArrDims getDimArray() const;
 
-    static ListTypePtr CreatePtr(TypeID, ArrDims &, bool);
+    static ListTypePtr CreatePtr(BaseType, ArrDims &);
 
     std::string tollvmIR();
 };

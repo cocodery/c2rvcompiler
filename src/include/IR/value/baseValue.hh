@@ -11,16 +11,15 @@ class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;
 
 class BaseValue {
-private:
+protected:
     BaseTypePtr base_type;
 public:
-    BaseValue() { assert(0); };
     BaseValue(BaseTypePtr);
     ~BaseValue() = default;
 
     BaseTypePtr getBaseType();
 
-    virtual void fixValue(TypeID) = 0;
+    virtual void fixValue(ATTR_TYPE) = 0;
 
     virtual std::string tollvmIR() = 0;
 };

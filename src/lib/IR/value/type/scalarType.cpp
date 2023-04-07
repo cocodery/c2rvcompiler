@@ -1,25 +1,26 @@
 #include "scalarType.hh"
 
-ScalarType::ScalarType(TypeID _tid) : BaseType(_tid) {
-    // assert(this->checkType(BOOL | INT | FLOAT | VOID));
-    // will do same check in BaseType::BaseType
+ScalarType::ScalarType(BaseType _type) 
+    : BaseType(_type) {
+    // no need to check for ScalarType
 }
 
-ScalarTypePtr ScalarType::CreatePtr(TypeID _tid) {
-    return std::make_shared<ScalarType>(_tid);
+ScalarTypePtr ScalarType::CreatePtr(BaseType _type) {
+    return std::make_shared<ScalarType>(_type);
 }
 
 std::string ScalarType::tollvmIR() {
-    assert(this->checkType(BOOL | INT | FLOAT | VOID));
-
     std::stringstream ss;
-    ss << ( this->IntType()     ?   "i32" :
-            this->FloatType()   ?   "float" :
-            this->BoolType()    ?   "i1" :
-            this->VoidType()    ?   "void" :
-                                    "error"
-            );
-    if (this->PoniterType()) {
+
+    switch (attr_type) {
+        case VOID : ss << "void" ; break;
+        case BOOL : ss << "i1"   ; break;
+        case CHAR : ss << "i8"   ; break;
+        case INT  : ss << "i32"  ; break;
+        case FLOAT: ss << "float"; break;
+        default: assert(0); break;
+    }
+    if (attr_pointer == POINTER) {
         ss << "*";
     }
 

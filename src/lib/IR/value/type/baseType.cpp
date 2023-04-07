@@ -1,49 +1,33 @@
 #include "baseType.hh"
 
-BaseType::BaseType(TypeID _tid) : tid(_tid) {
-    // must have a type
-    assert(checkType(BOOL | INT | FLOAT | VOID));
+BaseType::BaseType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position)
+    : attr_type(_type), attr_mutable(_mutable), attr_pointer(_pointer), attr_scalar(_scalar), attr_position(_position) {
 }
 
-TypeID BaseType::getType() const {
-    return this->tid;
+ BaseType::BaseType(const BaseType &base_type) 
+    : attr_type(base_type.attr_type), attr_mutable(base_type.attr_mutable), attr_pointer(base_type.attr_pointer), 
+      attr_scalar(base_type.attr_scalar), attr_position(base_type.attr_position) {
 }
 
-void BaseType::appendType(TypeID _tid) {
-    this->tid |= _tid;
-}
+bool BaseType::voidType()   const { return (attr_type == VOID) ; }
+bool BaseType::boolType()   const { return (attr_type == BOOL) ; }
+bool BaseType::charType()   const { return (attr_type == CHAR) ; }
+bool BaseType::intType()    const { return (attr_type == INT)  ; }
+bool BaseType::floatType()  const { return (attr_type == FLOAT); }
 
-void BaseType::resetType(TypeID _tid) {
-    // must have a type
-    assert(checkType(BOOL | INT | FLOAT | VOID));
-    tid = _tid;
-}
+bool BaseType::IsMutable()  const { return (attr_mutable == MUTABLE); }
+bool BaseType::IsImMutable()const { return (attr_mutable == IMMUTABLE); }
 
-bool BaseType::BoolType()     const { return this->tid & BOOL; }
-bool BaseType::IntType()      const { return this->tid & INT; }
-bool BaseType::FloatType()    const { return this->tid & FLOAT; }
-bool BaseType::VoidType()     const { return this->tid & VOID; }
+bool BaseType::IsPointer()  const { return (attr_pointer == POINTER); }
+bool BaseType::IsNotPtr()   const { return (attr_pointer == NOTPTR); }
 
-bool BaseType::ConstType()    const { return this->tid & CONST; }
+bool BaseType::IsScalar()   const { return (attr_scalar == SCALAR); }
+bool BaseType::isArray()    const { return (attr_scalar == ARRAY); }
 
-bool BaseType::ConstantType() const { return this->tid & CONSTANT; }
-bool BaseType::VariableType() const { return this->tid & VARIABLE; }
+bool BaseType::IsLocal()    const { return (attr_position == LOCAL); }
+bool BaseType::IsParameter()const { return (attr_position == PARAMETER); }
+bool BaseType::IsGlobal()   const { return (attr_position == GLOBAL); }
 
-bool BaseType::ArrayType()    const { return this->tid & ARRAY; }
-bool BaseType::PoniterType()  const { return this->tid & POINTER; }
-
-bool BaseType::GlobalType()   const { return this->tid & GLOBAL; }
-
-TypeID getTypeID(std::string name) {
-    TypeID tid =  (name == "int")   ? INT
-                : (name == "float") ? FLOAT
-                : (name == "void")  ? VOID
-                : NONE;
-    assert(tid != NONE);
-    return tid;
-}
-
-std::ostream &operator<<(std::ostream &os, BaseTypePtr type) {
-    os << type->tollvmIR();
-    return os;
+void BaseType::resetAttrType(ATTR_TYPE _type) {
+    attr_type = _type;
 }

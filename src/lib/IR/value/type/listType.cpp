@@ -1,8 +1,11 @@
 #include "listType.hh"
 
-ListType::ListType(TypeID _tid, ArrDims &_dims, bool _omit) 
-    : BaseType(_tid), dims(_dims), omit(_omit) {
-    assert(this->checkType(INT | FLOAT, ARRAY));
+ListType::ListType(BaseType _type, ArrDims &_dims) 
+    : BaseType(_type), dims(_dims) {
+    // INT || FLOAT
+    assert(intType() || floatType());
+    // ARRAY
+    assert(isArray());
 }
 
 size_t ListType::getArrDims() const {
@@ -17,21 +20,20 @@ ArrDims ListType::getDimArray() const {
     return this->dims;
 }
 
-ListTypePtr ListType::CreatePtr(TypeID _tid, ArrDims &_dims, bool _omit) {
-    return std::make_shared<ListType>(_tid, _dims, _omit);
+ListTypePtr ListType::CreatePtr(BaseType _type, ArrDims &_dims) {
+    return std::make_shared<ListType>(_type, _dims);
 }
 
 std::string ListType::tollvmIR() {
-    assert(this->checkType(INT | FLOAT, ARRAY));
-
     std::stringstream ss;
-    ss << '[' << this->getArrDims() << " x ";
-    ss << ( this->IntType()     ?   "i32" :
-            this->FloatType()   ?   "float" :
-                                    "error"
-            );
-    ss << ']';
-    if (this->PoniterType()) {
+
+    ss << '[' << getArrDims() << " x ";
+    switch (attr_type) {
+        case INT  : ss << "i32"  ; break;
+        case FLOAT: ss << "float"; break;
+        default: assert(0); break;
+    }
+    if (attr_pointer == POINTER) {
         ss << "*";
     }
 

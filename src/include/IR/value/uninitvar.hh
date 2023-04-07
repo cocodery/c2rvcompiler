@@ -11,7 +11,7 @@ class UnInitVar : public BaseValue {
 public:
     UnInitVar(BaseTypePtr);
 
-    void fixValue(TypeID) { return; }
+    void fixValue(ATTR_TYPE) { return; }
     
     static UnInitVarPtr CreatePtr(BaseTypePtr);
 

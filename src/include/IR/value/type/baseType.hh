@@ -10,73 +10,75 @@
 using std::cout;
 using std::endl;
 
-using TypeID = uint64_t;
+enum ATTR_TYPE {
+    VOID,
+    BOOL,
+    CHAR,
+    INT,
+    FLOAT
+};
 
-constexpr TypeID NONE       = (0ul << 0x0000);
-// type of value
-constexpr TypeID BOOL       = (1ul << 0x0001);
-constexpr TypeID INT        = (1ul << 0x0002);
-constexpr TypeID FLOAT      = (1ul << 0x0003);
-constexpr TypeID VOID       = (1ul << 0x0004);
-// type qualifier
-constexpr TypeID CONST      = (1ul << 0x0005);
-// contained-value attribute
-constexpr TypeID CONSTANT   = (1ul << 0x0006);
-constexpr TypeID VARIABLE   = (1ul << 0x0007);
+enum ATTR_MUTABLE {
+    NONE1 = 5, // ignore attribute mutable 
+    MUTABLE,
+    IMMUTABLE
+};
 
-constexpr TypeID ARRAY      = (1ul << 0x0009);
-constexpr TypeID POINTER    = (1ul << 0x000A);
-// global attribute
-constexpr TypeID GLOBAL     = (1ul << 0x000B);
+enum ATTR_POINTER {
+    NONE2 = 8, // ignore attribute pointer
+    POINTER,
+    NOTPTR
+};
+
+enum ATTR_SCALAR {
+    NONE3 = 11, // ignore attribute scalar
+    SCALAR,
+    ARRAY
+};
+
+enum ATTR_POSITION {
+    NONE4 = 14, // ignore attribute position
+    LOCAL,
+    PARAMETER,
+    GLOBAL
+};
 
 class BaseType;
 using BaseTypePtr = std::shared_ptr<BaseType>;
 
 class BaseType {
-private:
-    TypeID tid;
-    TypeID getType() const;
+protected:
+    ATTR_TYPE       attr_type; // void / bool / char / int / float
+    ATTR_MUTABLE    attr_mutable; // const / non-const
+    ATTR_POINTER    attr_pointer; // pointer / non-pointer
+    ATTR_SCALAR     attr_scalar; // scalar / list
+    ATTR_POSITION   attr_position; // local / parameter / global
+
 public:
-    BaseType(TypeID tid = NONE);
+    BaseType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION);
+    BaseType(const BaseType &);
     ~BaseType() = default;
 
-    void resetType(TypeID);
+    bool voidType()     const;
+    bool boolType()     const;
+    bool charType()     const;
+    bool intType()      const;
+    bool floatType()    const;
 
-    void appendType(TypeID);
+    bool IsMutable()    const;
+    bool IsImMutable()  const;
 
-    template<typename... TypeIDs>
-    TypeID getMaskedType(TypeID first, TypeIDs... rest) const {
-        TypeID res = getType() & first;
-        for (auto tid : std::initializer_list<TypeID>{rest...}) {
-            res |= getType() & tid;
-        }
-        return res;
-    }
+    bool IsPointer()    const;
+    bool IsNotPtr()     const;
 
-    template<typename... TypeIDs>
-    bool checkType(TypeIDs... _tids) const {
-        auto &&tids = {_tids...};
-        return std::all_of(tids.begin(), tids.end(), [this](auto tid){ return __builtin_popcountll(getMaskedType(tid)) == 1; });
-    }
+    bool IsScalar()     const;
+    bool isArray()      const;
 
-    bool BoolType()     const;
-    bool IntType()      const;
-    bool FloatType()    const;
-    bool VoidType()     const;
+    bool IsLocal()      const;
+    bool IsParameter()  const;
+    bool IsGlobal()     const;
 
-    bool ConstType()    const;
+    void resetAttrType(ATTR_TYPE);
 
-    bool ConstantType() const;
-    bool VariableType() const;
-
-    bool ArrayType()    const;
-    bool PoniterType()  const;
-
-    bool GlobalType()   const;
-
-    virtual std::string tollvmIR() = 0;
+    virtual std::string tollvmIR() { assert(false); };
 };
-
-TypeID getTypeID(std::string);
-
-std::ostream &operator<<(std::ostream &, BaseTypePtr);

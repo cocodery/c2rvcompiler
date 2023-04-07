@@ -2,8 +2,10 @@
 
 size_t Variable::var_idx = 1;
 
-Variable::Variable(BaseTypePtr _type) : idx(var_idx++), BaseValue(_type) {
-    assert(_type->checkType(BOOL | INT | FLOAT, VARIABLE));
+Variable::Variable(BaseTypePtr _type) 
+    : BaseValue(_type), idx(var_idx++) {
+    // attr_type != VOID, Mutable
+    assert(!base_type->voidType() && base_type->IsMutable());
 }
 
 void Variable::resetVarIdx() {

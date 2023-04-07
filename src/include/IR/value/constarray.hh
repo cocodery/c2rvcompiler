@@ -18,7 +18,7 @@ public:
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;
 
-    void fixValue(TypeID);
+    void fixValue(ATTR_TYPE);
 
     static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);
 

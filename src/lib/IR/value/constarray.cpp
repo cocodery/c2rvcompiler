@@ -1,20 +1,18 @@
 #include "constarray.hh"
 
 ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr)
-    : const_arr(_arr), BaseValue(list_type) {
-    // no need to checkType
+    : BaseValue(list_type), const_arr(_arr) {
+    // INT || FLOAT
+    assert(base_type->intType() || base_type->floatType());
+    // Array, Immutable, NotPtr
+    assert(base_type->isArray() && base_type->IsImMutable() && !base_type->IsNotPtr());
+    // capacity == arr_size 
     assert(const_arr.size() == list_type->getArrDims());
 }
 
-void ConstArray::fixValue(TypeID _tid) {
-    BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT, ARRAY, CONST | VARIABLE));
-
-    // un-set GLOBAL and CONST bit
-    // which can emit extra type qualifier in array-value 
-    _tid &= ~(GLOBAL | CONST | POINTER);
+void ConstArray::fixValue(ATTR_TYPE _type) {
     for (auto &&value : const_arr) {
-        value->fixValue(_tid);
+        value->fixValue(_type);
     }
 }
 
@@ -23,16 +21,15 @@ ConstArrayPtr ConstArray::CreatePtr(ListTypePtr list_type, ConstArr &_arr) {
 }
 
 std::string ConstArray::tollvmIR() {
-    BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT, ARRAY, CONST | VARIABLE));
-
     std::stringstream ss;
+
     ss << '[';
     size_t size = const_arr.size();
     ss << const_arr[0]->getBaseType()->tollvmIR() << ' ' << const_arr[0]->tollvmIR();
     for (size_t idx = 1; idx < size; ++idx) {
         ss << ", " << const_arr[idx]->getBaseType()->tollvmIR() << ' ' << const_arr[idx]->tollvmIR();
     }
+
     ss << ']';
 
     return ss.str();

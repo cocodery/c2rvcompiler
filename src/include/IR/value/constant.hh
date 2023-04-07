@@ -19,13 +19,13 @@ public:
 
     const ConstType &getValue() const;
 
-    void fixValue(TypeID);
+    void fixValue(ATTR_TYPE);
 
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 
     std::string tollvmIR();
 };
 
-static ConstantPtr zero_int32 = Constant::CreatePtr(ScalarType::CreatePtr(INT   | CONSTANT), static_cast<int32_t>(0));
-static ConstantPtr zero_float = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT | CONSTANT), static_cast<float>(0));
-static ConstantPtr zero_bool  = Constant::CreatePtr(ScalarType::CreatePtr(BOOL  | CONSTANT), static_cast<bool>(0));
+static ConstantPtr zero_int32 = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(INT  , IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<int32_t>(0));
+static ConstantPtr zero_float = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(FLOAT, IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<float>(0));
+static ConstantPtr zero_bool  = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(BOOL , IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<bool>(0));

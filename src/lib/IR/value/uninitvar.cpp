@@ -1,7 +1,9 @@
 #include "uninitvar.hh"
 
-UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
-    assert(_type->checkType(INT | FLOAT, GLOBAL, CONST | VARIABLE));
+UnInitVar::UnInitVar(BaseTypePtr _type) 
+    : BaseValue(_type) {
+    // INT || FLOAT
+    assert(base_type->intType() || base_type->floatType());
 }
 
 UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
@@ -9,15 +11,13 @@ UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
 }
 
 std::string UnInitVar::tollvmIR() {
-    BaseTypePtr base_type = this->getBaseType();
-    assert(base_type->checkType(INT | FLOAT));
-
     std::stringstream ss;
-    if (base_type->ArrayType()) {
+
+    if (!base_type->IsScalar()) {
         ss << "zeroinitializer";
-    } else if (base_type->IntType()) {
+    } else if (base_type->intType()) {
         ss << "0";
-    } else if (base_type->FloatType()) {
+    } else if (base_type->floatType()) {
         ss << "0x0000000000000000";
     } else {
         assert(0);

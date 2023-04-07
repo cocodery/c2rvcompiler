@@ -3,8 +3,11 @@
 size_t GlobalValue::glb_idx = 1;
 
 GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value) 
-    : idx(glb_idx++), init_value(_value), BaseValue(_type) {
-    assert(_type->checkType(INT | FLOAT, POINTER, GLOBAL));
+    : BaseValue(_type), idx(glb_idx++), init_value(_value) {
+    // INT || FLOAT
+    assert(base_type->intType() || base_type->floatType());
+    // GLOBAL
+    assert(base_type->IsGlobal());
 }
 
 BaseValuePtr GlobalValue::getInitValue() {
@@ -15,8 +18,8 @@ GlobalValuePtr GlobalValue::CreatePtr(BaseTypePtr _type, BaseValuePtr _value) {
     return std::make_shared<GlobalValue>(_type, _value);
 }
 
-void GlobalValue::fixValue(TypeID _tid) {
-    this->init_value->fixValue(_tid);
+void GlobalValue::fixValue(ATTR_TYPE _type) {
+    this->init_value->fixValue(_type);
 } 
 
 std::string GlobalValue::tollvmIR() {
