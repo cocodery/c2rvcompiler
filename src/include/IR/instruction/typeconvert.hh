@@ -10,13 +10,15 @@ using SitoFpInstPtr = std::shared_ptr<SitoFpInst>;
 
 class SitoFpInst : public Instruction {
 private:
-    BaseValuePtr fp_value;
+    VariablePtr  fp_value;
     BaseValuePtr si_value;
+
+    static SitoFpInstPtr CreatePtr(VariablePtr, BaseValuePtr);
 public:
-    SitoFpInst(BaseValuePtr, BaseValuePtr);
+    SitoFpInst(VariablePtr, BaseValuePtr);
     ~SitoFpInst() = default;
 
-    static SitoFpInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoSitoFp(BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -26,13 +28,15 @@ using FptoSiInstPtr = std::shared_ptr<FptoSiInst>;
 
 class FptoSiInst : public Instruction {
 private:
-    BaseValuePtr si_value;
+    VariablePtr  si_value;
     BaseValuePtr fp_value;
+
+    static FptoSiInstPtr CreatePtr(VariablePtr, BaseValuePtr);
 public:
-    FptoSiInst(BaseValuePtr, BaseValuePtr);
+    FptoSiInst(VariablePtr, BaseValuePtr);
     ~FptoSiInst() = default;
 
-    static FptoSiInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoFptoSi(ATTR_TYPE, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -42,15 +46,15 @@ using ZextInstPtr = std::shared_ptr<ZextInst>;
 
 class ZextInst : public Instruction {
 private:
-    BaseValuePtr l_value;
+    VariablePtr  l_value;
     BaseValuePtr s_value;
+
+    static ZextInstPtr CreatePtr(VariablePtr, BaseValuePtr);
 public:
-    ZextInst(BaseValuePtr, BaseValuePtr);
+    ZextInst(VariablePtr, BaseValuePtr);
     ~ZextInst() = default;
 
-    static ZextInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoZeroExt(BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
-
-BaseValuePtr scalarTypeConvert(TypeID, BaseValuePtr, BlockPtr);

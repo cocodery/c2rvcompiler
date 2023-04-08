@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../function/basicblock.hh"
 #include "instruction.hh"
 
 class IBinaryInst;
@@ -7,15 +8,17 @@ using IBinaryInstPtr = std::shared_ptr<IBinaryInst>;
 
 class IBinaryInst : public Instruction {
 private:
-    BaseValuePtr i_result;
+    VariablePtr  i_res;
     OpCode       i_op;
     BaseValuePtr i_lhs;
     BaseValuePtr i_rhs;
+
+    static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
 public:
-    IBinaryInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~IBinaryInst() = default;
 
-    static IBinaryInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -25,15 +28,17 @@ using FBinaryInstPtr = std::shared_ptr<FBinaryInst>;
 
 class FBinaryInst : public Instruction {
 private:
-    BaseValuePtr f_result;
+    VariablePtr  f_res;
     OpCode       f_op;
     BaseValuePtr f_lhs;
     BaseValuePtr f_rhs;
+
+    static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
 public:
-    FBinaryInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~FBinaryInst() = default;
 
-    static FBinaryInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };

@@ -4,14 +4,20 @@
 //                     SitoFpInst Implementation
 //===-----------------------------------------------------------===//
 
-SitoFpInst::SitoFpInst(BaseValuePtr _value1, BaseValuePtr _value2)  
+SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2)  
     : fp_value(_value1), si_value(_value2) {
-    assert(_value1->getBaseType()->checkType(FLOAT));
-    assert(_value2->getBaseType()->checkType(BOOL | INT));
+    assert(fp_value->getBaseType()->floatType());
+    assert(si_value->getBaseType()->intType() || si_value->getBaseType()->boolType());
 }
 
-SitoFpInstPtr SitoFpInst::CreatePtr(BaseValuePtr _value1, BaseValuePtr _value2) {
+SitoFpInstPtr SitoFpInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<SitoFpInst>(_value1, _value2);
+}
+
+VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, BlockPtr block) {
+    VariablePtr _fp = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    block->insertInst(CreatePtr(_fp, _si));
+    return _fp;
 }
 
 std::string SitoFpInst::tollvmIR() {
@@ -25,14 +31,20 @@ std::string SitoFpInst::tollvmIR() {
 //                     FptoSiInst Implementation
 //===-----------------------------------------------------------===//
 
-FptoSiInst::FptoSiInst(BaseValuePtr _value1, BaseValuePtr _value2)
+FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2)
     : si_value(_value1), fp_value(_value2) {
-    assert(_value1->getBaseType()->checkType(BOOL | INT));
-    assert(_value2->getBaseType()->checkType(FLOAT));
+    assert(si_value->getBaseType()->intType() || si_value->getBaseType()->boolType());
+    assert(fp_value->getBaseType()->floatType());
 }
 
-FptoSiInstPtr FptoSiInst::CreatePtr(BaseValuePtr _value1, BaseValuePtr _value2) {
+FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<FptoSiInst>(_value1, _value2);
+}
+
+VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, BlockPtr block) {
+    VariablePtr _si = Variable::CreatePtr(ScalarType::CreatePtr(_type, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    block->insertInst(CreatePtr(_si, _fp));
+    return _si;
 }
 
 std::string FptoSiInst::tollvmIR() {
@@ -46,14 +58,20 @@ std::string FptoSiInst::tollvmIR() {
 //                     ZextInst Implementation
 //===-----------------------------------------------------------===//
 
-ZextInst::ZextInst(BaseValuePtr _value1, BaseValuePtr _value2)
+ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2)
     : l_value(_value1), s_value(_value2) {
-    assert(_value1->getBaseType()->checkType(INT));
-    assert(_value2->getBaseType()->checkType(BOOL));
+    assert(_value1->getBaseType()->intType());
+    assert(_value2->getBaseType()->boolType());
 }
 
-ZextInstPtr ZextInst::CreatePtr(BaseValuePtr _value1, BaseValuePtr _value2) {
+ZextInstPtr ZextInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<ZextInst>(_value1, _value2);
+}
+
+VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, BlockPtr block) {
+    VariablePtr _lv = Variable::CreatePtr(ScalarType::CreatePtr(INT, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    block->insertInst(CreatePtr(_lv, _sv));
+    return _lv;
 }
 
 std::string ZextInst::tollvmIR() {
@@ -61,60 +79,4 @@ std::string ZextInst::tollvmIR() {
     ss << l_value->tollvmIR() << " = zext " << s_value->getBaseType()->tollvmIR();
     ss << ' ' << s_value->tollvmIR() << " to " << l_value->getBaseType()->tollvmIR();
     return ss.str();
-}
-
-//===-----------------------------------------------------------===//
-//                     scalarTypeConvert Implementation
-//===-----------------------------------------------------------===//
-
-BaseValuePtr scalarTypeConvert(TypeID tid, BaseValuePtr convertee, BlockPtr block) {
-    assert(!convertee->getBaseType()->checkType(ARRAY));
-    if (convertee->getBaseType()->checkType(POINTER)) {
-        convertee = LoadInst::LoadValuefromMem(convertee, block);
-    }
-    // if ret_type is `VOID`, return nullpre directly
-    if (tid == VOID) {
-        return nullptr;
-    }
-    BaseTypePtr type_convertee = convertee->getBaseType();
-    TypeID tid_convertee = type_convertee->getMaskedType(BOOL | INT | FLOAT);
-    // if tid == tid_convertee, no need to convert
-    if (tid == tid_convertee) {
-        return convertee;
-    }
-    // make sure target type is `BOOL` or `INT` or `FLOAT`
-    assert((tid == BOOL) || (tid == INT) || (tid == FLOAT));
-    // if convertee is `CONSTANT`, use `fixType` to convert
-    if (type_convertee->checkType(INT | FLOAT | BOOL, CONSTANT)) {
-        ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
-        ConstantPtr constant = Constant::CreatePtr(ScalarType::CreatePtr(tid | CONSTANT), constant_convertee->getValue());
-        constant->fixValue(tid);
-        return constant;
-    }
-    // use instruction to convert
-    BaseValuePtr convert_value = Variable::CreatePtr(ScalarType::CreatePtr(tid | VARIABLE));
-    if (tid == FLOAT) {
-        // convert i1 or i32 to float
-        InstPtr sitofp_inst = SitoFpInst::CreatePtr(convert_value, convertee);
-        block->insertInst(sitofp_inst);
-    } else if (tid == INT) {
-        if (tid_convertee == FLOAT) {
-            // convert float to i32
-            InstPtr fptosi_inst = FptoSiInst::CreatePtr(convert_value, convertee);
-            block->insertInst(fptosi_inst);
-        } else if (tid_convertee == BOOL) {
-            // convert i1 to i32
-            InstPtr zext_inst = ZextInst::CreatePtr(convert_value, convertee);
-            block->insertInst(zext_inst);
-        }
-    } else {
-        if (tid_convertee == INT) {
-            InstPtr icmp_inst = ICmpInst::CreatePtr(convert_value, OP_NEQ, convertee, zero_int32);
-            block->insertInst(icmp_inst);
-        } else if (tid_convertee == FLOAT) {
-            InstPtr fcmp_inst = FCmpInst::CreatePtr(convert_value, OP_NEQ, convertee, zero_float);
-            block->insertInst(fcmp_inst);
-        }
-    }
-    return convert_value;
 }

@@ -20,25 +20,6 @@ public:
     std::string tollvmIR();
 };
 
-class CallInst;
-using CallInstPtr = std::shared_ptr<CallInst>;
-using RParamList = std::vector<BaseValuePtr>;
-
-class CallInst : public Instruction {
-private:
-    ScalarTypePtr ret_type;
-    BaseValuePtr ret_value;
-    std::string callee_name;
-    RParamList rparam_list;
-public:
-    CallInst(ScalarTypePtr, BaseValuePtr, std::string &, RParamList &);
-    ~CallInst() = default;
-
-    static CallInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, std::string &, RParamList &);
-
-    std::string tollvmIR();
-};
-
 class JumpInst;
 using JumpInstPtr = std::shared_ptr<JumpInst>;
 

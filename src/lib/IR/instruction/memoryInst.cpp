@@ -15,8 +15,8 @@ AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, BaseValuePtr _addr) 
     return std::make_shared<AllocaInst>(_ty_stored, _addr);
 }
 
-BaseValuePtr AllocaInst::AllocaAddress(BaseTypePtr _ty_stored, BaseTypePtr _ty_alloca, BlockPtr block) {
-    BaseValuePtr _addr = Variable::CreatePtr(_ty_alloca);
+VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_alloca, BlockPtr block) {
+    VariablePtr _addr = Variable::CreatePtr(_ty_alloca);
     block->insertInst(CreatePtr(_ty_stored, _addr));
     return _addr;
 }
@@ -44,10 +44,10 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value) {
     return std::make_shared<StoreInst>(addr, value);
 }
 
-void StoreInst::StoreValue2Mem(BaseValuePtr addr, BaseValuePtr value, BlockPtr block) {
+void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, BlockPtr block) {
     // for store, only two target type, `INT` and `FLOAT`
     if (value->getBaseType()->IsPointer()) {
-        value = LoadInst::LoadValuefromMem(value, block);
+        value = LoadInst::DoLoadValue(value, block);
     }
 
     // BaseValuePtr convertee = scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
@@ -79,9 +79,8 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
     return std::make_shared<LoadInst>(value, addr);
 }
 
-BaseValuePtr LoadInst::LoadValuefromMem(BaseValuePtr addr, BlockPtr block) {
-    ATTR_TYPE attr_type = addr->getBaseType()->getAttrType();
-    BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(attr_type, MUTABLE, NOTPTR, SCALAR, LOCAL));
+BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, BlockPtr block) {
+    BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(addr->getBaseType()->getAttrType(), MUTABLE, NOTPTR, SCALAR, LOCAL));
     block->insertInst(CreatePtr(value, addr));
     return value;
 }
@@ -108,7 +107,7 @@ GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, Ba
     return std::make_shared<GetElementPtrInst>(_ptr ,_type, _addr, _off);
 }
 
-BaseValuePtr GetElementPtrInst::GepFromBaseAddr(BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
+BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
     BaseValuePtr _ptr = Variable::CreatePtr(ScalarType::CreatePtr(_type->getAttrType(), MUTABLE, POINTER, SCALAR, LOCAL));
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
     return _ptr;

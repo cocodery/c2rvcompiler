@@ -17,7 +17,7 @@ public:
     AllocaInst(BaseTypePtr, BaseValuePtr);
     ~AllocaInst() = default;
 
-    static BaseValuePtr AllocaAddress(BaseTypePtr, BaseTypePtr, BlockPtr);
+    static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -35,7 +35,7 @@ public:
     StoreInst(BaseValuePtr, BaseValuePtr);
     ~StoreInst() = default;
 
-    static void StoreValue2Mem(BaseValuePtr, BaseValuePtr, BlockPtr);
+    static void DoStoreValue(BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -53,7 +53,7 @@ public:
     LoadInst(BaseValuePtr, BaseValuePtr);
     ~LoadInst() = default;
 
-    static BaseValuePtr LoadValuefromMem(BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoLoadValue(BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
@@ -73,7 +73,7 @@ public:
     GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, BaseValuePtr);
     ~GetElementPtrInst() = default;
 
-    static BaseValuePtr GepFromBaseAddr(BaseTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };

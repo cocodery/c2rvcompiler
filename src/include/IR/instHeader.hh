@@ -5,3 +5,4 @@
 #include "instruction/binaryOpInst.hh"
 #include "instruction/controlFlowInst.hh"
 #include "instruction/typeconvert.hh"
+#include "instruction/otherInst.hh"

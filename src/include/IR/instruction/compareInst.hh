@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../function/basicblock.hh"
 #include "instruction.hh"
 
 class ICmpInst;
@@ -11,11 +12,13 @@ private:
     OpCode       cond;
     BaseValuePtr lhs;
     BaseValuePtr rhs;
+
+    static ICmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
 public:
     ICmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~ICmpInst() = default;
 
-    static ICmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
     
     std::string tollvmIR();
 };
@@ -29,11 +32,13 @@ private:
     OpCode       cond;
     BaseValuePtr lhs;
     BaseValuePtr rhs;
+
+    static FCmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
 public:
     FCmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~FCmpInst() = default;
 
-    static FCmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
     
     std::string tollvmIR();
 };
