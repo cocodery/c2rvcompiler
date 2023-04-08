@@ -84,5 +84,5 @@ public:
 
     ATTR_SCALAR getAttrScalar() const;
 
-    virtual std::string tollvmIR() { assert(false); };
+    virtual std::string tollvmIR() = 0;
 };

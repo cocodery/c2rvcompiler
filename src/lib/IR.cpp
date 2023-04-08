@@ -30,13 +30,13 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
     for (auto [name, glb_value] : glb_table.getNameValueMap()) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
-        if (type->ConstType() && type->ConstantType()) {
+        if (type->IsImMutable() && type->IsScalar()) {
             llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4"; 
         } else {
             llir << glb_value->tollvmIR() << " = ";
-            if (type->ConstType()) {
+            if (type->IsImMutable()) {
                 llir << "constant ";
-            } else if (type->GlobalType()) {
+            } else if (type->IsGlobal()) {
                 llir << "global ";
             }
             BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();

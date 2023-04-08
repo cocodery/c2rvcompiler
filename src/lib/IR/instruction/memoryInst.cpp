@@ -50,7 +50,7 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, BlockPtr blo
         value = LoadInst::DoLoadValue(value, block);
     }
 
-    // BaseValuePtr convertee = scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
+    BaseValuePtr convertee = Value::scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
     block->insertInst(CreatePtr(addr, value));
 }
 

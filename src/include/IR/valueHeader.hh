@@ -27,4 +27,6 @@ BaseValuePtr unaryOperate(const OpCode, BaseValuePtr, BlockPtr);
 
 BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
 
+BaseValuePtr scalarTypeConvert(ATTR_TYPE, BaseValuePtr, BlockPtr);
+
 }

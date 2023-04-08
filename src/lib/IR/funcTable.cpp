@@ -1,18 +1,18 @@
 #include "funcTable.hh"
 
 FunctionTable::FunctionTable() {
-    libfunc_table.reserve(12);
+    func_table.reserve(12);
 
     ScalarTypePtr ret_type[3];
-    ret_type[0] = ScalarType::CreatePtr(VOID);  // void
-    ret_type[1] = ScalarType::CreatePtr(INT);   // i32
-    ret_type[2] = ScalarType::CreatePtr(FLOAT); // float
+    ret_type[0] = ret_void;  // void
+    ret_type[1] = ret_int;   // i32
+    ret_type[2] = ret_float; // float
 
 
-    VariablePtr i32_param = Variable::CreatePtr(ScalarType::CreatePtr(INT | VARIABLE));
-    VariablePtr float_param = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT | VARIABLE));
-    VariablePtr i32p_param = Variable::CreatePtr(ScalarType::CreatePtr(INT | VARIABLE | POINTER));
-    VariablePtr floatp_param = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT | VARIABLE | POINTER));
+    VariablePtr i32_param    = Variable::CreatePtr(ScalarType::CreatePtr(INT  , MUTABLE, NOTPTR , SCALAR, PARAMETER));
+    VariablePtr float_param  = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, NOTPTR , SCALAR, PARAMETER));
+    VariablePtr i32p_param   = Variable::CreatePtr(ScalarType::CreatePtr(INT  , MUTABLE, POINTER, SCALAR, PARAMETER));
+    VariablePtr floatp_param = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, POINTER, SCALAR, PARAMETER));
     // 0 - no parameters
     ParamList param_list[7];
     // 1 - i32
@@ -49,38 +49,31 @@ FunctionTable::FunctionTable() {
     lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime" , param_list[1]);
     
     for (auto &&func_ptr : lib_func) {
-        libfunc_table.push_back(func_ptr);
+        func_table.push_back(func_ptr);
     }
 }
 
 BaseFuncPtr FunctionTable::getFunction(std::string &name) {
-    for (auto &&usr_func : usrfunc_table) {
-        if (name == usr_func->getFuncName()) {
-            return usr_func;
+    for (auto &&func : func_table) {
+        if (name == func->getFuncName()) {
+            return func;
         }
     }
-    for (auto &&lib_func : libfunc_table) {
-        if (name == lib_func->getFuncName()) {
-            return lib_func;
-        }
-    }
-    assert(false);
+    assert(0);
 }
 
 void FunctionTable::insertFunction(BaseFuncPtr func_ptr) {
-    usrfunc_table.push_back(func_ptr);
+    func_table.push_back(func_ptr);
 }
 
-std::ostream &operator<<(std::ostream &os, FunctionTable func_table) {
-    auto &&usrfunc_table = func_table.usrfunc_table;
-    auto &&libfunc_talbe = func_table.libfunc_table;
-
-    for (auto &&usr_func : usrfunc_table) {
-        os << usr_func << endl;
+std::ostream &operator<<(std::ostream &os, FunctionTable _func_table) {
+    constexpr size_t lib_func = 12;
+    auto &&_table = _func_table.func_table;
+    for (size_t idx = lib_func; idx < _table.size(); ++idx) {
+        os << _table[idx] << endl;
     }
-    for (auto &&lib_func : libfunc_talbe) {
-        os << lib_func << endl;
+    for (size_t idx = 0; idx < lib_func; ++idx) {
+        os << _table[idx] << endl;
     }
-
     return os;
 }

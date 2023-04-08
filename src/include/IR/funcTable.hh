@@ -8,8 +8,7 @@ using FuncMap = std::vector<BaseFuncPtr>;
 
 class FunctionTable {
 private:
-    FuncMap libfunc_table;
-    FuncMap usrfunc_table;
+    FuncMap func_table;
 public:
     FunctionTable();
 
