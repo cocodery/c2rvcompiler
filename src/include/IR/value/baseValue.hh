@@ -19,6 +19,8 @@ public:
 
     BaseTypePtr getBaseType();
 
+    bool isBinaryOprand();
+
     virtual void fixValue(ATTR_TYPE) = 0;
 
     virtual std::string tollvmIR() = 0;

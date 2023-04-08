@@ -1,7 +1,7 @@
 #include "listType.hh"
 
-ListType::ListType(BaseType _type, ArrDims &_dims) 
-    : BaseType(_type), dims(_dims) {
+ListType::ListType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position, ArrDims &_dims) 
+    : BaseType(_type, _mutable, _pointer, _scalar, _position), dims(_dims) {
     // INT || FLOAT
     assert(intType() || floatType());
     // ARRAY
@@ -20,8 +20,8 @@ ArrDims ListType::getDimArray() const {
     return this->dims;
 }
 
-ListTypePtr ListType::CreatePtr(BaseType _type, ArrDims &_dims) {
-    return std::make_shared<ListType>(_type, _dims);
+ListTypePtr ListType::CreatePtr(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position, ArrDims &_dims) {
+    return std::make_shared<ListType>(_type, _mutable, _pointer, _scalar, _position, _dims);
 }
 
 std::string ListType::tollvmIR() {
@@ -33,6 +33,7 @@ std::string ListType::tollvmIR() {
         case FLOAT: ss << "float"; break;
         default: assert(0); break;
     }
+    ss << ']';
     if (attr_pointer == POINTER) {
         ss << "*";
     }

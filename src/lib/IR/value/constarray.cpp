@@ -4,8 +4,8 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr)
     : BaseValue(list_type), const_arr(_arr) {
     // INT || FLOAT
     assert(base_type->intType() || base_type->floatType());
-    // Array, Immutable, NotPtr
-    assert(base_type->isArray() && base_type->IsImMutable() && !base_type->IsNotPtr());
+    // Immutable, NotPtr
+    assert(base_type->IsNotPtr() && base_type->isArray());
     // capacity == arr_size 
     assert(const_arr.size() == list_type->getArrDims());
 }

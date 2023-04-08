@@ -6,6 +6,8 @@ Variable::Variable(BaseTypePtr _type)
     : BaseValue(_type), idx(var_idx++) {
     // attr_type != VOID, Mutable
     assert(!base_type->voidType() && base_type->IsMutable());
+    // PARAMETER or LOCAL
+    assert(base_type->IsParameter() || base_type->IsLocal());
 }
 
 void Variable::resetVarIdx() {

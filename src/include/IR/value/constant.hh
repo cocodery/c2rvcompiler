@@ -26,6 +26,6 @@ public:
     std::string tollvmIR();
 };
 
-static ConstantPtr zero_int32 = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(INT  , IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<int32_t>(0));
-static ConstantPtr zero_float = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(FLOAT, IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<float>(0));
-static ConstantPtr zero_bool  = Constant::CreatePtr(ScalarType::CreatePtr(BaseType(BOOL , IMMUTABLE, NOTPTR, SCALAR, NONE4)), static_cast<bool>(0));
+static ConstantPtr zero_int32 = Constant::CreatePtr(ScalarType::CreatePtr(INT  , IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(0));
+static ConstantPtr zero_float = Constant::CreatePtr(ScalarType::CreatePtr(FLOAT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<float>(0));
+static ConstantPtr zero_bool  = Constant::CreatePtr(ScalarType::CreatePtr(BOOL , IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<bool>(0));

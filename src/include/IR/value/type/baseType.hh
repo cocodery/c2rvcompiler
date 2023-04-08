@@ -56,7 +56,6 @@ protected:
 
 public:
     BaseType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION);
-    BaseType(const BaseType &);
     ~BaseType() = default;
 
     bool voidType()     const;
@@ -78,7 +77,12 @@ public:
     bool IsParameter()  const;
     bool IsGlobal()     const;
 
+    ATTR_TYPE getAttrType() const;
     void resetAttrType(ATTR_TYPE);
+
+    ATTR_MUTABLE getAttrMutable() const;
+
+    ATTR_SCALAR getAttrScalar() const;
 
     virtual std::string tollvmIR() { assert(false); };
 };

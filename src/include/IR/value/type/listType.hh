@@ -12,13 +12,13 @@ class ListType : public BaseType {
 private:
     ArrDims dims;
 public:
-    ListType(BaseType, ArrDims &);
+    ListType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 
     size_t getArrDims() const;
 
     ArrDims getDimArray() const;
 
-    static ListTypePtr CreatePtr(BaseType, ArrDims &);
+    static ListTypePtr CreatePtr(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 
     std::string tollvmIR();
 };

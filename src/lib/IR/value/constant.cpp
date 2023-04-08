@@ -4,8 +4,8 @@ Constant::Constant(ScalarTypePtr _type, ConstType _value)
     : BaseValue(_type), value(_value) {
     // BOOL || INT || FLOAT
     assert(base_type->boolType() || base_type->intType() || base_type->floatType());
-    // Immutable, Scalar
-    assert(base_type->IsImMutable() && base_type->IsScalar());
+    // Immutable, NotPtr, Scalar
+    assert(base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
 }
 
 const ConstType &Constant::getValue() const {

@@ -4,6 +4,8 @@ UnInitVar::UnInitVar(BaseTypePtr _type)
     : BaseValue(_type) {
     // INT || FLOAT
     assert(base_type->intType() || base_type->floatType());
+    // MUTABLE, NOTPTR, GLOBAL
+    assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());
 }
 
 UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {

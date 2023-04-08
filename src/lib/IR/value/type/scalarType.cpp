@@ -1,12 +1,12 @@
 #include "scalarType.hh"
 
-ScalarType::ScalarType(BaseType _type) 
-    : BaseType(_type) {
+ScalarType::ScalarType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position)
+    : BaseType(_type, _mutable, _pointer, _scalar, _position) {
     // no need to check for ScalarType
 }
 
-ScalarTypePtr ScalarType::CreatePtr(BaseType _type) {
-    return std::make_shared<ScalarType>(_type);
+ScalarTypePtr ScalarType::CreatePtr(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position) {
+    return std::make_shared<ScalarType>(_type, _mutable, _pointer, _scalar, _position);
 }
 
 std::string ScalarType::tollvmIR() {
@@ -20,7 +20,7 @@ std::string ScalarType::tollvmIR() {
         case FLOAT: ss << "float"; break;
         default: assert(0); break;
     }
-    if (attr_pointer == POINTER) {
+    if (IsPointer()) {
         ss << "*";
     }
 
