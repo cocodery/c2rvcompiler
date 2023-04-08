@@ -16,6 +16,17 @@ size_t ListType::getArrDims() const {
     return size;
 }
 
+ArrDims ListType::getDimSize() const {
+    ArrDims ret;
+    size_t size = 1;
+    for (size_t idx = dims.size() - 1; idx < dims.size(); --idx) {
+        ret.push_back(size);
+        size *= dims[idx];
+    }
+    std::sort(ret.rbegin(), ret.rend());
+    return ret;
+}
+
 ArrDims ListType::getDimArray() const {
     return this->dims;
 }

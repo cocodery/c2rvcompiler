@@ -15,8 +15,6 @@
 
 namespace Value {
 
-bool isConstant(BaseValuePtr);
-
 bool bothConstant(BaseValuePtr, BaseValuePtr);
 
 BaseValuePtr unaryOperate(const OpCode, const ConstantPtr);

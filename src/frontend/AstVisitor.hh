@@ -23,9 +23,9 @@ private:
     VariablePtr ret_addr;
     BlockPtr ret_block;
 
-    bool in_function;
-
-    TypeID cur_type;
+    ATTR_TYPE cur_type;
+    ATTR_POSITION cur_position;
+    
     BlockPtr cur_block;
 
     NormalFuncPtr cur_func;
@@ -45,8 +45,12 @@ private:
     using BranchInstList = std::list<BranchInstPtr>;
     BranchInstList lOr_list;
     BranchInstList lAnd_list;
+
+    using AddrTypeMap = std::unordered_map<BaseValuePtr, ListTypePtr>;
+    AddrTypeMap addrTypeTable;
 public:
     AstVisitor(CompilationUnit &);
+    ~AstVisitor() = default;
     
     virtual antlrcpp::Any visitCompilationUnit(SysYParser::CompilationUnitContext *ctx) override;
 // override anltr parsing function
@@ -179,6 +183,4 @@ private:
     SymbolTable *initParamList(BlockPtr, SymbolTable *, std::vector<std::string>);
 
     void parseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, BlockPtr);
-
-    void temp(SysYParser::ListInitvalContext *, ArrDims, ListTypePtr, BaseValuePtr, BlockPtr);
 };

@@ -1,12 +1,7 @@
 #include "valueHeader.hh"
 
-bool Value::isConstant(BaseValuePtr value) {
-    BaseTypePtr base_type = value->getBaseType();
-    return (!base_type->voidType() && base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
-}
-
 bool Value::bothConstant(BaseValuePtr lhs, BaseValuePtr rhs) {
-    return isConstant(lhs) && isConstant(rhs);
+    return lhs->isConstant() && rhs->isConstant();
 }
 
 // Constant do unaryOperate
@@ -87,7 +82,7 @@ BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr 
     }
     if (op == OP_ADD) return oprand;
 
-    if (isConstant(oprand)) {
+    if (oprand->isConstant()) {
         return unaryOperate(op, std::static_pointer_cast<Constant>(oprand));
     } else {
         ATTR_TYPE _type = oprand->getBaseType()->getAttrType();
@@ -178,7 +173,7 @@ BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
         return convertee;
     }
     // if convertee is `CONSTANT`, use `fixType` to convert
-    if (isConstant(convertee)) {
+    if (convertee->isConstant()) {
         ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
         ConstantPtr constant = Constant::CreatePtr(ScalarType::CreatePtr(type_convertee, IMMUTABLE, NOTPTR, SCALAR, NONE4), constant_convertee->getValue());
         constant->fixValue(type_convert);

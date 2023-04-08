@@ -43,3 +43,33 @@ std::string CallInst::tollvmIR() {
     ss << ")";
     return ss.str();
 }
+
+//===-----------------------------------------------------------===//
+//                     BitCastInst Implementation
+//===-----------------------------------------------------------===//
+
+BitCastInst::BitCastInst(BaseValuePtr _res, BaseValuePtr _opr)
+    : result(_res), oprand(_opr) {
+    assert(result->getBaseType()->charType() && result->getBaseType()->IsPointer());
+    assert((oprand->getBaseType()->intType() || oprand->getBaseType()->floatType()) && result->getBaseType()->IsPointer());
+}
+
+BitCastInstPtr BitCastInst::CreatePtr(BaseValuePtr _res, BaseValuePtr _opr) {
+    return std::make_shared<BitCastInst>(_res, _opr);
+}
+
+BaseValuePtr BitCastInst::DoBitCast(BaseValuePtr _opr, BlockPtr block) {
+    BaseValuePtr _res = Variable::CreatePtr(ScalarType::CreatePtr(CHAR, MUTABLE, POINTER, SCALAR, LOCAL));
+    block->insertInst(CreatePtr(_res, _opr));
+    return _res;
+}
+
+std::string BitCastInst::tollvmIR() {
+    std::stringstream ss;
+
+    ss << result->tollvmIR() << " = bitcast ";
+    ss << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
+    ss << " to " << result->getBaseType()->tollvmIR();
+
+    return ss.str();
+}

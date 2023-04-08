@@ -24,3 +24,21 @@ public:
 
     std::string tollvmIR();
 };
+
+class BitCastInst;
+using BitCastInstPtr = std::shared_ptr<BitCastInst>;
+
+class BitCastInst : public Instruction {
+private:
+    BaseValuePtr result;
+    BaseValuePtr oprand;
+
+    static BitCastInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+public:
+    BitCastInst(BaseValuePtr, BaseValuePtr);
+    ~BitCastInst() = default;
+
+    static BaseValuePtr DoBitCast(BaseValuePtr, BlockPtr);
+
+    std::string tollvmIR();
+};
