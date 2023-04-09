@@ -21,5 +21,3 @@ public:
 
     void insertSymbol(std::string &, BaseValuePtr);
 };
-
-using SymTableList = std::vector<SymbolTable *>;

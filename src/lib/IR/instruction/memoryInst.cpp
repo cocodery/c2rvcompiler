@@ -49,9 +49,8 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, BlockPtr blo
     if (value->getBaseType()->IsPointer()) {
         value = LoadInst::DoLoadValue(value, block);
     }
-
     BaseValuePtr convertee = Value::scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
-    block->insertInst(CreatePtr(addr, value));
+    block->insertInst(CreatePtr(addr, convertee));
 }
 
 std::string StoreInst::tollvmIR() {
@@ -80,6 +79,7 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
 }
 
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, BlockPtr block) {
+    assert(addr->getBaseType()->IsPointer() && addr->getBaseType()->IsScalar());
     BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(addr->getBaseType()->getAttrType(), MUTABLE, NOTPTR, SCALAR, LOCAL));
     block->insertInst(CreatePtr(value, addr));
     return value;
@@ -93,21 +93,24 @@ std::string LoadInst::tollvmIR() {
     return ss.str();
 }
 
-GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off)
+//===-----------------------------------------------------------===//
+//                     GetElementPtrInst Implementation
+//===-----------------------------------------------------------===//
+
+GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off)
     : target_ptr(_ptr), base_type(_type), base_addr(_addr), offset(_off) {
     assert(target_ptr->getBaseType()->getAttrType() == base_addr->getBaseType()->getAttrType());
     assert(base_type->isArray());
-    assert(base_addr->getBaseType()->isArray());
-    ListTypePtr list1 = std::static_pointer_cast<ListType>(_type);
-    ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->getBaseType());
-    assert(list1->getArrDims() == list2->getArrDims());
+    assert(base_addr->getBaseType()->isArray() && base_addr->getBaseType()->IsPointer());
+    ListTypePtr list = std::static_pointer_cast<ListType>(base_addr->getBaseType());
+    assert(base_type->getArrDims() == list->getArrDims());
 }
 
-GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off) {
+GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off) {
     return std::make_shared<GetElementPtrInst>(_ptr ,_type, _addr, _off);
 }
 
-BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
+BaseValuePtr GetElementPtrInst::DoGetPointer(ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
     BaseValuePtr _ptr = Variable::CreatePtr(ScalarType::CreatePtr(_type->getAttrType(), MUTABLE, POINTER, SCALAR, LOCAL));
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
     return _ptr;

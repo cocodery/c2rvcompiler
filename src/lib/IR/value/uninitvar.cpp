@@ -15,7 +15,7 @@ UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
 std::string UnInitVar::tollvmIR() {
     std::stringstream ss;
 
-    if (!base_type->IsScalar()) {
+    if (base_type->isArray()) {
         ss << "zeroinitializer";
     } else if (base_type->intType()) {
         ss << "0";

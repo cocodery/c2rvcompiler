@@ -30,7 +30,8 @@ private:
 
     NormalFuncPtr cur_func;
     BaseFuncPtr callee_func;
-    
+
+    using SymTableList = std::list<SymbolTable *>;
     SymbolTable *cur_table;
     SymTableList table_list;
 

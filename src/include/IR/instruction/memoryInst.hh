@@ -64,16 +64,16 @@ using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
 class GetElementPtrInst : public Instruction {
 private:
     BaseValuePtr target_ptr;
-    BaseTypePtr  base_type;
+    ListTypePtr  base_type;
     BaseValuePtr base_addr;
     BaseValuePtr offset;
 
-    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, BaseValuePtr);
+    static GepInstPtr CreatePtr(BaseValuePtr, ListTypePtr, BaseValuePtr, BaseValuePtr);
 public:
-    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, BaseValuePtr);
+    GetElementPtrInst(BaseValuePtr, ListTypePtr, BaseValuePtr, BaseValuePtr);
     ~GetElementPtrInst() = default;
 
-    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoGetPointer(ListTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
 
     std::string tollvmIR();
 };
