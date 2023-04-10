@@ -331,7 +331,6 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     lAnd_list.clear();
     lOr_list.clear();
     return_list.clear();
-    addrTypeTable.clear();
 
     return nullptr;
 }
