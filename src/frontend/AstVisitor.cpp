@@ -57,6 +57,9 @@ BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_
 AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     have_main_func = false;
 
+    in_loop = false;
+    out_loop_block = nullptr;
+
     ret_addr  = nullptr;
     ret_block = nullptr;
 
@@ -215,7 +218,7 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
         } else {
-            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, cur_block);
+            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
         }
     } else {
         ArrDims &&arr_dims = getArrDims(dims_vec);
@@ -224,7 +227,7 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
         } else {
-            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, cur_block);
+            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
         }
         addrTypeTable[address] = ty_stored;
     }
@@ -249,7 +252,7 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, init_val->accept(this).as<BaseValuePtr>());
         } else {
-            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, cur_block);
+            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
             StoreInst::DoStoreValue(address, init_val->accept(this).as<BaseValuePtr>(), cur_block);
         }
     } else {
@@ -264,7 +267,7 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
                     > (dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, this);
             address = GlobalValue::CreatePtr(ty_alloca, init_value);
         } else {
-            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, cur_block);
+            address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
             parseLocalListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, address, cur_block);
         }
         addrTypeTable[address] = ty_stored;
@@ -475,10 +478,16 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
+    bool last_in_loop = in_loop;
+    if (last_in_loop == false) {
+        out_loop_block = cur_block;
+    }
+    in_loop = true;
+
+    BlockPtr block_before_cond = cur_block;
     BlockPtr cond_block_begin = cur_func->createBB();
     BlockPtr last_target_continue = target_continue;
     target_continue = cond_block_begin;
-    cur_block->insertInst(JumpInst::CreatePtr(cond_block_begin));
 
     BreakInstList last_break_list = break_list;
     break_list = BreakInstList();
@@ -496,6 +505,7 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     BlockPtr loop_begin = cur_func->createBB();
     cur_block = loop_begin;
     ctx->stmt()->accept(this);
+    block_before_cond->insertInst(JumpInst::CreatePtr(cond_block_begin));
     BlockPtr loop_end = cur_block;
 
     loop_end->insertInst(JumpInst::CreatePtr(cond_block_begin));
@@ -521,6 +531,7 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     target_continue = last_target_continue;
     cur_table = last_table;
     cur_block = loop_exit;
+    in_loop = last_in_loop;
 
     return nullptr;
 }
