@@ -60,20 +60,21 @@ public:
 
 class GetElementPtrInst;
 using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
+using OffsetList = std::list<BaseValuePtr>;
 
 class GetElementPtrInst : public Instruction {
 private:
     BaseValuePtr target_ptr;
-    ListTypePtr  base_type;
+    BaseTypePtr  store_type;
     BaseValuePtr base_addr;
-    BaseValuePtr offset;
+    OffsetList   offset_list;
 
-    static GepInstPtr CreatePtr(BaseValuePtr, ListTypePtr, BaseValuePtr, BaseValuePtr);
+    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
 public:
-    GetElementPtrInst(BaseValuePtr, ListTypePtr, BaseValuePtr, BaseValuePtr);
+    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
     ~GetElementPtrInst() = default;
 
-    static BaseValuePtr DoGetPointer(ListTypePtr, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, BlockPtr);
 
     std::string tollvmIR();
 };

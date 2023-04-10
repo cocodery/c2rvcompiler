@@ -71,7 +71,7 @@ public:
     bool IsNotPtr()     const;
 
     bool IsScalar()     const;
-    bool isArray()      const;
+    bool IsArray()      const;
 
     bool IsLocal()      const;
     bool IsParameter()  const;

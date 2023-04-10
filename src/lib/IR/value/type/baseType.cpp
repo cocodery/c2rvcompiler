@@ -17,7 +17,7 @@ bool BaseType::IsPointer()  const { return (attr_pointer == POINTER); }
 bool BaseType::IsNotPtr()   const { return (attr_pointer == NOTPTR); }
 
 bool BaseType::IsScalar()   const { return (attr_scalar == SCALAR); }
-bool BaseType::isArray()    const { return (attr_scalar == ARRAY); }
+bool BaseType::IsArray()    const { return (attr_scalar == ARRAY); }
 
 bool BaseType::IsLocal()    const { return (attr_position == LOCAL); }
 bool BaseType::IsParameter()const { return (attr_position == PARAMETER); }

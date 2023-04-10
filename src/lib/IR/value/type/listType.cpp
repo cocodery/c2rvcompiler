@@ -5,7 +5,7 @@ ListType::ListType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer
     // INT || FLOAT
     assert(intType() || floatType());
     // ARRAY
-    assert(isArray());
+    assert(IsArray());
 }
 
 size_t ListType::getArrDims() const {

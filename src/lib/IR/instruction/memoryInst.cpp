@@ -97,20 +97,16 @@ std::string LoadInst::tollvmIR() {
 //                     GetElementPtrInst Implementation
 //===-----------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off)
-    : target_ptr(_ptr), base_type(_type), base_addr(_addr), offset(_off) {
+GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off)
+    : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off) {
     assert(target_ptr->getBaseType()->getAttrType() == base_addr->getBaseType()->getAttrType());
-    assert(base_type->isArray());
-    assert(base_addr->getBaseType()->isArray() && base_addr->getBaseType()->IsPointer());
-    ListTypePtr list = std::static_pointer_cast<ListType>(base_addr->getBaseType());
-    assert(base_type->getArrDims() == list->getArrDims());
 }
 
-GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off) {
+GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off) {
     return std::make_shared<GetElementPtrInst>(_ptr ,_type, _addr, _off);
 }
 
-BaseValuePtr GetElementPtrInst::DoGetPointer(ListTypePtr _type, BaseValuePtr _addr, BaseValuePtr _off, BlockPtr block) {
+BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, BlockPtr block) {
     BaseValuePtr _ptr = Variable::CreatePtr(ScalarType::CreatePtr(_type->getAttrType(), MUTABLE, POINTER, SCALAR, LOCAL));
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
     return _ptr;
@@ -118,8 +114,10 @@ BaseValuePtr GetElementPtrInst::DoGetPointer(ListTypePtr _type, BaseValuePtr _ad
 
 std::string GetElementPtrInst::tollvmIR() {
     std::stringstream ss;
-    ss << target_ptr->tollvmIR() << " = getelementptr inbounds " << base_type->tollvmIR();
+    ss << target_ptr->tollvmIR() << " = getelementptr inbounds " << store_type->tollvmIR();
     ss << ", " << base_addr->getBaseType()->tollvmIR() << ' ' << base_addr->tollvmIR();
-    ss << ", i32 0, " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
+    for (auto &&offset : offset_list) {
+        ss << ", " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
+    }
     return ss.str();
 }

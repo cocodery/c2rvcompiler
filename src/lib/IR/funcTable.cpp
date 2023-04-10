@@ -3,10 +3,8 @@
 FunctionTable::FunctionTable() {
     func_table.reserve(12);
 
-    ScalarTypePtr ret_type[3];
-    ret_type[0] = ret_void;  // void
-    ret_type[1] = ret_int;   // i32
-    ret_type[2] = ret_float; // float
+    // void, i32, float
+    ScalarTypePtr ret_type[3] = { type_void, type_int, type_float};
 
 
     VariablePtr i32_param    = Variable::CreatePtr(ScalarType::CreatePtr(INT  , MUTABLE, NOTPTR , SCALAR, PARAMETER));
