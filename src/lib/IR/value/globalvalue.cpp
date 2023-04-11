@@ -5,7 +5,9 @@ size_t GlobalValue::glb_idx = 1;
 GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value) 
     : BaseValue(_type), idx(glb_idx++), init_value(_value) {
     // INT || FLOAT
-    assert(base_type->getAttrType()    == init_value->getBaseType()->getAttrType());
+    if (base_type->getAttrType() != init_value->getBaseType()->getAttrType()) {
+        init_value->fixValue(base_type->getAttrType());
+    }
     // GLOBAL, POINTER
     assert(base_type->IsGlobal() && base_type->IsPointer());
     assert(base_type->getAttrScalar()  == init_value->getBaseType()->getAttrScalar());
