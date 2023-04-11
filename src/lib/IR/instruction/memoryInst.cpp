@@ -99,7 +99,17 @@ std::string LoadInst::tollvmIR() {
 
 GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off)
     : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off) {
+    assert(target_ptr->getBaseType()->getAttrType() == store_type->getAttrType());
     assert(target_ptr->getBaseType()->getAttrType() == base_addr->getBaseType()->getAttrType());
+    assert(store_type->IsNotPtr() && base_addr->getBaseType()->IsPointer());
+    if (store_type->IsScalar()) {
+        assert(offset_list.size() == 1);
+    } else {
+        ListTypePtr list1 = std::static_pointer_cast<ListType>(store_type);
+        ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->getBaseType());
+        assert(list1->getArrDims() == list2->getArrDims());
+        assert(offset_list.size() == 2);
+    }
 }
 
 GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off) {
