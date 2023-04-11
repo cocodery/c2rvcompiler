@@ -19,12 +19,13 @@ BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_
     const_arr.reserve(list_type->getArrDims());
 
     ConstantPtr zero = (list_type->intType()) ? zero_int32 : zero_float;
+    ArrDims dim_size = list_type->getDimSize();
 
-    std::function<void(_ListType *, const ArrDims &, ConstArr &)> 
-        function = [&](_ListType *node, const ArrDims &arr_dims, ConstArr &const_arr) {
+    std::function<void(_ListType *, const ArrDims &, ConstArr &, size_t)> 
+        function = [&](_ListType *node, const ArrDims &arr_dims, ConstArr &const_arr, size_t level) {
         size_t total_size = 1;
-        for (auto &&dim : arr_dims) {
-            total_size *= dim;
+        for (size_t idx = level; idx < arr_dims.size(); ++idx) {
+            total_size *= arr_dims[idx];
         }
         if (total_size == 0) return;
         size_t cnt = 0;
@@ -35,10 +36,19 @@ BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_
                 ++cnt;
             } else {
                 ArrDims child_dims = arr_dims;
-                child_dims.erase(child_dims.begin());
+                if (cnt > 0) {
+                    size_t new_level = 0;
+                    for (; new_level < dim_size.size(); ++new_level) {
+                        if (new_level == dim_size.size() - 1) assert(0);
+                        if (cnt % dim_size[new_level] == 0) break;
+                    }
+                    level = new_level + 1;
+                } else {
+                    level += 1;
+                }
                 auto &&list_node = dynamic_cast<_ListType *>(child);
-                function(list_node, child_dims, const_arr);
-                cnt += total_size / arr_dims[0];
+                function(list_node, child_dims, const_arr, level);
+                cnt += dim_size[level - 1];
             }
         }
         while (cnt < total_size) {
@@ -47,7 +57,7 @@ BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_
         }
         return;
     };
-    function(node, list_type->getDimArray(), const_arr);
+    function(node, list_type->getDimArray(), const_arr, 0);
 
     return ConstArray::CreatePtr(list_type, const_arr);
 }
@@ -918,18 +928,17 @@ SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent
     return new_table;
 }
 
-void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr base_type, BaseValuePtr base_addr, BlockPtr cur_block) {
-    ArrDims arr_dims = base_type->getDimArray();
+void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr, BlockPtr cur_block) {
+    ATTR_TYPE _type = list_type->getAttrType();
 
-    int32_t idx_offset = 0;
-    ATTR_TYPE _type = base_type->getAttrType();
     ConstantPtr zero = (_type == INT) ? zero_int32 : zero_float;
+    ArrDims dim_size = list_type->getDimSize();
 
-    std::function<void(SysYParser::ListInitvalContext *, ArrDims &, int32_t)> 
-        function = [&](SysYParser::ListInitvalContext *node, ArrDims &arr_dims, int32_t idx_offset) {
+    std::function<void(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> 
+        function = [&](SysYParser::ListInitvalContext *node, const ArrDims &arr_dims, size_t idx_offset, size_t level) {
         size_t total_size = 1;
-        for (auto &&dim : arr_dims) {
-            total_size *= dim;
+        for (size_t idx = level; idx < arr_dims.size(); ++idx) {
+            total_size *= arr_dims[idx];
         }
         if (total_size == 0) return;
         size_t cnt = 0;
@@ -938,31 +947,41 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                 ConstantPtr offset = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(idx_offset));
                 OffsetList off_list = OffsetList(1, zero_int32);
                 off_list.push_back(offset);
-                BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(base_type, base_addr, off_list, cur_block);
+                BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
                 BaseValuePtr value = Value::scalarTypeConvert(_type, scalar_node->exp()->accept(this).as<BaseValuePtr>(), cur_block);
                 StoreInst::DoStoreValue(store_addr, value, cur_block);
                 ++cnt;
                 ++idx_offset;
             } else {
                 ArrDims child_dims = arr_dims;
-                child_dims.erase(child_dims.begin());
+                if (cnt > 0) {
+                    size_t new_level = 0;
+                    for (; new_level < dim_size.size(); ++new_level) {
+                        if (new_level == dim_size.size() - 1) assert(0);
+                        if (cnt % dim_size[new_level] == 0) break;
+                    }
+                    level = new_level + 1;
+                } else {
+                    level += 1;
+                }
                 auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
-                function(list_node, child_dims, idx_offset);
-                cnt += total_size / arr_dims[0];
-                idx_offset += total_size / arr_dims[0];
+                function(list_node, child_dims, idx_offset, level);
+                cnt += dim_size[level - 1];
+                idx_offset += dim_size[level - 1];
             }
         }
         while (cnt < total_size) {
-            ConstantPtr offset = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(idx_offset));
             OffsetList off_list = OffsetList(1, zero_int32);
+            ConstantPtr offset = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(idx_offset));
             off_list.push_back(offset);
-            BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(base_type, base_addr, off_list, cur_block);
+            BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
             StoreInst::DoStoreValue(store_addr, zero, cur_block);
             ++cnt;
             ++idx_offset;
         }
         return;
     };
+    function(ctx, list_type->getDimArray(), 0, 0);
 
-    function(ctx, arr_dims, idx_offset);
+    return;
 }
