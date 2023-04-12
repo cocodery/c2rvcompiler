@@ -19,9 +19,9 @@ public:
 
     BaseTypePtr getBaseType();
 
-    bool isConstant();
-
     bool isBinaryOprand();
+
+    virtual bool isConstant() = 0;
 
     virtual void fixValue(ATTR_TYPE) = 0;
 

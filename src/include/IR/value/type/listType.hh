@@ -14,11 +14,11 @@ private:
 public:
     ListType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 
-    size_t getArrDims() const;
+    size_t getArrSize() const;
 
     ArrDims getDimSize() const;
 
-    ArrDims getDimArray() const;
+    ArrDims getArrDims() const;
 
     static ListTypePtr CreatePtr(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 

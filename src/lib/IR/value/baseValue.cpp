@@ -10,10 +10,6 @@ BaseTypePtr BaseValue::getBaseType() {
     return this->base_type;
 }
 
-bool BaseValue::isConstant() {
-    return (!base_type->voidType() && base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
-}
-
 bool BaseValue::isBinaryOprand() {
     return (!base_type->voidType() && base_type->IsNotPtr() && base_type->IsScalar());
 }

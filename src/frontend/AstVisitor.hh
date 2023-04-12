@@ -7,7 +7,6 @@
 #include <cstdio>
 
 #include "SysYBaseVisitor.h"
-#include "SupportFile.hh"
 #include "IR.hh"
 
 using std::cout;
@@ -175,9 +174,6 @@ private:
     
 // support function to parse
     ArrDims getArrDims(std::vector<SysYParser::ConstExpContext *> &);
-
-    [[ deprecated ]] BaseValuePtr parseConstListInit(SysYParser::ListConstInitValContext *, ArrDims &);
-    [[ deprecated ]] BaseValuePtr parseGlbVarListInit(SysYParser::ListInitvalContext *, ArrDims &);
 
     SymbolTable *newLocalTable(SymbolTable *);
     void clearTableList();

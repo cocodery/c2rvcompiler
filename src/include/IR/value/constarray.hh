@@ -18,6 +18,8 @@ public:
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;
 
+    bool isConstant() { return false; } ;
+
     void fixValue(ATTR_TYPE);
 
     static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);

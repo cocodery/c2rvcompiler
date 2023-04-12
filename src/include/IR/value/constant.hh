@@ -19,6 +19,8 @@ public:
 
     const ConstType &getValue() const;
 
+    bool isConstant() { return true; } ;
+
     void fixValue(ATTR_TYPE);
 
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);

@@ -16,7 +16,7 @@ std::vector<_Type *> getInitVal(_ListType *list) {
 template <typename _Type, typename _ListType, typename _ScalarType>
 BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_this) {
     ConstArr const_arr;
-    const_arr.reserve(list_type->getArrDims());
+    const_arr.reserve(list_type->getArrSize());
 
     ConstantPtr zero = (list_type->intType()) ? zero_int32 : zero_float;
     ArrDims dim_size = list_type->getDimSize();
@@ -57,7 +57,7 @@ BaseValuePtr parseListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_
         }
         return;
     };
-    function(node, list_type->getDimArray(), const_arr, 0);
+    function(node, list_type->getArrDims(), const_arr, 0);
 
     return ConstArray::CreatePtr(list_type, const_arr);
 }
@@ -872,8 +872,8 @@ antlrcpp::Any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
 ArrDims AstVisitor::getArrDims(std::vector<SysYParser::ConstExpContext *> &constExpVec) {
     ArrDims arr_dims;
     for (auto &&const_exp : constExpVec) {
-        BaseValuePtr base_value = const_exp->accept(this).as<BaseValuePtr>();
-        ConstantPtr constant = std::dynamic_pointer_cast<Constant>(base_value);
+        BaseValuePtr value = const_exp->accept(this).as<BaseValuePtr>();
+        ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
         constant->fixValue(INT);
         arr_dims.push_back(std::get<int32_t>(constant->getValue()));
     }
@@ -981,7 +981,7 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
         }
         return;
     };
-    function(ctx, list_type->getDimArray(), 0, 0);
+    function(ctx, list_type->getArrDims(), 0, 0);
 
     return;
 }

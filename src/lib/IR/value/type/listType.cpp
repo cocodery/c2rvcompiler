@@ -8,7 +8,7 @@ ListType::ListType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer
     assert(IsArray());
 }
 
-size_t ListType::getArrDims() const {
+size_t ListType::getArrSize() const {
     size_t size = 1;
     for (auto &&dim : dims) {
         size *= dim;
@@ -27,7 +27,7 @@ ArrDims ListType::getDimSize() const {
     return ret;
 }
 
-ArrDims ListType::getDimArray() const {
+ArrDims ListType::getArrDims() const {
     return this->dims;
 }
 
@@ -38,7 +38,7 @@ ListTypePtr ListType::CreatePtr(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POI
 std::string ListType::tollvmIR() {
     std::stringstream ss;
 
-    ss << '[' << getArrDims() << " x ";
+    ss << '[' << getArrSize() << " x ";
     switch (attr_type) {
         case INT  : ss << "i32"  ; break;
         case FLOAT: ss << "float"; break;

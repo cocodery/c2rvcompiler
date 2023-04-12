@@ -18,6 +18,8 @@ public:
 
     static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
 
+    bool isConstant() { return false; } ;
+
     void fixValue(ATTR_TYPE);
 
     std::string tollvmIR();
