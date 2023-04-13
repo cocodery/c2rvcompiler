@@ -173,7 +173,7 @@ private:
     virtual antlrcpp::Any visitConstExp(SysYParser::ConstExpContext *ctx) override;
     
 // support function to parse
-    ArrDims getArrDims(std::vector<SysYParser::ConstExpContext *> &);
+    ArrDims getArrayDims(std::vector<SysYParser::ConstExpContext *> &);
 
     SymbolTable *newLocalTable(SymbolTable *);
     void clearTableList();

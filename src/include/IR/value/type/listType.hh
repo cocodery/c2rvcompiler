@@ -16,9 +16,9 @@ public:
 
     size_t getArrSize() const;
 
-    ArrDims getDimSize() const;
+    const ArrDims getDimSize() const;
 
-    ArrDims getArrDims() const;
+    const ArrDims getArrDims() const;
 
     static ListTypePtr CreatePtr(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 

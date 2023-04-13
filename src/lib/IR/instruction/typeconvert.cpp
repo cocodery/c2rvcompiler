@@ -16,7 +16,7 @@ SitoFpInstPtr SitoFpInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
 }
 
 VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, BlockPtr block) {
-    VariablePtr _fp = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    VariablePtr _fp = Variable::CreatePtr(type_float);
     block->insertInst(CreatePtr(_fp, _si));
     return _fp;
 }
@@ -34,7 +34,6 @@ std::string SitoFpInst::tollvmIR() {
 
 FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2)
     : si_value(_value1), fp_value(_value2) {
-    assert(si_value->getBaseType()->intType() || si_value->getBaseType()->boolType());
     assert(fp_value->getBaseType()->floatType());
     assert(fp_value->isBinaryOprand());
 }
@@ -44,7 +43,8 @@ FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
 }
 
 VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, BlockPtr block) {
-    VariablePtr _si = Variable::CreatePtr(ScalarType::CreatePtr(_type, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    assert(_type == BOOL || _type == INT);
+    VariablePtr _si = Variable::CreatePtr((_type == INT) ? type_int : type_bool);
     block->insertInst(CreatePtr(_si, _fp));
     return _si;
 }
@@ -72,7 +72,7 @@ ZextInstPtr ZextInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
 }
 
 VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, BlockPtr block) {
-    VariablePtr _lv = Variable::CreatePtr(ScalarType::CreatePtr(INT, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    VariablePtr _lv = Variable::CreatePtr(type_int);
     block->insertInst(CreatePtr(_lv, _sv));
     return _lv;
 }

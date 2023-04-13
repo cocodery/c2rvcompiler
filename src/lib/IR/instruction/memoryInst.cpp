@@ -79,8 +79,9 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
 }
 
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, BlockPtr block) {
-    assert(addr->getBaseType()->IsPointer() && addr->getBaseType()->IsScalar());
-    BaseValuePtr value = Variable::CreatePtr(ScalarType::CreatePtr(addr->getBaseType()->getAttrType(), MUTABLE, NOTPTR, SCALAR, LOCAL));
+    BaseTypePtr addr_type = addr->getBaseType();
+    assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->intType() || addr_type->floatType()));
+    BaseValuePtr value = Variable::CreatePtr(addr_type->intType() ? type_int : type_float);
     block->insertInst(CreatePtr(value, addr));
     return value;
 }
@@ -107,7 +108,7 @@ GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseV
     } else {
         ListTypePtr list1 = std::static_pointer_cast<ListType>(store_type);
         ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->getBaseType());
-        assert(list1->getArrDims() == list2->getArrDims());
+        assert(list1->getArrSize() == list2->getArrSize());
         assert(offset_list.size() == 2);
     }
 }
@@ -117,7 +118,8 @@ GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, Ba
 }
 
 BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, BlockPtr block) {
-    BaseValuePtr _ptr = Variable::CreatePtr(ScalarType::CreatePtr(_type->getAttrType(), MUTABLE, POINTER, SCALAR, LOCAL));
+    // only have INT-array or FLOAT-array
+    BaseValuePtr _ptr = Variable::CreatePtr(_type->intType() ? type_int_ptr : type_float_ptr);
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
     return _ptr;
 }

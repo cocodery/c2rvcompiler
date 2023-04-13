@@ -16,7 +16,7 @@ size_t ListType::getArrSize() const {
     return size;
 }
 
-ArrDims ListType::getDimSize() const {
+const ArrDims ListType::getDimSize() const {
     ArrDims ret;
     size_t size = 1;
     for (size_t idx = dims.size() - 1; idx < dims.size(); --idx) {
@@ -27,7 +27,7 @@ ArrDims ListType::getDimSize() const {
     return ret;
 }
 
-ArrDims ListType::getArrDims() const {
+const ArrDims ListType::getArrDims() const {
     return this->dims;
 }
 

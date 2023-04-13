@@ -7,10 +7,10 @@ FunctionTable::FunctionTable() {
     ScalarTypePtr ret_type[3] = { type_void, type_int, type_float};
 
 
-    VariablePtr i32_param    = Variable::CreatePtr(ScalarType::CreatePtr(INT  , MUTABLE, NOTPTR , SCALAR, PARAMETER));
-    VariablePtr float_param  = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, NOTPTR , SCALAR, PARAMETER));
-    VariablePtr i32p_param   = Variable::CreatePtr(ScalarType::CreatePtr(INT  , MUTABLE, POINTER, SCALAR, PARAMETER));
-    VariablePtr floatp_param = Variable::CreatePtr(ScalarType::CreatePtr(FLOAT, MUTABLE, POINTER, SCALAR, PARAMETER));
+    VariablePtr i32_param    = Variable::CreatePtr(param_int);
+    VariablePtr float_param  = Variable::CreatePtr(param_float);
+    VariablePtr i32p_param   = Variable::CreatePtr(param_intp);
+    VariablePtr floatp_param = Variable::CreatePtr(param_floatp);
     // 0 - no parameters
     ParamList param_list[7];
     // 1 - i32

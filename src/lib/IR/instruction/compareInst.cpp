@@ -6,7 +6,6 @@
 
 ICmpInst::ICmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
-    assert(result->getBaseType()->boolType());
     assert(lhs->isBinaryOprand() && rhs->isBinaryOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
 }
@@ -16,7 +15,7 @@ ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
 }
 
 VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
-    VariablePtr _res = Variable::CreatePtr(ScalarType::CreatePtr(BOOL, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    VariablePtr _res = Variable::CreatePtr(type_bool);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }
@@ -43,7 +42,6 @@ std::string ICmpInst::tollvmIR() {
 
 FCmpInst::FCmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
-    assert(result->getBaseType()->boolType());
     assert(lhs->isBinaryOprand() && rhs->isBinaryOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
 }
@@ -53,7 +51,7 @@ FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
 }
 
 VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
-    VariablePtr _res = Variable::CreatePtr(ScalarType::CreatePtr(BOOL, MUTABLE, NOTPTR, SCALAR, LOCAL));
+    VariablePtr _res = Variable::CreatePtr(type_bool);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }

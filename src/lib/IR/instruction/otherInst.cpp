@@ -20,7 +20,7 @@ CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, std::stri
 }
 
 BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, RParamList &_list, BlockPtr block) {
-    VariablePtr _ret = (_type->voidType()) ? nullptr : Variable::CreatePtr(ScalarType::CreatePtr(_type->getAttrType(), MUTABLE, NOTPTR, SCALAR, LOCAL));
+    VariablePtr _ret = (_type->voidType()) ? nullptr : Variable::CreatePtr(_type->intType() ? type_int : type_float);
     block->insertInst(CreatePtr(_type, _ret, _name, _list));
     return _ret;
 }
@@ -59,7 +59,7 @@ BitCastInstPtr BitCastInst::CreatePtr(BaseValuePtr _res, BaseValuePtr _opr) {
 }
 
 BaseValuePtr BitCastInst::DoBitCast(BaseValuePtr _opr, BlockPtr block) {
-    BaseValuePtr _res = Variable::CreatePtr(ScalarType::CreatePtr(CHAR, MUTABLE, POINTER, SCALAR, LOCAL));
+    BaseValuePtr _res = Variable::CreatePtr(type_char_ptr);
     block->insertInst(CreatePtr(_res, _opr));
     return _res;
 }
