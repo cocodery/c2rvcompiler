@@ -29,7 +29,12 @@ BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
         }
     }, oprand->getValue());
 
-    return Constant::CreatePtr(ScalarType::CreatePtr(_type, IMMUTABLE, NOTPTR, SCALAR, NONE4), _value);
+    ScalarTypePtr _stype =  (_type == INT)  ?   type_const_int :
+                            (_type == FLOAT)?   type_const_float :
+                                                type_const_bool
+                                                ;
+
+    return Constant::CreatePtr(_stype, _value);
 }
 
 // Constant do unaryOperate
@@ -72,7 +77,12 @@ BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const 
         }
     }, lhs->getValue(), rhs->getValue());
 
-    return Constant::CreatePtr(ScalarType::CreatePtr(_type, IMMUTABLE, NOTPTR, SCALAR, NONE4), _value);
+    ScalarTypePtr _stype =  (_type == INT)  ?   type_const_int :
+                            (_type == FLOAT)?   type_const_float :
+                                                type_const_bool
+                                                ;
+
+    return Constant::CreatePtr(_stype, _value);
 }
 
 BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr block) {
@@ -175,7 +185,11 @@ BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
     // if convertee is `CONSTANT`, use `fixType` to convert
     if (convertee->isConstant()) {
         ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
-        ConstantPtr constant = Constant::CreatePtr(ScalarType::CreatePtr(type_convertee, IMMUTABLE, NOTPTR, SCALAR, NONE4), constant_convertee->getValue());
+        ScalarTypePtr _stype =  (type_convertee == INT)  ?  type_const_int :
+                                (type_convertee == FLOAT)?  type_const_float :
+                                                            type_const_bool
+                                                            ;
+        ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->getValue());
         constant->fixValue(type_convert);
         return constant;
     }

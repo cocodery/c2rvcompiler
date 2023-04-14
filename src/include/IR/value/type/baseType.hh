@@ -78,7 +78,6 @@ public:
     bool IsGlobal()     const;
 
     ATTR_TYPE getAttrType() const;
-    void resetAttrType(ATTR_TYPE);
 
     ATTR_MUTABLE getAttrMutable() const;
 

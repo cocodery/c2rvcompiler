@@ -21,8 +21,14 @@ void Constant::fixValue(ATTR_TYPE _type) {
             default:    assert(false);
         }
     }, value);
-    base_type->resetAttrType(_type);
-    // only change base_type->attr_type, no need to checkType
+    // for Constant, 
+    // its base_type come from ScalarType::{ type_const_bool, type_const_int, type_const_float }
+    // if directly modify their ATTR_TYPE, will distory later use
+    // so replace original type with an allocated one 
+    base_type = (_type == INT)  ? type_const_int :
+                (_type == FLOAT)? type_const_float :
+                                  type_const_bool
+                                ;
 } 
 
 ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {

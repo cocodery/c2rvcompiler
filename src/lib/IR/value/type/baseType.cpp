@@ -27,10 +27,6 @@ ATTR_TYPE BaseType::getAttrType() const {
     return attr_type;
 }
 
-void BaseType::resetAttrType(ATTR_TYPE _type) {
-    attr_type = _type;
-}
-
 ATTR_MUTABLE BaseType::getAttrMutable() const {
     return attr_mutable;
 }

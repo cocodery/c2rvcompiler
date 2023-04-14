@@ -577,7 +577,7 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         BaseValuePtr offset = zero_int32;
         if (exp_list.size() > 0) {
             for (size_t idx = 0; idx < exp_list.size(); ++idx) {
-                ConstantPtr dim_size = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(arr_dims[idx]));
+                ConstantPtr dim_size = Constant::CreatePtr(type_const_int, static_cast<int32_t>(arr_dims[idx]));
                 BaseValuePtr cur_off = Value::binaryOperate(OP_MUL, exp_list[idx]->accept(this).as<BaseValuePtr>(), dim_size, cur_block);
                 offset = Value::binaryOperate(OP_ADD, offset, cur_off, cur_block);
             }
@@ -606,11 +606,11 @@ antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) 
 }
 
 antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
-    return Constant::CreatePtr(ScalarType::CreatePtr(INT  , IMMUTABLE, NOTPTR, SCALAR, NONE4), ConstType(std::stoi(ctx->getText(), nullptr, 0)));
+    return Constant::CreatePtr(type_const_int, ConstType(std::stoi(ctx->getText(), nullptr, 0)));
 }
 
 antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    return Constant::CreatePtr(ScalarType::CreatePtr(FLOAT, IMMUTABLE, NOTPTR, SCALAR, NONE4), ConstType(std::stof(ctx->getText())));
+    return Constant::CreatePtr(type_const_float, ConstType(std::stof(ctx->getText())));
 }
 
 antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
@@ -665,7 +665,7 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     ScalarTypePtr ret_type = callee_func->getReturnType();
 
     RParamList rparam_list = (callee_name == "_sysy_starttime" || callee_name == "_sysy_stoptime") ?
-        RParamList(1, Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(ctx->start->getLine()))) :
+        RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine()))) :
         (ctx->funcRParams() != nullptr ? ctx->funcRParams()->accept(this).as<RParamList>() : RParamList())
         ;
 
@@ -916,8 +916,8 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
         size_t cnt = 0;
         for (auto &&child : node->initVal()) {
             if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
-                ConstantPtr offset = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(idx_offset));
                 OffsetList off_list = OffsetList(1, zero_int32);
+                ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
                 off_list.push_back(offset);
                 BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
                 BaseValuePtr value = Value::scalarTypeConvert(_type, scalar_node->exp()->accept(this).as<BaseValuePtr>(), cur_block);
@@ -944,7 +944,7 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
         }
         while (cnt < total_size) {
             OffsetList off_list = OffsetList(1, zero_int32);
-            ConstantPtr offset = Constant::CreatePtr(ScalarType::CreatePtr(INT, IMMUTABLE, NOTPTR, SCALAR, NONE4), static_cast<int32_t>(idx_offset));
+            ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
             off_list.push_back(offset);
             BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
             StoreInst::DoStoreValue(store_addr, zero, cur_block);
