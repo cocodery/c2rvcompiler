@@ -7,6 +7,13 @@
 #define COMMA ","
 #define NEWLINE "\n"
 
+constexpr uint64_t LTY_ZERO = 0;
+constexpr uint64_t LTY_ONE = 1;
+constexpr uint64_t LTY_LOAD = 5;
+constexpr uint64_t LTY_MUL = 3;
+constexpr uint64_t LTY_DR = 35;
+constexpr uint64_t LTY_RST = -1;
+
 #define RVCNAM(name) RV_##name::RV_##name
 
 #define GENSTAT(fmt, ...)                                                      \
@@ -17,53 +24,93 @@
     fclose(out);                                                               \
   } while (0)
 
-using rifs = REGinterface;
-
 char nonstr[] = "";
 
-static const char *irgnm[] = {
-    "zero",        "ra", "sp",  "gp",  "tp", "t0", "t1", "t2",
-    "fp" /* s0 */, "s1", "a0",  "a1",  "a2", "a3", "a4", "a5",
-    "a6",          "a7", "s2",  "s3",  "s4", "s5", "s6", "s7",
-    "s8",          "s9", "s10", "s11", "t3", "t4", "t5", "t6",
-};
-
-static const char *frgnm[] = {
-    "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
-    "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
-    "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
-    "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11",
+static const char *rgnm[] = {
+    // integer registers
+    "zero", // x0
+    "ra",   // x1
+    "sp",   // x2
+    "gp",   // x3
+    "tp",   // x4
+    "t0",   // x5
+    "t1",   // x6
+    "t2",   // x7
+    "fp",   // x8 s0
+    "s1",   // x9
+    "a0",   // x10
+    "a1",   // x11
+    "a2",   // x12
+    "a3",   // x13
+    "a4",   // x14
+    "a5",   // x15
+    "a6",   // x16
+    "a7",   // x17
+    "s2",   // x18
+    "s3",   // x19
+    "s4",   // x20
+    "s5",   // x21
+    "s6",   // x22
+    "s7",   // x23
+    "s8",   // x24
+    "s9",   // x25
+    "s10",  // x26
+    "s11",  // x27
+    "t3",   // x28
+    "t4",   // x29
+    "t5",   // x30
+    "t6",   // x31
+    // float registers freg n idx = 32 + n
+    "ft0",  // f0
+    "ft1",  // f1
+    "ft2",  // f2
+    "ft3",  // f3
+    "ft4",  // f4
+    "ft5",  // f5
+    "ft6",  // f6
+    "ft7",  // f7
+    "fs0",  // f8
+    "fs1",  // f9
+    "fa0",  // f10
+    "fa1",  // f11
+    "fa2",  // f12
+    "fa3",  // f13
+    "fa4",  // f14
+    "fa5",  // f15
+    "fa6",  // f16
+    "fa7",  // f17
+    "fs2",  // f18
+    "fs3",  // f19
+    "fs4",  // f20
+    "fs5",  // f21
+    "fs6",  // f22
+    "fs7",  // f23
+    "fs8",  // f24
+    "fs9",  // f25
+    "fs10", // f26
+    "fs11", // f27
+    "ft8",  // f28
+    "ft9",  // f29
+    "ft10", // f30
+    "ft11", // f31
 };
 
 //
 // ----- ----- Basic Class ----- -----
 //
 
-RVInst::RVInst(u8 rd, u8 rs1, u8 rs2)
-    : dst(rd), src1(rs1), src2(rs2), stat(nonstr), statlen(0),
+RVInst::RVInst(rid_t rd, rid_t rs1, rid_t rs2, rid_t rs3)
+    : dst(rd), src1(rs1), src2(rs2), src3(rs3), stat(nonstr), statlen(0),
       comt_(COMMENT_BEGIN "error inst") {
-  assert(rd < 32);
-  assert(src1 < 32);
-  assert(src2 < 32);
-}
-
-RVInst::RVInst(rifs &&rfc)
-    : dst(rfc.dst), src1(rfc.src1), src2(rfc.src2), fdst(rfc.fdst),
-      fsrc1(rfc.fsrc1), fsrc2(rfc.fsrc2), fsrc3(rfc.fsrc3), stat(nonstr),
-      statlen(0), comt_(COMMENT_BEGIN "error inst") {
-  assert(dst < 32);
-  assert(src1 < 32);
-  assert(src2 < 32);
-  assert(fdst < 33);
-  assert(fsrc1 < 33);
-  assert(fsrc2 < 33);
-  assert(fsrc3 < 33);
+  assert(rd < 64);
+  assert(src1 < 64);
+  assert(src2 < 64);
+  assert(src3 < 64);
 }
 
 RVInst::~RVInst() {
   if (statlen)
     delete[] stat;
-
   stat = nullptr;
   statlen = 0;
 }
@@ -72,485 +119,568 @@ std::string_view RVInst::toString() { return stat; }
 std::string_view RVInst::Comment() { return comt_; }
 void RVInst::setComment(cstr comt) { comt_ = comt; }
 
+void RVInst::setMAttr(uint64_t lty, opKind opk) {
+  latency = lty;
+  opkind = opk;
+}
+
 //
 // ----- ----- Instructions ----- -----
 //
 
-RVCNAM(LI)(u8 rd, i32 imm) : RVInst(rd, 0, 0) {
-  GENSTAT("li" TAB "%s" COMMA "%d", irgnm[rd], imm);
+RVCNAM(LI)(rid_t rd, i32 imm) : RVInst(rd) {
+  GENSTAT("li  " TAB "%s" COMMA "%d", rgnm[rd], imm);
   comt_ = COMMENT_BEGIN "load immediate";
+  setMAttr(LTY_ONE, opKind::ALU);
 }
 
-RVCNAM(LA$)(u8 rd, cstr sym) : RVInst(rd, 0, 0) {
-  GENSTAT("la" TAB "%s" COMMA "%s", irgnm[rd], sym);
+RVCNAM(LA$)(rid_t rd, cstr sym) : RVInst(rd) {
+  GENSTAT("la  " TAB "%s" COMMA "%s", rgnm[rd], sym);
   comt_ = COMMENT_BEGIN "load absolute address";
+  setMAttr(LTY_ONE, opKind::ALU);
 }
 
-RVCNAM(LLA$)(u8 rd, cstr sym) : RVInst(rd, 0, 0) {
-  GENSTAT("lla" TAB "%s" COMMA "%s", irgnm[rd], sym);
+RVCNAM(LLA$)(rid_t rd, cstr sym) : RVInst(rd) {
+  GENSTAT("lla " TAB "%s" COMMA "%s", rgnm[rd], sym);
   comt_ = COMMENT_BEGIN "load local address";
+  setMAttr(LTY_ONE, opKind::ALU);
 }
 
-RVCNAM(LEA$)(u8 rd, cstr sym) : RVInst(rd, 0, 0) {
+RVCNAM(LEA$)(rid_t rd, cstr sym) : RVInst(rd) {
   FILE *out = open_memstream(&stat, &statlen);
-  fprintf(out, TAB "lui" TAB "%s" COMMA "%%hi(%s)" NEWLINE, irgnm[rd], sym);
-  fprintf(out, TAB "addi" TAB "%s" COMMA "%s" COMMA "%%lo(%s)", irgnm[rd],
-          irgnm[rd], sym);
+  fprintf(out, TAB "lui" TAB "%s" COMMA "%%hi(%s)" NEWLINE, rgnm[rd], sym);
+  fprintf(out, TAB "addi" TAB "%s" COMMA "%s" COMMA "%%lo(%s)", rgnm[rd],
+          rgnm[rd], sym);
   fflush(out);
   fclose(out);
 
   comt_ = COMMENT_BEGIN "load effective address";
+  setMAttr(LTY_ONE, opKind::ALU);
 }
 
-RVCNAM(LW)(u8 rd, u8 rb, i32 off) : RVInst(rd, rb, 0) {
-  GENSTAT("lw" TAB "%s" COMMA "%d(%s)", irgnm[rd], off, irgnm[rb]);
+RVCNAM(LW)(rid_t rd, rid_t rb, i32 off) : RVInst(rd, rb) {
+  GENSTAT("lw  " TAB "%s" COMMA "%d(%s)", rgnm[rd], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "load word signed";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(LD)(u8 rd, u8 rb, i32 off) : RVInst(rd, rb, 0) {
-  GENSTAT("ld" TAB "%s" COMMA "%d(%s)", irgnm[rd], off, irgnm[rb]);
+RVCNAM(LD)(rid_t rd, rid_t rb, i32 off) : RVInst(rd, rb) {
+  GENSTAT("ld  " TAB "%s" COMMA "%d(%s)", rgnm[rd], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "load double word signed";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(LWU)(u8 rd, u8 rb, i32 off) : RVInst(rd, rb, 0) {
-  GENSTAT("lwu" TAB "%s" COMMA "%d(%s)", irgnm[rd], off, irgnm[rb]);
+RVCNAM(LWU)(rid_t rd, rid_t rb, i32 off) : RVInst(rd, rb) {
+  GENSTAT("lwu " TAB "%s" COMMA "%d(%s)", rgnm[rd], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "load word unsigned";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(SW)(u8 rs, u8 rb, i32 off) : RVInst(0, rs, rb) {
-  GENSTAT("sw" TAB "%s" COMMA "%d(%s)", irgnm[rs], off, irgnm[rb]);
+RVCNAM(SW)(rid_t rs, rid_t rb, i32 off) : RVInst(0, rs, rb) {
+  GENSTAT("sw  " TAB "%s" COMMA "%d(%s)", rgnm[rs], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "store word";
+  setMAttr(LTY_ONE, opKind::MEMW);
 }
 
-RVCNAM(SD)(u8 rs, u8 rb, i32 off) : RVInst(0, rs, rb) {
-  GENSTAT("sd" TAB "%s" COMMA "%d(%s)", irgnm[rs], off, irgnm[rb]);
+RVCNAM(SD)(rid_t rs, rid_t rb, i32 off) : RVInst(0, rs, rb) {
+  GENSTAT("sd  " TAB "%s" COMMA "%d(%s)", rgnm[rs], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "store double word";
+  setMAttr(LTY_ONE, opKind::MEMW);
 }
 
-RVCNAM(LW$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("lw" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(LW$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("lw  " TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "load word by symbol";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(LD$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("ld" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(LD$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("ld  " TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "load double word by symbol";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(LWU$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("lwu" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(LWU$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("lwu " TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "load word unsigned by symbol";
+  setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(SW$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("sw" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(SW$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("sw  " TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "store word by symbol";
+  setMAttr(LTY_ONE, opKind::MEMW);
 }
 
-RVCNAM(SD$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("sd" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(SD$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("sd  " TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "store double word by symbol";
+  setMAttr(LTY_ONE, opKind::MEMW);
 }
 
-RVCNAM(JR)(u8 rs) : RVInst(0, rs, 0) {
-  GENSTAT("jr" TAB "%s", irgnm[rs]);
+RVCNAM(JR)(rid_t rs) : RVInst(0, rs) {
+  GENSTAT("jr  " TAB "%s", rgnm[rs]);
   comt_ = COMMENT_BEGIN "jmp by addr in reg";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(JALR)(u8 rs) : RVInst(0, rs, 0) {
-  GENSTAT("jalr" TAB "%s", irgnm[rs]);
+RVCNAM(JALR)(rid_t rs) : RVInst(0, rs) {
+  GENSTAT("jalr" TAB "%s", rgnm[rs]);
   comt_ = COMMENT_BEGIN "jmp and link by addr in reg";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(J$)(cstr sym) : RVInst(0, 0, 0) {
-  GENSTAT("j" TAB "%s", sym);
+RVCNAM(J$)(cstr sym) : RVInst() {
+  GENSTAT("j   " TAB "%s", sym);
   comt_ = COMMENT_BEGIN "jmp by symbol";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(JAL$)(cstr sym) : RVInst(0, 0, 0) {
-  GENSTAT("jal" TAB "%s", sym);
+RVCNAM(JAL$)(cstr sym) : RVInst() {
+  GENSTAT("jal " TAB "%s", sym);
   comt_ = COMMENT_BEGIN "jmp and link by symbol";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(RET)() : RVInst(0, 0, 0) {
-  GENSTAT("ret");
+RVCNAM(RET)() : RVInst() {
+  GENSTAT("ret ");
   comt_ = COMMENT_BEGIN "return";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(CALL$)(cstr sym) : RVInst(0, 0, 0) {
+RVCNAM(CALL$)(cstr sym) : RVInst() {
   GENSTAT("call" TAB "%s", sym);
   comt_ = COMMENT_BEGIN "call function";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(TAIL$)(cstr sym) : RVInst(0, 0, 0) {
+RVCNAM(TAIL$)(cstr sym) : RVInst() {
   GENSTAT("tail" TAB "%s", sym);
   comt_ = COMMENT_BEGIN "tail call function";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BEQZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("beqz" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BEQZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("beqz" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs == 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BNEZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("bnez" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BNEZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("bnez" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs != 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BLEZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("blez" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BLEZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("blez" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs <= 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BGEZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("bgez" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BGEZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("bgez" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs >= 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BLTZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("bltz" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BLTZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("bltz" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs < 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BGTZ$)(u8 rs, cstr sym) : RVInst(0, rs, 0) {
-  GENSTAT("bgtz" TAB "%s" COMMA "%s", irgnm[rs], sym);
+RVCNAM(BGTZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
+  GENSTAT("bgtz" TAB "%s" COMMA "%s", rgnm[rs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if rs > 0";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BGT$)(u8 lhs, u8 rhs, cstr sym) : RVInst(0, lhs, rhs) {
-  GENSTAT("bgt" TAB "%s" COMMA "%s" COMMA "%s", irgnm[lhs], irgnm[rhs], sym);
+RVCNAM(BGT$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+  GENSTAT("bgt " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if lhs > rhs";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BLE$)(u8 lhs, u8 rhs, cstr sym) : RVInst(0, lhs, rhs) {
-  GENSTAT("ble" TAB "%s" COMMA "%s" COMMA "%s", irgnm[lhs], irgnm[rhs], sym);
+RVCNAM(BLE$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+  GENSTAT("ble " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
   comt_ = COMMENT_BEGIN "jmp to symbol if lhs <= rhs";
+  setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(FENCE)() : RVInst(0, 0, 0) {
+RVCNAM(FENCE)() : RVInst() {
   GENSTAT("fence");
   comt_ = COMMENT_BEGIN "synchronize";
+  setMAttr(LTY_RST, opKind::FENCE);
 }
 
-RVCNAM(NOP)() : RVInst(0, 0, 0) {
-  GENSTAT("nop");
+RVCNAM(NOP)() : RVInst() {
+  GENSTAT("nop ");
   comt_ = COMMENT_BEGIN "no op";
+  setMAttr(LTY_ZERO, opKind::FENCE);
 }
 
-RVCNAM(MV)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("mv" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(MV)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("mv  " TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "move data";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(NOT)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("not" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(NOT)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("not " TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "logic not";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(NEGW)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("negw" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(NEGW)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("negw" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "negative";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SEXT_W)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("sext.w" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(SEXT_W)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("sext.w" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "signed extend";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SEQZ)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("seqz" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(SEQZ)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("seqz" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "set rd to true if rs == 0";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SNEZ)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("snez" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(SNEZ)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("snez" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "set rd to true if rs != 0";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SLTZ)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("sltz" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(SLTZ)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("sltz" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "set rd to true if rs < 0";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SGTZ)(u8 rd, u8 rs) : RVInst(rd, rs, 0) {
-  GENSTAT("sgtz" TAB "%s" COMMA "%s", irgnm[rd], irgnm[rs]);
+RVCNAM(SGTZ)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
+  GENSTAT("sgtz" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "set rd to true if rs > 0";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(FMV_S)(u8 frd, u8 frs) : RVInst(rifs{.fdst = frd, .fsrc1 = frs}) {
-  GENSTAT("fmv.s" TAB "%s" COMMA "%s", frgnm[frd], frgnm[frs]);
+RVCNAM(FMV_S)
+(rid_t frd, rid_t frs) : RVInst(frd, frs) {
+  GENSTAT("fmv.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "move float data";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FABS_S)
-(u8 frd, u8 frs) : RVInst(rifs{.fdst = frd, .fsrc1 = frs}) {
-  GENSTAT("fabs.s" TAB "%s" COMMA "%s", frgnm[frd], frgnm[frs]);
+(rid_t frd, rid_t frs) : RVInst(frd, frs) {
+  GENSTAT("fabs.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "get absolute float data";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FNEG_S)
-(u8 frd, u8 frs) : RVInst(rifs{.fdst = frd, .fsrc1 = frs}) {
-  GENSTAT("fneg.s" TAB "%s" COMMA "%s", frgnm[frd], frgnm[frs]);
+(rid_t frd, rid_t frs) : RVInst(frd, frs) {
+  GENSTAT("fneg.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "get negative float data";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
-RVCNAM(SLTI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("slti" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SLTI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("slti" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "set rd to true if rs > imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(XORI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("xori" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(XORI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("xori" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "xor imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(ORI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("ori" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(ORI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("ori " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "or imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(ANDI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("andi" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(ANDI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("andi" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "and imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SLLI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("slli" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SLLI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("slli" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift left logical imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRLI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("srli" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SRLI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("srli" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift right logical imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRAI)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("srai" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SRAI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("srai" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift right algorithm imm";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(ADDIW)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("addiw" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(ADDIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("addiw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "add imm 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SLLIW)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("slliw" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SLLIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("slliw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift left logical imm 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRLIW)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("srliw" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SRLIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("srliw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift right logical imm 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRAIW)(u8 rd, u8 rs, i32 imm) : RVInst(rd, rs, 0) {
-  GENSTAT("sraiw" TAB "%s" COMMA "%s" COMMA "%d", irgnm[rd], irgnm[rs], imm);
+RVCNAM(SRAIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+  GENSTAT("sraiw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
   comt_ = COMMENT_BEGIN "shift right algorithm imm 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(ADDW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("addw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(ADDW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("addw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "add 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SUBW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("subw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(SUBW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("subw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "sub 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SLLW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("sllw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(SLLW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("sllw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "shift left logical 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRLW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("srlw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(SRLW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("srlw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "shift right logical 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(SRAW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("sraw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(SRAW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("sraw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "shift right algorithm 32bit";
+  setMAttr(LTY_ZERO, opKind::ALU);
 }
 
-RVCNAM(MULW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("mulw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(MULW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("mulw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "mul 32bit";
+  setMAttr(LTY_MUL, opKind::MDR);
 }
 
-RVCNAM(DIVW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("divw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(DIVW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("divw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "div 32bit";
+  setMAttr(LTY_DR, opKind::MDR);
 }
 
-RVCNAM(REMW)(u8 rd, u8 rs1, u8 rs2) : RVInst(rd, rs1, rs2) {
-  GENSTAT("remw" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], irgnm[rs1],
-          irgnm[rs2]);
+RVCNAM(REMW)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+  GENSTAT("remw" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1],
+          rgnm[rs2]);
   comt_ = COMMENT_BEGIN "rem 32bit";
+  setMAttr(LTY_DR, opKind::MDR);
 }
 
-RVCNAM(FLW)(u8 frd, u8 rb, i32 off) : RVInst(rifs{.src1 = rb, .fdst = frd}) {
-  GENSTAT("flw" TAB "%s" COMMA "%d(%s)", frgnm[frd], off, irgnm[rb]);
+RVCNAM(FLW)
+(rid_t frd, rid_t rb, i32 off) : RVInst(rb, frd) {
+  GENSTAT("flw " TAB "%s" COMMA "%d(%s)", rgnm[frd], off, rgnm[rb]);
   comt_ = COMMENT_BEGIN "load word size float data";
+  setMAttr(LTY_LOAD, opKind::MEMR);
+}
+
+RVCNAM(FSW)
+(rid_t frd, rid_t rb, i32 off) : RVInst(rb, frd) {
+  GENSTAT("fsw " TAB "%s" COMMA "%d(%s)", rgnm[frd], off, rgnm[rb]);
+  comt_ = COMMENT_BEGIN "store word size float data";
+  setMAttr(LTY_LOAD, opKind::MEMW);
 }
 
 RVCNAM(FMADD_S)
-(u8 frd, u8 frs1, u8 frs2, u8 frs3)
-    : RVInst(
-          rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2, .fsrc3 = fsrc3}) {
-  GENSTAT("fmadd.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", frgnm[frd],
-          frgnm[fsrc1], frgnm[fsrc2], frgnm[fsrc3]);
+(rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3)
+    : RVInst(frd, frs1, frs2, frs3) {
+  GENSTAT("fmadd.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", rgnm[frd],
+          rgnm[frs1], rgnm[frs2], rgnm[frs3]);
   comt_ = COMMENT_BEGIN "fmadd signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
 RVCNAM(FMSUB_S)
-(u8 frd, u8 frs1, u8 frs2, u8 frs3)
-    : RVInst(
-          rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2, .fsrc3 = fsrc3}) {
-  GENSTAT("fmsub.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", frgnm[frd],
-          frgnm[fsrc1], frgnm[fsrc2], frgnm[fsrc3]);
+(rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3)
+    : RVInst(frd, frs1, frs2, frs3) {
+  GENSTAT("fmsub.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", rgnm[frd],
+          rgnm[frs1], rgnm[frs2], rgnm[frs3]);
   comt_ = COMMENT_BEGIN "fmsub signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
 RVCNAM(FNMADD_S)
-(u8 frd, u8 frs1, u8 frs2, u8 frs3)
-    : RVInst(
-          rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2, .fsrc3 = fsrc3}) {
-  GENSTAT("fnmadd.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", frgnm[frd],
-          frgnm[fsrc1], frgnm[fsrc2], frgnm[fsrc3]);
+(rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3)
+    : RVInst(frd, frs1, frs2, frs3) {
+  GENSTAT("fnmadd.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", rgnm[frd],
+          rgnm[frs1], rgnm[frs2], rgnm[frs3]);
   comt_ = COMMENT_BEGIN "fnmadd signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
 RVCNAM(FNMSUB_S)
-(u8 frd, u8 frs1, u8 frs2, u8 frs3)
-    : RVInst(
-          rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2, .fsrc3 = fsrc3}) {
-  GENSTAT("fnmsub.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", frgnm[frd],
-          frgnm[fsrc1], frgnm[fsrc2], frgnm[fsrc3]);
+(rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3)
+    : RVInst(frd, frs1, frs2, frs3) {
+  GENSTAT("fnmsub.s" TAB "%s" COMMA "%s" COMMA "%s" COMMA "%s", rgnm[frd],
+          rgnm[frs1], rgnm[frs2], rgnm[frs3]);
   comt_ = COMMENT_BEGIN "fnmsub signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
 RVCNAM(FADD_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fadd.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fadd.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fadd signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FSUB_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fsub.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fsub.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fsub signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FMUL_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fmul.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fmul.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fmul signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
 RVCNAM(FDIV_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fdiv.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fdiv.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fdiv signle";
+  setMAttr(LTY_ONE + LTY_MUL, opKind::FLT);
 }
 
-RVCNAM(FSQRT_S)(u8 frd, u8 frs1) : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1}) {
-  GENSTAT("fsqrt.s" TAB "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1]);
+RVCNAM(FSQRT_S)
+(rid_t frd, rid_t frs) : RVInst(frd, frs) {
+  GENSTAT("fsqrt.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "fsqrt signle";
+  setMAttr(LTY_ONE + LTY_DR, opKind::FLT);
 }
 
 RVCNAM(FSGNJ_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fsgnj.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fsgnj.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fsgnj signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FSGNJN_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fsgnjn.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fsgnjn.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fsgnjn signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FSGNJX_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fsgnjx.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fsgnjx.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fsgnjx signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FMIN_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fmin signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FMAX_S)
-(u8 frd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.fdst = frd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fmax.s" TAB "%s" COMMA "%s" COMMA "%s", frgnm[frd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t frd, rid_t frs1, rid_t frs2) : RVInst(frd, frs1, frs2) {
+  GENSTAT("fmax.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fmax signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
-RVCNAM(FCVT_W_S)(u8 rd, u8 frs) : RVInst(rifs{.dst = rd, .fsrc1 = fsrc1}) {
-  GENSTAT("fcvt.w.s" TAB "%s" COMMA "%s", irgnm[rd], frgnm[fsrc1]);
+RVCNAM(FCVT_W_S)
+(rid_t rd, rid_t frs) : RVInst(rd, frs) {
+  GENSTAT("fcvt.w.s" TAB "%s" COMMA "%s", rgnm[rd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "fcvt s -> w";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
-RVCNAM(FCVT_S_W)(u8 frd, u8 rs) : RVInst(rifs{.src1 = rs, .fdst = frd}) {
-  GENSTAT("fcvt.w.s" TAB "%s" COMMA "%s", frgnm[frd], irgnm[rs]);
+RVCNAM(FCVT_S_W)
+(rid_t frd, rid_t rs) : RVInst(frd, rs) {
+  GENSTAT("fcvt.w.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[rs]);
   comt_ = COMMENT_BEGIN "fcvt w -> s";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FEQ_S)
-(u8 rd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.dst = rd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("feq.s" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t rd, rid_t frs1, rid_t frs2) : RVInst(rd, frs1, frs2) {
+  GENSTAT("feq.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "feq signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FLT_S)
-(u8 rd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.dst = rd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t rd, rid_t frs1, rid_t frs2) : RVInst(rd, frs1, frs2) {
+  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "flt signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FLE_S)
-(u8 rd, u8 frs1, u8 frs2)
-    : RVInst(rifs{.dst = rd, .fsrc1 = fsrc1, .fsrc2 = fsrc2}) {
-  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", irgnm[rd], frgnm[fsrc1],
-          frgnm[fsrc2]);
+(rid_t rd, rid_t frs1, rid_t frs2) : RVInst(rd, frs1, frs2) {
+  GENSTAT("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[frs1],
+          rgnm[frs2]);
   comt_ = COMMENT_BEGIN "fle signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FCLASS_S)
-(u8 rd, u8 frs) : RVInst(rifs{.dst = rd, .fsrc1 = frs}) {
-  GENSTAT("fmin.s" TAB "%s" COMMA "%s", irgnm[rd], frgnm[fsrc1]);
+(rid_t rd, rid_t frs) : RVInst(rd, frs) {
+  GENSTAT("fmin.s" TAB "%s" COMMA "%s", rgnm[rd], rgnm[frs]);
   comt_ = COMMENT_BEGIN "fclass signle";
+  setMAttr(LTY_ONE, opKind::FLT);
 }

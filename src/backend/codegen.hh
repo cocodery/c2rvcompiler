@@ -17,10 +17,11 @@ class GlobalValue;
 class GAttributes;
 class Progress;
 
-class BasicBlock {
+class ASMBasic {
 public:
   virtual void GenASM(BBVisitor *visitor) = 0;
-  virtual ~BasicBlock() = default;
+  virtual void Issue(BBVisitor *visitor) = 0;
+  virtual ~ASMBasic() = default;
 };
 
 class BBVisitor {
@@ -31,12 +32,19 @@ public:
   void toASM(GlobalValue *gv);
   void toASM(GAttributes *ga);
   void toASM(Progress  *prog);
+
+  void Issue(GlobalValue *gv);
+  void Issue(GAttributes *ga);
+  void Issue(Progress  *prog);
   ~BBVisitor() = default;
 };
 
-template <typename BBType> class VisitableBasicBlock : public BasicBlock {
+template <typename BType> class VisitableBasicBlock : public ASMBasic {
   void GenASM(BBVisitor *visitor) {
-    visitor->toASM(static_cast<BBType *>(this));
+    visitor->toASM(static_cast<BType *>(this));
+  }
+  void Issue(BBVisitor *visitor) {
+    visitor->Issue(static_cast<BType *>(this));
   }
 };
 
@@ -54,18 +62,19 @@ public:
 class Progress : public VisitableBasicBlock<Progress> {
 public:
   std::string name;
-  std::list<std::shared_ptr<ASMInst>> asms;
+  std::list<std::shared_ptr<ASMBasicBlock>> abbs;
 };
 
 class CodeGen {
-  std::list<std::shared_ptr<BasicBlock>> bbs;
+  std::list<std::shared_ptr<ASMBasic>> bbs;
   std::fstream fs;
 public:
   CodeGen(const char *path);
   ~CodeGen();
 
   void Generate();
-  void push_bb(std::shared_ptr<BasicBlock> &bb);
+  void Issuer();
+  void PushBB(std::shared_ptr<ASMBasic> &bb);
 
   friend BBVisitor;
 };

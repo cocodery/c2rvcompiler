@@ -3,81 +3,80 @@
 #include "asm.hh"
 
 #define RVINST(name, ...)                                                      \
-  class RV_##name : public RVInst {                                         \
+  class RV_##name : public RVInst {                                            \
   public:                                                                      \
     RV_##name(__VA_ARGS__);                                                    \
   };
 
-using u8 = uint8_t;
-using u64 = uint64_t;
+using rid_t = uint32_t;
 using i32 = int32_t;
 using cstr = const char *;
 
-struct REGinterface {
-  u8 dst{};
-  u8 src1{};
-  u8 src2{};
-  u8 fdst{32};
-  u8 fsrc1{32};
-  u8 fsrc2{32};
-  u8 fsrc3{32};
-};
+enum class opKind { MEMR, MEMW, BJ, FLT, MDR, ALU, FENCE };
 
 class RVInst : public ASMInst {
 public:
-  RVInst(u8 rd, u8 rs1, u8 rs2);
-  RVInst(REGinterface &&rfc);
+  RVInst(rid_t rd = 0, rid_t rs1 = 0, rid_t rs2 = 0, rid_t rs3 = 0);
   ~RVInst();
   virtual std::string_view toString();
   virtual std::string_view Comment();
   virtual void setComment(cstr comt);
+  virtual void setMAttr(uint64_t lty, opKind opk);
+
+public:
+  rid_t dst{};
+  rid_t src1{};
+  rid_t src2{};
+  rid_t src3{};
+
+public:
+  uint64_t latency{};
+  opKind opkind{opKind::FENCE};
 
 protected:
-  u8 dst{};
-  u8 src1{};
-  u8 src2{};
-  u8 fdst{};
-  u8 fsrc1{};
-  u8 fsrc2{};
-  u8 fsrc3{};
-
   char *stat;
   size_t statlen;
   cstr comt_;
 };
 
+class RVBasicBlock : public ASMBasicBlock {};
+
 //
 // memory operations
 //
 
-RVINST(LI, u8 rd, i32 imm);    // imm => R[rd] 加载常数
-RVINST(LA$, u8 rd, cstr sym);  // addr(sym) => R[rd] 加载绝对地址
-RVINST(LLA$, u8 rd, cstr sym); // addr(sym) => R[rd] 加载本地地址
-RVINST(LEA$, u8 rd, cstr sym); // addr(sym) => R[rd] 加载符号地址
+RVINST(LI, rid_t rd, i32 imm);    // imm => R[rd] 加载常数
+RVINST(LA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载绝对地址
+RVINST(LLA$, rid_t rd, cstr sym); // addr(sym) => R[rd] 加载本地地址
+RVINST(LEA$, rid_t rd, cstr sym); // addr(sym) => R[rd] 加载符号地址
 
-RVINST(LW, u8 rd, u8 rb, i32 off); // @word(off + R[rb]) => R[rd] 加载字数据
-RVINST(LD, u8 rd, u8 rb, i32 off); // @dword(off + R[rb]) => R[rd] 加载双字数据
+RVINST(LW, rid_t rd, rid_t rb,
+       i32 off); // @word(off + R[rb]) => R[rd] 加载字数据
+RVINST(LD, rid_t rd, rid_t rb,
+       i32 off); // @dword(off + R[rb]) => R[rd] 加载双字数据
 
 // @uword(off + R[rb]) => R[rd] 加载无符号字数据
-RVINST(LWU, u8 rd, u8 rb, i32 off);
+RVINST(LWU, rid_t rd, rid_t rb, i32 off);
 
-RVINST(SW, u8 rs, u8 rb, i32 off); // R[rs] => @word(off + R[rb]) 存储字数据
-RVINST(SD, u8 rs, u8 rb, i32 off); // R[rs] => @dword(off + R[rb]) 存储双字数据
+RVINST(SW, rid_t rs, rid_t rb,
+       i32 off); // R[rs] => @word(off + R[rb]) 存储字数据
+RVINST(SD, rid_t rs, rid_t rb,
+       i32 off); // R[rs] => @dword(off + R[rb]) 存储双字数据
 
-RVINST(LW$, u8 rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
-RVINST(LD$, u8 rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
+RVINST(LW$, rid_t rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
+RVINST(LD$, rid_t rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
 
-RVINST(LWU$, u8 rd, cstr sym);
+RVINST(LWU$, rid_t rd, cstr sym);
 
-RVINST(SW$, u8 rs, cstr sym);
-RVINST(SD$, u8 rs, cstr sym);
+RVINST(SW$, rid_t rs, cstr sym);
+RVINST(SD$, rid_t rs, cstr sym);
 
 //
 // jmp operations
 //
 
-RVINST(JR, u8 rs);
-RVINST(JALR, u8 rs);
+RVINST(JR, rid_t rs);
+RVINST(JALR, rid_t rs);
 
 RVINST(J$, cstr sym);
 RVINST(JAL$, cstr sym);
@@ -91,15 +90,15 @@ RVINST(TAIL$, cstr sym);
 // branch operation
 //
 
-RVINST(BEQZ$, u8 rs, cstr sym);
-RVINST(BNEZ$, u8 rs, cstr sym);
-RVINST(BLEZ$, u8 rs, cstr sym);
-RVINST(BGEZ$, u8 rs, cstr sym);
-RVINST(BLTZ$, u8 rs, cstr sym);
-RVINST(BGTZ$, u8 rs, cstr sym);
+RVINST(BEQZ$, rid_t rs, cstr sym);
+RVINST(BNEZ$, rid_t rs, cstr sym);
+RVINST(BLEZ$, rid_t rs, cstr sym);
+RVINST(BGEZ$, rid_t rs, cstr sym);
+RVINST(BLTZ$, rid_t rs, cstr sym);
+RVINST(BGTZ$, rid_t rs, cstr sym);
 
-RVINST(BGT$, u8 lhs, u8 rhs, cstr sym);
-RVINST(BLE$, u8 lhs, u8 rhs, cstr sym);
+RVINST(BGT$, rid_t lhs, rid_t rhs, cstr sym);
+RVINST(BLE$, rid_t lhs, rid_t rhs, cstr sym);
 
 //
 // mem-misc operation
@@ -112,93 +111,94 @@ RVINST(FENCE);
 //
 
 RVINST(NOP);
-RVINST(MV, u8 rd, u8 rs);
-RVINST(NOT, u8 rd, u8 rs);
-RVINST(NEGW, u8 rd, u8 rs);
-RVINST(SEXT_W, u8 rd, u8 rs);
+RVINST(MV, rid_t rd, rid_t rs);
+RVINST(NOT, rid_t rd, rid_t rs);
+RVINST(NEGW, rid_t rd, rid_t rs);
+RVINST(SEXT_W, rid_t rd, rid_t rs);
 
-RVINST(SEQZ, u8 rd, u8 rs);
-RVINST(SNEZ, u8 rd, u8 rs);
-RVINST(SLTZ, u8 rd, u8 rs);
-RVINST(SGTZ, u8 rd, u8 rs);
+RVINST(SEQZ, rid_t rd, rid_t rs);
+RVINST(SNEZ, rid_t rd, rid_t rs);
+RVINST(SLTZ, rid_t rd, rid_t rs);
+RVINST(SGTZ, rid_t rd, rid_t rs);
 
 //
 // float misc operation
 //
 
-RVINST(FMV_S, u8 frd, u8 frs);
-RVINST(FABS_S, u8 frd, u8 frs);
-RVINST(FNEG_S, u8 frd, u8 frs);
+RVINST(FMV_S, rid_t frd, rid_t frs);
+RVINST(FABS_S, rid_t frd, rid_t frs);
+RVINST(FNEG_S, rid_t frd, rid_t frs);
 
 //
 // RV32I
 //
 
-RVINST(SLTI, u8 rd, u8 rs, i32 imm);
-RVINST(XORI, u8 rd, u8 rs, i32 imm);
-RVINST(ORI, u8 rd, u8 rs, i32 imm);
-RVINST(ANDI, u8 rd, u8 rs, i32 imm);
-RVINST(SLLI, u8 rd, u8 rs, i32 imm);
-RVINST(SRLI, u8 rd, u8 rs, i32 imm);
-RVINST(SRAI, u8 rd, u8 rs, i32 imm);
+RVINST(SLTI, rid_t rd, rid_t rs, i32 imm);
+RVINST(XORI, rid_t rd, rid_t rs, i32 imm);
+RVINST(ORI, rid_t rd, rid_t rs, i32 imm);
+RVINST(ANDI, rid_t rd, rid_t rs, i32 imm);
+RVINST(SLLI, rid_t rd, rid_t rs, i32 imm);
+RVINST(SRLI, rid_t rd, rid_t rs, i32 imm);
+RVINST(SRAI, rid_t rd, rid_t rs, i32 imm);
 
 //
 // RV64I
 //
 
-RVINST(ADDIW, u8 rd, u8 rs, i32 imm);
-RVINST(SLLIW, u8 rd, u8 rs, i32 imm);
-RVINST(SRLIW, u8 rd, u8 rs, i32 imm);
-RVINST(SRAIW, u8 rd, u8 rs, i32 imm);
+RVINST(ADDIW, rid_t rd, rid_t rs, i32 imm);
+RVINST(SLLIW, rid_t rd, rid_t rs, i32 imm);
+RVINST(SRLIW, rid_t rd, rid_t rs, i32 imm);
+RVINST(SRAIW, rid_t rd, rid_t rs, i32 imm);
 
-RVINST(ADDW, u8 rd, u8 rs1, u8 rs2);
-RVINST(SUBW, u8 rd, u8 rs1, u8 rs2);
-RVINST(SLLW, u8 rd, u8 rs1, u8 rs2);
-RVINST(SRLW, u8 rd, u8 rs1, u8 rs2);
-RVINST(SRAW, u8 rd, u8 rs1, u8 rs2);
+RVINST(ADDW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SUBW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SLLW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SRLW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SRAW, rid_t rd, rid_t rs1, rid_t rs2);
 
 //
 // RV64M
 //
 
-RVINST(MULW, u8 rd, u8 rs1, u8 rs2);
-RVINST(DIVW, u8 rd, u8 rs1, u8 rs2);
-RVINST(REMW, u8 rd, u8 rs1, u8 rs2);
+RVINST(MULW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(DIVW, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(REMW, rid_t rd, rid_t rs1, rid_t rs2);
 
 //
 // RV32F
 //
 
-RVINST(FLW, u8 frd, u8 rb, i32 off);
+RVINST(FLW, rid_t frd, rid_t rb, i32 off);
+RVINST(FSW, rid_t frd, rid_t rb, i32 off);
 
-RVINST(FMADD_S, u8 frd, u8 frs1, u8 frs2, u8 frs3);
-RVINST(FMSUB_S, u8 frd, u8 frs1, u8 frs2, u8 frs3);
+RVINST(FMADD_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);
+RVINST(FMSUB_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);
 
-RVINST(FNMADD_S, u8 frd, u8 frs1, u8 frs2, u8 frs3);
-RVINST(FNMSUB_S, u8 frd, u8 frs1, u8 frs2, u8 frs3);
+RVINST(FNMADD_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);
+RVINST(FNMSUB_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);
 
-RVINST(FADD_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FSUB_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FMUL_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FDIV_S, u8 frd, u8 frs1, u8 frs2);
+RVINST(FADD_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FSUB_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FMUL_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FDIV_S, rid_t frd, rid_t frs1, rid_t frs2);
 
-RVINST(FSQRT_S, u8 frd, u8 frs1);
+RVINST(FSQRT_S, rid_t frd, rid_t frs1);
 
-RVINST(FSGNJ_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FSGNJN_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FSGNJX_S, u8 frd, u8 frs1, u8 frs2);
+RVINST(FSGNJ_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FSGNJN_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FSGNJX_S, rid_t frd, rid_t frs1, rid_t frs2);
 
-RVINST(FMIN_S, u8 frd, u8 frs1, u8 frs2);
-RVINST(FMAX_S, u8 frd, u8 frs1, u8 frs2);
+RVINST(FMIN_S, rid_t frd, rid_t frs1, rid_t frs2);
+RVINST(FMAX_S, rid_t frd, rid_t frs1, rid_t frs2);
 
-RVINST(FCVT_W_S, u8 rd, u8 frs);
+RVINST(FCVT_W_S, rid_t rd, rid_t frs);
 
-RVINST(FCVT_S_W, u8 frd, u8 rs);
+RVINST(FCVT_S_W, rid_t frd, rid_t rs);
 
-RVINST(FEQ_S, u8 rd, u8 frs1, u8 frs2);
-RVINST(FLT_S, u8 rd, u8 frs1, u8 frs2);
-RVINST(FLE_S, u8 rd, u8 frs1, u8 frs2);
-RVINST(FCLASS_S, u8 rd, u8 frs);
+RVINST(FEQ_S, rid_t rd, rid_t frs1, rid_t frs2);
+RVINST(FLT_S, rid_t rd, rid_t frs1, rid_t frs2);
+RVINST(FLE_S, rid_t rd, rid_t frs1, rid_t frs2);
+RVINST(FCLASS_S, rid_t rd, rid_t frs);
 
 //
 // RV32A

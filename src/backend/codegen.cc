@@ -14,7 +14,7 @@ void CodeGen::Generate() {
   fs.flush();
 }
 
-void CodeGen::push_bb(std::shared_ptr<BasicBlock> &bb) {
+void CodeGen::PushBB(std::shared_ptr<ASMBasic> &bb) {
   bbs.push_back(std::move(bb));
 }
 
@@ -40,8 +40,11 @@ void BBVisitor::toASM(GAttributes *ga) {
 void BBVisitor::toASM(Progress *prog) {
   // TODO: translate to asm codes
   cg->fs << prog->name << ":" << std::endl;
-  for (auto &&inst: prog->asms) {
-    cg->fs << inst->toString() << inst->Comment() << std::endl;
+  for (auto &&abb: prog->abbs) {
+    cg->fs << abb->tagname << ":" << std::endl;
+    for (auto &&inst: abb->asms) {
+      cg->fs << inst->toString() << inst->Comment() << std::endl;
+    }
   }
   cg->fs << std::endl;
 }
