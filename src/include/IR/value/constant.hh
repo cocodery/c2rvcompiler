@@ -19,7 +19,7 @@ public:
 
     const ConstType &getValue() const;
 
-    bool isConstant() { return true; } ;
+    bool IsConstant() { return true; } ;
 
     void fixValue(ATTR_TYPE);
 

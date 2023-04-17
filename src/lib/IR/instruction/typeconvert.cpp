@@ -6,9 +6,8 @@
 
 SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2)  
     : fp_value(_value1), si_value(_value2) {
-    assert(fp_value->getBaseType()->floatType());
-    assert(si_value->getBaseType()->intType() || si_value->getBaseType()->boolType());
-    assert(si_value->isBinaryOprand());
+    assert(si_value->getBaseType()->IntType() || si_value->getBaseType()->BoolType());
+    assert(si_value->IsOprand());
 }
 
 SitoFpInstPtr SitoFpInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
@@ -34,8 +33,8 @@ std::string SitoFpInst::tollvmIR() {
 
 FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2)
     : si_value(_value1), fp_value(_value2) {
-    assert(fp_value->getBaseType()->floatType());
-    assert(fp_value->isBinaryOprand());
+    assert(fp_value->getBaseType()->FloatType());
+    assert(fp_value->IsOprand());
 }
 
 FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
@@ -62,9 +61,8 @@ std::string FptoSiInst::tollvmIR() {
 
 ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2)
     : l_value(_value1), s_value(_value2) {
-    assert(l_value->getBaseType()->intType());
-    assert(s_value->getBaseType()->boolType());
-    assert(s_value->isBinaryOprand());
+    assert(s_value->getBaseType()->BoolType());
+    assert(s_value->IsOprand());
 }
 
 ZextInstPtr ZextInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {

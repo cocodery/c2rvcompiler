@@ -15,8 +15,6 @@
 
 namespace Value {
 
-bool bothConstant(BaseValuePtr, BaseValuePtr);
-
 BaseValuePtr unaryOperate(const OpCode, const ConstantPtr);
 
 BaseValuePtr binaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);

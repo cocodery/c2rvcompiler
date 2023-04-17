@@ -11,7 +11,7 @@ class UnInitVar : public BaseValue {
 public:
     UnInitVar(BaseTypePtr);
 
-    bool isConstant() { return false; } ;
+    bool IsConstant() { return false; } ;
 
     void fixValue(ATTR_TYPE) { return; }
     

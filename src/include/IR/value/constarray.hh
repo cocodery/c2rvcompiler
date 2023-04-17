@@ -18,7 +18,7 @@ public:
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;
 
-    bool isConstant() { return false; } ;
+    bool IsConstant() { return false; } ;
 
     void fixValue(ATTR_TYPE);
 

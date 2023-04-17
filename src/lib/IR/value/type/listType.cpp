@@ -3,7 +3,7 @@
 ListType::ListType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar, ATTR_POSITION _position, ArrDims &_dims) 
     : BaseType(_type, _mutable, _pointer, _scalar, _position), dims(_dims) {
     // INT || FLOAT
-    assert(intType() || floatType());
+    assert(IntType() || FloatType());
     // ARRAY
     assert(IsArray());
 }

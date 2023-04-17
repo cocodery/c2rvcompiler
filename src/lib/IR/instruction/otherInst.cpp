@@ -6,11 +6,11 @@
 
 CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, std::string &_name, RParamList &_list)
     : ret_type(_type), ret_value(_ret), callee_name(_name), rparam_list(_list) {
-    if (ret_type->voidType()) {
+    if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
         assert(ret_type->getAttrType() == ret_value->getBaseType()->getAttrType());
-        assert(ret_value->isBinaryOprand());
+        assert(ret_value->IsOprand());
     }
     // param-type have been checked at `visitFuncRParams`
 }
@@ -20,7 +20,7 @@ CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, std::stri
 }
 
 BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, RParamList &_list, BlockPtr block) {
-    VariablePtr _ret = (_type->voidType()) ? nullptr : Variable::CreatePtr(_type->intType() ? type_int_L : type_float_L);
+    VariablePtr _ret = (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L);
     block->insertInst(CreatePtr(_type, _ret, _name, _list));
     return _ret;
 }
@@ -50,8 +50,8 @@ std::string CallInst::tollvmIR() {
 
 BitCastInst::BitCastInst(BaseValuePtr _res, BaseValuePtr _opr)
     : result(_res), oprand(_opr) {
-    assert(result->getBaseType()->charType() && result->getBaseType()->IsPointer());
-    assert((oprand->getBaseType()->intType() || oprand->getBaseType()->floatType()) && result->getBaseType()->IsPointer());
+    assert(result->getBaseType()->CharType() && result->getBaseType()->IsPointer());
+    assert((oprand->getBaseType()->IntType() || oprand->getBaseType()->FloatType()) && result->getBaseType()->IsPointer());
 }
 
 BitCastInstPtr BitCastInst::CreatePtr(BaseValuePtr _res, BaseValuePtr _opr) {

@@ -1,9 +1,5 @@
 #include "valueHeader.hh"
 
-bool Value::bothConstant(BaseValuePtr lhs, BaseValuePtr rhs) {
-    return lhs->isConstant() && rhs->isConstant();
-}
-
 // Constant do unaryOperate
 // must have type in { BOOL, INT, FLOAT }
 BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
@@ -33,7 +29,6 @@ BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
                             (_type == FLOAT)?   type_const_float :
                                                 type_const_bool
                                                 ;
-
     return Constant::CreatePtr(_stype, _value);
 }
 
@@ -86,13 +81,9 @@ BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const 
 }
 
 BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr block) {
-    assert(oprand->getBaseType()->IsScalar());
-    if (oprand->getBaseType()->IsPointer()) {
-        oprand = LoadInst::DoLoadValue(oprand, block);
-    }
+    assert(oprand->IsOprand());
     if (op == OP_ADD) return oprand;
-
-    if (oprand->isConstant()) {
+    if (oprand->IsConstant()) {
         return unaryOperate(op, std::static_pointer_cast<Constant>(oprand));
     } else {
         ATTR_TYPE _type = oprand->getBaseType()->getAttrType();
@@ -111,16 +102,10 @@ BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr 
 }
 
 BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePtr rhs, BlockPtr block) {
-    if (lhs->getBaseType()->IsPointer()) {
-        lhs = LoadInst::DoLoadValue(lhs, block);
-    }
-    if (rhs->getBaseType()->IsPointer()) {
-        rhs = LoadInst::DoLoadValue(rhs, block);
-    }
-    if (bothConstant(lhs, rhs)) {
+    assert(lhs->IsOprand() && rhs->IsOprand());
+    if (lhs->IsConstant() && rhs->IsConstant()) {
         return binaryOperate(op, std::static_pointer_cast<Constant>(lhs), std::static_pointer_cast<Constant>(rhs));
     } 
-
     BaseValuePtr i_lhs = lhs, f_lhs = lhs;
     BaseValuePtr i_rhs = rhs, f_rhs = rhs;
 
@@ -170,20 +155,14 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
 }
 
 BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, BlockPtr block) {
-    // target type must in `BOOL` or `INT` or `FLOAT`
-    assert((type_convert == BOOL) || (type_convert == INT) || (type_convert == FLOAT));
-    // convertee should be a Scalar
-    assert(convertee->getBaseType()->IsScalar());
-    if (convertee->getBaseType()->IsPointer()) {
-        convertee = LoadInst::DoLoadValue(convertee, block);
-    }
+    assert(convertee->IsOprand());
     ATTR_TYPE type_convertee = convertee->getBaseType()->getAttrType();
     // if type_convert == type_convertee, no need to convert
     if (type_convert == type_convertee) {
         return convertee;
     }
     // if convertee is `CONSTANT`, use `fixType` to convert
-    if (convertee->isConstant()) {
+    if (convertee->IsConstant()) {
         ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
         ScalarTypePtr _stype =  (type_convertee == INT)  ?  type_const_int :
                                 (type_convertee == FLOAT)?  type_const_float :

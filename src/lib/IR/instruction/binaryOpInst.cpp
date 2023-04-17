@@ -6,8 +6,8 @@
 
 IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : i_res(_res), i_op(_op), i_lhs(_lhs), i_rhs(_rhs) {
-    assert(i_lhs->getBaseType()->intType() && i_lhs->isBinaryOprand());
-    assert(i_rhs->getBaseType()->intType() && i_rhs->isBinaryOprand());
+    assert(i_lhs->getBaseType()->IntType() && i_lhs->IsOprand());
+    assert(i_rhs->getBaseType()->IntType() && i_rhs->IsOprand());
 }
 
 IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {
@@ -41,8 +41,8 @@ std::string IBinaryInst::tollvmIR() {
 
 FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : f_res(_res), f_op(_op), f_lhs(_lhs), f_rhs(_rhs) {
-    assert(f_lhs->getBaseType()->floatType() && f_lhs->isBinaryOprand());
-    assert(f_rhs->getBaseType()->floatType() && f_rhs->isBinaryOprand());
+    assert(f_lhs->getBaseType()->FloatType() && f_lhs->IsOprand());
+    assert(f_rhs->getBaseType()->FloatType() && f_rhs->IsOprand());
 }
 
 FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {

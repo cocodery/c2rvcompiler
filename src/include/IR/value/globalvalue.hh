@@ -18,7 +18,7 @@ public:
 
     static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
 
-    bool isConstant() { return false; } ;
+    bool IsConstant() { return false; } ;
 
     void fixValue(ATTR_TYPE);
 

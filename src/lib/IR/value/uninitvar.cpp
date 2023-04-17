@@ -3,7 +3,7 @@
 UnInitVar::UnInitVar(BaseTypePtr _type) 
     : BaseValue(_type) {
     // INT || FLOAT
-    assert(base_type->intType() || base_type->floatType());
+    assert(base_type->IntType() || base_type->FloatType());
     // MUTABLE, NOTPTR, GLOBAL
     assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());
 }
@@ -17,9 +17,9 @@ std::string UnInitVar::tollvmIR() {
 
     if (base_type->IsArray()) {
         ss << "zeroinitializer";
-    } else if (base_type->intType()) {
+    } else if (base_type->IntType()) {
         ss << "0";
-    } else if (base_type->floatType()) {
+    } else if (base_type->FloatType()) {
         ss << "0x0000000000000000";
     } else {
         assert(0);

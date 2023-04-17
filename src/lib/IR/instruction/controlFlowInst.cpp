@@ -6,11 +6,11 @@
 
 ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value)
     : ret_type(_type), ret_value(_value) {
-    if (ret_type->voidType()) {
+    if (ret_type->VoidType()) {
         assert(_value == nullptr);
     } else {
         assert(ret_type->getAttrType() == ret_value->getBaseType()->getAttrType());
-        assert(ret_value->isBinaryOprand());
+        assert(ret_value->IsOprand());
     }
 }
 
@@ -20,7 +20,7 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value) {
 
 std::string ReturnInst::tollvmIR() {
     std::stringstream ss;
-    if (ret_type->voidType()) {
+    if (ret_type->VoidType()) {
         ss << "ret void";
     } else {
         ss << "ret " << ret_type->tollvmIR() << ' ' << ret_value->tollvmIR();
@@ -54,7 +54,7 @@ std::string JumpInst::tollvmIR() {
 
 BranchInst::BranchInst(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2)
     : cond(_cond), iftrue(_br1), iffalse(_br2) {
-    assert(cond->getBaseType()->boolType());
+    assert(cond->getBaseType()->BoolType());
 }
 
 BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2) {

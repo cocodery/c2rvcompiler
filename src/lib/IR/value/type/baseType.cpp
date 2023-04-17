@@ -4,11 +4,11 @@ BaseType::BaseType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer
     : attr_type(_type), attr_mutable(_mutable), attr_pointer(_pointer), attr_scalar(_scalar), attr_position(_position) {
 }
 
-bool BaseType::voidType()   const { return (attr_type == VOID) ; }
-bool BaseType::boolType()   const { return (attr_type == BOOL) ; }
-bool BaseType::charType()   const { return (attr_type == CHAR) ; }
-bool BaseType::intType()    const { return (attr_type == INT)  ; }
-bool BaseType::floatType()  const { return (attr_type == FLOAT); }
+bool BaseType::VoidType()   const { return (attr_type == VOID) ; }
+bool BaseType::BoolType()   const { return (attr_type == BOOL) ; }
+bool BaseType::CharType()   const { return (attr_type == CHAR) ; }
+bool BaseType::IntType()    const { return (attr_type == INT)  ; }
+bool BaseType::FloatType()  const { return (attr_type == FLOAT); }
 
 bool BaseType::IsMutable()  const { return (attr_mutable == MUTABLE); }
 bool BaseType::IsImMutable()const { return (attr_mutable == IMMUTABLE); }
@@ -29,6 +29,10 @@ ATTR_TYPE BaseType::getAttrType() const {
 
 ATTR_MUTABLE BaseType::getAttrMutable() const {
     return attr_mutable;
+}
+
+ATTR_POINTER BaseType::getAttrPointer() const {
+    return attr_pointer;
 }
 
 ATTR_SCALAR BaseType::getAttrScalar() const {

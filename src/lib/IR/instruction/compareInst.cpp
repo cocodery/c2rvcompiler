@@ -6,8 +6,9 @@
 
 ICmpInst::ICmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
-    assert(lhs->isBinaryOprand() && rhs->isBinaryOprand());
+    assert(lhs->IsOprand() && rhs->IsOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
+    assert(lhs->getBaseType()->BoolType() || lhs->getBaseType()->IntType());
 }
 
 ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs) {
@@ -42,8 +43,9 @@ std::string ICmpInst::tollvmIR() {
 
 FCmpInst::FCmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
     : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
-    assert(lhs->isBinaryOprand() && rhs->isBinaryOprand());
+    assert(lhs->IsOprand() && rhs->IsOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
+    assert(lhs->getBaseType()->FloatType());
 }
 
 FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs) {

@@ -58,11 +58,11 @@ public:
     BaseType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION);
     ~BaseType() = default;
 
-    bool voidType()     const;
-    bool boolType()     const;
-    bool charType()     const;
-    bool intType()      const;
-    bool floatType()    const;
+    bool VoidType()     const;
+    bool BoolType()     const;
+    bool CharType()     const;
+    bool IntType()      const;
+    bool FloatType()    const;
 
     bool IsMutable()    const;
     bool IsImMutable()  const;
@@ -80,6 +80,8 @@ public:
     ATTR_TYPE getAttrType() const;
 
     ATTR_MUTABLE getAttrMutable() const;
+
+    ATTR_POINTER getAttrPointer() const;
 
     ATTR_SCALAR getAttrScalar() const;
 

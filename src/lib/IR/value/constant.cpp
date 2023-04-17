@@ -3,7 +3,7 @@
 Constant::Constant(ScalarTypePtr _type, ConstType _value) 
     : BaseValue(_type), value(_value) {
     // BOOL || INT || FLOAT
-    assert(base_type->boolType() || base_type->intType() || base_type->floatType());
+    assert(base_type->BoolType() || base_type->IntType() || base_type->FloatType());
     // Immutable, NotPtr, Scalar
     assert(base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
 }
@@ -42,7 +42,7 @@ std::string Constant::tollvmIR() {
     std::visit([&ss, base_type](auto &&arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, float>) {
-            assert(base_type->floatType());
+            assert(base_type->FloatType());
             double double_value = arg;
             uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
             char buf[20];

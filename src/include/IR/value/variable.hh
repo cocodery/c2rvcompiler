@@ -14,7 +14,7 @@ public:
     Variable(BaseTypePtr);
     ~Variable() = default;
 
-    bool isConstant() { return false; } ;
+    bool IsConstant() { return false; } ;
 
     void fixValue(ATTR_TYPE) { return; }
 
