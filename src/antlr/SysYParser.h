@@ -946,19 +946,38 @@ public:
   class  RelExpContext : public antlr4::ParserRuleContext {
   public:
     RelExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    RelExpContext() = default;
+    void copyFrom(RelExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
-    std::vector<AddExpContext *> addExp();
-    AddExpContext* addExp(size_t i);
-    std::vector<RelOpContext *> relOp();
-    RelOpContext* relOp(size_t i);
 
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
    
   };
 
-  RelExpContext* relExp();
+  class  Rel2Context : public RelExpContext {
+  public:
+    Rel2Context(RelExpContext *ctx);
 
+    RelExpContext *relExp();
+    RelOpContext *relOp();
+    AddExpContext *addExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Rel1Context : public RelExpContext {
+  public:
+    Rel1Context(RelExpContext *ctx);
+
+    AddExpContext *addExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  RelExpContext* relExp();
+  RelExpContext* relExp(int precedence);
   class  RelOpContext : public antlr4::ParserRuleContext {
   public:
     RelOpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -978,19 +997,38 @@ public:
   class  EqExpContext : public antlr4::ParserRuleContext {
   public:
     EqExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    EqExpContext() = default;
+    void copyFrom(EqExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
-    std::vector<RelExpContext *> relExp();
-    RelExpContext* relExp(size_t i);
-    std::vector<EqOpContext *> eqOp();
-    EqOpContext* eqOp(size_t i);
 
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
    
   };
 
-  EqExpContext* eqExp();
+  class  Eq1Context : public EqExpContext {
+  public:
+    Eq1Context(EqExpContext *ctx);
 
+    RelExpContext *relExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Eq2Context : public EqExpContext {
+  public:
+    Eq2Context(EqExpContext *ctx);
+
+    EqExpContext *eqExp();
+    EqOpContext *eqOp();
+    RelExpContext *relExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  EqExpContext* eqExp();
+  EqExpContext* eqExp(int precedence);
   class  EqOpContext : public antlr4::ParserRuleContext {
   public:
     EqOpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1092,6 +1130,8 @@ public:
   virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
   bool mulExpSempred(MulExpContext *_localctx, size_t predicateIndex);
   bool addExpSempred(AddExpContext *_localctx, size_t predicateIndex);
+  bool relExpSempred(RelExpContext *_localctx, size_t predicateIndex);
+  bool eqExpSempred(EqExpContext *_localctx, size_t predicateIndex);
   bool lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex);
   bool lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex);
 

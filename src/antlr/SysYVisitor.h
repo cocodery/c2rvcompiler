@@ -121,11 +121,15 @@ public:
 
     virtual antlrcpp::Any visitAddOp(SysYParser::AddOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitRelExp(SysYParser::RelExpContext *context) = 0;
+    virtual antlrcpp::Any visitRel2(SysYParser::Rel2Context *context) = 0;
+
+    virtual antlrcpp::Any visitRel1(SysYParser::Rel1Context *context) = 0;
 
     virtual antlrcpp::Any visitRelOp(SysYParser::RelOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitEqExp(SysYParser::EqExpContext *context) = 0;
+    virtual antlrcpp::Any visitEq1(SysYParser::Eq1Context *context) = 0;
+
+    virtual antlrcpp::Any visitEq2(SysYParser::Eq2Context *context) = 0;
 
     virtual antlrcpp::Any visitEqOp(SysYParser::EqOpContext *context) = 0;
 

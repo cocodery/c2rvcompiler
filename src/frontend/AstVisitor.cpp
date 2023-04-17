@@ -749,19 +749,15 @@ antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitRelExp(SysYParser::RelExpContext *ctx) {
-    auto &&add_exp = ctx->addExp();
-    auto &&rel_op  = ctx->relOp();
+antlrcpp::Any AstVisitor::visitRel1(SysYParser::Rel1Context *ctx) {
+    return ctx->addExp()->accept(this).as<BaseValuePtr>();
+}
 
-    BaseValuePtr lhs = add_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
-
-    size_t size = add_exp.size();
-    for (size_t idx = 1; idx < size; ++idx) {
-        OpCode op = rel_op[idx-1]->accept(this).as<OpCode>();
-        rhs = add_exp[idx]->accept(this).as<BaseValuePtr>();
-        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
-    }
-    return lhs;
+antlrcpp::Any AstVisitor::visitRel2(SysYParser::Rel2Context *ctx) {
+    BaseValuePtr lhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
+    OpCode       op  = ctx->relOp ()->accept(this).as<OpCode>();
+    BaseValuePtr rhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
+    return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
@@ -778,19 +774,15 @@ antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitEqExp(SysYParser::EqExpContext *ctx) {
-    auto &&rel_exp = ctx->relExp();
-    auto &&eq_op   = ctx->eqOp();
+antlrcpp::Any AstVisitor::visitEq1(SysYParser::Eq1Context *ctx) {
+    return ctx->relExp()->accept(this).as<BaseValuePtr>();
+}
 
-    BaseValuePtr lhs = rel_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
-
-    size_t size = rel_exp.size();
-    for (size_t idx = 1; idx < size; ++idx) {
-        OpCode op = eq_op[idx-1]->accept(this).as<OpCode>();
-        rhs = rel_exp[idx]->accept(this).as<BaseValuePtr>();
-        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
-    }
-    return lhs;
+antlrcpp::Any AstVisitor::visitEq2(SysYParser::Eq2Context *ctx) {
+    BaseValuePtr lhs = ctx->eqExp ()->accept(this).as<BaseValuePtr>();
+    OpCode       op  = ctx->eqOp  ()->accept(this).as<OpCode>();
+    BaseValuePtr rhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
+    return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
