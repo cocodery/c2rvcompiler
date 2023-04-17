@@ -81,7 +81,7 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, BlockPtr block) {
     BaseTypePtr addr_type = addr->getBaseType();
     assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->intType() || addr_type->floatType()));
-    BaseValuePtr value = Variable::CreatePtr(addr_type->intType() ? type_int : type_float);
+    BaseValuePtr value = Variable::CreatePtr(addr_type->intType() ? type_int_L : type_float_L);
     block->insertInst(CreatePtr(value, addr));
     return value;
 }
@@ -119,7 +119,7 @@ GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, Ba
 
 BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, BlockPtr block) {
     // only have INT-array or FLOAT-array
-    BaseValuePtr _ptr = Variable::CreatePtr(_type->intType() ? type_int_ptr : type_float_ptr);
+    BaseValuePtr _ptr = Variable::CreatePtr(_type->intType() ? type_int_ptr_L : type_float_ptr_L);
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));
     return _ptr;
 }

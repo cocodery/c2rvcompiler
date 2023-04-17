@@ -20,7 +20,7 @@ CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, std::stri
 }
 
 BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, RParamList &_list, BlockPtr block) {
-    VariablePtr _ret = (_type->voidType()) ? nullptr : Variable::CreatePtr(_type->intType() ? type_int : type_float);
+    VariablePtr _ret = (_type->voidType()) ? nullptr : Variable::CreatePtr(_type->intType() ? type_int_L : type_float_L);
     block->insertInst(CreatePtr(_type, _ret, _name, _list));
     return _ret;
 }

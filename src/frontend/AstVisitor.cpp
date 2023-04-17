@@ -71,6 +71,7 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
 
     cur_type     = VOID;
     cur_position = GLOBAL;
+    ptr_or_not   = NONE2;
 
     cur_block = nullptr;
 
@@ -202,8 +203,14 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = ScalarType::CreatePtr(cur_type, MUTABLE, NOTPTR , SCALAR, cur_position);
-        ScalarTypePtr ty_alloca = ScalarType::CreatePtr(cur_type, MUTABLE, POINTER, SCALAR, cur_position);
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ?
+                                    (cur_type == INT ? type_int_G : type_float_G) :
+                                    (cur_type == INT ? type_int_L : type_float_L)
+                                    ;
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ?
+                                    (cur_type == INT ? type_int_ptr_G : type_float_ptr_G) :
+                                    (cur_type == INT ? type_int_ptr_L : type_float_ptr_L)
+                                    ;
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
         } else {
@@ -234,8 +241,14 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = ScalarType::CreatePtr(cur_type, MUTABLE, NOTPTR , SCALAR, cur_position);
-        ScalarTypePtr ty_alloca = ScalarType::CreatePtr(cur_type, MUTABLE, POINTER, SCALAR, cur_position);
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ?
+                                    (cur_type == INT ? type_int_G : type_float_G) :
+                                    (cur_type == INT ? type_int_L : type_float_L)
+                                    ;
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ?
+                                    (cur_type == INT ? type_int_ptr_G : type_float_ptr_G) :
+                                    (cur_type == INT ? type_int_ptr_L : type_float_ptr_L)
+                                    ;
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, init_val->accept(this).as<BaseValuePtr>());
         } else {
@@ -293,7 +306,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     ret_addr = ret_type->voidType() ? 
                 nullptr :
-                AllocaInst::DoAllocaAddr(ret_type, (ret_type->intType() ? type_int_ptr : type_float_ptr), cur_block);
+                AllocaInst::DoAllocaAddr(ret_type, (ret_type->intType() ? type_int_ptr_L : type_float_ptr_L), cur_block);
 
     // create a local-table layer for func-parameter to convenient resolveTable
     SymbolTable *last_table = cur_table;
@@ -327,9 +340,9 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
     std::string type_name = ctx->getText();
     if (type_name == "int") {
-        return type_int;
+        return type_int_L;
     } else if (type_name == "float") {
-        return type_float;
+        return type_float_L;
     } else if (type_name == "void") {
         return type_void;
     }
@@ -572,7 +585,7 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         }
         ListTypePtr list_type = addrTypeTable[value];
         ArrDims arr_dims = list_type->getDimSize();
-        ScalarTypePtr scalar_type = type_value->intType() ? type_int : type_float;
+        ScalarTypePtr scalar_type = type_value->intType() ? type_int_L : type_float_L;
 
         BaseValuePtr offset = zero_int32;
         if (exp_list.size() > 0) {
@@ -658,13 +671,15 @@ antlrcpp::Any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
 
 antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     std::string callee_name = ctx->Identifier()->getText();
+    bool time_function = false;
     if (callee_name == "starttime" || callee_name == "stoptime") {
         callee_name = (callee_name == "starttime") ? "_sysy_starttime" : "_sysy_stoptime";
+        time_function = true;
     }
     callee_func = comp_unit.getFunction(callee_name);
     ScalarTypePtr ret_type = callee_func->getReturnType();
 
-    RParamList rparam_list = (callee_name == "_sysy_starttime" || callee_name == "_sysy_stoptime") ?
+    RParamList rparam_list = time_function ?
         RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine()))) :
         (ctx->funcRParams() != nullptr ? ctx->funcRParams()->accept(this).as<RParamList>() : RParamList())
         ;
@@ -839,7 +854,9 @@ antlrcpp::Any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
-    return ctx->addExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr constant = ctx->addExp()->accept(this).as<BaseValuePtr>();
+    assert(constant->isConstant());
+    return constant;
 }
 
 ArrDims AstVisitor::getArrayDims(std::vector<SysYParser::ConstExpContext *> &constExpVec) {
@@ -890,9 +907,9 @@ SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent
             new_table->insertSymbol(name, param);
         } else {
             ATTR_TYPE _type = param->getBaseType()->getAttrType();
-            BaseTypePtr ty_stored = ScalarType::CreatePtr(_type, MUTABLE, NOTPTR , SCALAR, LOCAL);
-            BaseTypePtr ty_alloca = ScalarType::CreatePtr(_type, MUTABLE, POINTER, SCALAR, LOCAL);
-            BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca,first_block);
+            BaseTypePtr ty_stored = (_type == INT) ? type_int_L     : type_float_L;
+            BaseTypePtr ty_alloca = (_type == INT) ? type_int_ptr_L : type_float_ptr_L;
+            BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, first_block);
             StoreInst::DoStoreValue(addr_alloca, param, first_block);
             new_table->insertSymbol(name, addr_alloca);
         }

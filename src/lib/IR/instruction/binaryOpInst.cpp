@@ -15,7 +15,7 @@ IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr
 }
 
 VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
-    VariablePtr _res = Variable::CreatePtr(type_int);
+    VariablePtr _res = Variable::CreatePtr(type_int_L);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }
@@ -50,7 +50,7 @@ FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr
 }
 
 VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
-    VariablePtr _res = Variable::CreatePtr(type_float);
+    VariablePtr _res = Variable::CreatePtr(type_float_L);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }

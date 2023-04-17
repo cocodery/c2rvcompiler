@@ -4,7 +4,7 @@ FunctionTable::FunctionTable() {
     func_table.reserve(12);
 
     // void, i32, float
-    ScalarTypePtr ret_type[3] = { type_void, type_int, type_float};
+    ScalarTypePtr ret_type[3] = { type_void, type_int_L, type_float_L};
 
 
     VariablePtr i32_param    = Variable::CreatePtr(param_int);

@@ -27,6 +27,7 @@ private:
 
     ATTR_TYPE cur_type;
     ATTR_POSITION cur_position;
+    ATTR_POINTER ptr_or_not;
     
     BlockPtr cur_block;
 
