@@ -145,11 +145,15 @@ private:
 
     virtual antlrcpp::Any visitUnaryOp(SysYParser::UnaryOpContext *ctx) override;
 
-    virtual antlrcpp::Any visitMulExp(SysYParser::MulExpContext *ctx) override;
+    virtual antlrcpp::Any visitMul1(SysYParser::Mul1Context *ctx) override;
+
+    virtual antlrcpp::Any visitMul2(SysYParser::Mul2Context *ctx) override;
 
     virtual antlrcpp::Any visitMulOp(SysYParser::MulOpContext *ctx) override;
 
-    virtual antlrcpp::Any visitAddExp(SysYParser::AddExpContext *ctx) override;
+    virtual antlrcpp::Any visitAdd1(SysYParser::Add1Context *ctx) override;
+
+    virtual antlrcpp::Any visitAdd2(SysYParser::Add2Context *ctx) override;
 
     virtual antlrcpp::Any visitAddOp(SysYParser::AddOpContext *ctx) override;
 

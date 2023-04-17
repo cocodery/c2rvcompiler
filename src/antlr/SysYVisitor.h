@@ -109,11 +109,15 @@ public:
 
     virtual antlrcpp::Any visitUnaryOp(SysYParser::UnaryOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitMulExp(SysYParser::MulExpContext *context) = 0;
+    virtual antlrcpp::Any visitMul2(SysYParser::Mul2Context *context) = 0;
+
+    virtual antlrcpp::Any visitMul1(SysYParser::Mul1Context *context) = 0;
 
     virtual antlrcpp::Any visitMulOp(SysYParser::MulOpContext *context) = 0;
 
-    virtual antlrcpp::Any visitAddExp(SysYParser::AddExpContext *context) = 0;
+    virtual antlrcpp::Any visitAdd2(SysYParser::Add2Context *context) = 0;
+
+    virtual antlrcpp::Any visitAdd1(SysYParser::Add1Context *context) = 0;
 
     virtual antlrcpp::Any visitAddOp(SysYParser::AddOpContext *context) = 0;
 

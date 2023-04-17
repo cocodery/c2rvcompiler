@@ -164,7 +164,8 @@ unaryOp
     ;
 
 mulExp
-    :   unaryExp (mulOp unaryExp)*
+    :   unaryExp # mul1
+    |   mulExp mulOp unaryExp # mul2
     ;
 
 mulOp
@@ -172,7 +173,8 @@ mulOp
     ;
 
 addExp
-    :   mulExp (addOp mulExp)*
+    :   mulExp # add1
+    |   addExp addOp mulExp # add2
     ;
 
 addOp

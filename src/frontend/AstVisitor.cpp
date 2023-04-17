@@ -321,11 +321,11 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
         ret_inst->setTarget(ret_block);
     }
     ret_block->insertInst(
-        ret_type->voidType() ?
-            ReturnInst::CreatePtr(ret_type, nullptr) :
-            ReturnInst::CreatePtr(ret_type, LoadInst::DoLoadValue(ret_addr, ret_block))
+        ReturnInst::CreatePtr(
+            ret_type, 
+            ret_type->voidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block)
+        )
     );
-
     cur_position = GLOBAL;
     cur_table = last_table;
 
@@ -359,7 +359,7 @@ antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) 
     }
     return std::make_pair(param_name, param_list);
 }
-    
+
 antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     ATTR_TYPE _type = ctx->bType()->accept(this).as<ATTR_TYPE>();
     std::string param_name = ctx->Identifier()->getText();
@@ -705,18 +705,15 @@ antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitMulExp(SysYParser::MulExpContext *ctx) {
-    auto &&unary_exp = ctx->unaryExp();
-    auto &&mul_op    = ctx->mulOp();
-    BaseValuePtr lhs = unary_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
+antlrcpp::Any AstVisitor::visitMul1(SysYParser::Mul1Context *ctx) {
+    return ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+}
 
-    size_t size = unary_exp.size();
-    for (size_t idx = 1; idx < size; ++idx) {
-        OpCode op = mul_op[idx-1]->accept(this).as<OpCode>();
-        rhs = unary_exp[idx]->accept(this).as<BaseValuePtr>();
-        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
-    }
-    return lhs;
+antlrcpp::Any AstVisitor::visitMul2(SysYParser::Mul2Context *ctx) {
+    BaseValuePtr lhs = ctx->mulExp  ()->accept(this).as<BaseValuePtr>();
+    OpCode       op  = ctx->mulOp   ()->accept(this).as<OpCode>();
+    BaseValuePtr rhs = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+    return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
@@ -731,18 +728,15 @@ antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitAddExp(SysYParser::AddExpContext *ctx) {
-    auto &&mul_exp = ctx->mulExp();
-    auto &&add_op  = ctx->addOp();
-    BaseValuePtr lhs = mul_exp[0]->accept(this).as<BaseValuePtr>(), rhs = nullptr;
-    
-    size_t size = mul_exp.size();
-    for (size_t idx = 1; idx < size; ++idx) {
-        OpCode op = add_op[idx-1]->accept(this).as<OpCode>();
-        rhs = mul_exp[idx]->accept(this).as<BaseValuePtr>();
-        lhs = Value::binaryOperate(op, lhs, rhs, cur_block);
-    }
-    return lhs;
+antlrcpp::Any AstVisitor::visitAdd1(SysYParser::Add1Context *ctx) {
+    return ctx->mulExp()->accept(this).as<BaseValuePtr>();
+}
+
+antlrcpp::Any AstVisitor::visitAdd2(SysYParser::Add2Context *ctx) {
+    BaseValuePtr lhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
+    OpCode       op  = ctx->addOp ()->accept(this).as<OpCode>();
+    BaseValuePtr rhs = ctx->mulExp()->accept(this).as<BaseValuePtr>();
+    return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
 antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
@@ -944,15 +938,12 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             } else {
                 ArrDims child_dims = arr_dims;
                 if (cnt > 0) {
-                    size_t new_level = 0;
-                    for (; new_level < dim_size.size(); ++new_level) {
-                        if (new_level == dim_size.size() - 1) assert(0);
-                        if (cnt % dim_size[new_level] == 0) break;
+                    for (level = 0; level < dim_size.size(); ++level) {
+                        if (level == dim_size.size() - 1) assert(0);
+                        if (cnt % dim_size[level] == 0) break;
                     }
-                    level = new_level + 1;
-                } else {
-                    level += 1;
-                }
+                } 
+                level = level + 1;
                 auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
                 function(list_node, child_dims, idx_offset, level);
                 cnt += dim_size[level - 1];

@@ -847,19 +847,38 @@ public:
   class  MulExpContext : public antlr4::ParserRuleContext {
   public:
     MulExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    MulExpContext() = default;
+    void copyFrom(MulExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
-    std::vector<UnaryExpContext *> unaryExp();
-    UnaryExpContext* unaryExp(size_t i);
-    std::vector<MulOpContext *> mulOp();
-    MulOpContext* mulOp(size_t i);
 
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
    
   };
 
-  MulExpContext* mulExp();
+  class  Mul2Context : public MulExpContext {
+  public:
+    Mul2Context(MulExpContext *ctx);
 
+    MulExpContext *mulExp();
+    MulOpContext *mulOp();
+    UnaryExpContext *unaryExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Mul1Context : public MulExpContext {
+  public:
+    Mul1Context(MulExpContext *ctx);
+
+    UnaryExpContext *unaryExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  MulExpContext* mulExp();
+  MulExpContext* mulExp(int precedence);
   class  MulOpContext : public antlr4::ParserRuleContext {
   public:
     MulOpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -878,19 +897,38 @@ public:
   class  AddExpContext : public antlr4::ParserRuleContext {
   public:
     AddExpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    AddExpContext() = default;
+    void copyFrom(AddExpContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
-    std::vector<MulExpContext *> mulExp();
-    MulExpContext* mulExp(size_t i);
-    std::vector<AddOpContext *> addOp();
-    AddOpContext* addOp(size_t i);
 
-
-    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
    
   };
 
-  AddExpContext* addExp();
+  class  Add2Context : public AddExpContext {
+  public:
+    Add2Context(AddExpContext *ctx);
 
+    AddExpContext *addExp();
+    AddOpContext *addOp();
+    MulExpContext *mulExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Add1Context : public AddExpContext {
+  public:
+    Add1Context(AddExpContext *ctx);
+
+    MulExpContext *mulExp();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  AddExpContext* addExp();
+  AddExpContext* addExp(int precedence);
   class  AddOpContext : public antlr4::ParserRuleContext {
   public:
     AddOpContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1052,6 +1090,8 @@ public:
 
 
   virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+  bool mulExpSempred(MulExpContext *_localctx, size_t predicateIndex);
+  bool addExpSempred(AddExpContext *_localctx, size_t predicateIndex);
   bool lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex);
   bool lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex);
 
