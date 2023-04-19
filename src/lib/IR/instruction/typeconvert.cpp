@@ -4,8 +4,7 @@
 //                     SitoFpInst Implementation
 //===-----------------------------------------------------------===//
 
-SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2)  
-    : fp_value(_value1), si_value(_value2) {
+SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2) : fp_value(_value1), si_value(_value2) {
     assert(si_value->getBaseType()->IntType() || si_value->getBaseType()->BoolType());
     assert(si_value->IsOprand());
 }
@@ -31,8 +30,7 @@ std::string SitoFpInst::tollvmIR() {
 //                     FptoSiInst Implementation
 //===-----------------------------------------------------------===//
 
-FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2)
-    : si_value(_value1), fp_value(_value2) {
+FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2) : si_value(_value1), fp_value(_value2) {
     assert(fp_value->getBaseType()->FloatType());
     assert(fp_value->IsOprand());
 }
@@ -59,8 +57,7 @@ std::string FptoSiInst::tollvmIR() {
 //                     ZextInst Implementation
 //===-----------------------------------------------------------===//
 
-ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2)
-    : l_value(_value1), s_value(_value2) {
+ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2) : l_value(_value1), s_value(_value2) {
     assert(s_value->getBaseType()->BoolType());
     assert(s_value->IsOprand());
 }

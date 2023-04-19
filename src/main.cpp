@@ -1,15 +1,15 @@
-#include <iostream>
-#include <string>
-#include <fstream>
-
-#include <cstdio>
-#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include "AstVisitor.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
-#include "AstVisitor.hh"
 
 using namespace antlr4;
 using std::cout;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
                 opt = atoi(optarg);
                 break;
             case 'h':
-                print_usage = true; 
+                print_usage = true;
                 break;
             default:
                 break;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
     std::ifstream src(input);
     if (!src.is_open()) {
-        std::cerr << "line " <<  __LINE__ << ": cannot open input file \"" << input << "\"" << endl;
+        std::cerr << "line " << __LINE__ << ": cannot open input file \"" << input << "\"" << endl;
         return EXIT_FAILURE;
     }
 

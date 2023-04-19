@@ -10,11 +10,12 @@ using BaseFuncPtr = std::shared_ptr<BaseFunction>;
 using ParamList = std::vector<BaseValuePtr>;
 
 class BaseFunction {
-protected:
+   protected:
     ScalarTypePtr ret_type;
     std::string func_name;
     ParamList param_list;
-public:
+
+   public:
     BaseFunction(ScalarTypePtr, std::string &, ParamList &);
     ~BaseFunction() = default;
 
@@ -29,12 +30,13 @@ public:
 
 class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
-using BlockList     = std::list<BlockPtr>;
+using BlockList = std::list<BlockPtr>;
 
 class NormalFunction : public BaseFunction {
-private:
+   private:
     BlockList block_list;
-public:
+
+   public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
 
@@ -49,7 +51,7 @@ class LibraryFunction;
 using LibFuncPtr = std::shared_ptr<LibraryFunction>;
 
 class LibraryFunction : public BaseFunction {
-public:
+   public:
     LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
     ~LibraryFunction() = default;
 

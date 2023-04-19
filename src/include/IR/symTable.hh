@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "valueHeader.hh"
 
@@ -9,10 +9,11 @@ using NameValue = std::pair<std::string, BaseValuePtr>;
 using NameValueMap = std::unordered_map<std::string, BaseValuePtr>;
 
 class SymbolTable {
-private:
+   private:
     SymbolTable *parent;
     NameValueMap sym_table;
-public:
+
+   public:
     SymbolTable(SymbolTable *_p = nullptr);
 
     NameValueMap &getNameValueMap();

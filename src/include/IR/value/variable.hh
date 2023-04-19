@@ -6,15 +6,16 @@ class Variable;
 using VariablePtr = std::shared_ptr<Variable>;
 
 class Variable : public BaseValue {
-private:
+   private:
     size_t idx;
 
     static size_t var_idx;
-public:
+
+   public:
     Variable(BaseTypePtr);
     ~Variable() = default;
 
-    bool IsConstant() { return false; } ;
+    bool IsConstant() { return false; };
 
     void fixValue(ATTR_TYPE) { return; }
 

@@ -4,12 +4,11 @@ FunctionTable::FunctionTable() {
     func_table.reserve(12);
 
     // void, i32, float
-    ScalarTypePtr ret_type[3] = { type_void, type_int_L, type_float_L};
+    ScalarTypePtr ret_type[3] = {type_void, type_int_L, type_float_L};
 
-
-    VariablePtr i32_param    = Variable::CreatePtr(param_int);
-    VariablePtr float_param  = Variable::CreatePtr(param_float);
-    VariablePtr i32p_param   = Variable::CreatePtr(param_intp);
+    VariablePtr i32_param = Variable::CreatePtr(param_int);
+    VariablePtr float_param = Variable::CreatePtr(param_float);
+    VariablePtr i32p_param = Variable::CreatePtr(param_intp);
     VariablePtr floatp_param = Variable::CreatePtr(param_floatp);
     // 0 - no parameters
     ParamList param_list[7];
@@ -33,19 +32,19 @@ FunctionTable::FunctionTable() {
     // 10 - _sysy_starttime
     // 11 - _sysy_stoptime
     LibFuncPtr lib_func[12];
-    lib_func[0]  = LibraryFunction::CreatePtr(ret_type[1], "getint"         , param_list[0]);
-    lib_func[1]  = LibraryFunction::CreatePtr(ret_type[1], "getch"          , param_list[0]);
-    lib_func[2]  = LibraryFunction::CreatePtr(ret_type[2], "getfloat"       , param_list[0]);
-    lib_func[3]  = LibraryFunction::CreatePtr(ret_type[1], "getarray"       , param_list[3]);
-    lib_func[4]  = LibraryFunction::CreatePtr(ret_type[1], "getfarray"      , param_list[4]);
-    lib_func[5]  = LibraryFunction::CreatePtr(ret_type[0], "putint"         , param_list[1]);
-    lib_func[6]  = LibraryFunction::CreatePtr(ret_type[0], "putch"          , param_list[1]);
-    lib_func[7]  = LibraryFunction::CreatePtr(ret_type[0], "putfloat"       , param_list[2]);
-    lib_func[8]  = LibraryFunction::CreatePtr(ret_type[0], "putarray"       , param_list[5]);
-    lib_func[9]  = LibraryFunction::CreatePtr(ret_type[0], "putfarray"      , param_list[6]);
+    lib_func[0] = LibraryFunction::CreatePtr(ret_type[1], "getint", param_list[0]);
+    lib_func[1] = LibraryFunction::CreatePtr(ret_type[1], "getch", param_list[0]);
+    lib_func[2] = LibraryFunction::CreatePtr(ret_type[2], "getfloat", param_list[0]);
+    lib_func[3] = LibraryFunction::CreatePtr(ret_type[1], "getarray", param_list[3]);
+    lib_func[4] = LibraryFunction::CreatePtr(ret_type[1], "getfarray", param_list[4]);
+    lib_func[5] = LibraryFunction::CreatePtr(ret_type[0], "putint", param_list[1]);
+    lib_func[6] = LibraryFunction::CreatePtr(ret_type[0], "putch", param_list[1]);
+    lib_func[7] = LibraryFunction::CreatePtr(ret_type[0], "putfloat", param_list[2]);
+    lib_func[8] = LibraryFunction::CreatePtr(ret_type[0], "putarray", param_list[5]);
+    lib_func[9] = LibraryFunction::CreatePtr(ret_type[0], "putfarray", param_list[6]);
     lib_func[10] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_starttime", param_list[1]);
-    lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime" , param_list[1]);
-    
+    lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
+
     for (auto &&func_ptr : lib_func) {
         func_table.push_back(func_ptr);
     }
@@ -60,9 +59,7 @@ BaseFuncPtr FunctionTable::getFunction(std::string &name) {
     assert(0);
 }
 
-void FunctionTable::insertFunction(BaseFuncPtr func_ptr) {
-    func_table.push_back(func_ptr);
-}
+void FunctionTable::insertFunction(BaseFuncPtr func_ptr) { func_table.push_back(func_ptr); }
 
 std::ostream &operator<<(std::ostream &os, FunctionTable _func_table) {
     constexpr size_t lib_func = 12;

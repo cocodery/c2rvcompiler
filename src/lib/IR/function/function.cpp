@@ -4,29 +4,21 @@
 //                     BaseFunction Implementation
 //===-----------------------------------------------------------===//
 
-BaseFunction::BaseFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list) 
-    : ret_type(_type), func_name(_name), param_list(_list) {
-}
+BaseFunction::BaseFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : ret_type(_type), func_name(_name), param_list(_list) {}
 
-ScalarTypePtr BaseFunction::getReturnType() {
-    return this->ret_type;
-}
+ScalarTypePtr BaseFunction::getReturnType() { return this->ret_type; }
 
-std::string &BaseFunction::getFuncName() {
-    return this->func_name;
-}
+std::string &BaseFunction::getFuncName() { return this->func_name; }
 
-ParamList &BaseFunction::getParamList() {
-    return this->param_list;
-}
+ParamList &BaseFunction::getParamList() { return this->param_list; }
 
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list) {
-}
+    : BaseFunction(_type, _name, _list) {}
 
 BlockPtr NormalFunction::createBB(bool insertable) {
     BlockPtr block = BasicBlock::CreatePtr();
@@ -52,8 +44,9 @@ std::string NormalFunction::tollvmIR() {
             ss << ", " << param_list[idx]->getBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
         }
     }
-    
-    ss << ")" << " {" << endl;
+
+    ss << ")"
+       << " {" << endl;
     for (auto &&block : block_list) {
         ss << block->tollvmIR() << endl;
     }
@@ -66,11 +59,10 @@ std::string NormalFunction::tollvmIR() {
 //                     LibraryFunction Implementation
 //===-----------------------------------------------------------===//
 
-LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list) 
-    : BaseFunction(_type, _name, _list) {
-}
+LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : BaseFunction(_type, _name, _list) {}
 
-LibFuncPtr LibraryFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list)  {
+LibFuncPtr LibraryFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
     return std::make_shared<LibraryFunction>(_type, _name, _list);
 }
 

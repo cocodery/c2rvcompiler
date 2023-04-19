@@ -11,12 +11,13 @@ using InstListType = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
 class BasicBlock {
-private:
+   private:
     size_t idx;
     InstListType inst_list;
 
     static size_t blk_idx;
-public:
+
+   public:
     BasicBlock();
     ~BasicBlock() = default;
 

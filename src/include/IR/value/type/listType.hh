@@ -9,9 +9,10 @@ using ListTypePtr = std::shared_ptr<ListType>;
 using ArrDims = std::vector<size_t>;
 
 class ListType : public BaseType {
-private:
+   private:
     ArrDims dims;
-public:
+
+   public:
     ListType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 
     size_t getArrSize() const;

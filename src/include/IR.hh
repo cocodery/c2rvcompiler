@@ -1,22 +1,23 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 
-#include "valueHeader.hh"
-#include "symTable.hh"
 #include "funcTable.hh"
 #include "instHeader.hh"
+#include "symTable.hh"
+#include "valueHeader.hh"
 
 using std::cout;
 using std::endl;
 
 class CompilationUnit {
-private:
+   private:
     SymbolTable glb_table;
     FunctionTable func_talbe;
-public:
+
+   public:
     CompilationUnit() = default;
     ~CompilationUnit() = default;
 

@@ -4,8 +4,7 @@
 //                     ReturnInst Implementation
 //===-----------------------------------------------------------===//
 
-ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value)
-    : ret_type(_type), ret_value(_value) {
+ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value) : ret_type(_type), ret_value(_value) {
     if (ret_type->VoidType()) {
         assert(_value == nullptr);
     } else {
@@ -32,15 +31,11 @@ std::string ReturnInst::tollvmIR() {
 //                     JumpInst Implementation
 //===-----------------------------------------------------------===//
 
-JumpInst::JumpInst(BlockPtr _dest) : dest(_dest) { }
+JumpInst::JumpInst(BlockPtr _dest) : dest(_dest) {}
 
-JumpInstPtr JumpInst::CreatePtr(BlockPtr _dest) {
-    return std::make_shared<JumpInst>(_dest);
-}
+JumpInstPtr JumpInst::CreatePtr(BlockPtr _dest) { return std::make_shared<JumpInst>(_dest); }
 
-void JumpInst::setTarget(BlockPtr _dest) {
-    this->dest = _dest;
-}
+void JumpInst::setTarget(BlockPtr _dest) { this->dest = _dest; }
 
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
@@ -52,8 +47,7 @@ std::string JumpInst::tollvmIR() {
 //                     BranchInst Implementation
 //===-----------------------------------------------------------===//
 
-BranchInst::BranchInst(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2)
-    : cond(_cond), iftrue(_br1), iffalse(_br2) {
+BranchInst::BranchInst(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2) : cond(_cond), iftrue(_br1), iffalse(_br2) {
     assert(cond->getBaseType()->BoolType());
 }
 
@@ -61,14 +55,9 @@ BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, BlockPtr _br1, BlockPtr 
     return std::make_shared<BranchInst>(_cond, _br1, _br2);
 }
 
+void BranchInst::setTrueTarget(BlockPtr _iftrue) { this->iftrue = _iftrue; }
 
-void BranchInst::setTrueTarget(BlockPtr _iftrue) {
-    this->iftrue = _iftrue;
-}
-
-void BranchInst::setFalseTarget(BlockPtr _iffalse) {
-    this->iffalse = _iffalse;
-}
+void BranchInst::setFalseTarget(BlockPtr _iffalse) { this->iffalse = _iffalse; }
 
 std::string BranchInst::tollvmIR() {
     std::stringstream ss;

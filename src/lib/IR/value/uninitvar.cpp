@@ -1,16 +1,13 @@
 #include "uninitvar.hh"
 
-UnInitVar::UnInitVar(BaseTypePtr _type) 
-    : BaseValue(_type) {
+UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
     // INT || FLOAT
     assert(base_type->IntType() || base_type->FloatType());
     // MUTABLE, NOTPTR, GLOBAL
     assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());
 }
 
-UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) {
-    return std::make_shared<UnInitVar>(_type);
-}
+UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) { return std::make_shared<UnInitVar>(_type); }
 
 std::string UnInitVar::tollvmIR() {
     std::stringstream ss;

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
-#include <sstream>
 #include <cassert>
 #include <memory>
+#include <sstream>
+#include <string>
 
 #include "typeHeader.hh"
 
@@ -11,9 +11,10 @@ class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;
 
 class BaseValue {
-protected:
+   protected:
     BaseTypePtr base_type;
-public:
+
+   public:
     BaseValue(BaseTypePtr);
     ~BaseValue() = default;
 

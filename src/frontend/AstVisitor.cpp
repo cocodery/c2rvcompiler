@@ -8,7 +8,7 @@ std::vector<_Type *> getInitVal(_ListType *list) {
         return list->initVal();
     } else if constexpr (std::is_same_v<_Type, SysYParser::ConstInitValContext>) {
         return list->constInitVal();
-    } 
+    }
     assert(false);
 }
 
@@ -21,8 +21,8 @@ BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
     const ArrDims dim_size = list_type->getDimSize();
     ConstantPtr zero = (list_type->IntType()) ? zero_int32 : zero_float;
 
-    std::function<void(_ListType *, ConstArr &, size_t)> 
-        function = [&](_ListType *node, ConstArr &const_arr, size_t level) {
+    std::function<void(_ListType *, ConstArr &, size_t)> function = [&](_ListType *node, ConstArr &const_arr,
+                                                                        size_t level) {
         size_t total_size = 1;
         for (size_t idx = level; idx < arr_dims.size(); ++idx) {
             total_size *= arr_dims[idx];
@@ -31,7 +31,8 @@ BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
         size_t cnt = 0;
         for (auto &&child : getInitVal<_Type, _ListType>(node)) {
             if (auto &&scalar_node = dynamic_cast<_ScalarType *>(child)) {
-                ConstantPtr value = std::dynamic_pointer_cast<Constant>(scalar_node->accept(_this).template as<BaseValuePtr>());
+                ConstantPtr value =
+                    std::dynamic_pointer_cast<Constant>(scalar_node->accept(_this).template as<BaseValuePtr>());
                 const_arr.push_back(value);
                 ++cnt;
             } else {
@@ -58,7 +59,7 @@ BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
     return ConstArray::CreatePtr(list_type, const_arr);
 }
 
-}
+}  // namespace
 
 AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     have_main_func = false;
@@ -66,12 +67,12 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     in_loop = false;
     out_loop_block = nullptr;
 
-    ret_addr  = nullptr;
+    ret_addr = nullptr;
     ret_block = nullptr;
 
-    cur_type     = VOID;
+    cur_type = VOID;
     cur_position = GLOBAL;
-    ptr_or_not   = NOTPTR;
+    ptr_or_not = NOTPTR;
 
     cur_block = nullptr;
 
@@ -121,7 +122,7 @@ antlrcpp::Any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
         return INT;
     } else if (type_name == "float") {
         return FLOAT;
-    } 
+    }
     assert(false);
 }
 
@@ -135,7 +136,7 @@ antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
 
         cur_table->insertSymbol(name, value);
         // for Local Constant-Array
-        // store one copy at Global-Table to generate in .data section 
+        // store one copy at Global-Table to generate in .data section
         if (cur_position == LOCAL && value->getBaseType()->IsArray()) {
             comp_unit.insertSymbol(name, value);
         }
@@ -156,14 +157,12 @@ antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
     } else {
         // Const-Array is always GLOBAL no matter GLOBAL or LOCAL
         auto &&arr_dims = getArrayDims(dims_vec);
-        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, IMMUTABLE, NOTPTR , ARRAY, GLOBAL, arr_dims);
+        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, IMMUTABLE, NOTPTR, ARRAY, GLOBAL, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, IMMUTABLE, POINTER, ARRAY, GLOBAL, arr_dims);
-        BaseValuePtr init_value = parseGlobalListInit<
-                            SysYParser::ConstInitValContext, 
-                            SysYParser::ListConstInitValContext, 
-                            SysYParser::ScalarConstInitValContext
-                        > (dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), ty_stored, this)
-                        ;
+        BaseValuePtr init_value =
+            parseGlobalListInit<SysYParser::ConstInitValContext, SysYParser::ListConstInitValContext,
+                                SysYParser::ScalarConstInitValContext>(
+                dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), ty_stored, this);
         value = GlobalValue::CreatePtr(ty_alloca, init_value);
         addrTypeTable[value] = ty_stored;
     }
@@ -203,14 +202,10 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ?
-                                    (cur_type == INT ? type_int_G : type_float_G) :
-                                    (cur_type == INT ? type_int_L : type_float_L)
-                                    ;
-        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ?
-                                    (cur_type == INT ? type_int_ptr_G : type_float_ptr_G) :
-                                    (cur_type == INT ? type_int_ptr_L : type_float_ptr_L)
-                                    ;
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_G : type_float_G)
+                                                           : (cur_type == INT ? type_int_L : type_float_L);
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_ptr_G : type_float_ptr_G)
+                                                           : (cur_type == INT ? type_int_ptr_L : type_float_ptr_L);
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
         } else {
@@ -218,7 +213,7 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
         }
     } else {
         ArrDims &&arr_dims = getArrayDims(dims_vec);
-        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR , ARRAY, cur_position, arr_dims);
+        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR, ARRAY, cur_position, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, MUTABLE, POINTER, ARRAY, cur_position, arr_dims);
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
@@ -241,14 +236,10 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ?
-                                    (cur_type == INT ? type_int_G : type_float_G) :
-                                    (cur_type == INT ? type_int_L : type_float_L)
-                                    ;
-        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ?
-                                    (cur_type == INT ? type_int_ptr_G : type_float_ptr_G) :
-                                    (cur_type == INT ? type_int_ptr_L : type_float_ptr_L)
-                                    ;
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_G : type_float_G)
+                                                           : (cur_type == INT ? type_int_L : type_float_L);
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_ptr_G : type_float_ptr_G)
+                                                           : (cur_type == INT ? type_int_ptr_L : type_float_ptr_L);
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, init_val->accept(this).as<BaseValuePtr>());
         } else {
@@ -257,14 +248,12 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
         }
     } else {
         auto &&arr_dims = getArrayDims(dims_vec);
-        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR , ARRAY, cur_position, arr_dims);
+        ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR, ARRAY, cur_position, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, MUTABLE, POINTER, ARRAY, cur_position, arr_dims);
         if (cur_position == GLOBAL) {
-            BaseValuePtr init_value = parseGlobalListInit<
-                        SysYParser::InitValContext, 
-                        SysYParser::ListInitvalContext, 
-                        SysYParser::ScalarInitValContext
-                    > (dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, this);
+            BaseValuePtr init_value = parseGlobalListInit<SysYParser::InitValContext, SysYParser::ListInitvalContext,
+                                                          SysYParser::ScalarInitValContext>(
+                dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, this);
             address = GlobalValue::CreatePtr(ty_alloca, init_value);
         } else {
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
@@ -295,25 +284,26 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     std::string func_name = ctx->Identifier()->getText();
 
     cur_position = PARAMETER;
-    auto &&[param_name, param_list] = (ctx->funcFParams() == nullptr) ?
-                                        std::make_pair(std::vector<std::string>(), ParamList()) :
-                                        ctx->funcFParams()->accept(this).as<std::pair<std::vector<std::string>, ParamList>>()
-                                    ;
+    auto &&[param_name, param_list] =
+        (ctx->funcFParams() == nullptr)
+            ? std::make_pair(std::vector<std::string>(), ParamList())
+            : ctx->funcFParams()->accept(this).as<std::pair<std::vector<std::string>, ParamList>>();
     cur_position = LOCAL;
 
     NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
-    comp_unit.insertFunction(function); // for recursion
+    comp_unit.insertFunction(function);  // for recursion
     cur_func = function;
 
     cur_block = cur_func->createBB();
 
-    ret_addr = ret_type->VoidType() ? 
-                nullptr :
-                AllocaInst::DoAllocaAddr(ret_type, (ret_type->IntType() ? type_int_ptr_L : type_float_ptr_L), cur_block);
+    ret_addr =
+        ret_type->VoidType()
+            ? nullptr
+            : AllocaInst::DoAllocaAddr(ret_type, (ret_type->IntType() ? type_int_ptr_L : type_float_ptr_L), cur_block);
 
     // create a local-table layer for func-parameter to convenient resolveTable
     SymbolTable *last_table = cur_table;
-    cur_table = initParamList(cur_block, last_table, param_name); 
+    cur_table = initParamList(cur_block, last_table, param_name);
 
     ctx->block()->accept(this);
 
@@ -324,11 +314,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
         ret_inst->setTarget(ret_block);
     }
     ret_block->insertInst(
-        ReturnInst::CreatePtr(
-            ret_type, 
-            ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block)
-        )
-    );
+        ReturnInst::CreatePtr(ret_type, ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block)));
     cur_position = GLOBAL;
     cur_table = last_table;
 
@@ -339,7 +325,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     return nullptr;
 }
-    
+
 antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
     std::string type_name = ctx->getText();
     if (type_name == "int") {
@@ -351,7 +337,7 @@ antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
     }
     assert(false);
 }
-    
+
 antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
     std::vector<std::string> param_name;
     ParamList param_list;
@@ -405,7 +391,7 @@ antlrcpp::Any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
     BaseValuePtr store_value = ctx->exp()->accept(this).as<BaseValuePtr>();
     assert(store_value->IsOprand());
     ptr_or_not = POINTER;
-    BaseValuePtr store_addr  = ctx->lVal()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr store_addr = ctx->lVal()->accept(this).as<BaseValuePtr>();
     ptr_or_not = NOTPTR;
     assert(store_addr->getBaseType()->IsMutable());
     // in SysY, only care about '='
@@ -426,7 +412,7 @@ antlrcpp::Any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
 
 antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
     SymbolTable *last_table = cur_table;
-    SymbolTable *new_table  = newLocalTable(last_table);
+    SymbolTable *new_table = newLocalTable(last_table);
     cur_table = new_table;
     ctx->block()->accept(this);
     cur_table = last_table;
@@ -434,16 +420,16 @@ antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
-    BranchInstList last_lOr_list  = lOr_list;
+    BranchInstList last_lOr_list = lOr_list;
     BranchInstList last_lAnd_list = lAnd_list;
-    lOr_list  = BranchInstList();
-    lAnd_list = BranchInstList(); 
+    lOr_list = BranchInstList();
+    lAnd_list = BranchInstList();
     BaseValuePtr cond = ctx->condExp()->accept(this).as<BaseValuePtr>();
 
     BlockPtr last_block = cur_block;
 
-    SymbolTable *last_table  = cur_table;
-    SymbolTable *table_true  = newLocalTable(last_table);
+    SymbolTable *last_table = cur_table;
+    SymbolTable *table_true = newLocalTable(last_table);
     SymbolTable *table_false = newLocalTable(last_table);
 
     BlockPtr branch_true = cur_func->createBB();
@@ -463,11 +449,11 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     for (auto &&lAnd_inst : lAnd_list) {
         lAnd_inst->setFalseTarget(branch_false);
     }
-    for (auto &&lOr_inst  : lOr_list) {
+    for (auto &&lOr_inst : lOr_list) {
         lOr_inst->setTrueTarget(branch_true);
     }
     lAnd_list = last_lAnd_list;
-    lOr_list  = last_lOr_list;
+    lOr_list = last_lOr_list;
 
     BranchInstPtr branch_inst = BranchInst::CreatePtr(cond, branch_true, branch_false);
     last_block->insertInst(branch_inst);
@@ -477,7 +463,7 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     cur_block = branch_out;
 
     JumpInstPtr jump_inst = JumpInst::CreatePtr(branch_out);
-    true_end ->insertInst(jump_inst);
+    true_end->insertInst(jump_inst);
     false_end->insertInst(jump_inst);
 
     return nullptr;
@@ -498,10 +484,10 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     BreakInstList last_break_list = break_list;
     break_list = BreakInstList();
 
-    BranchInstList last_lOr_list  = lOr_list;
+    BranchInstList last_lOr_list = lOr_list;
     BranchInstList last_lAnd_list = lAnd_list;
-    lOr_list  = BranchInstList();
-    lAnd_list = BranchInstList(); 
+    lOr_list = BranchInstList();
+    lAnd_list = BranchInstList();
     cur_block = cond_block_begin;
     BaseValuePtr cond = ctx->condExp()->accept(this);
     BlockPtr cond_block_end = cur_block;
@@ -528,12 +514,12 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     for (auto &&lAnd_inst : lAnd_list) {
         lAnd_inst->setFalseTarget(loop_exit);
     }
-    for (auto &&lOr_inst  : lOr_list) {
+    for (auto &&lOr_inst : lOr_list) {
         lOr_inst->setTrueTarget(loop_begin);
     }
     lAnd_list = last_lAnd_list;
-    lOr_list  = last_lOr_list;
-    
+    lOr_list = last_lOr_list;
+
     target_continue = last_target_continue;
     cur_table = last_table;
     cur_block = loop_exit;
@@ -558,13 +544,14 @@ antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
 }
 
 antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
-    ScalarTypePtr ret_type  = cur_func->getReturnType();
+    ScalarTypePtr ret_type = cur_func->getReturnType();
     if (ret_type->VoidType()) {
         assert(ctx->exp() == nullptr);
     } else {
         assert(ctx->exp() != nullptr);
         ptr_or_not = NOTPTR;
-        BaseValuePtr ret_value = Value::scalarTypeConvert(ret_type->getAttrType(), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
+        BaseValuePtr ret_value =
+            Value::scalarTypeConvert(ret_type->getAttrType(), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr);
@@ -590,7 +577,7 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     auto &&exp_list = ctx->exp();
     if (type_addr->IsScalar() && !type_addr->IsParameter()) {
         // Do NoThing
-    } else { // For Array or Pointer-Parameter
+    } else {  // For Array or Pointer-Parameter
         assert(type_addr->IsPointer() && (type_addr->IsArray() || type_addr->IsParameter()));
         ListTypePtr list_type = addrTypeTable[address];
         ArrDims arr_dims = list_type->getDimSize();
@@ -600,16 +587,16 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         ptr_or_not = NOTPTR;
         for (size_t idx = 0; idx < exp_list.size(); ++idx) {
             ConstantPtr dim_size = Constant::CreatePtr(type_const_int, static_cast<int32_t>(arr_dims[idx]));
-            BaseValuePtr cur_off = Value::binaryOperate(OP_MUL, exp_list[idx]->accept(this).as<BaseValuePtr>(), dim_size, cur_block);
+            BaseValuePtr cur_off =
+                Value::binaryOperate(OP_MUL, exp_list[idx]->accept(this).as<BaseValuePtr>(), dim_size, cur_block);
             offset = Value::binaryOperate(OP_ADD, offset, cur_off, cur_block);
         }
         ptr_or_not = last_ptr_or_not;
         OffsetList off_list = type_addr->IsScalar() ? OffsetList() : OffsetList(1, zero_int32);
         off_list.push_back(offset);
-        BaseTypePtr base_type = type_addr->IsScalar() ? 
-                                    std::static_pointer_cast<BaseType>(type_addr->IntType() ? type_int_L : type_float_L) :
-                                    std::static_pointer_cast<BaseType>(list_type)
-                                    ;
+        BaseTypePtr base_type =
+            type_addr->IsScalar() ? std::static_pointer_cast<BaseType>(type_addr->IntType() ? type_int_L : type_float_L)
+                                  : std::static_pointer_cast<BaseType>(list_type);
         address = GetElementPtrInst::DoGetPointer(base_type, address, off_list, cur_block);
     }
     if (ptr_or_not == POINTER) {
@@ -646,7 +633,7 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
     auto &&rparam_node = ctx->funcRParam();
     auto &&fparam_list = callee_func->getParamList();
 
-    size_t rparam_size =  rparam_node.size();
+    size_t rparam_size = rparam_node.size();
     assert(rparam_size == fparam_list.size());
     rparam_list.reserve(rparam_size);
 
@@ -658,11 +645,11 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
 
         BaseTypePtr type_rparam = rparam->getBaseType();
         BaseTypePtr type_fparam = fparam->getBaseType();
-        
+
         if (type_fparam->IsNotPtr()) {
             assert(type_rparam->IsScalar());
             rparam = Value::scalarTypeConvert(type_fparam->getAttrType(), rparam, cur_block);
-        } 
+        }
         rparam_list.push_back(rparam);
     }
     ptr_or_not = last_ptr_or_not;
@@ -688,10 +675,10 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     callee_func = comp_unit.getFunction(callee_name);
     ScalarTypePtr ret_type = callee_func->getReturnType();
 
-    RParamList rparam_list = time_function ?
-        RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine()))) :
-        (ctx->funcRParams() != nullptr ? ctx->funcRParams()->accept(this).as<RParamList>() : RParamList())
-        ;
+    RParamList rparam_list =
+        time_function
+            ? RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
+            : (ctx->funcRParams() != nullptr ? ctx->funcRParams()->accept(this).as<RParamList>() : RParamList());
 
     return CallInst::DoCallFunction(ret_type, callee_name, rparam_list, cur_block);
 }
@@ -711,7 +698,7 @@ antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
         return OP_MINUS;
     } else if (op == "!") {
         return OP_NOT;
-    } 
+    }
     assert(0);
 }
 
@@ -721,8 +708,8 @@ antlrcpp::Any AstVisitor::visitMul1(SysYParser::Mul1Context *ctx) {
 
 antlrcpp::Any AstVisitor::visitMul2(SysYParser::Mul2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->mulExp  ()->accept(this).as<BaseValuePtr>();
-    OpCode       op  = ctx->mulOp   ()->accept(this).as<OpCode>();
+    BaseValuePtr lhs = ctx->mulExp()->accept(this).as<BaseValuePtr>();
+    OpCode op = ctx->mulOp()->accept(this).as<OpCode>();
     BaseValuePtr rhs = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
@@ -746,7 +733,7 @@ antlrcpp::Any AstVisitor::visitAdd1(SysYParser::Add1Context *ctx) {
 antlrcpp::Any AstVisitor::visitAdd2(SysYParser::Add2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
     BaseValuePtr lhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
-    OpCode       op  = ctx->addOp ()->accept(this).as<OpCode>();
+    OpCode op = ctx->addOp()->accept(this).as<OpCode>();
     BaseValuePtr rhs = ctx->mulExp()->accept(this).as<BaseValuePtr>();
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
@@ -757,7 +744,7 @@ antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
         return OP_ADD;
     } else if (op == "-") {
         return OP_SUB;
-    } 
+    }
     assert(0);
 }
 
@@ -768,7 +755,7 @@ antlrcpp::Any AstVisitor::visitRel1(SysYParser::Rel1Context *ctx) {
 antlrcpp::Any AstVisitor::visitRel2(SysYParser::Rel2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
     BaseValuePtr lhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
-    OpCode       op  = ctx->relOp ()->accept(this).as<OpCode>();
+    OpCode op = ctx->relOp()->accept(this).as<OpCode>();
     BaseValuePtr rhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
@@ -793,8 +780,8 @@ antlrcpp::Any AstVisitor::visitEq1(SysYParser::Eq1Context *ctx) {
 
 antlrcpp::Any AstVisitor::visitEq2(SysYParser::Eq2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->eqExp ()->accept(this).as<BaseValuePtr>();
-    OpCode       op  = ctx->eqOp  ()->accept(this).as<OpCode>();
+    BaseValuePtr lhs = ctx->eqExp()->accept(this).as<BaseValuePtr>();
+    OpCode op = ctx->eqOp()->accept(this).as<OpCode>();
     BaseValuePtr rhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
@@ -805,7 +792,7 @@ antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
         return OP_EQU;
     } else if (op == "!=") {
         return OP_NEQ;
-    } 
+    }
     assert(0);
 }
 
@@ -816,7 +803,7 @@ antlrcpp::Any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
 antlrcpp::Any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
     BaseValuePtr lAnd_node = Value::scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
     BlockPtr lAnd_true = cur_func->createBB();
-    
+
     BranchInstPtr br_inst = BranchInst::CreatePtr(lAnd_node, lAnd_true, nullptr);
     cur_block->insertInst(br_inst);
     lAnd_list.push_back(br_inst);
@@ -903,13 +890,13 @@ SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent
     size_t size = param_name.size();
     auto &&param_list = cur_func->getParamList();
     for (size_t idx = 0; idx < size; ++idx) {
-        auto &&name  = param_name[idx];
+        auto &&name = param_name[idx];
         auto &&param = param_list[idx];
         if (param->getBaseType()->IsPointer()) {
             new_table->insertSymbol(name, param);
         } else {
             ATTR_TYPE _type = param->getBaseType()->getAttrType();
-            BaseTypePtr ty_stored = (_type == INT) ? type_int_L     : type_float_L;
+            BaseTypePtr ty_stored = (_type == INT) ? type_int_L : type_float_L;
             BaseTypePtr ty_alloca = (_type == INT) ? type_int_ptr_L : type_float_ptr_L;
             BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, first_block);
             StoreInst::DoStoreValue(addr_alloca, param, first_block);
@@ -919,56 +906,59 @@ SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent
     return new_table;
 }
 
-void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr, BlockPtr cur_block) {
+void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
+                                    BlockPtr cur_block) {
     ATTR_TYPE _type = list_type->getAttrType();
 
     ConstantPtr zero = (_type == INT) ? zero_int32 : zero_float;
     ArrDims dim_size = list_type->getDimSize();
 
-    std::function<void(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> 
-        function = [&](SysYParser::ListInitvalContext *node, const ArrDims &arr_dims, size_t idx_offset, size_t level) {
-        size_t total_size = 1;
-        for (size_t idx = level; idx < arr_dims.size(); ++idx) {
-            total_size *= arr_dims[idx];
-        }
-        if (total_size == 0) return;
-        size_t cnt = 0;
-        for (auto &&child : node->initVal()) {
-            if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
+    std::function<void(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> function =
+        [&](SysYParser::ListInitvalContext *node, const ArrDims &arr_dims, size_t idx_offset, size_t level) {
+            size_t total_size = 1;
+            for (size_t idx = level; idx < arr_dims.size(); ++idx) {
+                total_size *= arr_dims[idx];
+            }
+            if (total_size == 0) return;
+            size_t cnt = 0;
+            for (auto &&child : node->initVal()) {
+                if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
+                    OffsetList off_list = OffsetList(1, zero_int32);
+                    ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
+                    off_list.push_back(offset);
+                    BaseValuePtr store_addr =
+                        GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
+                    BaseValuePtr value =
+                        Value::scalarTypeConvert(_type, scalar_node->exp()->accept(this).as<BaseValuePtr>(), cur_block);
+                    StoreInst::DoStoreValue(store_addr, value, cur_block);
+                    ++cnt;
+                    ++idx_offset;
+                } else {
+                    ArrDims child_dims = arr_dims;
+                    if (cnt > 0) {
+                        for (level = 0; level < dim_size.size(); ++level) {
+                            if (level == dim_size.size() - 1) assert(0);
+                            if (cnt % dim_size[level] == 0) break;
+                        }
+                    }
+                    level = level + 1;
+                    auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
+                    function(list_node, child_dims, idx_offset, level);
+                    cnt += dim_size[level - 1];
+                    idx_offset += dim_size[level - 1];
+                }
+            }
+            while (cnt < total_size) {
                 OffsetList off_list = OffsetList(1, zero_int32);
                 ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
                 off_list.push_back(offset);
                 BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-                BaseValuePtr value = Value::scalarTypeConvert(_type, scalar_node->exp()->accept(this).as<BaseValuePtr>(), cur_block);
-                StoreInst::DoStoreValue(store_addr, value, cur_block);
+                StoreInst::DoStoreValue(store_addr, zero, cur_block);
                 ++cnt;
                 ++idx_offset;
-            } else {
-                ArrDims child_dims = arr_dims;
-                if (cnt > 0) {
-                    for (level = 0; level < dim_size.size(); ++level) {
-                        if (level == dim_size.size() - 1) assert(0);
-                        if (cnt % dim_size[level] == 0) break;
-                    }
-                } 
-                level = level + 1;
-                auto &&list_node = dynamic_cast<SysYParser::ListInitvalContext *>(child);
-                function(list_node, child_dims, idx_offset, level);
-                cnt += dim_size[level - 1];
-                idx_offset += dim_size[level - 1];
             }
-        }
-        while (cnt < total_size) {
-            OffsetList off_list = OffsetList(1, zero_int32);
-            ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
-            off_list.push_back(offset);
-            BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-            StoreInst::DoStoreValue(store_addr, zero, cur_block);
-            ++cnt;
-            ++idx_offset;
-        }
-        return;
-    };
+            return;
+        };
     function(ctx, list_type->getArrDims(), 0, 0);
     return;
 }

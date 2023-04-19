@@ -2,16 +2,15 @@
 
 #include <memory>
 
+#include "function/basicblock.hh"
+#include "instHeader.hh"
+#include "instruction/memoryInst.hh"
 #include "value/baseValue.hh"
 #include "value/constant.hh"
 #include "value/constarray.hh"
+#include "value/globalvalue.hh"
 #include "value/uninitvar.hh"
 #include "value/variable.hh"
-#include "value/globalvalue.hh"
-#include "instHeader.hh"
-
-#include "instruction/memoryInst.hh"
-#include "function/basicblock.hh"
 
 namespace Value {
 
@@ -25,4 +24,4 @@ BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
 
 BaseValuePtr scalarTypeConvert(ATTR_TYPE, BaseValuePtr, BlockPtr);
 
-}
+}  // namespace Value

@@ -24,12 +24,24 @@ std::string IBinaryInst::tollvmIR() {
     std::stringstream ss;
     ss << i_res->tollvmIR() << " = ";
     switch (i_op) {
-        case OP_ADD: ss << "add" ; break;
-        case OP_SUB: ss << "sub" ; break;
-        case OP_MUL: ss << "mul" ; break;
-        case OP_DIV: ss << "sdiv"; break;
-        case OP_REM: ss << "srem"; break;
-        default : assert(0)      ; break;
+        case OP_ADD:
+            ss << "add";
+            break;
+        case OP_SUB:
+            ss << "sub";
+            break;
+        case OP_MUL:
+            ss << "mul";
+            break;
+        case OP_DIV:
+            ss << "sdiv";
+            break;
+        case OP_REM:
+            ss << "srem";
+            break;
+        default:
+            assert(0);
+            break;
     }
     ss << " i32 " << i_lhs->tollvmIR() << ", " << i_rhs->tollvmIR();
     return ss.str();
@@ -59,13 +71,22 @@ std::string FBinaryInst::tollvmIR() {
     std::stringstream ss;
     ss << f_res->tollvmIR() << " = ";
     switch (f_op) {
-        case OP_ADD: ss << "fadd" ; break;
-        case OP_SUB: ss << "fsub" ; break;
-        case OP_MUL: ss << "fmul" ; break;
-        case OP_DIV: ss << "fdiv" ; break;
-        default : assert(0)       ; break;
+        case OP_ADD:
+            ss << "fadd";
+            break;
+        case OP_SUB:
+            ss << "fsub";
+            break;
+        case OP_MUL:
+            ss << "fmul";
+            break;
+        case OP_DIV:
+            ss << "fdiv";
+            break;
+        default:
+            assert(0);
+            break;
     }
-    ss << " float " <<  f_lhs->tollvmIR() << ", " << f_rhs->tollvmIR();
+    ss << " float " << f_lhs->tollvmIR() << ", " << f_rhs->tollvmIR();
     return ss.str();
 }
-

@@ -4,11 +4,10 @@
 //                     AllocaInst Implementation
 //===-----------------------------------------------------------===//
 
-AllocaInst::AllocaInst(BaseTypePtr _ty_stored, BaseValuePtr _addr) 
-    : type_stored(_ty_stored), addr_alloca(_addr) {
+AllocaInst::AllocaInst(BaseTypePtr _ty_stored, BaseValuePtr _addr) : type_stored(_ty_stored), addr_alloca(_addr) {
     BaseTypePtr type_alloca = addr_alloca->getBaseType();
     assert(type_stored->getAttrType() == type_alloca->getAttrType());
-    assert(type_stored->IsNotPtr()    && type_alloca->IsPointer());
+    assert(type_stored->IsNotPtr() && type_alloca->IsPointer());
 }
 
 AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, BaseValuePtr _addr) {
@@ -31,13 +30,12 @@ std::string AllocaInst::tollvmIR() {
 //                     StoreInst Implementation
 //===-----------------------------------------------------------===//
 
-StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value)
-    : store_addr(addr), store_value(value) {
-    BaseTypePtr type_addr  = store_addr ->getBaseType();
+StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value) : store_addr(addr), store_value(value) {
+    BaseTypePtr type_addr = store_addr->getBaseType();
     BaseTypePtr type_value = store_value->getBaseType();
     assert(type_addr->getAttrType() == type_value->getAttrType());
-    assert(type_addr->IsPointer()   && type_value->IsNotPtr());
-    assert(type_addr->IsScalar()    && type_value->IsScalar());
+    assert(type_addr->IsPointer() && type_value->IsNotPtr());
+    assert(type_addr->IsScalar() && type_value->IsScalar());
 }
 
 StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value) {
@@ -54,7 +52,7 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, BlockPtr blo
 std::string StoreInst::tollvmIR() {
     std::stringstream ss;
     ss << "store " << store_value->getBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
-    ss << ", "     << store_addr ->getBaseType()->tollvmIR() << ' ' << store_addr ->tollvmIR();
+    ss << ", " << store_addr->getBaseType()->tollvmIR() << ' ' << store_addr->tollvmIR();
     ss << ", align 4";
     return ss.str();
 }
@@ -63,13 +61,12 @@ std::string StoreInst::tollvmIR() {
 //                     LoadInst Implementation
 //===-----------------------------------------------------------===//
 
-LoadInst::LoadInst(BaseValuePtr value, BaseValuePtr addr)
-    : load_value(value), load_addr(addr) {
-    BaseTypePtr type_addr  = load_addr ->getBaseType();
+LoadInst::LoadInst(BaseValuePtr value, BaseValuePtr addr) : load_value(value), load_addr(addr) {
+    BaseTypePtr type_addr = load_addr->getBaseType();
     BaseTypePtr type_value = load_value->getBaseType();
     assert(type_addr->getAttrType() == type_value->getAttrType());
-    assert(type_addr->IsPointer()   && type_value->IsNotPtr());
-    assert(type_addr->IsScalar()    && type_value->IsScalar());
+    assert(type_addr->IsPointer() && type_value->IsNotPtr());
+    assert(type_addr->IsScalar() && type_value->IsScalar());
 }
 
 LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
@@ -112,7 +109,7 @@ GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseV
 }
 
 GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off) {
-    return std::make_shared<GetElementPtrInst>(_ptr ,_type, _addr, _off);
+    return std::make_shared<GetElementPtrInst>(_ptr, _type, _addr, _off);
 }
 
 BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, BlockPtr block) {

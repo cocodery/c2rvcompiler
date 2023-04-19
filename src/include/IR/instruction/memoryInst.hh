@@ -8,12 +8,13 @@ class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 
 class AllocaInst : public Instruction {
-private:
-    BaseTypePtr  type_stored;
+   private:
+    BaseTypePtr type_stored;
     BaseValuePtr addr_alloca;
 
     static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr);
-public:
+
+   public:
     AllocaInst(BaseTypePtr, BaseValuePtr);
     ~AllocaInst() = default;
 
@@ -26,12 +27,13 @@ class StoreInst;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
 
 class StoreInst : public Instruction {
-private:
+   private:
     BaseValuePtr store_addr;
     BaseValuePtr store_value;
 
     static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
-public:
+
+   public:
     StoreInst(BaseValuePtr, BaseValuePtr);
     ~StoreInst() = default;
 
@@ -44,12 +46,13 @@ class LoadInst;
 using LoadInstPtr = std::shared_ptr<LoadInst>;
 
 class LoadInst : public Instruction {
-private:
+   private:
     BaseValuePtr load_value;
     BaseValuePtr load_addr;
 
     static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
-public:
+
+   public:
     LoadInst(BaseValuePtr, BaseValuePtr);
     ~LoadInst() = default;
 
@@ -63,14 +66,15 @@ using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
 using OffsetList = std::list<BaseValuePtr>;
 
 class GetElementPtrInst : public Instruction {
-private:
+   private:
     BaseValuePtr target_ptr;
-    BaseTypePtr  store_type;
+    BaseTypePtr store_type;
     BaseValuePtr base_addr;
-    OffsetList   offset_list;
+    OffsetList offset_list;
 
     static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
-public:
+
+   public:
     GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
     ~GetElementPtrInst() = default;
 

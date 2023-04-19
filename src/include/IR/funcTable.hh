@@ -7,9 +7,10 @@
 using FuncMap = std::vector<BaseFuncPtr>;
 
 class FunctionTable {
-private:
+   private:
     FuncMap func_table;
-public:
+
+   public:
     FunctionTable();
 
     BaseFuncPtr getFunction(std::string &);

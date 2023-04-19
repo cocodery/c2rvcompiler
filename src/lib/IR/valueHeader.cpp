@@ -6,29 +6,28 @@ BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
     ATTR_TYPE _type;
     ConstType _value;
 
-    std::visit([&_type, &_value, oper = op](auto &&arg) {
-        switch (oper) {
-            case OP_MINUS:
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, float>) {
-                    _type = FLOAT;
-                } else {
-                    _type = INT;
-                }
-                _value = -arg;
-                return;
-            case OP_NOT:
-                _type = BOOL;
-                _value = !arg;
-                return;
-            default:
-                assert(false);
-        }
-    }, oprand->getValue());
+    std::visit(
+        [&_type, &_value, oper = op](auto &&arg) {
+            switch (oper) {
+                case OP_MINUS:
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, float>) {
+                        _type = FLOAT;
+                    } else {
+                        _type = INT;
+                    }
+                    _value = -arg;
+                    return;
+                case OP_NOT:
+                    _type = BOOL;
+                    _value = !arg;
+                    return;
+                default:
+                    assert(false);
+            }
+        },
+        oprand->getValue());
 
-    ScalarTypePtr _stype =  (_type == INT)  ?   type_const_int :
-                            (_type == FLOAT)?   type_const_float :
-                                                type_const_bool
-                                                ;
+    ScalarTypePtr _stype = (_type == INT) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
     return Constant::CreatePtr(_stype, _value);
 }
 
@@ -38,44 +37,70 @@ BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const 
     ATTR_TYPE _type;
     ConstType _value;
 
-    std::visit([&_type, &_value, oper = op](auto &&l, auto &&r) {
-        using type_l = std::decay_t<decltype(l)>;
-        using type_r = std::decay_t<decltype(r)>;
+    std::visit(
+        [&_type, &_value, oper = op](auto &&l, auto &&r) {
+            using type_l = std::decay_t<decltype(l)>;
+            using type_r = std::decay_t<decltype(r)>;
 
-        constexpr bool returns_float = std::is_same_v<type_l, float> || std::is_same_v<type_r, float>;
+            constexpr bool returns_float = std::is_same_v<type_l, float> || std::is_same_v<type_r, float>;
 
-        if constexpr (returns_float) {
-            _type = FLOAT;
-        } else {
-            _type = INT;
-        }
+            if constexpr (returns_float) {
+                _type = FLOAT;
+            } else {
+                _type = INT;
+            }
 
-        switch (oper) {
-            case OP_ADD: _value = l + r; return;
-            case OP_SUB: _value = l - r; return;
-            case OP_MUL: _value = l * r; return;
-            case OP_DIV: _value = l / r; return;
-            case OP_REM:
-                if constexpr (returns_float) {
+            switch (oper) {
+                case OP_ADD:
+                    _value = l + r;
+                    return;
+                case OP_SUB:
+                    _value = l - r;
+                    return;
+                case OP_MUL:
+                    _value = l * r;
+                    return;
+                case OP_DIV:
+                    _value = l / r;
+                    return;
+                case OP_REM:
+                    if constexpr (returns_float) {
+                        assert(false);
+                    } else {
+                        _value = l % r;
+                    }
+                    return;
+                case OP_LTH:
+                    _value = (l < r);
+                    _type = BOOL;
+                    return;
+                case OP_LEQ:
+                    _value = (l <= r);
+                    _type = BOOL;
+                    return;
+                case OP_GTH:
+                    _value = (l > r);
+                    _type = BOOL;
+                    return;
+                case OP_GEQ:
+                    _value = (l >= r);
+                    _type = BOOL;
+                    return;
+                case OP_EQU:
+                    _value = (l == r);
+                    _type = BOOL;
+                    return;
+                case OP_NEQ:
+                    _value = (l != r);
+                    _type = BOOL;
+                    return;
+                default:
                     assert(false);
-                } else {
-                    _value = l % r;
-                }
-                return;
-            case OP_LTH: _value = (l <  r); _type = BOOL; return;
-            case OP_LEQ: _value = (l <= r); _type = BOOL; return;
-            case OP_GTH: _value = (l >  r); _type = BOOL; return;
-            case OP_GEQ: _value = (l >= r); _type = BOOL; return;
-            case OP_EQU: _value = (l == r); _type = BOOL; return;
-            case OP_NEQ: _value = (l != r); _type = BOOL; return;
-            default: assert(false);
-        }
-    }, lhs->getValue(), rhs->getValue());
+            }
+        },
+        lhs->getValue(), rhs->getValue());
 
-    ScalarTypePtr _stype =  (_type == INT)  ?   type_const_int :
-                            (_type == FLOAT)?   type_const_float :
-                                                type_const_bool
-                                                ;
+    ScalarTypePtr _stype = (_type == INT) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
 
     return Constant::CreatePtr(_stype, _value);
 }
@@ -105,7 +130,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     assert(lhs->IsOprand() && rhs->IsOprand());
     if (lhs->IsConstant() && rhs->IsConstant()) {
         return binaryOperate(op, std::static_pointer_cast<Constant>(lhs), std::static_pointer_cast<Constant>(rhs));
-    } 
+    }
     BaseValuePtr i_lhs = lhs, f_lhs = lhs;
     BaseValuePtr i_rhs = rhs, f_rhs = rhs;
 
@@ -124,7 +149,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
                 i_rhs = scalarTypeConvert(INT, i_rhs, block);
                 lhs_type = rhs_type = INT;
             }
-        } 
+        }
         assert(lhs_type == rhs_type);
         if (lhs_type == INT) {
             return IBinaryInst::DoIBinOperate(op, i_lhs, i_rhs, block);
@@ -134,7 +159,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     } else if ((op & (OP_LTH | OP_LEQ | OP_GTH | OP_GEQ | OP_EQU | OP_NEQ)) != 0) {
         // when do compare operation, lhs_type == rhs_type in { BOOL, INT, FLOAT }
         if (lhs_type != rhs_type) {
-            if (lhs_type == BOOL || rhs_type == BOOL) { // if one is BOOL, convert the other to BOOL
+            if (lhs_type == BOOL || rhs_type == BOOL) {  // if one is BOOL, convert the other to BOOL
                 i_lhs = scalarTypeConvert(BOOL, i_lhs, block);
                 i_rhs = scalarTypeConvert(BOOL, i_rhs, block);
                 lhs_type = rhs_type = BOOL;
@@ -142,7 +167,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
                 f_lhs = scalarTypeConvert(FLOAT, f_lhs, block);
                 f_rhs = scalarTypeConvert(FLOAT, f_rhs, block);
                 lhs_type = rhs_type = FLOAT;
-            } // else, Both type are INT
+            }  // else, Both type are INT
         }
         assert(lhs_type == rhs_type);
         if (lhs_type == FLOAT) {
@@ -164,10 +189,9 @@ BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
     // if convertee is `CONSTANT`, use `fixType` to convert
     if (convertee->IsConstant()) {
         ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
-        ScalarTypePtr _stype =  (type_convertee == INT)  ?  type_const_int :
-                                (type_convertee == FLOAT)?  type_const_float :
-                                                            type_const_bool
-                                                            ;
+        ScalarTypePtr _stype = (type_convertee == INT)     ? type_const_int
+                               : (type_convertee == FLOAT) ? type_const_float
+                                                           : type_const_bool;
         ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->getValue());
         constant->fixValue(type_convert);
         return constant;

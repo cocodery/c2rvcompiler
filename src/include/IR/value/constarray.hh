@@ -12,13 +12,14 @@ using ConstArr = std::vector<ConstantPtr>;
 // both global-const-array or local-const-array
 // will be put in .data section
 class ConstArray : public BaseValue {
-private:
+   private:
     ConstArr const_arr;
-public:
+
+   public:
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;
 
-    bool IsConstant() { return false; } ;
+    bool IsConstant() { return false; };
 
     void fixValue(ATTR_TYPE);
 

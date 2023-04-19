@@ -1,24 +1,14 @@
 #include "IR.hh"
 
-SymbolTable &CompilationUnit::getGlbTable() {
-    return this->glb_table;
-}
+SymbolTable &CompilationUnit::getGlbTable() { return this->glb_table; }
 
-void CompilationUnit::insertSymbol(std::string &name, BaseValuePtr value) {
-    glb_table.insertSymbol(name, value);
-}
+void CompilationUnit::insertSymbol(std::string &name, BaseValuePtr value) { glb_table.insertSymbol(name, value); }
 
-FunctionTable &CompilationUnit::getFuncTable() {
-    return this->func_talbe;
-}
+FunctionTable &CompilationUnit::getFuncTable() { return this->func_talbe; }
 
-BaseFuncPtr CompilationUnit::getFunction(std::string &name) {
-    return this->func_talbe.getFunction(name);
-}
+BaseFuncPtr CompilationUnit::getFunction(std::string &name) { return this->func_talbe.getFunction(name); }
 
-void CompilationUnit::insertFunction(BaseFuncPtr func_ptr) {
-    func_talbe.insertFunction(func_ptr);
-}
+void CompilationUnit::insertFunction(BaseFuncPtr func_ptr) { func_talbe.insertFunction(func_ptr); }
 
 void CompilationUnit::generatellvmIR(std::string &irfile) {
     std::ofstream llir;
@@ -31,7 +21,7 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->IsImMutable() && type->IsScalar()) {
-            llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4"; 
+            llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4";
         } else {
             llir << glb_value->tollvmIR() << " = ";
             if (type->IsImMutable()) {

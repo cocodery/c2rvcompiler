@@ -1,20 +1,20 @@
 #pragma once
 
+#include <cstdio>
 #include <iostream>
 #include <list>
-#include <vector>
 #include <string>
-#include <cstdio>
+#include <vector>
 
-#include "SysYBaseVisitor.h"
 #include "IR.hh"
+#include "SysYBaseVisitor.h"
 
 using std::cout;
 using std::endl;
 
 class AstVisitor : public SysYBaseVisitor {
-// private variable for parsing AST and building llvm-ir
-private:
+    // private variable for parsing AST and building llvm-IR
+   private:
     CompilationUnit &comp_unit;
 
     bool have_main_func;
@@ -28,7 +28,7 @@ private:
     ATTR_TYPE cur_type;
     ATTR_POSITION cur_position;
     ATTR_POINTER ptr_or_not;
-    
+
     BlockPtr cur_block;
 
     NormalFuncPtr cur_func;
@@ -52,15 +52,16 @@ private:
 
     using AddrTypeMap = std::unordered_map<BaseValuePtr, ListTypePtr>;
     AddrTypeMap addrTypeTable;
-public:
+
+   public:
     AstVisitor(CompilationUnit &);
     ~AstVisitor() = default;
-    
+
     virtual antlrcpp::Any visitCompilationUnit(SysYParser::CompilationUnitContext *ctx) override;
-// override anltr parsing function
-private:
+    // override anltr parsing function
+   private:
     virtual antlrcpp::Any visitChildren(antlr4::tree::ParseTree *ctx) override;
-    
+
     virtual antlrcpp::Any visitTranslationUnit(SysYParser::TranslationUnitContext *ctx) override;
 
     virtual antlrcpp::Any visitDecl(SysYParser::DeclContext *ctx) override;
@@ -84,13 +85,13 @@ private:
     virtual antlrcpp::Any visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) override;
 
     virtual antlrcpp::Any visitListInitval(SysYParser::ListInitvalContext *ctx) override;
-    
+
     virtual antlrcpp::Any visitFuncDef(SysYParser::FuncDefContext *ctx) override;
-    
+
     virtual antlrcpp::Any visitFuncType(SysYParser::FuncTypeContext *ctx) override;
-    
+
     virtual antlrcpp::Any visitFuncFParams(SysYParser::FuncFParamsContext *ctx) override;
-    
+
     virtual antlrcpp::Any visitFuncFParam(SysYParser::FuncFParamContext *ctx) override;
 
     virtual antlrcpp::Any visitBlock(SysYParser::BlockContext *ctx) override;
@@ -180,8 +181,8 @@ private:
     virtual antlrcpp::Any visitCondExp(SysYParser::CondExpContext *ctx) override;
 
     virtual antlrcpp::Any visitConstExp(SysYParser::ConstExpContext *ctx) override;
-    
-// support function to parse
+
+    // support function to parse
     ArrDims getArrayDims(std::vector<SysYParser::ConstExpContext *> &);
 
     SymbolTable *newLocalTable(SymbolTable *);

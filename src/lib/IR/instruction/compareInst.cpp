@@ -20,18 +20,32 @@ VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }
-    
+
 std::string ICmpInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = icmp ";
     switch (cond) {
-        case OP_LTH: ss << "slt"; break;
-        case OP_LEQ: ss << "sle"; break;
-        case OP_GTH: ss << "sgt"; break;
-        case OP_GEQ: ss << "sge"; break;
-        case OP_EQU: ss << "eq" ; break;
-        case OP_NEQ: ss << "ne" ; break;
-        default : assert(0)     ; break;
+        case OP_LTH:
+            ss << "slt";
+            break;
+        case OP_LEQ:
+            ss << "sle";
+            break;
+        case OP_GTH:
+            ss << "sgt";
+            break;
+        case OP_GEQ:
+            ss << "sge";
+            break;
+        case OP_EQU:
+            ss << "eq";
+            break;
+        case OP_NEQ:
+            ss << "ne";
+            break;
+        default:
+            assert(0);
+            break;
     }
     ss << " " << lhs->getBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     return ss.str();
@@ -57,18 +71,32 @@ VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
 }
-    
+
 std::string FCmpInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = fcmp ";
     switch (cond) {
-        case OP_LTH: ss << "olt"; break;
-        case OP_LEQ: ss << "ole"; break;
-        case OP_GTH: ss << "ogt"; break;
-        case OP_GEQ: ss << "oge"; break;
-        case OP_EQU: ss << "oeq"; break;
-        case OP_NEQ: ss << "one"; break;
-        default : assert(0)     ; break;
+        case OP_LTH:
+            ss << "olt";
+            break;
+        case OP_LEQ:
+            ss << "ole";
+            break;
+        case OP_GTH:
+            ss << "ogt";
+            break;
+        case OP_GEQ:
+            ss << "oge";
+            break;
+        case OP_EQU:
+            ss << "oeq";
+            break;
+        case OP_NEQ:
+            ss << "one";
+            break;
+        default:
+            assert(0);
+            break;
     }
     ss << " float " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     return ss.str();
