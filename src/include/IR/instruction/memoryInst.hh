@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/basicblock.hh"
+#include "../function/cfgNode.hh"
 #include "instruction.hh"
 #include "typeconvert.hh"
 
@@ -18,7 +18,7 @@ class AllocaInst : public Instruction {
     AllocaInst(BaseTypePtr, BaseValuePtr);
     ~AllocaInst() = default;
 
-    static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, BlockPtr);
+    static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -37,7 +37,7 @@ class StoreInst : public Instruction {
     StoreInst(BaseValuePtr, BaseValuePtr);
     ~StoreInst() = default;
 
-    static void DoStoreValue(BaseValuePtr, BaseValuePtr, BlockPtr);
+    static void DoStoreValue(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -56,7 +56,7 @@ class LoadInst : public Instruction {
     LoadInst(BaseValuePtr, BaseValuePtr);
     ~LoadInst() = default;
 
-    static BaseValuePtr DoLoadValue(BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -78,7 +78,7 @@ class GetElementPtrInst : public Instruction {
     GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
     ~GetElementPtrInst() = default;
 
-    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, BlockPtr);
+    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
     std::string tollvmIR();
 };

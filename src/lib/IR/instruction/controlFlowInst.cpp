@@ -31,11 +31,11 @@ std::string ReturnInst::tollvmIR() {
 //                     JumpInst Implementation
 //===-----------------------------------------------------------===//
 
-JumpInst::JumpInst(BlockPtr _dest) : dest(_dest) {}
+JumpInst::JumpInst(CfgNodePtr _dest) : dest(_dest) {}
 
-JumpInstPtr JumpInst::CreatePtr(BlockPtr _dest) { return std::make_shared<JumpInst>(_dest); }
+JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _dest) { return std::make_shared<JumpInst>(_dest); }
 
-void JumpInst::setTarget(BlockPtr _dest) { this->dest = _dest; }
+void JumpInst::setTarget(CfgNodePtr _dest) { this->dest = _dest; }
 
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
@@ -47,17 +47,18 @@ std::string JumpInst::tollvmIR() {
 //                     BranchInst Implementation
 //===-----------------------------------------------------------===//
 
-BranchInst::BranchInst(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2) : cond(_cond), iftrue(_br1), iffalse(_br2) {
+BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2)
+    : cond(_cond), iftrue(_br1), iffalse(_br2) {
     assert(cond->getBaseType()->BoolType());
 }
 
-BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, BlockPtr _br1, BlockPtr _br2) {
+BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2) {
     return std::make_shared<BranchInst>(_cond, _br1, _br2);
 }
 
-void BranchInst::setTrueTarget(BlockPtr _iftrue) { this->iftrue = _iftrue; }
+void BranchInst::setTrueTarget(CfgNodePtr _iftrue) { this->iftrue = _iftrue; }
 
-void BranchInst::setFalseTarget(BlockPtr _iffalse) { this->iffalse = _iffalse; }
+void BranchInst::setFalseTarget(CfgNodePtr _iffalse) { this->iffalse = _iffalse; }
 
 std::string BranchInst::tollvmIR() {
     std::stringstream ss;

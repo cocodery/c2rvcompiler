@@ -14,7 +14,7 @@ IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr
     return std::make_shared<IBinaryInst>(_res, _op, _lhs, _rhs);
 }
 
-VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
+VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_int_L);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
@@ -61,7 +61,7 @@ FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr
     return std::make_shared<FBinaryInst>(_res, _op, _lhs, _rhs);
 }
 
-VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
+VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_float_L);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;

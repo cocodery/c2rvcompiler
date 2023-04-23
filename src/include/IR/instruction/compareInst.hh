@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/basicblock.hh"
+#include "../function/cfgNode.hh"
 #include "instruction.hh"
 
 class ICmpInst;
@@ -19,7 +19,7 @@ class ICmpInst : public Instruction {
     ICmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~ICmpInst() = default;
 
-    static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -40,7 +40,7 @@ class FCmpInst : public Instruction {
     FCmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~FCmpInst() = default;
 
-    static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };

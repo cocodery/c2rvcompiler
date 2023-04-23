@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/basicblock.hh"
+#include "../function/cfgNode.hh"
 #include "compareInst.hh"
 #include "instruction.hh"
 #include "valueHeader.hh"
@@ -19,7 +19,7 @@ class SitoFpInst : public Instruction {
     SitoFpInst(VariablePtr, BaseValuePtr);
     ~SitoFpInst() = default;
 
-    static VariablePtr DoSitoFp(BaseValuePtr, BlockPtr);
+    static VariablePtr DoSitoFp(BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -38,7 +38,7 @@ class FptoSiInst : public Instruction {
     FptoSiInst(VariablePtr, BaseValuePtr);
     ~FptoSiInst() = default;
 
-    static VariablePtr DoFptoSi(ATTR_TYPE, BaseValuePtr, BlockPtr);
+    static VariablePtr DoFptoSi(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -57,7 +57,7 @@ class ZextInst : public Instruction {
     ZextInst(VariablePtr, BaseValuePtr);
     ~ZextInst() = default;
 
-    static VariablePtr DoZeroExt(BaseValuePtr, BlockPtr);
+    static VariablePtr DoZeroExt(BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };

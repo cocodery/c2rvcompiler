@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/basicblock.hh"
+#include "function/cfgNode.hh"
 #include "instruction.hh"
 #include "value/type/scalarType.hh"
 
@@ -26,15 +26,15 @@ using JumpInstPtr = std::shared_ptr<JumpInst>;
 
 class JumpInst : public Instruction {
    private:
-    BlockPtr dest;
+    CfgNodePtr dest;
 
    public:
-    JumpInst(BlockPtr);
+    JumpInst(CfgNodePtr);
     ~JumpInst() = default;
 
-    static JumpInstPtr CreatePtr(BlockPtr);
+    static JumpInstPtr CreatePtr(CfgNodePtr);
 
-    void setTarget(BlockPtr);
+    void setTarget(CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -45,17 +45,17 @@ using BranchInstPtr = std::shared_ptr<BranchInst>;
 class BranchInst : public Instruction {
    private:
     BaseValuePtr cond;
-    BlockPtr iftrue;
-    BlockPtr iffalse;
+    CfgNodePtr iftrue;
+    CfgNodePtr iffalse;
 
    public:
-    BranchInst(BaseValuePtr, BlockPtr, BlockPtr);
+    BranchInst(BaseValuePtr, CfgNodePtr, CfgNodePtr);
     ~BranchInst() = default;
 
-    static BranchInstPtr CreatePtr(BaseValuePtr, BlockPtr, BlockPtr);
+    static BranchInstPtr CreatePtr(BaseValuePtr, CfgNodePtr, CfgNodePtr);
 
-    void setTrueTarget(BlockPtr);
-    void setFalseTarget(BlockPtr);
+    void setTrueTarget(CfgNodePtr);
+    void setFalseTarget(CfgNodePtr);
 
     std::string tollvmIR();
 };

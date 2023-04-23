@@ -14,7 +14,7 @@ AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, BaseValuePtr _addr) 
     return std::make_shared<AllocaInst>(_ty_stored, _addr);
 }
 
-VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_alloca, BlockPtr block) {
+VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_alloca, CfgNodePtr block) {
     VariablePtr _addr = Variable::CreatePtr(_ty_alloca);
     block->insertInst(CreatePtr(_ty_stored, _addr));
     return _addr;
@@ -42,7 +42,7 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value) {
     return std::make_shared<StoreInst>(addr, value);
 }
 
-void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, BlockPtr block) {
+void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block) {
     // for store, only two target type, `INT` and `FLOAT`
     assert(value->IsOprand());
     BaseValuePtr convertee = Value::scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
@@ -73,7 +73,7 @@ LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr) {
     return std::make_shared<LoadInst>(value, addr);
 }
 
-BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, BlockPtr block) {
+BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     BaseTypePtr addr_type = addr->getBaseType();
     assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->IntType() || addr_type->FloatType()));
     BaseValuePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L);
@@ -112,7 +112,7 @@ GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, Ba
     return std::make_shared<GetElementPtrInst>(_ptr, _type, _addr, _off);
 }
 
-BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, BlockPtr block) {
+BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, CfgNodePtr block) {
     // only have INT-array or FLOAT-array
     BaseValuePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L);
     block->insertInst(CreatePtr(_ptr, _type, _addr, _off));

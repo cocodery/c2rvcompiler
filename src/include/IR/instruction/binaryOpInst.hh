@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/basicblock.hh"
+#include "../function/cfgNode.hh"
 #include "instruction.hh"
 
 class IBinaryInst;
@@ -19,7 +19,7 @@ class IBinaryInst : public Instruction {
     IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~IBinaryInst() = default;
 
-    static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -40,7 +40,7 @@ class FBinaryInst : public Instruction {
     FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
     ~FBinaryInst() = default;
 
-    static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
+    static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };

@@ -105,7 +105,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const 
     return Constant::CreatePtr(_stype, _value);
 }
 
-BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr block) {
+BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePtr block) {
     assert(oprand->IsOprand());
     if (op == OP_ADD) return oprand;
     if (oprand->IsConstant()) {
@@ -126,7 +126,7 @@ BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, BlockPtr 
     assert(0);
 }
 
-BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePtr rhs, BlockPtr block) {
+BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePtr rhs, CfgNodePtr block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
     if (lhs->IsConstant() && rhs->IsConstant()) {
         return binaryOperate(op, std::static_pointer_cast<Constant>(lhs), std::static_pointer_cast<Constant>(rhs));
@@ -179,7 +179,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     assert(0);
 }
 
-BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, BlockPtr block) {
+BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, CfgNodePtr block) {
     assert(convertee->IsOprand());
     ATTR_TYPE type_convertee = convertee->getBaseType()->getAttrType();
     // if type_convert == type_convertee, no need to convert

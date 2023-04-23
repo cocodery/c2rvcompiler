@@ -15,7 +15,7 @@ ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
     return std::make_shared<ICmpInst>(_res, _cond, _lhs, _rhs);
 }
 
-VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
+VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_bool);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;
@@ -66,7 +66,7 @@ FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
     return std::make_shared<FCmpInst>(_res, _cond, _lhs, _rhs);
 }
 
-VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, BlockPtr block) {
+VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_bool);
     block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
     return _res;

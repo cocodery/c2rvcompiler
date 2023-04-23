@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/basicblock.hh"
+#include "function/cfgNode.hh"
 #include "instruction.hh"
 #include "value/type/scalarType.hh"
 
@@ -21,7 +21,7 @@ class CallInst : public Instruction {
     CallInst(ScalarTypePtr, VariablePtr, std::string &, RParamList &);
     ~CallInst() = default;
 
-    static BaseValuePtr DoCallFunction(ScalarTypePtr, std::string &, RParamList &, BlockPtr);
+    static BaseValuePtr DoCallFunction(ScalarTypePtr, std::string &, RParamList &, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -40,7 +40,7 @@ class BitCastInst : public Instruction {
     BitCastInst(BaseValuePtr, BaseValuePtr);
     ~BitCastInst() = default;
 
-    static BaseValuePtr DoBitCast(BaseValuePtr, BlockPtr);
+    static BaseValuePtr DoBitCast(BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "function/basicblock.hh"
+#include "function/cfgNode.hh"
 #include "instHeader.hh"
 #include "instruction/memoryInst.hh"
 #include "value/baseValue.hh"
@@ -18,10 +18,10 @@ BaseValuePtr unaryOperate(const OpCode, const ConstantPtr);
 
 BaseValuePtr binaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);
 
-BaseValuePtr unaryOperate(const OpCode, BaseValuePtr, BlockPtr);
+BaseValuePtr unaryOperate(const OpCode, BaseValuePtr, CfgNodePtr);
 
-BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, BlockPtr);
+BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-BaseValuePtr scalarTypeConvert(ATTR_TYPE, BaseValuePtr, BlockPtr);
+BaseValuePtr scalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
 }  // namespace Value

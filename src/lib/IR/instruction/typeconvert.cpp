@@ -13,7 +13,7 @@ SitoFpInstPtr SitoFpInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<SitoFpInst>(_value1, _value2);
 }
 
-VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, BlockPtr block) {
+VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, CfgNodePtr block) {
     VariablePtr _fp = Variable::CreatePtr(type_float_L);
     block->insertInst(CreatePtr(_fp, _si));
     return _fp;
@@ -39,7 +39,7 @@ FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<FptoSiInst>(_value1, _value2);
 }
 
-VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, BlockPtr block) {
+VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, CfgNodePtr block) {
     assert(_type == BOOL || _type == INT);
     VariablePtr _si = Variable::CreatePtr((_type == INT) ? type_int_L : type_bool);
     block->insertInst(CreatePtr(_si, _fp));
@@ -66,7 +66,7 @@ ZextInstPtr ZextInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2) {
     return std::make_shared<ZextInst>(_value1, _value2);
 }
 
-VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, BlockPtr block) {
+VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, CfgNodePtr block) {
     VariablePtr _lv = Variable::CreatePtr(type_int_L);
     block->insertInst(CreatePtr(_lv, _sv));
     return _lv;
