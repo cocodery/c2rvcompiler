@@ -31,11 +31,24 @@ std::string ReturnInst::tollvmIR() {
 //                     JumpInst Implementation
 //===-----------------------------------------------------------===//
 
-JumpInst::JumpInst(CfgNodePtr _dest) : dest(_dest) {}
+JumpInst::JumpInst(CfgNodePtr _block, CfgNodePtr _dest) : block(_block), dest(_dest) {
+    assert(block != nullptr);
+    if (dest != nullptr) {
+        block->AddSuccessor(dest);
+        dest->AddPredcessor(block);
+    }
+}
 
-JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _dest) { return std::make_shared<JumpInst>(_dest); }
+JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _block, CfgNodePtr _dest) {
+    return std::make_shared<JumpInst>(_block, _dest);
+}
 
-void JumpInst::setTarget(CfgNodePtr _dest) { this->dest = _dest; }
+void JumpInst::setTarget(CfgNodePtr _dest) {
+    assert(dest == nullptr);
+    dest = _dest;
+    block->AddSuccessor(dest);
+    dest->AddPredcessor(block);
+}
 
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
@@ -47,18 +60,37 @@ std::string JumpInst::tollvmIR() {
 //                     BranchInst Implementation
 //===-----------------------------------------------------------===//
 
-BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2)
-    : cond(_cond), iftrue(_br1), iffalse(_br2) {
+BranchInst::BranchInst(CfgNodePtr _block, BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2)
+    : block(_block), cond(_cond), iftrue(_br1), iffalse(_br2) {
     assert(cond->getBaseType()->BoolType());
+    assert(block != nullptr);
+    if (iftrue != nullptr) {
+        block->AddSuccessor(iftrue);
+        iftrue->AddPredcessor(block);
+    }
+    if (iffalse != nullptr) {
+        block->AddSuccessor(iffalse);
+        iffalse->AddPredcessor(block);
+    }
 }
 
-BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2) {
-    return std::make_shared<BranchInst>(_cond, _br1, _br2);
+BranchInstPtr BranchInst::CreatePtr(CfgNodePtr _block, BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2) {
+    return std::make_shared<BranchInst>(_block, _cond, _br1, _br2);
 }
 
-void BranchInst::setTrueTarget(CfgNodePtr _iftrue) { this->iftrue = _iftrue; }
+void BranchInst::setTrueTarget(CfgNodePtr _iftrue) {
+    assert(iftrue == nullptr);
+    iftrue = _iftrue;
+    block->AddSuccessor(iftrue);
+    iftrue->AddPredcessor(block);
+}
 
-void BranchInst::setFalseTarget(CfgNodePtr _iffalse) { this->iffalse = _iffalse; }
+void BranchInst::setFalseTarget(CfgNodePtr _iffalse) {
+    assert(iffalse == nullptr);
+    iffalse = _iffalse;
+    block->AddSuccessor(iffalse);
+    iffalse->AddPredcessor(block);
+}
 
 std::string BranchInst::tollvmIR() {
     std::stringstream ss;

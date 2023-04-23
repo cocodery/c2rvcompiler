@@ -26,13 +26,14 @@ using JumpInstPtr = std::shared_ptr<JumpInst>;
 
 class JumpInst : public Instruction {
    private:
+    CfgNodePtr block;
     CfgNodePtr dest;
 
    public:
-    JumpInst(CfgNodePtr);
+    JumpInst(CfgNodePtr, CfgNodePtr);
     ~JumpInst() = default;
 
-    static JumpInstPtr CreatePtr(CfgNodePtr);
+    static JumpInstPtr CreatePtr(CfgNodePtr, CfgNodePtr);
 
     void setTarget(CfgNodePtr);
 
@@ -44,15 +45,16 @@ using BranchInstPtr = std::shared_ptr<BranchInst>;
 
 class BranchInst : public Instruction {
    private:
+    CfgNodePtr block;
     BaseValuePtr cond;
     CfgNodePtr iftrue;
     CfgNodePtr iffalse;
 
    public:
-    BranchInst(BaseValuePtr, CfgNodePtr, CfgNodePtr);
+    BranchInst(CfgNodePtr, BaseValuePtr, CfgNodePtr, CfgNodePtr);
     ~BranchInst() = default;
 
-    static BranchInstPtr CreatePtr(BaseValuePtr, CfgNodePtr, CfgNodePtr);
+    static BranchInstPtr CreatePtr(CfgNodePtr, BaseValuePtr, CfgNodePtr, CfgNodePtr);
 
     void setTrueTarget(CfgNodePtr);
     void setFalseTarget(CfgNodePtr);
