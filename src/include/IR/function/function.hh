@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "../valueHeader.hh"
-#include "basicblock.hh"
+#include "cfgNode.hh"
 
 class BaseFunction;
 using BaseFuncPtr = std::shared_ptr<BaseFunction>;
@@ -30,17 +30,21 @@ class BaseFunction {
 
 class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
-using BlockList = std::list<BlockPtr>;
+using BlockList = std::list<CfgNodePtr>;
 
 class NormalFunction : public BaseFunction {
    private:
+    CfgNodePtr entry;
+    CfgNodePtr exit;
     BlockList block_list;
 
    public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
 
-    BlockPtr createBB(bool insertalbe = true);
+    CfgNodePtr CreateEntry();
+    CfgNodePtr CreateExit();
+    CfgNodePtr CreateCfgNode(bool insertalbe = true);
 
     static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 

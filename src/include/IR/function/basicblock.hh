@@ -11,7 +11,7 @@ using InstListType = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
 class BasicBlock {
-   private:
+   protected:
     size_t idx;
     InstListType inst_list;
 
@@ -27,8 +27,7 @@ class BasicBlock {
 
     void insertInst(InstPtr);
 
-    static BlockPtr CreatePtr();
     static void resetBlkIdx();
 
-    std::string tollvmIR();
+    virtual std::string tollvmIR() = 0;
 };

@@ -20,16 +20,16 @@ class AstVisitor : public SysYBaseVisitor {
     bool have_main_func;
 
     bool in_loop;
-    BlockPtr out_loop_block;
+    CfgNodePtr out_loop_block;
 
     VariablePtr ret_addr;
-    BlockPtr ret_block;
+    CfgNodePtr ret_block;
 
     ATTR_TYPE cur_type;
     ATTR_POSITION cur_position;
     ATTR_POINTER ptr_or_not;
 
-    BlockPtr cur_block;
+    CfgNodePtr cur_block;
 
     NormalFuncPtr cur_func;
     BaseFuncPtr callee_func;
@@ -41,7 +41,7 @@ class AstVisitor : public SysYBaseVisitor {
     using RetInstList = std::list<JumpInstPtr>;
     RetInstList return_list;
 
-    BlockPtr target_continue;
+    CfgNodePtr target_continue;
 
     using BreakInstList = std::list<JumpInstPtr>;
     BreakInstList break_list;
@@ -190,7 +190,7 @@ class AstVisitor : public SysYBaseVisitor {
 
     BaseValuePtr resolveTable(std::string &name);
 
-    SymbolTable *initParamList(BlockPtr, SymbolTable *, std::vector<std::string>);
+    SymbolTable *initParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
 
-    void parseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, BlockPtr);
+    void parseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, CfgNodePtr);
 };

@@ -294,7 +294,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     comp_unit.insertFunction(function);  // for recursion
     cur_func = function;
 
-    cur_block = cur_func->createBB();
+    cur_block = cur_func->CreateEntry();
 
     ret_addr =
         ret_type->VoidType()
@@ -307,8 +307,8 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     ctx->block()->accept(this);
 
-    ret_block = cur_func->createBB();
-    cur_block->insertInst(JumpInst::CreatePtr(ret_block));
+    ret_block = cur_func->CreateExit();
+    cur_block->insertInst(JumpInst::CreatePtr(cur_block, ret_block));
 
     for (auto &&ret_inst : return_list) {
         ret_inst->setTarget(ret_block);
@@ -426,25 +426,25 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     lAnd_list = BranchInstList();
     BaseValuePtr cond = ctx->condExp()->accept(this).as<BaseValuePtr>();
 
-    BlockPtr last_block = cur_block;
+    CfgNodePtr last_block = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
     SymbolTable *table_true = newLocalTable(last_table);
     SymbolTable *table_false = newLocalTable(last_table);
 
-    BlockPtr branch_true = cur_func->createBB();
+    CfgNodePtr branch_true = cur_func->CreateCfgNode();  // first-block-of-true-branch
     cur_table = table_true;
     cur_block = branch_true;
     ctx->stmt(0)->accept(this);
-    BlockPtr true_end = cur_block;
+    CfgNodePtr true_end = cur_block;  // last-block-of-true-branch
 
-    BlockPtr branch_false = cur_func->createBB();
+    CfgNodePtr branch_false = cur_func->CreateCfgNode();  // first-block-of-false-branch
     cur_table = table_false;
     cur_block = branch_false;
     if (ctx->Else() != nullptr) {
         ctx->stmt(1)->accept(this);
     }
-    BlockPtr false_end = cur_block;
+    CfgNodePtr false_end = cur_block;  // last-block-of-false-branch
 
     for (auto &&lAnd_inst : lAnd_list) {
         lAnd_inst->setFalseTarget(branch_false);
@@ -455,16 +455,14 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
 
-    BranchInstPtr branch_inst = BranchInst::CreatePtr(cond, branch_true, branch_false);
-    last_block->insertInst(branch_inst);
+    last_block->insertInst(BranchInst::CreatePtr(last_block, cond, branch_true, branch_false));
 
-    BlockPtr branch_out = cur_func->createBB();
+    CfgNodePtr branch_out = cur_func->CreateCfgNode();  // after-branch
     cur_table = last_table;
     cur_block = branch_out;
 
-    JumpInstPtr jump_inst = JumpInst::CreatePtr(branch_out);
-    true_end->insertInst(jump_inst);
-    false_end->insertInst(jump_inst);
+    true_end->insertInst(JumpInst::CreatePtr(true_end, branch_out));
+    false_end->insertInst(JumpInst::CreatePtr(false_end, branch_out));
 
     return nullptr;
 }
@@ -476,9 +474,10 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     }
     in_loop = true;
 
-    BlockPtr block_before_cond = cur_block;
-    BlockPtr cond_block_begin = cur_func->createBB();
-    BlockPtr last_target_continue = target_continue;
+    CfgNodePtr block_before_cond = cur_block;                 // block-before-enter-while-condition
+    CfgNodePtr cond_block_begin = cur_func->CreateCfgNode();  // first-block-of-loop-condition
+
+    CfgNodePtr last_target_continue = target_continue;
     target_continue = cond_block_begin;
 
     BreakInstList last_break_list = break_list;
@@ -488,23 +487,24 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     BranchInstList last_lAnd_list = lAnd_list;
     lOr_list = BranchInstList();
     lAnd_list = BranchInstList();
+
     cur_block = cond_block_begin;
     BaseValuePtr cond = ctx->condExp()->accept(this);
-    BlockPtr cond_block_end = cur_block;
+    CfgNodePtr cond_block_end = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
     cur_table = newLocalTable(last_table);
-    BlockPtr loop_begin = cur_func->createBB();
+    CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
     ctx->stmt()->accept(this);
-    block_before_cond->insertInst(JumpInst::CreatePtr(cond_block_begin));
-    BlockPtr loop_end = cur_block;
+    block_before_cond->insertInst(JumpInst::CreatePtr(block_before_cond, cond_block_begin));
+    CfgNodePtr loop_end = cur_block;
 
-    loop_end->insertInst(JumpInst::CreatePtr(cond_block_begin));
+    loop_end->insertInst(JumpInst::CreatePtr(loop_end, cond_block_begin));
 
-    BlockPtr loop_exit = cur_func->createBB();
+    CfgNodePtr loop_exit = cur_func->CreateCfgNode();  // exit-block-of-loop
 
-    cond_block_end->insertInst(BranchInst::CreatePtr(cond, loop_begin, loop_exit));
+    cond_block_end->insertInst(BranchInst::CreatePtr(cond_block_end, cond, loop_begin, loop_exit));
 
     for (auto &&break_inst : break_list) {
         break_inst->setTarget(loop_exit);
@@ -530,16 +530,16 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
 antlrcpp::Any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
-    cur_block->insertInst(JumpInst::CreatePtr(target_continue));
-    cur_block = cur_func->createBB(false);
+    cur_block->insertInst(JumpInst::CreatePtr(cur_block, target_continue));
+    cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
 antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
-    JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr);
+    JumpInstPtr break_inst = JumpInst::CreatePtr(cur_block, nullptr);
     cur_block->insertInst(break_inst);
     break_list.push_back(break_inst);
-    cur_block = cur_func->createBB(false);
+    cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
@@ -554,11 +554,11 @@ antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
             Value::scalarTypeConvert(ret_type->getAttrType(), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
-    JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr);
+    JumpInstPtr ret_inst = JumpInst::CreatePtr(cur_block, nullptr);
     cur_block->insertInst(ret_inst);
     return_list.push_back(ret_inst);
 
-    cur_block = cur_func->createBB(false);
+    cur_block = cur_func->CreateCfgNode();
 
     return nullptr;
 }
@@ -802,9 +802,9 @@ antlrcpp::Any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
 
 antlrcpp::Any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
     BaseValuePtr lAnd_node = Value::scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
-    BlockPtr lAnd_true = cur_func->createBB();
+    CfgNodePtr lAnd_true = cur_func->CreateCfgNode();
 
-    BranchInstPtr br_inst = BranchInst::CreatePtr(lAnd_node, lAnd_true, nullptr);
+    BranchInstPtr br_inst = BranchInst::CreatePtr(cur_block, lAnd_node, lAnd_true, nullptr);
     cur_block->insertInst(br_inst);
     lAnd_list.push_back(br_inst);
 
@@ -821,14 +821,14 @@ antlrcpp::Any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     lAnd_list = BranchInstList();
 
     BaseValuePtr lOr_node = ctx->lOrExp()->accept(this).as<BaseValuePtr>();
-    BlockPtr lOr_false = cur_func->createBB();
+    CfgNodePtr lOr_false = cur_func->CreateCfgNode();
 
     for (auto &&lAnd_inst : lAnd_list) {
         lAnd_inst->setFalseTarget(lOr_false);
     }
     lAnd_list = last_lAnd_list;
 
-    BranchInstPtr br_inst = BranchInst::CreatePtr(lOr_node, nullptr, lOr_false);
+    BranchInstPtr br_inst = BranchInst::CreatePtr(cur_block, lOr_node, nullptr, lOr_false);
     cur_block->insertInst(br_inst);
     lOr_list.push_back(br_inst);
 
@@ -884,7 +884,8 @@ BaseValuePtr AstVisitor::resolveTable(std::string &name) {
     assert(0);
 }
 
-SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent, std::vector<std::string> param_name) {
+SymbolTable *AstVisitor::initParamList(CfgNodePtr first_block, SymbolTable *parent,
+                                       std::vector<std::string> param_name) {
     SymbolTable *new_table = newLocalTable(parent);
 
     size_t size = param_name.size();
@@ -907,7 +908,7 @@ SymbolTable *AstVisitor::initParamList(BlockPtr first_block, SymbolTable *parent
 }
 
 void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
-                                    BlockPtr cur_block) {
+                                    CfgNodePtr cur_block) {
     ATTR_TYPE _type = list_type->getAttrType();
 
     ConstantPtr zero = (_type == INT) ? zero_int32 : zero_float;

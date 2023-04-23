@@ -20,8 +20,20 @@ ParamList &BaseFunction::getParamList() { return this->param_list; }
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
     : BaseFunction(_type, _name, _list) {}
 
-BlockPtr NormalFunction::createBB(bool insertable) {
-    BlockPtr block = BasicBlock::CreatePtr();
+CfgNodePtr NormalFunction::CreateEntry() {
+    entry = CtrlFlowGraphNode::CreatePtr();
+    block_list.push_back(entry);
+    return entry;
+}
+
+CfgNodePtr NormalFunction::CreateExit() {
+    exit = CtrlFlowGraphNode::CreatePtr();
+    block_list.push_back(exit);
+    return exit;
+}
+
+CfgNodePtr NormalFunction::CreateCfgNode(bool insertable) {
+    CfgNodePtr block = CtrlFlowGraphNode::CreatePtr();
     if (insertable) {
         this->block_list.push_back(block);
     }
