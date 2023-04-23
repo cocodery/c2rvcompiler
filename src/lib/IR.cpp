@@ -4,7 +4,7 @@ SymbolTable &CompilationUnit::getGlbTable() { return this->glb_table; }
 
 void CompilationUnit::insertSymbol(std::string &name, BaseValuePtr value) { glb_table.insertSymbol(name, value); }
 
-FunctionTable &CompilationUnit::getFuncTable() { return this->func_talbe; }
+NormalFuncList &CompilationUnit::GetNormalFuncTable() { return func_talbe.getNormalFuncTable(); }
 
 BaseFuncPtr CompilationUnit::getFunction(std::string &name) { return this->func_talbe.getFunction(name); }
 

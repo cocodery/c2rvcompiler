@@ -24,7 +24,7 @@ class CompilationUnit {
     SymbolTable &getGlbTable();
     void insertSymbol(std::string &, BaseValuePtr);
 
-    FunctionTable &getFuncTable();
+    NormalFuncList &GetNormalFuncTable();
     BaseFuncPtr getFunction(std::string &);
     void insertFunction(NormalFuncPtr);
 
