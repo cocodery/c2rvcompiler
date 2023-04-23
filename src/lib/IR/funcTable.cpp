@@ -1,8 +1,6 @@
 #include "funcTable.hh"
 
 FunctionTable::FunctionTable() {
-    func_table.reserve(12);
-
     // void, i32, float
     ScalarTypePtr ret_type[3] = {type_void, type_int_L, type_float_L};
 
@@ -46,12 +44,17 @@ FunctionTable::FunctionTable() {
     lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
 
     for (auto &&func_ptr : lib_func) {
-        func_table.push_back(func_ptr);
+        libraryFuncTable.push_back(func_ptr);
     }
 }
 
 BaseFuncPtr FunctionTable::getFunction(std::string &name) {
-    for (auto &&func : func_table) {
+    for (auto &&func : normalFuncTable) {
+        if (name == func->getFuncName()) {
+            return func;
+        }
+    }
+    for (auto &&func : libraryFuncTable) {
         if (name == func->getFuncName()) {
             return func;
         }
@@ -59,16 +62,16 @@ BaseFuncPtr FunctionTable::getFunction(std::string &name) {
     assert(0);
 }
 
-void FunctionTable::insertFunction(BaseFuncPtr func_ptr) { func_table.push_back(func_ptr); }
+void FunctionTable::insertFunction(NormalFuncPtr func_ptr) { normalFuncTable.push_back(func_ptr); }
+
+NormalFuncList &FunctionTable::getNormalFuncTable() { return normalFuncTable; }
 
 std::ostream &operator<<(std::ostream &os, FunctionTable _func_table) {
-    constexpr size_t lib_func = 12;
-    auto &&_table = _func_table.func_table;
-    for (size_t idx = lib_func; idx < _table.size(); ++idx) {
-        os << _table[idx] << endl;
+    for (auto &&normal_func : _func_table.normalFuncTable) {
+        os << std::static_pointer_cast<BaseFunction>(normal_func) << endl;
     }
-    for (size_t idx = 0; idx < lib_func; ++idx) {
-        os << _table[idx] << endl;
+    for (auto &&lib_func : _func_table.libraryFuncTable) {
+        os << std::static_pointer_cast<BaseFunction>(lib_func) << endl;
     }
     return os;
 }

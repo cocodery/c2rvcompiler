@@ -26,7 +26,7 @@ class CompilationUnit {
 
     FunctionTable &getFuncTable();
     BaseFuncPtr getFunction(std::string &);
-    void insertFunction(BaseFuncPtr);
+    void insertFunction(NormalFuncPtr);
 
     void generatellvmIR(std::string &irile);
 };

@@ -8,7 +8,7 @@ FunctionTable &CompilationUnit::getFuncTable() { return this->func_talbe; }
 
 BaseFuncPtr CompilationUnit::getFunction(std::string &name) { return this->func_talbe.getFunction(name); }
 
-void CompilationUnit::insertFunction(BaseFuncPtr func_ptr) { func_talbe.insertFunction(func_ptr); }
+void CompilationUnit::insertFunction(NormalFuncPtr func_ptr) { func_talbe.insertFunction(func_ptr); }
 
 void CompilationUnit::generatellvmIR(std::string &irfile) {
     std::ofstream llir;

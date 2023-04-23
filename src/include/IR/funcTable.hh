@@ -1,21 +1,25 @@
 #pragma once
 
-#include <vector>
+#include <list>
 
 #include "function.hh"
 
-using FuncMap = std::vector<BaseFuncPtr>;
+using NormalFuncList = std::list<NormalFuncPtr>;
+using LibFuncList = std::list<LibFuncPtr>;
 
 class FunctionTable {
    private:
-    FuncMap func_table;
+    NormalFuncList normalFuncTable;
+    LibFuncList libraryFuncTable;
 
    public:
     FunctionTable();
 
     BaseFuncPtr getFunction(std::string &);
 
-    void insertFunction(BaseFuncPtr);
+    void insertFunction(NormalFuncPtr);
+
+    NormalFuncList &getNormalFuncTable();
 
     friend std::ostream &operator<<(std::ostream &, FunctionTable);
 };
