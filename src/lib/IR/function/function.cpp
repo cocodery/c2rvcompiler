@@ -40,6 +40,9 @@ CfgNodePtr NormalFunction::CreateCfgNode(bool insertable) {
     return block;
 }
 
+CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
+CfgNodePtr NormalFunction::GetExitNode() { return exit; }
+
 NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
     return std::make_shared<NormalFunction>(_type, _name, _list);
 }

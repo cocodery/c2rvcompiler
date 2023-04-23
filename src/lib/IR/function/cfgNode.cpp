@@ -7,6 +7,9 @@ CfgNodePtr CtrlFlowGraphNode::CreatePtr() { return std::make_shared<CtrlFlowGrap
 void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) { predecessors.push_back(predecessor); }
 void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.push_back(successor); }
 
+CfgNodeList &CtrlFlowGraphNode::GetPredcessors() { return predecessors; }
+CfgNodeList &CtrlFlowGraphNode::GetSuccessors() { return successors; }
+
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
 

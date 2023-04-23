@@ -46,6 +46,9 @@ class NormalFunction : public BaseFunction {
     CfgNodePtr CreateExit();
     CfgNodePtr CreateCfgNode(bool insertalbe = true);
 
+    CfgNodePtr GetEntryNode();
+    CfgNodePtr GetExitNode();
+
     static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 
     std::string tollvmIR();
