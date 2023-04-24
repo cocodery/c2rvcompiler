@@ -10,6 +10,13 @@ void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.push_bac
 CfgNodeList &CtrlFlowGraphNode::GetPredcessors() { return predecessors; }
 CfgNodeList &CtrlFlowGraphNode::GetSuccessors() { return successors; }
 
+void CtrlFlowGraphNode::InsertDominator(CfgNodePtr dominator) { dominator_set.insert(dominator); }
+DominatorSet &CtrlFlowGraphNode::GetDominatorSet() { return dominator_set; }
+void CtrlFlowGraphNode::SetDominatorSet(DominatorSet &_dom_set) {
+    dominator_set.clear();
+    dominator_set = _dom_set;
+}
+
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
 
@@ -23,6 +30,12 @@ std::string CtrlFlowGraphNode::tollvmIR() {
     ss << "\t; Successors  : ";
     for (auto &&succ : successors) {
         ss << succ->idx << ' ';
+    }
+    ss << '\n';
+
+    ss << "\t; DominatorSet  : ";
+    for (auto &&node : dominator_set) {
+        ss << node->idx << ' ';
     }
     ss << '\n';
 
