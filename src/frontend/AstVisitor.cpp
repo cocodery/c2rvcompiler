@@ -32,7 +32,7 @@ BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
         for (auto &&child : getInitVal<_Type, _ListType>(node)) {
             if (auto &&scalar_node = dynamic_cast<_ScalarType *>(child)) {
                 ConstantPtr value =
-                    std::dynamic_pointer_cast<Constant>(scalar_node->accept(_this).template as<BaseValuePtr>());
+                    std::dynamic_pointer_cast<Constant>(std::any_cast<BaseValuePtr>(scalar_node->accept(_this)));
                 const_arr.push_back(value);
                 ++cnt;
             } else {
@@ -94,29 +94,29 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     addrTypeTable.clear();
 }
 
-antlrcpp::Any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
+std::any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
     for (auto &&child : ctx->children) {
         child->accept(this);
     }
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContext *ctx) {
+std::any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContext *ctx) {
     visitChildren(ctx);
     return have_main_func;
 }
 
-antlrcpp::Any AstVisitor::visitTranslationUnit(SysYParser::TranslationUnitContext *ctx) {
+std::any AstVisitor::visitTranslationUnit(SysYParser::TranslationUnitContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitDecl(SysYParser::DeclContext *ctx) {
+std::any AstVisitor::visitDecl(SysYParser::DeclContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
+std::any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
     std::string type_name = ctx->getText();
     if (type_name == "int") {
         return INT;
@@ -126,12 +126,12 @@ antlrcpp::Any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
     assert(false);
 }
 
-antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
+std::any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
     // ConstDecl don't generate any calculation llvmIR
-    cur_type = ctx->bType()->accept(this).as<ATTR_TYPE>();
+    cur_type = std::any_cast<ATTR_TYPE>(ctx->bType()->accept(this));
 
     for (auto &&def_node : ctx->constDef()) {
-        auto [name, value] = def_node->accept(this).as<NameValue>();
+        auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
         value->fixValue(cur_type);
 
         cur_table->insertSymbol(name, value);
@@ -144,7 +144,7 @@ antlrcpp::Any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
+std::any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
     std::string name = ctx->Identifier()->getText();
 
     auto &&dims_vec = ctx->constExp();
@@ -153,7 +153,7 @@ antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
     BaseValuePtr value = nullptr;
 
     if (dims_vec.size() == 0) {
-        value = init_val->accept(this).as<BaseValuePtr>();
+        value = std::any_cast<BaseValuePtr>(init_val->accept(this));
     } else {
         // Const-Array is always GLOBAL no matter GLOBAL or LOCAL
         auto &&arr_dims = getArrayDims(dims_vec);
@@ -169,22 +169,22 @@ antlrcpp::Any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
     return std::make_pair(name, value);
 }
 
-antlrcpp::Any AstVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext *ctx) {
-    return ctx->constExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext *ctx) {
+    return ctx->constExp()->accept(this);
 }
 
-antlrcpp::Any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext *ctx) {
+std::any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext *ctx) {
     assert(0);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
-    cur_type = ctx->bType()->accept(this).as<ATTR_TYPE>();
+std::any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
+    cur_type = std::any_cast<ATTR_TYPE>(ctx->bType()->accept(this));
 
     auto &&var_def = ctx->varDef();
 
     for (auto &&def_node : var_def) {
-        auto [name, value] = def_node->accept(this).as<NameValue>();
+        auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
         value->fixValue(cur_type);
 
         cur_table->insertSymbol(name, value);
@@ -192,7 +192,7 @@ antlrcpp::Any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) {
+std::any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) {
     std::string name = ctx->Identifier()->getText();
 
     auto &&dims_vec = ctx->constExp();
@@ -225,7 +225,7 @@ antlrcpp::Any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx
     return std::make_pair(name, address);
 }
 
-antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
+std::any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
     std::string name = ctx->Identifier()->getText();
 
     auto &&dims_vec = ctx->constExp();
@@ -241,10 +241,10 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
         ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_ptr_G : type_float_ptr_G)
                                                            : (cur_type == INT ? type_int_ptr_L : type_float_ptr_L);
         if (cur_position == GLOBAL) {
-            address = GlobalValue::CreatePtr(ty_alloca, init_val->accept(this).as<BaseValuePtr>());
+            address = GlobalValue::CreatePtr(ty_alloca, std::any_cast<BaseValuePtr>(init_val->accept(this)));
         } else {
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
-            StoreInst::DoStoreValue(address, init_val->accept(this).as<BaseValuePtr>(), cur_block);
+            StoreInst::DoStoreValue(address, std::any_cast<BaseValuePtr>(init_val->accept(this)), cur_block);
         }
     } else {
         auto &&arr_dims = getArrayDims(dims_vec);
@@ -264,30 +264,30 @@ antlrcpp::Any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
     return std::make_pair(name, address);
 }
 
-antlrcpp::Any AstVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) {
+std::any AstVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) {
     ptr_or_not = NOTPTR;
-    BaseValuePtr init_value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr init_value = std::any_cast<BaseValuePtr>(ctx->exp()->accept(this));
     assert(init_value->IsOprand());
     return init_value;
 }
 
-antlrcpp::Any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
+std::any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
     assert(0);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
+std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     BasicBlock::resetBlkIdx();
     Variable::resetVarIdx();
 
-    ScalarTypePtr ret_type = ctx->funcType()->accept(this).as<ScalarTypePtr>();
+    ScalarTypePtr ret_type = std::any_cast<ScalarTypePtr>(ctx->funcType()->accept(this));
     std::string func_name = ctx->Identifier()->getText();
 
     cur_position = PARAMETER;
     auto &&[param_name, param_list] =
         (ctx->funcFParams() == nullptr)
             ? std::make_pair(std::vector<std::string>(), ParamList())
-            : ctx->funcFParams()->accept(this).as<std::pair<std::vector<std::string>, ParamList>>();
+            : std::any_cast<std::pair<std::vector<std::string>, ParamList>>(ctx->funcFParams()->accept(this));
     cur_position = LOCAL;
 
     NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
@@ -327,7 +327,7 @@ antlrcpp::Any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
+std::any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
     std::string type_name = ctx->getText();
     if (type_name == "int") {
         return type_int_L;
@@ -339,19 +339,19 @@ antlrcpp::Any AstVisitor::visitFuncType(SysYParser::FuncTypeContext *ctx) {
     assert(false);
 }
 
-antlrcpp::Any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
+std::any AstVisitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
     std::vector<std::string> param_name;
     ParamList param_list;
     for (auto &&param_node : ctx->funcFParam()) {
-        auto [name, param] = param_node->accept(this).as<std::pair<std::string, BaseValuePtr>>();
+        auto [name, param] = std::any_cast<std::pair<std::string, BaseValuePtr>>(param_node->accept(this));
         param_name.push_back(name);
         param_list.push_back(param);
     }
     return std::make_pair(param_name, param_list);
 }
 
-antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
-    ATTR_TYPE _type = ctx->bType()->accept(this).as<ATTR_TYPE>();
+std::any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
+    ATTR_TYPE _type = std::any_cast<ATTR_TYPE>(ctx->bType()->accept(this));
     std::string param_name = ctx->Identifier()->getText();
     BaseValuePtr value = nullptr;
     if (ctx->getText().find("[") == std::string::npos) {
@@ -367,32 +367,32 @@ antlrcpp::Any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     return std::make_pair(param_name, value);
 }
 
-antlrcpp::Any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
+std::any AstVisitor::visitBlock(SysYParser::BlockContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *ctx) {
+std::any AstVisitor::visitBlockItemList(SysYParser::BlockItemListContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBlockItem(SysYParser::BlockItemContext *ctx) {
+std::any AstVisitor::visitBlockItem(SysYParser::BlockItemContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitStmt(SysYParser::StmtContext *ctx) {
+std::any AstVisitor::visitStmt(SysYParser::StmtContext *ctx) {
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
+std::any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
     ptr_or_not = NOTPTR;
-    BaseValuePtr store_value = ctx->exp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr store_value = std::any_cast<BaseValuePtr>(ctx->exp()->accept(this));
     assert(store_value->IsOprand());
     ptr_or_not = POINTER;
-    BaseValuePtr store_addr = ctx->lVal()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr store_addr = std::any_cast<BaseValuePtr>(ctx->lVal()->accept(this));
     ptr_or_not = NOTPTR;
     assert(store_addr->getBaseType()->IsMutable());
     // in SysY, only care about '='
@@ -400,18 +400,18 @@ antlrcpp::Any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitAssignOp(SysYParser::AssignOpContext *ctx) {
+std::any AstVisitor::visitAssignOp(SysYParser::AssignOpContext *ctx) {
     assert(0);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
+std::any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
     ptr_or_not = NOTPTR;
     visitChildren(ctx);
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
+std::any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
     SymbolTable *last_table = cur_table;
     SymbolTable *new_table = newLocalTable(last_table);
     cur_table = new_table;
@@ -420,12 +420,12 @@ antlrcpp::Any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
+std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     BranchInstList last_lOr_list = lOr_list;
     BranchInstList last_lAnd_list = lAnd_list;
     lOr_list = BranchInstList();
     lAnd_list = BranchInstList();
-    BaseValuePtr cond = ctx->condExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
 
     CfgNodePtr last_block = cur_block;  // last-condition block
 
@@ -468,7 +468,7 @@ antlrcpp::Any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
+std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     bool last_in_loop = in_loop;
     if (last_in_loop == false) {
         out_loop_block = cur_block;
@@ -490,7 +490,7 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     lAnd_list = BranchInstList();
 
     cur_block = cond_block_begin;
-    BaseValuePtr cond = ctx->condExp()->accept(this);
+    BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
     CfgNodePtr cond_block_end = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
@@ -529,14 +529,14 @@ antlrcpp::Any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
+std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->insertInst(JumpInst::CreatePtr(cur_block, target_continue));
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
+std::any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(cur_block, nullptr);
     cur_block->insertInst(break_inst);
     break_list.push_back(break_inst);
@@ -544,15 +544,15 @@ antlrcpp::Any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
+std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     ScalarTypePtr ret_type = cur_func->getReturnType();
     if (ret_type->VoidType()) {
         assert(ctx->exp() == nullptr);
     } else {
         assert(ctx->exp() != nullptr);
         ptr_or_not = NOTPTR;
-        BaseValuePtr ret_value =
-            Value::scalarTypeConvert(ret_type->getAttrType(), ctx->exp()->accept(this).as<BaseValuePtr>(), cur_block);
+        BaseValuePtr ret_value = Value::scalarTypeConvert(
+            ret_type->getAttrType(), std::any_cast<BaseValuePtr>(ctx->exp()->accept(this)), cur_block);
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(cur_block, nullptr);
@@ -564,11 +564,11 @@ antlrcpp::Any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     return nullptr;
 }
 
-antlrcpp::Any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
-    return ctx->addExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
+std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     std::string name = ctx->Identifier()->getText();
     BaseValuePtr address = resolveTable(name);
     if (address->IsConstant()) return address;
@@ -588,8 +588,8 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         ptr_or_not = NOTPTR;
         for (size_t idx = 0; idx < exp_list.size(); ++idx) {
             ConstantPtr dim_size = Constant::CreatePtr(type_const_int, static_cast<int32_t>(arr_dims[idx]));
-            BaseValuePtr cur_off =
-                Value::binaryOperate(OP_MUL, exp_list[idx]->accept(this).as<BaseValuePtr>(), dim_size, cur_block);
+            BaseValuePtr cur_off = Value::binaryOperate(
+                OP_MUL, std::any_cast<BaseValuePtr>(exp_list[idx]->accept(this)), dim_size, cur_block);
             offset = Value::binaryOperate(OP_ADD, offset, cur_off, cur_block);
         }
         ptr_or_not = last_ptr_or_not;
@@ -608,27 +608,25 @@ antlrcpp::Any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
-    return ctx->exp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->exp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) {
-    return ctx->lVal()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context *ctx) { return ctx->lVal()->accept(this); }
+
+std::any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
+    return std::static_pointer_cast<BaseValue>(std::any_cast<ConstantPtr>(ctx->number()->accept(this)));
 }
 
-antlrcpp::Any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
-    return std::static_pointer_cast<BaseValue>(ctx->number()->accept(this).as<ConstantPtr>());
-}
-
-antlrcpp::Any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
+std::any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
     return Constant::CreatePtr(type_const_int, ConstType(std::stoi(ctx->getText(), nullptr, 0)));
 }
 
-antlrcpp::Any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
+std::any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
     return Constant::CreatePtr(type_const_float, ConstType(std::stof(ctx->getText())));
 }
 
-antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
+std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
     RParamList rparam_list;
 
     auto &&rparam_node = ctx->funcRParam();
@@ -642,7 +640,7 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
     for (size_t idx = 0; idx < rparam_size; ++idx) {
         BaseValuePtr fparam = fparam_list[idx];
         ptr_or_not = fparam->getBaseType()->getAttrPointer();
-        BaseValuePtr rparam = rparam_node[idx]->accept(this).as<BaseValuePtr>();
+        BaseValuePtr rparam = std::any_cast<BaseValuePtr>(rparam_node[idx]->accept(this));
 
         BaseTypePtr type_rparam = rparam->getBaseType();
         BaseTypePtr type_fparam = fparam->getBaseType();
@@ -658,15 +656,15 @@ antlrcpp::Any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) 
     return rparam_list;
 }
 
-antlrcpp::Any AstVisitor::visitFuncRParam(SysYParser::FuncRParamContext *ctx) {
-    return ctx->exp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitFuncRParam(SysYParser::FuncRParamContext *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->exp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
-    return ctx->primaryExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->primaryExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
+std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     std::string callee_name = ctx->Identifier()->getText();
     bool time_function = false;
     if (callee_name == "starttime" || callee_name == "stoptime") {
@@ -677,21 +675,21 @@ antlrcpp::Any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     ScalarTypePtr ret_type = callee_func->getReturnType();
 
     RParamList rparam_list =
-        time_function
-            ? RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
-            : (ctx->funcRParams() != nullptr ? ctx->funcRParams()->accept(this).as<RParamList>() : RParamList());
+        time_function ? RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
+                      : (ctx->funcRParams() != nullptr ? std::any_cast<RParamList>(ctx->funcRParams()->accept(this))
+                                                       : RParamList());
 
     return CallInst::DoCallFunction(ret_type, callee_name, rparam_list, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
+std::any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    OpCode unary_op = ctx->unaryOp()->accept(this).as<OpCode>();
-    BaseValuePtr value = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+    OpCode unary_op = std::any_cast<OpCode>(ctx->unaryOp()->accept(this));
+    BaseValuePtr value = std::any_cast<BaseValuePtr>(ctx->unaryExp()->accept(this));
     return Value::unaryOperate(unary_op, value, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
+std::any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
     std::string op = ctx->getText();
     if (op == "+") {
         return OP_ADD;
@@ -703,19 +701,19 @@ antlrcpp::Any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitMul1(SysYParser::Mul1Context *ctx) {
-    return ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitMul1(SysYParser::Mul1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->unaryExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitMul2(SysYParser::Mul2Context *ctx) {
+std::any AstVisitor::visitMul2(SysYParser::Mul2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->mulExp()->accept(this).as<BaseValuePtr>();
-    OpCode op = ctx->mulOp()->accept(this).as<OpCode>();
-    BaseValuePtr rhs = ctx->unaryExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->mulExp()->accept(this));
+    OpCode op = std::any_cast<OpCode>(ctx->mulOp()->accept(this));
+    BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->unaryExp()->accept(this));
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
+std::any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
     std::string op = ctx->getText();
     if (op == "*") {
         return OP_MUL;
@@ -727,19 +725,19 @@ antlrcpp::Any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitAdd1(SysYParser::Add1Context *ctx) {
-    return ctx->mulExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitAdd1(SysYParser::Add1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->mulExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitAdd2(SysYParser::Add2Context *ctx) {
+std::any AstVisitor::visitAdd2(SysYParser::Add2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
-    OpCode op = ctx->addOp()->accept(this).as<OpCode>();
-    BaseValuePtr rhs = ctx->mulExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
+    OpCode op = std::any_cast<OpCode>(ctx->addOp()->accept(this));
+    BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->mulExp()->accept(this));
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
+std::any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
     std::string op = ctx->getText();
     if (op == "+") {
         return OP_ADD;
@@ -749,19 +747,19 @@ antlrcpp::Any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitRel1(SysYParser::Rel1Context *ctx) {
-    return ctx->addExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitRel1(SysYParser::Rel1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitRel2(SysYParser::Rel2Context *ctx) {
+std::any AstVisitor::visitRel2(SysYParser::Rel2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
-    OpCode op = ctx->relOp()->accept(this).as<OpCode>();
-    BaseValuePtr rhs = ctx->addExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->relExp()->accept(this));
+    OpCode op = std::any_cast<OpCode>(ctx->relOp()->accept(this));
+    BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
+std::any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
     std::string op = ctx->getText();
     if (op == "<") {
         return OP_LTH;
@@ -775,19 +773,19 @@ antlrcpp::Any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitEq1(SysYParser::Eq1Context *ctx) {
-    return ctx->relExp()->accept(this).as<BaseValuePtr>();
+std::any AstVisitor::visitEq1(SysYParser::Eq1Context *ctx) {
+    return std::any_cast<BaseValuePtr>(ctx->relExp()->accept(this));
 }
 
-antlrcpp::Any AstVisitor::visitEq2(SysYParser::Eq2Context *ctx) {
+std::any AstVisitor::visitEq2(SysYParser::Eq2Context *ctx) {
     assert(ptr_or_not == NOTPTR);
-    BaseValuePtr lhs = ctx->eqExp()->accept(this).as<BaseValuePtr>();
-    OpCode op = ctx->eqOp()->accept(this).as<OpCode>();
-    BaseValuePtr rhs = ctx->relExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this));
+    OpCode op = std::any_cast<OpCode>(ctx->eqOp()->accept(this));
+    BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->relExp()->accept(this));
     return Value::binaryOperate(op, lhs, rhs, cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
+std::any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
     std::string op = ctx->getText();
     if (op == "==") {
         return OP_EQU;
@@ -797,12 +795,13 @@ antlrcpp::Any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
     assert(0);
 }
 
-antlrcpp::Any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
-    return Value::scalarTypeConvert(BOOL, ctx->eqExp()->accept(this).as<BaseValuePtr>(), cur_block);
+std::any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
+    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
-    BaseValuePtr lAnd_node = Value::scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
+std::any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
+    BaseValuePtr lAnd_node =
+        Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
     CfgNodePtr lAnd_true = cur_func->CreateCfgNode();
 
     BranchInstPtr br_inst = BranchInst::CreatePtr(cur_block, lAnd_node, lAnd_true, nullptr);
@@ -810,18 +809,18 @@ antlrcpp::Any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
     lAnd_list.push_back(br_inst);
 
     cur_block = lAnd_true;
-    return Value::scalarTypeConvert(BOOL, ctx->eqExp()->accept(this).as<BaseValuePtr>(), cur_block);
+    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitLOr1(SysYParser::LOr1Context *ctx) {
-    return Value::scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
+std::any AstVisitor::visitLOr1(SysYParser::LOr1Context *ctx) {
+    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
+std::any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     BranchInstList last_lAnd_list = lAnd_list;
     lAnd_list = BranchInstList();
 
-    BaseValuePtr lOr_node = ctx->lOrExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr lOr_node = std::any_cast<BaseValuePtr>(ctx->lOrExp()->accept(this));
     CfgNodePtr lOr_false = cur_func->CreateCfgNode();
 
     for (auto &&lAnd_inst : lAnd_list) {
@@ -834,17 +833,17 @@ antlrcpp::Any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     lOr_list.push_back(br_inst);
 
     cur_block = lOr_false;
-    return Value::scalarTypeConvert(BOOL, ctx->lAndExp()->accept(this).as<BaseValuePtr>(), cur_block);
+    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
+std::any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
     ptr_or_not = NOTPTR;
-    return Value::scalarTypeConvert(BOOL, ctx->lOrExp()->accept(this).as<BaseValuePtr>(), cur_block);
+    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lOrExp()->accept(this)), cur_block);
 }
 
-antlrcpp::Any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
+std::any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
     ptr_or_not = NOTPTR;
-    BaseValuePtr constant = ctx->addExp()->accept(this).as<BaseValuePtr>();
+    BaseValuePtr constant = std::any_cast<BaseValuePtr>(std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this)));
     assert(constant->IsConstant());
     return constant;
 }
@@ -852,7 +851,7 @@ antlrcpp::Any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
 ArrDims AstVisitor::getArrayDims(std::vector<SysYParser::ConstExpContext *> &constExpVec) {
     ArrDims arr_dims;
     for (auto &&const_exp : constExpVec) {
-        BaseValuePtr value = const_exp->accept(this).as<BaseValuePtr>();
+        BaseValuePtr value = std::any_cast<BaseValuePtr>(const_exp->accept(this));
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
         constant->fixValue(INT);
         arr_dims.push_back(std::get<int32_t>(constant->getValue()));
@@ -930,8 +929,8 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                     off_list.push_back(offset);
                     BaseValuePtr store_addr =
                         GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-                    BaseValuePtr value =
-                        Value::scalarTypeConvert(_type, scalar_node->exp()->accept(this).as<BaseValuePtr>(), cur_block);
+                    BaseValuePtr value = Value::scalarTypeConvert(
+                        _type, std::any_cast<BaseValuePtr>(scalar_node->exp()->accept(this)), cur_block);
                     StoreInst::DoStoreValue(store_addr, value, cur_block);
                     ++cnt;
                     ++idx_offset;
