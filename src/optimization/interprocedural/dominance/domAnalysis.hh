@@ -1,10 +1,9 @@
 #pragma once
 
 #include <list>
-#include <map>
 #include <queue>
 
-#include "../../../include/IR.hh"
+#include "IR.hh"
 
 class DomAnalysis {
    private:
@@ -12,10 +11,13 @@ class DomAnalysis {
     CfgNodeList allNodes;
 
    public:
-    DomAnalysis(CfgNodePtr);
+    DomAnalysis(CfgNodePtr, CfgNodeList);
     ~DomAnalysis() = default;
+
+    void DominanceAnalysis();
+    void DominanceFrontier();
 
     void DoDomAnalysis();
 };
 
-void DoDomAnalysis(NormalFuncPtr);
+void DoDomAnalysis(CfgNodePtr, CfgNodeList);
