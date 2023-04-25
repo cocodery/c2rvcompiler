@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <queue>
 
 #include "../valueHeader.hh"
 #include "cfgNode.hh"
@@ -36,7 +37,6 @@ class NormalFunction : public BaseFunction {
    private:
     CfgNodePtr entry;
     CfgNodePtr exit;
-    BlockList block_list;
 
    public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
@@ -44,7 +44,7 @@ class NormalFunction : public BaseFunction {
 
     CfgNodePtr CreateEntry();
     CfgNodePtr CreateExit();
-    CfgNodePtr CreateCfgNode(bool insertalbe = true);
+    CfgNodePtr CreateCfgNode();
 
     CfgNodePtr GetEntryNode();
     CfgNodePtr GetExitNode();
