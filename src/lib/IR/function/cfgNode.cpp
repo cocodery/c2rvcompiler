@@ -6,7 +6,6 @@ CfgNodePtr CtrlFlowGraphNode::CreatePtr() { return std::make_shared<CtrlFlowGrap
 
 void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) { predecessors.push_back(predecessor); }
 void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.push_back(successor); }
-
 CfgNodeList &CtrlFlowGraphNode::GetPredcessors() { return predecessors; }
 CfgNodeList &CtrlFlowGraphNode::GetSuccessors() { return successors; }
 
@@ -16,6 +15,12 @@ void CtrlFlowGraphNode::SetDominatorSet(DominatorSet &_dom_set) {
     dominator_set.clear();
     dominator_set = _dom_set;
 }
+
+CfgNodePtr CtrlFlowGraphNode::GetImmediateDominator() { return immediate_dominator; }
+void CtrlFlowGraphNode::SetImmediateDominator(CfgNodePtr _idom) { immediate_dominator = _idom; }
+
+void CtrlFlowGraphNode::InsertDomFrontier(CfgNodePtr frontier) { dominance_frontier.insert(frontier); }
+DominatorSet &CtrlFlowGraphNode::GetDomFrontier() { return dominance_frontier; }
 
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
@@ -35,6 +40,18 @@ std::string CtrlFlowGraphNode::tollvmIR() {
 
     ss << "\t; DominatorSet  : ";
     for (auto &&node : dominator_set) {
+        ss << node->idx << ' ';
+    }
+    ss << '\n';
+
+    ss << "\t; ImmediateDominator  : ";
+    if (immediate_dominator != nullptr) {
+        ss << immediate_dominator->idx;
+    }
+    ss << '\n';
+
+    ss << "\t; DominanceFrontier  : ";
+    for (auto &&node : dominance_frontier) {
         ss << node->idx << ' ';
     }
     ss << '\n';
