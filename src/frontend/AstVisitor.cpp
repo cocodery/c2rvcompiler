@@ -322,7 +322,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     ret_addr = nullptr;
     ret_block = nullptr;
     cur_block = nullptr;
-    cur_table = nullptr;
+    assert(cur_table == &comp_unit.getGlbTable());
     clearTableList();
     return_list.clear();
     target_continue = nullptr;
