@@ -318,11 +318,17 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_position = GLOBAL;
     cur_table = last_table;
 
+    out_loop_block = nullptr;
+    ret_addr = nullptr;
+    ret_block = nullptr;
+    cur_block = nullptr;
+    cur_table = nullptr;
     clearTableList();
+    return_list.clear();
+    target_continue = nullptr;
+    break_list.clear();
     lAnd_list.clear();
     lOr_list.clear();
-    return_list.clear();
-    cur_block = nullptr;
 
     return nullptr;
 }
