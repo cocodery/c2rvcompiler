@@ -20,6 +20,8 @@ VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_all
     return _addr;
 }
 
+bool AllocaInst::IsAllocaInst() const { return true; }
+
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
@@ -48,6 +50,8 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     BaseValuePtr convertee = Value::scalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
     block->insertInst(CreatePtr(addr, convertee));
 }
+
+bool StoreInst::IsStoreInst() const { return true; }
 
 std::string StoreInst::tollvmIR() {
     std::stringstream ss;
@@ -80,6 +84,8 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     block->insertInst(CreatePtr(value, addr));
     return value;
 }
+
+bool LoadInst::IsLoadInst() const { return true; }
 
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;

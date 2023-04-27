@@ -34,5 +34,9 @@ class Instruction {
     Instruction() = default;
     ~Instruction() = default;
 
+    virtual bool IsAllocaInst() const;
+    virtual bool IsStoreInst() const;
+    virtual bool IsLoadInst() const;
+
     virtual std::string tollvmIR() = 0;
 };

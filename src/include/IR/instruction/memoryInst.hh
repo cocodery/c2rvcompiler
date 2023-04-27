@@ -20,6 +20,8 @@ class AllocaInst : public Instruction {
 
     static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 
+    bool IsAllocaInst() const;
+
     std::string tollvmIR();
 };
 
@@ -39,6 +41,8 @@ class StoreInst : public Instruction {
 
     static void DoStoreValue(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
+    bool IsStoreInst() const;
+
     std::string tollvmIR();
 };
 
@@ -57,6 +61,8 @@ class LoadInst : public Instruction {
     ~LoadInst() = default;
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
+
+    bool IsLoadInst() const;
 
     std::string tollvmIR();
 };
