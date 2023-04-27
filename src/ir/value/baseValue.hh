@@ -27,7 +27,7 @@ class BaseValue {
 
     bool IsOprand();
 
-    virtual InstPtr GetParent();
+    virtual const InstPtr GetParent() const;
 
     virtual bool IsConstant();
 
