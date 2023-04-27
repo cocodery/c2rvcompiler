@@ -8,22 +8,22 @@ using VariablePtr = std::shared_ptr<Variable>;
 class Variable : public BaseValue {
    private:
     size_t idx;
+    InstPtr parent;
 
     static size_t var_idx;
 
    public:
-    Variable(BaseTypePtr);
+    Variable(BaseTypePtr, InstPtr);
     ~Variable() = default;
 
-    bool IsConstant() { return false; };
-
-    void fixValue(ATTR_TYPE) { return; }
+    void SetParent(InstPtr);
+    const InstPtr GetParent() const;
 
     static void ResetVarIdx();
     static size_t GetVarIdx();
     static void SetVarIdx(size_t);
 
-    static VariablePtr CreatePtr(BaseTypePtr);
+    static VariablePtr CreatePtr(BaseTypePtr, InstPtr);
 
     std::string tollvmIR();
 };

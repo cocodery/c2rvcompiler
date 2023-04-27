@@ -17,8 +17,10 @@ ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
 }
 
 VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
-    VariablePtr _res = Variable::CreatePtr(type_bool);
-    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
+    VariablePtr _res = Variable::CreatePtr(type_bool, nullptr);
+    auto &&inst = CreatePtr(_res, _op, _lhs, _rhs, block);
+    _res->SetParent(inst);
+    block->InsertInst(inst);
     return _res;
 }
 
@@ -70,8 +72,10 @@ FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _l
 }
 
 VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
-    VariablePtr _res = Variable::CreatePtr(type_bool);
-    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
+    VariablePtr _res = Variable::CreatePtr(type_bool, nullptr);
+    auto &&inst = CreatePtr(_res, _op, _lhs, _rhs, block);
+    _res->SetParent(inst);
+    block->InsertInst(inst);
     return _res;
 }
 

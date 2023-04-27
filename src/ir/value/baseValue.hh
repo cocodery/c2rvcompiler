@@ -12,6 +12,9 @@
 class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;
 
+class Instruction;
+using InstPtr = std::shared_ptr<Instruction>;
+
 class BaseValue {
    protected:
     BaseTypePtr base_type;
@@ -24,9 +27,11 @@ class BaseValue {
 
     bool IsOprand();
 
-    virtual bool IsConstant() = 0;
+    virtual InstPtr GetParent();
 
-    virtual void fixValue(ATTR_TYPE) = 0;
+    virtual bool IsConstant();
+
+    virtual void fixValue(ATTR_TYPE);
 
     virtual std::string tollvmIR() = 0;
 };

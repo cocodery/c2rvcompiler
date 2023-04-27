@@ -9,6 +9,8 @@ Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), va
 
 const ConstType &Constant::getValue() const { return this->value; }
 
+bool Constant::IsConstant() { return true; }
+
 void Constant::fixValue(ATTR_TYPE _type) {
     std::visit(
         [&_value = this->value, _type](auto &&arg) {

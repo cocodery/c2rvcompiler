@@ -366,13 +366,13 @@ std::any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     std::string param_name = ctx->Identifier()->getText();
     BaseValuePtr value = nullptr;
     if (ctx->getText().find("[") == std::string::npos) {
-        value = Variable::CreatePtr((_type == INT) ? param_int : param_float);
+        value = Variable::CreatePtr((_type == INT) ? param_int : param_float, nullptr);
     } else {
         auto &&dims_vec = ctx->constExp();
         ArrDims arr_dims = getArrayDims(dims_vec);
         arr_dims.insert(arr_dims.begin(), 1);
         ListTypePtr ty_stored = ListType::CreatePtr(_type, MUTABLE, NOTPTR, ARRAY, PARAMETER, arr_dims);
-        value = Variable::CreatePtr((_type == INT) ? param_intp : param_floatp);
+        value = Variable::CreatePtr((_type == INT) ? param_intp : param_floatp, nullptr);
         addrTypeTable[value] = ty_stored;
     }
     return std::make_pair(param_name, value);

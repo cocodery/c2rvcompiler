@@ -22,8 +22,10 @@ CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, std::stri
 
 BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, RParamList &_list, CfgNodePtr block) {
     VariablePtr _ret =
-        (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L);
-    block->InsertInst(CreatePtr(_type, _ret, _name, _list, block));
+        (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L, nullptr);
+    auto &&inst = CreatePtr(_type, _ret, _name, _list, block);
+    if (_ret != nullptr) _ret->SetParent(inst);
+    block->InsertInst(inst);
     return _ret;
 }
 
@@ -51,20 +53,22 @@ std::string CallInst::tollvmIR() {
 //                     BitCastInst Implementation
 //===-----------------------------------------------------------===//
 
-BitCastInst::BitCastInst(BaseValuePtr _res, BaseValuePtr _opr, CfgNodePtr block)
+BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block)
     : result(_res), oprand(_opr), Instruction(block) {
     assert(result->getBaseType()->CharType() && result->getBaseType()->IsPointer());
     assert((oprand->getBaseType()->IntType() || oprand->getBaseType()->FloatType()) &&
            result->getBaseType()->IsPointer());
 }
 
-BitCastInstPtr BitCastInst::CreatePtr(BaseValuePtr _res, BaseValuePtr _opr, CfgNodePtr block) {
+BitCastInstPtr BitCastInst::CreatePtr(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block) {
     return std::make_shared<BitCastInst>(_res, _opr, block);
 }
 
-BaseValuePtr BitCastInst::DoBitCast(BaseValuePtr _opr, CfgNodePtr block) {
-    BaseValuePtr _res = Variable::CreatePtr(type_char_ptr);
-    block->InsertInst(CreatePtr(_res, _opr, block));
+VariablePtr BitCastInst::DoBitCast(BaseValuePtr _opr, CfgNodePtr block) {
+    VariablePtr _res = Variable::CreatePtr(type_char_ptr, nullptr);
+    auto &&inst = CreatePtr(_res, _opr, block);
+    _res->SetParent(inst);
+    block->InsertInst(inst);
     return _res;
 }
 

@@ -20,7 +20,7 @@ class Constant : public BaseValue {
 
     const ConstType &getValue() const;
 
-    bool IsConstant() { return true; };
+    bool IsConstant();
 
     void fixValue(ATTR_TYPE);
 

@@ -54,13 +54,13 @@ using LoadInstPtr = std::shared_ptr<LoadInst>;
 
 class LoadInst : public Instruction {
    private:
-    BaseValuePtr load_value;
+    VariablePtr load_value;
     BaseValuePtr load_addr;
 
-    static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
+    static LoadInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    LoadInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
+    LoadInst(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~LoadInst() = default;
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
@@ -76,18 +76,18 @@ using OffsetList = std::list<BaseValuePtr>;
 
 class GetElementPtrInst : public Instruction {
    private:
-    BaseValuePtr target_ptr;
+    VariablePtr target_ptr;
     BaseTypePtr store_type;
     BaseValuePtr base_addr;
     OffsetList offset_list;
 
-    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
    public:
-    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
     ~GetElementPtrInst() = default;
 
-    static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
     std::string tollvmIR();
 };

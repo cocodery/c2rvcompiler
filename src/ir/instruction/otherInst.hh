@@ -31,16 +31,16 @@ using BitCastInstPtr = std::shared_ptr<BitCastInst>;
 
 class BitCastInst : public Instruction {
    private:
-    BaseValuePtr result;
+    VariablePtr result;
     BaseValuePtr oprand;
 
-    static BitCastInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
+    static BitCastInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    BitCastInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
+    BitCastInst(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~BitCastInst() = default;
 
-    static BaseValuePtr DoBitCast(BaseValuePtr, CfgNodePtr);
+    static VariablePtr DoBitCast(BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };

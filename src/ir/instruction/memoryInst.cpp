@@ -16,8 +16,10 @@ AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, BaseValuePtr _addr, 
 }
 
 VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_alloca, CfgNodePtr block) {
-    VariablePtr _addr = Variable::CreatePtr(_ty_alloca);
-    block->InsertInst(CreatePtr(_ty_stored, _addr, block));
+    VariablePtr _addr = Variable::CreatePtr(_ty_alloca, nullptr);
+    auto &&inst = CreatePtr(_ty_stored, _addr, block);
+    _addr->SetParent(inst);
+    block->InsertInst(inst);
     return _addr;
 }
 
@@ -72,7 +74,7 @@ std::string StoreInst::tollvmIR() {
 //                     LoadInst Implementation
 //===-----------------------------------------------------------===//
 
-LoadInst::LoadInst(BaseValuePtr value, BaseValuePtr addr, CfgNodePtr block)
+LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block)
     : load_value(value), load_addr(addr), Instruction(block) {
     BaseTypePtr type_addr = load_addr->getBaseType();
     BaseTypePtr type_value = load_value->getBaseType();
@@ -81,15 +83,17 @@ LoadInst::LoadInst(BaseValuePtr value, BaseValuePtr addr, CfgNodePtr block)
     assert(type_addr->IsScalar() && type_value->IsScalar());
 }
 
-LoadInstPtr LoadInst::CreatePtr(BaseValuePtr value, BaseValuePtr addr, CfgNodePtr block) {
+LoadInstPtr LoadInst::CreatePtr(VariablePtr value, BaseValuePtr addr, CfgNodePtr block) {
     return std::make_shared<LoadInst>(value, addr, block);
 }
 
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     BaseTypePtr addr_type = addr->getBaseType();
     assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->IntType() || addr_type->FloatType()));
-    BaseValuePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L);
-    block->InsertInst(CreatePtr(value, addr, block));
+    VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
+    auto &&inst = CreatePtr(value, addr, block);
+    value->SetParent(inst);
+    block->InsertInst(inst);
     return value;
 }
 
@@ -108,7 +112,7 @@ std::string LoadInst::tollvmIR() {
 //                     GetElementPtrInst Implementation
 //===-----------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
+GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
                                      CfgNodePtr block)
     : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(block) {
     assert(target_ptr->getBaseType()->getAttrType() == store_type->getAttrType());
@@ -124,15 +128,17 @@ GetElementPtrInst::GetElementPtrInst(BaseValuePtr _ptr, BaseTypePtr _type, BaseV
     }
 }
 
-GepInstPtr GetElementPtrInst::CreatePtr(BaseValuePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
+GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
                                         CfgNodePtr block) {
     return std::make_shared<GetElementPtrInst>(_ptr, _type, _addr, _off, block);
 }
 
-BaseValuePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, CfgNodePtr block) {
+VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, CfgNodePtr block) {
     // only have INT-array or FLOAT-array
-    BaseValuePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L);
-    block->InsertInst(CreatePtr(_ptr, _type, _addr, _off, block));
+    VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
+    auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);
+    _ptr->SetParent(inst);
+    block->InsertInst(inst);
     return _ptr;
 }
 
