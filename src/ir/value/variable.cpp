@@ -9,7 +9,9 @@ Variable::Variable(BaseTypePtr _type) : BaseValue(_type), idx(var_idx++) {
     assert(base_type->IsParameter() || base_type->IsLocal());
 }
 
-void Variable::resetVarIdx() { var_idx = 1; }
+void Variable::ResetVarIdx() { var_idx = 1; }
+size_t Variable::GetVarIdx() { return var_idx; }
+void Variable::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
 
 VariablePtr Variable::CreatePtr(BaseTypePtr _type) { return std::make_shared<Variable>(_type); }
 

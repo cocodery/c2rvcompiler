@@ -19,7 +19,9 @@ class Variable : public BaseValue {
 
     void fixValue(ATTR_TYPE) { return; }
 
-    static void resetVarIdx();
+    static void ResetVarIdx();
+    static size_t GetVarIdx();
+    static void SetVarIdx(size_t);
 
     static VariablePtr CreatePtr(BaseTypePtr);
 

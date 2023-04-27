@@ -10,4 +10,6 @@ InstListType &BasicBlock::getInstList() { return this->inst_list; }
 
 void BasicBlock::insertInst(InstPtr inst) { this->inst_list.push_back(inst); }
 
-void BasicBlock::resetBlkIdx() { blk_idx = 1; }
+void BasicBlock::ResetBlkIdx() { blk_idx = 1; }
+size_t BasicBlock::GetBlkIdx() { return blk_idx; }
+void BasicBlock::SetBlkIdx(size_t _blk_idx) { blk_idx = _blk_idx; }

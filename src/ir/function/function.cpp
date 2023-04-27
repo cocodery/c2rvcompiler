@@ -35,6 +35,12 @@ CfgNodePtr NormalFunction::CreateCfgNode() { return CtrlFlowGraphNode::CreatePtr
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 
+void NormalFunction::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
+size_t NormalFunction::GetVarIdx() { return var_idx; }
+
+void NormalFunction::SetBlkIdx(size_t _blk_idx) { blk_idx = _blk_idx; }
+size_t NormalFunction::GetBlkIdx() { return blk_idx; }
+
 NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
     return std::make_shared<NormalFunction>(_type, _name, _list);
 }
@@ -52,8 +58,7 @@ std::string NormalFunction::tollvmIR() {
         }
     }
 
-    ss << ")"
-       << " {" << endl;
+    ss << ") {" << endl;
 
     CfgNodeList allNodes;
     std::queue<CfgNodePtr> nodeQueue;

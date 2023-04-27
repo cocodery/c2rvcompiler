@@ -27,7 +27,9 @@ class BasicBlock {
 
     void insertInst(InstPtr);
 
-    static void resetBlkIdx();
+    static void ResetBlkIdx();
+    static size_t GetBlkIdx();
+    static void SetBlkIdx(size_t);
 
     virtual std::string tollvmIR() = 0;
 };

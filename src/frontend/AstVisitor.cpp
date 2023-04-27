@@ -277,8 +277,8 @@ std::any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
 }
 
 std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
-    BasicBlock::resetBlkIdx();
-    Variable::resetVarIdx();
+    BasicBlock::ResetBlkIdx();
+    Variable::ResetVarIdx();
 
     ScalarTypePtr ret_type = std::any_cast<ScalarTypePtr>(ctx->funcType()->accept(this));
     std::string func_name = ctx->Identifier()->getText();
@@ -318,10 +318,15 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_position = GLOBAL;
     cur_table = last_table;
 
+    cur_func->SetVarIdx(Variable::GetVarIdx());
+    cur_func->SetBlkIdx(BasicBlock::GetBlkIdx());
+
     out_loop_block = nullptr;
     ret_addr = nullptr;
     ret_block = nullptr;
     cur_block = nullptr;
+    cur_func = nullptr;
+    callee_func = nullptr;
     assert(cur_table == &comp_unit.getGlbTable());
     clearTableList();
     return_list.clear();

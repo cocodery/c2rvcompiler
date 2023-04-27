@@ -38,6 +38,9 @@ class NormalFunction : public BaseFunction {
     CfgNodePtr entry;
     CfgNodePtr exit;
 
+    size_t var_idx;
+    size_t blk_idx;
+
    public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
@@ -48,6 +51,12 @@ class NormalFunction : public BaseFunction {
 
     CfgNodePtr GetEntryNode();
     CfgNodePtr GetExitNode();
+
+    void SetVarIdx(size_t);
+    size_t GetVarIdx();
+
+    void SetBlkIdx(size_t);
+    size_t GetBlkIdx();
 
     static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
 
