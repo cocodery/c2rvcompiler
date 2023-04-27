@@ -22,11 +22,11 @@ class CompilationUnit {
     ~CompilationUnit() = default;
 
     SymbolTable &getGlbTable();
-    void insertSymbol(std::string &, BaseValuePtr);
+    void InsertSymbol(std::string &, BaseValuePtr);
 
     NormalFuncList &GetNormalFuncTable();
-    BaseFuncPtr getFunction(std::string &);
-    void insertFunction(NormalFuncPtr);
+    BaseFuncPtr GetFunction(std::string &);
+    void InsertFunction(NormalFuncPtr);
 
     void generatellvmIR(std::string &irile);
 };

@@ -21,11 +21,12 @@ class BasicBlock {
     BasicBlock();
     ~BasicBlock() = default;
 
-    size_t getBlockIdx();
+    size_t GetBlockIdx();
 
-    InstListType &getInstList();
+    InstListType &GetInstList();
 
-    void insertInst(InstPtr);
+    void InsertInst(InstPtr);
+    void RemoveInst(InstPtr);
 
     static void ResetBlkIdx();
     static size_t GetBlkIdx();

@@ -7,11 +7,11 @@
 BaseFunction::BaseFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
     : ret_type(_type), func_name(_name), param_list(_list) {}
 
-ScalarTypePtr BaseFunction::getReturnType() { return this->ret_type; }
+ScalarTypePtr BaseFunction::GetReturnType() { return this->ret_type; }
 
-std::string &BaseFunction::getFuncName() { return this->func_name; }
+std::string &BaseFunction::GetFuncName() { return this->func_name; }
 
-ParamList &BaseFunction::getParamList() { return this->param_list; }
+ParamList &BaseFunction::GetParamList() { return this->param_list; }
 
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation

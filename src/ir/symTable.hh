@@ -16,9 +16,9 @@ class SymbolTable {
    public:
     SymbolTable(SymbolTable *_p = nullptr);
 
-    NameValueMap &getNameValueMap();
+    NameValueMap &GetNameValueMap();
 
-    SymbolTable *getParentTable();
+    SymbolTable *GetParentTable();
 
-    void insertSymbol(std::string &, BaseValuePtr);
+    void InsertSymbol(std::string &, BaseValuePtr);
 };

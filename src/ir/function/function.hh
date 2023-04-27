@@ -20,11 +20,11 @@ class BaseFunction {
     BaseFunction(ScalarTypePtr, std::string &, ParamList &);
     ~BaseFunction() = default;
 
-    ScalarTypePtr getReturnType();
+    ScalarTypePtr GetReturnType();
 
-    std::string &getFuncName();
+    std::string &GetFuncName();
 
-    ParamList &getParamList();
+    ParamList &GetParamList();
 
     virtual std::string tollvmIR() = 0;
 };

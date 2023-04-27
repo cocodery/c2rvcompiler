@@ -2,13 +2,13 @@
 
 SymbolTable &CompilationUnit::getGlbTable() { return this->glb_table; }
 
-void CompilationUnit::insertSymbol(std::string &name, BaseValuePtr value) { glb_table.insertSymbol(name, value); }
+void CompilationUnit::InsertSymbol(std::string &name, BaseValuePtr value) { glb_table.InsertSymbol(name, value); }
 
-NormalFuncList &CompilationUnit::GetNormalFuncTable() { return func_talbe.getNormalFuncTable(); }
+NormalFuncList &CompilationUnit::GetNormalFuncTable() { return func_talbe.GetNormalFuncTable(); }
 
-BaseFuncPtr CompilationUnit::getFunction(std::string &name) { return this->func_talbe.getFunction(name); }
+BaseFuncPtr CompilationUnit::GetFunction(std::string &name) { return this->func_talbe.GetFunction(name); }
 
-void CompilationUnit::insertFunction(NormalFuncPtr func_ptr) { func_talbe.insertFunction(func_ptr); }
+void CompilationUnit::InsertFunction(NormalFuncPtr func_ptr) { func_talbe.InsertFunction(func_ptr); }
 
 void CompilationUnit::generatellvmIR(std::string &irfile) {
     std::ofstream llir;
@@ -17,7 +17,7 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
         assert(0);
     }
     llir << "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"" << endl;
-    for (auto [name, glb_value] : glb_table.getNameValueMap()) {
+    for (auto [name, glb_value] : glb_table.GetNameValueMap()) {
         BaseTypePtr &&type = glb_value->getBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->IsImMutable() && type->IsScalar()) {

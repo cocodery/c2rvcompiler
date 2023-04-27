@@ -15,11 +15,11 @@ class FunctionTable {
    public:
     FunctionTable();
 
-    BaseFuncPtr getFunction(std::string &);
+    BaseFuncPtr GetFunction(std::string &);
 
-    void insertFunction(NormalFuncPtr);
+    void InsertFunction(NormalFuncPtr);
 
-    NormalFuncList &getNormalFuncTable();
+    NormalFuncList &GetNormalFuncTable();
 
     friend std::ostream &operator<<(std::ostream &, FunctionTable);
 };

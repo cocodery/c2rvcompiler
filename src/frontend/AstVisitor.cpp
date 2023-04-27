@@ -134,11 +134,11 @@ std::any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
         value->fixValue(cur_type);
 
-        cur_table->insertSymbol(name, value);
+        cur_table->InsertSymbol(name, value);
         // for Local Constant-Array
         // store one copy at Global-Table to generate in .data section
         if (cur_position == LOCAL && value->getBaseType()->IsArray()) {
-            comp_unit.insertSymbol(name, value);
+            comp_unit.InsertSymbol(name, value);
         }
     }
     return nullptr;
@@ -187,7 +187,7 @@ std::any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
         value->fixValue(cur_type);
 
-        cur_table->insertSymbol(name, value);
+        cur_table->InsertSymbol(name, value);
     }
     return nullptr;
 }
@@ -291,7 +291,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_position = LOCAL;
 
     NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
-    comp_unit.insertFunction(function);  // for recursion
+    comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 
     cur_block = cur_func->CreateEntry();
@@ -308,13 +308,13 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     ctx->block()->accept(this);
 
     ret_block = cur_func->CreateExit();
-    cur_block->insertInst(JumpInst::CreatePtr(cur_block, ret_block));
+    cur_block->InsertInst(JumpInst::CreatePtr(ret_block, cur_block));
 
     for (auto &&ret_inst : return_list) {
         ret_inst->setTarget(ret_block);
     }
-    ret_block->insertInst(
-        ReturnInst::CreatePtr(ret_type, ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block)));
+    ret_block->InsertInst(ReturnInst::CreatePtr(
+        ret_type, ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block), ret_block));
     cur_position = GLOBAL;
     cur_table = last_table;
 
@@ -467,14 +467,14 @@ std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
 
-    last_block->insertInst(BranchInst::CreatePtr(last_block, cond, branch_true, branch_false));
+    last_block->InsertInst(BranchInst::CreatePtr(cond, branch_true, branch_false, last_block));
 
     CfgNodePtr branch_out = cur_func->CreateCfgNode();  // after-branch
     cur_table = last_table;
     cur_block = branch_out;
 
-    true_end->insertInst(JumpInst::CreatePtr(true_end, branch_out));
-    false_end->insertInst(JumpInst::CreatePtr(false_end, branch_out));
+    true_end->InsertInst(JumpInst::CreatePtr(branch_out, true_end));
+    false_end->InsertInst(JumpInst::CreatePtr(branch_out, false_end));
 
     return nullptr;
 }
@@ -509,14 +509,14 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
     ctx->stmt()->accept(this);
-    block_before_cond->insertInst(JumpInst::CreatePtr(block_before_cond, cond_block_begin));
+    block_before_cond->InsertInst(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
     CfgNodePtr loop_end = cur_block;
 
-    loop_end->insertInst(JumpInst::CreatePtr(loop_end, cond_block_begin));
+    loop_end->InsertInst(JumpInst::CreatePtr(cond_block_begin, loop_end));
 
     CfgNodePtr loop_exit = cur_func->CreateCfgNode();  // exit-block-of-loop
 
-    cond_block_end->insertInst(BranchInst::CreatePtr(cond_block_end, cond, loop_begin, loop_exit));
+    cond_block_end->InsertInst(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
 
     for (auto &&break_inst : break_list) {
         break_inst->setTarget(loop_exit);
@@ -542,32 +542,32 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
 std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
-    cur_block->insertInst(JumpInst::CreatePtr(cur_block, target_continue));
+    cur_block->InsertInst(JumpInst::CreatePtr(target_continue, cur_block));
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
 std::any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
-    JumpInstPtr break_inst = JumpInst::CreatePtr(cur_block, nullptr);
-    cur_block->insertInst(break_inst);
+    JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
+    cur_block->InsertInst(break_inst);
     break_list.push_back(break_inst);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
 std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
-    ScalarTypePtr ret_type = cur_func->getReturnType();
+    ScalarTypePtr ret_type = cur_func->GetReturnType();
     if (ret_type->VoidType()) {
         assert(ctx->exp() == nullptr);
     } else {
         assert(ctx->exp() != nullptr);
         ptr_or_not = NOTPTR;
-        BaseValuePtr ret_value = Value::scalarTypeConvert(
+        BaseValuePtr ret_value = Value::ScalarTypeConvert(
             ret_type->getAttrType(), std::any_cast<BaseValuePtr>(ctx->exp()->accept(this)), cur_block);
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
-    JumpInstPtr ret_inst = JumpInst::CreatePtr(cur_block, nullptr);
-    cur_block->insertInst(ret_inst);
+    JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
+    cur_block->InsertInst(ret_inst);
     return_list.push_back(ret_inst);
 
     cur_block = cur_func->CreateCfgNode();
@@ -599,9 +599,9 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         ptr_or_not = NOTPTR;
         for (size_t idx = 0; idx < exp_list.size(); ++idx) {
             ConstantPtr dim_size = Constant::CreatePtr(type_const_int, static_cast<int32_t>(arr_dims[idx]));
-            BaseValuePtr cur_off = Value::binaryOperate(
+            BaseValuePtr cur_off = Value::BinaryOperate(
                 OP_MUL, std::any_cast<BaseValuePtr>(exp_list[idx]->accept(this)), dim_size, cur_block);
-            offset = Value::binaryOperate(OP_ADD, offset, cur_off, cur_block);
+            offset = Value::BinaryOperate(OP_ADD, offset, cur_off, cur_block);
         }
         ptr_or_not = last_ptr_or_not;
         OffsetList off_list = type_addr->IsScalar() ? OffsetList() : OffsetList(1, zero_int32);
@@ -641,7 +641,7 @@ std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
     RParamList rparam_list;
 
     auto &&rparam_node = ctx->funcRParam();
-    auto &&fparam_list = callee_func->getParamList();
+    auto &&fparam_list = callee_func->GetParamList();
 
     size_t rparam_size = rparam_node.size();
     assert(rparam_size == fparam_list.size());
@@ -658,7 +658,7 @@ std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
 
         if (type_fparam->IsNotPtr()) {
             assert(type_rparam->IsScalar());
-            rparam = Value::scalarTypeConvert(type_fparam->getAttrType(), rparam, cur_block);
+            rparam = Value::ScalarTypeConvert(type_fparam->getAttrType(), rparam, cur_block);
         }
         rparam_list.push_back(rparam);
     }
@@ -682,8 +682,8 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
         callee_name = (callee_name == "starttime") ? "_sysy_starttime" : "_sysy_stoptime";
         time_function = true;
     }
-    callee_func = comp_unit.getFunction(callee_name);
-    ScalarTypePtr ret_type = callee_func->getReturnType();
+    callee_func = comp_unit.GetFunction(callee_name);
+    ScalarTypePtr ret_type = callee_func->GetReturnType();
 
     RParamList rparam_list =
         time_function ? RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
@@ -697,7 +697,7 @@ std::any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {
     assert(ptr_or_not == NOTPTR);
     OpCode unary_op = std::any_cast<OpCode>(ctx->unaryOp()->accept(this));
     BaseValuePtr value = std::any_cast<BaseValuePtr>(ctx->unaryExp()->accept(this));
-    return Value::unaryOperate(unary_op, value, cur_block);
+    return Value::UnaryOperate(unary_op, value, cur_block);
 }
 
 std::any AstVisitor::visitUnaryOp(SysYParser::UnaryOpContext *ctx) {
@@ -721,7 +721,7 @@ std::any AstVisitor::visitMul2(SysYParser::Mul2Context *ctx) {
     BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->mulExp()->accept(this));
     OpCode op = std::any_cast<OpCode>(ctx->mulOp()->accept(this));
     BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->unaryExp()->accept(this));
-    return Value::binaryOperate(op, lhs, rhs, cur_block);
+    return Value::BinaryOperate(op, lhs, rhs, cur_block);
 }
 
 std::any AstVisitor::visitMulOp(SysYParser::MulOpContext *ctx) {
@@ -745,7 +745,7 @@ std::any AstVisitor::visitAdd2(SysYParser::Add2Context *ctx) {
     BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
     OpCode op = std::any_cast<OpCode>(ctx->addOp()->accept(this));
     BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->mulExp()->accept(this));
-    return Value::binaryOperate(op, lhs, rhs, cur_block);
+    return Value::BinaryOperate(op, lhs, rhs, cur_block);
 }
 
 std::any AstVisitor::visitAddOp(SysYParser::AddOpContext *ctx) {
@@ -767,7 +767,7 @@ std::any AstVisitor::visitRel2(SysYParser::Rel2Context *ctx) {
     BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->relExp()->accept(this));
     OpCode op = std::any_cast<OpCode>(ctx->relOp()->accept(this));
     BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->addExp()->accept(this));
-    return Value::binaryOperate(op, lhs, rhs, cur_block);
+    return Value::BinaryOperate(op, lhs, rhs, cur_block);
 }
 
 std::any AstVisitor::visitRelOp(SysYParser::RelOpContext *ctx) {
@@ -793,7 +793,7 @@ std::any AstVisitor::visitEq2(SysYParser::Eq2Context *ctx) {
     BaseValuePtr lhs = std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this));
     OpCode op = std::any_cast<OpCode>(ctx->eqOp()->accept(this));
     BaseValuePtr rhs = std::any_cast<BaseValuePtr>(ctx->relExp()->accept(this));
-    return Value::binaryOperate(op, lhs, rhs, cur_block);
+    return Value::BinaryOperate(op, lhs, rhs, cur_block);
 }
 
 std::any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
@@ -807,24 +807,24 @@ std::any AstVisitor::visitEqOp(SysYParser::EqOpContext *ctx) {
 }
 
 std::any AstVisitor::visitLAnd1(SysYParser::LAnd1Context *ctx) {
-    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
+    return Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
 }
 
 std::any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
     BaseValuePtr lAnd_node =
-        Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
+        Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
     CfgNodePtr lAnd_true = cur_func->CreateCfgNode();
 
-    BranchInstPtr br_inst = BranchInst::CreatePtr(cur_block, lAnd_node, lAnd_true, nullptr);
-    cur_block->insertInst(br_inst);
+    BranchInstPtr br_inst = BranchInst::CreatePtr(lAnd_node, lAnd_true, nullptr, cur_block);
+    cur_block->InsertInst(br_inst);
     lAnd_list.push_back(br_inst);
 
     cur_block = lAnd_true;
-    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
+    return Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->eqExp()->accept(this)), cur_block);
 }
 
 std::any AstVisitor::visitLOr1(SysYParser::LOr1Context *ctx) {
-    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
+    return Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
 }
 
 std::any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
@@ -839,17 +839,17 @@ std::any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     }
     lAnd_list = last_lAnd_list;
 
-    BranchInstPtr br_inst = BranchInst::CreatePtr(cur_block, lOr_node, nullptr, lOr_false);
-    cur_block->insertInst(br_inst);
+    BranchInstPtr br_inst = BranchInst::CreatePtr(lOr_node, nullptr, lOr_false, cur_block);
+    cur_block->InsertInst(br_inst);
     lOr_list.push_back(br_inst);
 
     cur_block = lOr_false;
-    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
+    return Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lAndExp()->accept(this)), cur_block);
 }
 
 std::any AstVisitor::visitCondExp(SysYParser::CondExpContext *ctx) {
     ptr_or_not = NOTPTR;
-    return Value::scalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lOrExp()->accept(this)), cur_block);
+    return Value::ScalarTypeConvert(BOOL, std::any_cast<BaseValuePtr>(ctx->lOrExp()->accept(this)), cur_block);
 }
 
 std::any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
@@ -886,11 +886,11 @@ void AstVisitor::clearTableList() {
 BaseValuePtr AstVisitor::resolveTable(std::string &name) {
     SymbolTable *itre_table = cur_table;
     while (itre_table != nullptr) {
-        auto &&sym_table = itre_table->getNameValueMap();
+        auto &&sym_table = itre_table->GetNameValueMap();
         if (sym_table.find(name) != sym_table.end()) {
             return sym_table[name];
         }
-        itre_table = itre_table->getParentTable();
+        itre_table = itre_table->GetParentTable();
     }
     assert(0);
 }
@@ -900,19 +900,19 @@ SymbolTable *AstVisitor::initParamList(CfgNodePtr first_block, SymbolTable *pare
     SymbolTable *new_table = newLocalTable(parent);
 
     size_t size = param_name.size();
-    auto &&param_list = cur_func->getParamList();
+    auto &&param_list = cur_func->GetParamList();
     for (size_t idx = 0; idx < size; ++idx) {
         auto &&name = param_name[idx];
         auto &&param = param_list[idx];
         if (param->getBaseType()->IsPointer()) {
-            new_table->insertSymbol(name, param);
+            new_table->InsertSymbol(name, param);
         } else {
             ATTR_TYPE _type = param->getBaseType()->getAttrType();
             BaseTypePtr ty_stored = (_type == INT) ? type_int_L : type_float_L;
             BaseTypePtr ty_alloca = (_type == INT) ? type_int_ptr_L : type_float_ptr_L;
             BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, first_block);
             StoreInst::DoStoreValue(addr_alloca, param, first_block);
-            new_table->insertSymbol(name, addr_alloca);
+            new_table->InsertSymbol(name, addr_alloca);
         }
     }
     return new_table;
@@ -940,7 +940,7 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                     off_list.push_back(offset);
                     BaseValuePtr store_addr =
                         GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-                    BaseValuePtr value = Value::scalarTypeConvert(
+                    BaseValuePtr value = Value::ScalarTypeConvert(
                         _type, std::any_cast<BaseValuePtr>(scalar_node->exp()->accept(this)), cur_block);
                     StoreInst::DoStoreValue(store_addr, value, cur_block);
                     ++cnt;

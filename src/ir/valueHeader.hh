@@ -14,14 +14,14 @@
 
 namespace Value {
 
-BaseValuePtr unaryOperate(const OpCode, const ConstantPtr);
+BaseValuePtr UnaryOperate(const OpCode, const ConstantPtr);
 
-BaseValuePtr binaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);
+BaseValuePtr BinaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);
 
-BaseValuePtr unaryOperate(const OpCode, BaseValuePtr, CfgNodePtr);
+BaseValuePtr UnaryOperate(const OpCode, BaseValuePtr, CfgNodePtr);
 
-BaseValuePtr binaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
+BaseValuePtr BinaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-BaseValuePtr scalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
+BaseValuePtr ScalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
 }  // namespace Value

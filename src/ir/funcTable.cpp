@@ -48,23 +48,23 @@ FunctionTable::FunctionTable() {
     }
 }
 
-BaseFuncPtr FunctionTable::getFunction(std::string &name) {
+BaseFuncPtr FunctionTable::GetFunction(std::string &name) {
     for (auto &&func : normalFuncTable) {
-        if (name == func->getFuncName()) {
+        if (name == func->GetFuncName()) {
             return func;
         }
     }
     for (auto &&func : libraryFuncTable) {
-        if (name == func->getFuncName()) {
+        if (name == func->GetFuncName()) {
             return func;
         }
     }
     assert(0);
 }
 
-void FunctionTable::insertFunction(NormalFuncPtr func_ptr) { normalFuncTable.push_back(func_ptr); }
+void FunctionTable::InsertFunction(NormalFuncPtr func_ptr) { normalFuncTable.push_back(func_ptr); }
 
-NormalFuncList &FunctionTable::getNormalFuncTable() { return normalFuncTable; }
+NormalFuncList &FunctionTable::GetNormalFuncTable() { return normalFuncTable; }
 
 std::ostream &operator<<(std::ostream &os, FunctionTable _func_table) {
     for (auto &&normal_func : _func_table.normalFuncTable) {

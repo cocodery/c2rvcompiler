@@ -1,8 +1,8 @@
 #include "valueHeader.hh"
 
-// Constant do unaryOperate
+// Constant do UnaryOperate
 // must have type in { BOOL, INT, FLOAT }
-BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
+BaseValuePtr Value::UnaryOperate(const OpCode op, const ConstantPtr oprand) {
     ATTR_TYPE _type;
     ConstType _value;
 
@@ -31,9 +31,9 @@ BaseValuePtr Value::unaryOperate(const OpCode op, const ConstantPtr oprand) {
     return Constant::CreatePtr(_stype, _value);
 }
 
-// Constant do unaryOperate
+// Constant do UnaryOperate
 // must have type in { BOOL, INT, FLOAT }
-BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const ConstantPtr rhs) {
+BaseValuePtr Value::BinaryOperate(const OpCode op, const ConstantPtr lhs, const ConstantPtr rhs) {
     ATTR_TYPE _type;
     ConstType _value;
 
@@ -105,16 +105,16 @@ BaseValuePtr Value::binaryOperate(const OpCode op, const ConstantPtr lhs, const 
     return Constant::CreatePtr(_stype, _value);
 }
 
-BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePtr block) {
+BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePtr block) {
     assert(oprand->IsOprand());
     if (op == OP_ADD) return oprand;
     if (oprand->IsConstant()) {
-        return unaryOperate(op, std::static_pointer_cast<Constant>(oprand));
+        return UnaryOperate(op, std::static_pointer_cast<Constant>(oprand));
     } else {
         ATTR_TYPE _type = oprand->getBaseType()->getAttrType();
         ConstantPtr zero = (_type == BOOL) ? zero_bool : ((_type == INT) ? zero_int32 : zero_float);
         if (op == OP_MINUS) {
-            return binaryOperate(OP_SUB, zero, oprand, block);
+            return BinaryOperate(OP_SUB, zero, oprand, block);
         } else if (op == OP_NOT) {
             if (_type == FLOAT) {
                 return FCmpInst::DoFCompare(OP_EQU, oprand, zero, block);
@@ -126,10 +126,10 @@ BaseValuePtr Value::unaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePt
     assert(0);
 }
 
-BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePtr rhs, CfgNodePtr block) {
+BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePtr rhs, CfgNodePtr block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
     if (lhs->IsConstant() && rhs->IsConstant()) {
-        return binaryOperate(op, std::static_pointer_cast<Constant>(lhs), std::static_pointer_cast<Constant>(rhs));
+        return BinaryOperate(op, std::static_pointer_cast<Constant>(lhs), std::static_pointer_cast<Constant>(rhs));
     }
     BaseValuePtr i_lhs = lhs, f_lhs = lhs;
     BaseValuePtr i_rhs = rhs, f_rhs = rhs;
@@ -141,12 +141,12 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
         // when do arithmetic operation, lhs_type == rhs_type in { INT, FLOAT }
         if ((lhs_type != rhs_type) || ((lhs_type & rhs_type) == BOOL)) {
             if (lhs_type == FLOAT || rhs_type == FLOAT) {
-                f_lhs = scalarTypeConvert(FLOAT, f_lhs, block);
-                f_rhs = scalarTypeConvert(FLOAT, f_rhs, block);
+                f_lhs = ScalarTypeConvert(FLOAT, f_lhs, block);
+                f_rhs = ScalarTypeConvert(FLOAT, f_rhs, block);
                 lhs_type = rhs_type = FLOAT;
             } else {
-                i_lhs = scalarTypeConvert(INT, i_lhs, block);
-                i_rhs = scalarTypeConvert(INT, i_rhs, block);
+                i_lhs = ScalarTypeConvert(INT, i_lhs, block);
+                i_rhs = ScalarTypeConvert(INT, i_rhs, block);
                 lhs_type = rhs_type = INT;
             }
         }
@@ -160,12 +160,12 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
         // when do compare operation, lhs_type == rhs_type in { BOOL, INT, FLOAT }
         if (lhs_type != rhs_type) {
             if (lhs_type == BOOL || rhs_type == BOOL) {  // if one is BOOL, convert the other to BOOL
-                i_lhs = scalarTypeConvert(BOOL, i_lhs, block);
-                i_rhs = scalarTypeConvert(BOOL, i_rhs, block);
+                i_lhs = ScalarTypeConvert(BOOL, i_lhs, block);
+                i_rhs = ScalarTypeConvert(BOOL, i_rhs, block);
                 lhs_type = rhs_type = BOOL;
             } else if (lhs_type == FLOAT || rhs_type == FLOAT) {
-                f_lhs = scalarTypeConvert(FLOAT, f_lhs, block);
-                f_rhs = scalarTypeConvert(FLOAT, f_rhs, block);
+                f_lhs = ScalarTypeConvert(FLOAT, f_lhs, block);
+                f_rhs = ScalarTypeConvert(FLOAT, f_rhs, block);
                 lhs_type = rhs_type = FLOAT;
             }  // else, Both type are INT
         }
@@ -179,7 +179,7 @@ BaseValuePtr Value::binaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     assert(0);
 }
 
-BaseValuePtr Value::scalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, CfgNodePtr block) {
+BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, CfgNodePtr block) {
     assert(convertee->IsOprand());
     ATTR_TYPE type_convertee = convertee->getBaseType()->getAttrType();
     // if type_convert == type_convertee, no need to convert
