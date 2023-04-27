@@ -13,10 +13,10 @@ class ICmpInst : public Instruction {
     BaseValuePtr lhs;
     BaseValuePtr rhs;
 
-    static ICmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static ICmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    ICmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    ICmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~ICmpInst() = default;
 
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
@@ -34,10 +34,10 @@ class FCmpInst : public Instruction {
     BaseValuePtr lhs;
     BaseValuePtr rhs;
 
-    static FCmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static FCmpInstPtr CreatePtr(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    FCmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    FCmpInst(BaseValuePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FCmpInst() = default;
 
     static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);

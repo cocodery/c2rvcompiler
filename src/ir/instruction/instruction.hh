@@ -28,10 +28,18 @@ constexpr OpCode OP_NEQ = (1ul << 0x000E);     // not equal
 class Instruction;
 using InstPtr = std::shared_ptr<Instruction>;
 
+class CtrlFlowGraphNode;
+using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
+
 class Instruction {
+   protected:
+    CfgNodePtr parent;
+
    public:
-    Instruction() = default;
+    Instruction(CfgNodePtr);
     ~Instruction() = default;
+
+    const CfgNodePtr GetParent() const;
 
     virtual bool IsAllocaInst() const;
     virtual bool IsStoreInst() const;

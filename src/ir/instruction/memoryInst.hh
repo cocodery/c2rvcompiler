@@ -12,15 +12,17 @@ class AllocaInst : public Instruction {
     BaseTypePtr type_stored;
     BaseValuePtr addr_alloca;
 
-    static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr);
+    static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    AllocaInst(BaseTypePtr, BaseValuePtr);
+    AllocaInst(BaseTypePtr, BaseValuePtr, CfgNodePtr);
     ~AllocaInst() = default;
 
     static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 
     bool IsAllocaInst() const;
+    const BaseTypePtr GetAllocaType() const;
+    const BaseValuePtr GetAllocaAddr() const;
 
     std::string tollvmIR();
 };
@@ -33,15 +35,16 @@ class StoreInst : public Instruction {
     BaseValuePtr store_addr;
     BaseValuePtr store_value;
 
-    static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    StoreInst(BaseValuePtr, BaseValuePtr);
+    StoreInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~StoreInst() = default;
 
     static void DoStoreValue(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool IsStoreInst() const;
+    const BaseValuePtr GetStoreAddr() const;
 
     std::string tollvmIR();
 };
@@ -54,10 +57,10 @@ class LoadInst : public Instruction {
     BaseValuePtr load_value;
     BaseValuePtr load_addr;
 
-    static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static LoadInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    LoadInst(BaseValuePtr, BaseValuePtr);
+    LoadInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~LoadInst() = default;
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
@@ -78,10 +81,10 @@ class GetElementPtrInst : public Instruction {
     BaseValuePtr base_addr;
     OffsetList offset_list;
 
-    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
+    static GepInstPtr CreatePtr(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
    public:
-    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList);
+    GetElementPtrInst(BaseValuePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
     ~GetElementPtrInst() = default;
 
     static BaseValuePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);

@@ -4,19 +4,20 @@
 //                     IBinaryInst Implementation
 //===-----------------------------------------------------------===//
 
-IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
-    : i_res(_res), i_op(_op), i_lhs(_lhs), i_rhs(_rhs) {
+IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
+    : i_res(_res), i_op(_op), i_lhs(_lhs), i_rhs(_rhs), Instruction(block) {
     assert(i_lhs->getBaseType()->IntType() && i_lhs->IsOprand());
     assert(i_rhs->getBaseType()->IntType() && i_rhs->IsOprand());
 }
 
-IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {
-    return std::make_shared<IBinaryInst>(_res, _op, _lhs, _rhs);
+IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
+                                      CfgNodePtr block) {
+    return std::make_shared<IBinaryInst>(_res, _op, _lhs, _rhs, block);
 }
 
 VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_int_L);
-    block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
+    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
     return _res;
 }
 
@@ -44,6 +45,7 @@ std::string IBinaryInst::tollvmIR() {
             break;
     }
     ss << " i32 " << i_lhs->tollvmIR() << ", " << i_rhs->tollvmIR();
+    ss << "; " << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -51,19 +53,20 @@ std::string IBinaryInst::tollvmIR() {
 //                     FBinaryInst Implementation
 //===-----------------------------------------------------------===//
 
-FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs)
-    : f_res(_res), f_op(_op), f_lhs(_lhs), f_rhs(_rhs) {
+FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
+    : f_res(_res), f_op(_op), f_lhs(_lhs), f_rhs(_rhs), Instruction(block) {
     assert(f_lhs->getBaseType()->FloatType() && f_lhs->IsOprand());
     assert(f_rhs->getBaseType()->FloatType() && f_rhs->IsOprand());
 }
 
-FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs) {
-    return std::make_shared<FBinaryInst>(_res, _op, _lhs, _rhs);
+FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
+                                      CfgNodePtr block) {
+    return std::make_shared<FBinaryInst>(_res, _op, _lhs, _rhs, block);
 }
 
 VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_float_L);
-    block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
+    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
     return _res;
 }
 
@@ -88,5 +91,6 @@ std::string FBinaryInst::tollvmIR() {
             break;
     }
     ss << " float " << f_lhs->tollvmIR() << ", " << f_rhs->tollvmIR();
+    ss << "; " << parent->GetBlockIdx();
     return ss.str();
 }

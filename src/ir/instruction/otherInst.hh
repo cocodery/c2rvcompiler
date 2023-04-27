@@ -15,10 +15,10 @@ class CallInst : public Instruction {
     std::string callee_name;
     RParamList rparam_list;
 
-    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, std::string &, RParamList &);
+    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, std::string &, RParamList &, CfgNodePtr);
 
    public:
-    CallInst(ScalarTypePtr, VariablePtr, std::string &, RParamList &);
+    CallInst(ScalarTypePtr, VariablePtr, std::string &, RParamList &, CfgNodePtr);
     ~CallInst() = default;
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, std::string &, RParamList &, CfgNodePtr);
@@ -34,10 +34,10 @@ class BitCastInst : public Instruction {
     BaseValuePtr result;
     BaseValuePtr oprand;
 
-    static BitCastInstPtr CreatePtr(BaseValuePtr, BaseValuePtr);
+    static BitCastInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    BitCastInst(BaseValuePtr, BaseValuePtr);
+    BitCastInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BitCastInst() = default;
 
     static BaseValuePtr DoBitCast(BaseValuePtr, CfgNodePtr);

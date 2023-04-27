@@ -13,10 +13,10 @@ class ReturnInst : public Instruction {
     BaseValuePtr ret_value;
 
    public:
-    ReturnInst(ScalarTypePtr, BaseValuePtr);
+    ReturnInst(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
     ~ReturnInst() = default;
 
-    static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr);
+    static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
 
     std::string tollvmIR();
 };
@@ -26,7 +26,6 @@ using JumpInstPtr = std::shared_ptr<JumpInst>;
 
 class JumpInst : public Instruction {
    private:
-    CfgNodePtr block;
     CfgNodePtr dest;
 
    public:
@@ -45,16 +44,15 @@ using BranchInstPtr = std::shared_ptr<BranchInst>;
 
 class BranchInst : public Instruction {
    private:
-    CfgNodePtr block;
     BaseValuePtr cond;
     CfgNodePtr iftrue;
     CfgNodePtr iffalse;
 
    public:
-    BranchInst(CfgNodePtr, BaseValuePtr, CfgNodePtr, CfgNodePtr);
+    BranchInst(BaseValuePtr, CfgNodePtr, CfgNodePtr, CfgNodePtr);
     ~BranchInst() = default;
 
-    static BranchInstPtr CreatePtr(CfgNodePtr, BaseValuePtr, CfgNodePtr, CfgNodePtr);
+    static BranchInstPtr CreatePtr(BaseValuePtr, CfgNodePtr, CfgNodePtr, CfgNodePtr);
 
     void setTrueTarget(CfgNodePtr);
     void setFalseTarget(CfgNodePtr);

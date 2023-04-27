@@ -4,20 +4,21 @@
 //                     ICmpInst Implementation
 //===-----------------------------------------------------------===//
 
-ICmpInst::ICmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
-    : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
+ICmpInst::ICmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
+    : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs), Instruction(block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
     assert(lhs->getBaseType()->BoolType() || lhs->getBaseType()->IntType());
 }
 
-ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs) {
-    return std::make_shared<ICmpInst>(_res, _cond, _lhs, _rhs);
+ICmpInstPtr ICmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs,
+                                CfgNodePtr block) {
+    return std::make_shared<ICmpInst>(_res, _cond, _lhs, _rhs, block);
 }
 
 VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_bool);
-    block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
+    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
     return _res;
 }
 
@@ -48,6 +49,7 @@ std::string ICmpInst::tollvmIR() {
             break;
     }
     ss << " " << lhs->getBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
+    ss << "; " << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -55,20 +57,21 @@ std::string ICmpInst::tollvmIR() {
 //                     FCmpInst Implementation
 //===-----------------------------------------------------------===//
 
-FCmpInst::FCmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs)
-    : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs) {
+FCmpInst::FCmpInst(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
+    : result(_res), cond(_cond), lhs(_lhs), rhs(_rhs), Instruction(block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
     assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
     assert(lhs->getBaseType()->FloatType());
 }
 
-FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs) {
-    return std::make_shared<FCmpInst>(_res, _cond, _lhs, _rhs);
+FCmpInstPtr FCmpInst::CreatePtr(BaseValuePtr _res, OpCode _cond, BaseValuePtr _lhs, BaseValuePtr _rhs,
+                                CfgNodePtr block) {
+    return std::make_shared<FCmpInst>(_res, _cond, _lhs, _rhs, block);
 }
 
 VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_bool);
-    block->insertInst(CreatePtr(_res, _op, _lhs, _rhs));
+    block->InsertInst(CreatePtr(_res, _op, _lhs, _rhs, block));
     return _res;
 }
 
@@ -99,5 +102,6 @@ std::string FCmpInst::tollvmIR() {
             break;
     }
     ss << " float " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
+    ss << "; " << parent->GetBlockIdx();
     return ss.str();
 }

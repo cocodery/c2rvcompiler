@@ -13,10 +13,10 @@ class IBinaryInst : public Instruction {
     BaseValuePtr i_lhs;
     BaseValuePtr i_rhs;
 
-    static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~IBinaryInst() = default;
 
     static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
@@ -34,10 +34,10 @@ class FBinaryInst : public Instruction {
     BaseValuePtr f_lhs;
     BaseValuePtr f_rhs;
 
-    static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
-    FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr);
+    FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FBinaryInst() = default;
 
     static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
