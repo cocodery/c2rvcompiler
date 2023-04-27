@@ -1,8 +1,8 @@
 #pragma once
 
-#include "function/cfgNode.hh"
+#include "cfgNode.hh"
 #include "instruction.hh"
-#include "value/type/scalarType.hh"
+#include "scalarType.hh"
 
 class CallInst;
 using CallInstPtr = std::shared_ptr<CallInst>;

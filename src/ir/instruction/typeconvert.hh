@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/cfgNode.hh"
+#include "cfgNode.hh"
 #include "compareInst.hh"
 #include "instruction.hh"
 #include "valueHeader.hh"

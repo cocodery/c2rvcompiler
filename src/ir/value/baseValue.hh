@@ -5,7 +5,9 @@
 #include <sstream>
 #include <string>
 
-#include "typeHeader.hh"
+#include "type/baseType.hh"
+#include "type/listType.hh"
+#include "type/scalarType.hh"
 
 class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;

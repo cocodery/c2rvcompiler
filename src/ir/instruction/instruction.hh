@@ -5,9 +5,8 @@
 #include <sstream>
 #include <string>
 
-#include "../value/baseValue.hh"
-#include "../value/typeHeader.hh"
-#include "../value/variable.hh"
+#include "baseValue.hh"
+#include "variable.hh"
 
 using OpCode = uint64_t;
 constexpr OpCode OP_ADD = (1ul << 0x0000);     // binary add

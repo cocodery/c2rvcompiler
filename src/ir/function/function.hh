@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <queue>
+#include <vector>
 
-#include "../valueHeader.hh"
 #include "cfgNode.hh"
+#include "valueHeader.hh"
 
 class BaseFunction;
 using BaseFuncPtr = std::shared_ptr<BaseFunction>;

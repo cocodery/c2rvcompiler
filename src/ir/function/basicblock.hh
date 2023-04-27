@@ -3,7 +3,7 @@
 #include <list>
 #include <memory>
 
-#include "../instruction/instruction.hh"
+#include "instruction.hh"
 
 class BasicBlock;
 

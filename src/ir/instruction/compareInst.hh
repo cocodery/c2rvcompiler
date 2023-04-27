@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../function/cfgNode.hh"
+#include "cfgNode.hh"
 #include "instruction.hh"
 
 class ICmpInst;
