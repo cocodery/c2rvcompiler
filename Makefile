@@ -1,47 +1,25 @@
-TOPNAME := compiler 
-BUILD_DIR := ./build
-BINARY := $(BUILD_DIR)/$(TOPNAME)
-CMAKE := cmake
-MAKE := make
-GDB := gdb
-LLDB := lldb
-OS := $(shell uname)
-ifeq ($(OS), Darwin)
-	LLVM_LINK := /usr/local/opt/llvm/bin/llvm-link
-	LLI := /usr/local/opt/llvm/bin/lli
-	DIFF := /usr/local/Cellar/diffutils/3.8/bin/diff
-else
-	LLVM_LINK := llvm-link
-	LLI := lli
-	DIFF := diff
-endif
-NODENAME := $(shell uname -n)
-ifeq ($(NODENAME), g14)
-	ECHO := echo -e
-else
-	ECHO := echo
-endif
-MODE := func # func or perf, selet functional or performance
-TEST_MODE := functional # test case directory
+TOPNAME 	:= compiler 
+BUILD_DIR 	:= ./build
+BINARY 		:= $(BUILD_DIR)/$(TOPNAME)
+CMAKE 		:= cmake
+MAKE 		:= make
+GDB 		:= gdb
+LLDB 		:= lldb
+OS 			:= $(shell uname)
+LLVM_LINK 	:= llvm-link
+LLI 		:= lli
+DIFF 		:= diff
+ECHO 		:= echo
 
-# re-define 
-#ifeq ($(MODE), "func")
-#	TEST_MODE = functional 
-#else
-#	TEST_MODE = performance
-#endif
+MODE 		:= functional # test case directory
 
-TEST_DIR := ./compiler2022/公开样例与运行时库/$(TEST_MODE)
-TEST_CASES = $(shell find $(TEST_DIR) -name "*.sy")
-TEST_NUM := $(words $(TEST_CASES));
-TEST := 00
+TEST_DIR 	:= ./compiler2022/公开样例与运行时库/$(MODE)
+TEST_CASES	:= $(shell find $(TEST_DIR) -name "*.sy")
 
-OUTPUT_ASM = $(addsuffix .s, $(basename $(TEST_CASES)))
-OUTPUT_RES = $(addsuffix .res, $(basename $(TEST_CASES)))
-OUTPUT_LOG = $(addsuffix .log, $(basename $(TEST_CASES)))
-OUTPUT_IR = $(addsuffix .ll, $(basename $(TEST_CASES)))
-
-CASE = $(shell find $(TEST_DIR) -name "$(TEST)*.sy")
+OUTPUT_ASM 	= $(addsuffix .s, $(basename $(TEST_CASES)))
+OUTPUT_RES 	= $(addsuffix .res, $(basename $(TEST_CASES)))
+OUTPUT_LOG 	= $(addsuffix .log, $(basename $(TEST_CASES)))
+OUTPUT_IR  	= $(addsuffix .ll, $(basename $(TEST_CASES)))
 
 $(shell mkdir -p $(BUILD_DIR))
 
@@ -54,38 +32,6 @@ build:
 run:
 	@cd $(BUILD_DIR); ./$(TOPNAME) -S -o ../main.s -l ../main.ll ../main.sy ; cd ..
 	@$(LLVM_LINK) sylib.ll main.ll -S -o run.ll
-
-.PHONY: test
-test:
-	@cd $(BUILD_DIR); ./$(TOPNAME) -S -o ../main.s -l ../main.ll ../$(CASE); cd ..
-	@$(LLVM_LINK) sylib.ll main.ll -S -o run.ll
-
-.ONESHELL:
-.PHONY: compile
-compile:
-	@success=0
-	@for file in $(sort $(TEST_CASES))
-	do
-		ASM=$${file%.*}.s
-		LOG=$${file%.*}.log
-		RES=$${file%.*}.res
-		LL=$${file%.*}.ll
-		IN=$${file%.*}.in
-		OUT=$${file%.*}.out
-		FILE=$${file##*/}
-		FILE=$${FILE%.*}
-		$(ECHO) $${file}
-		timeout 180s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
-		RETURN_VALUE=$$? 
-		if [ $$RETURN_VALUE = 124 ]; then
-			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Timeout\033[0m"
-			continue
-		else if [ $$RETURN_VALUE != 0 ]; then
-			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Error\033[0m"
-			continue
-			fi
-		fi
-	done
 
 .ONESHELL:
 .PHONY: all
