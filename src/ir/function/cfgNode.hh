@@ -11,6 +11,8 @@ using DominatorSet = std::set<CfgNodePtr>;
 
 class CtrlFlowGraphNode : public BasicBlock {
    private:
+    bool dirty;
+
     CfgNodeList predecessors;
     CfgNodeList successors;
 
@@ -22,6 +24,9 @@ class CtrlFlowGraphNode : public BasicBlock {
    public:
     CtrlFlowGraphNode();
     ~CtrlFlowGraphNode() = default;
+
+    bool GetDirty();
+    void SetDirty(bool);
 
     void AddPredcessor(CfgNodePtr);
     void AddSuccessor(CfgNodePtr);

@@ -2,6 +2,9 @@
 
 CtrlFlowGraphNode::CtrlFlowGraphNode() : BasicBlock() {}
 
+bool CtrlFlowGraphNode::GetDirty() { return dirty; }
+void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
+
 CfgNodePtr CtrlFlowGraphNode::CreatePtr() { return std::make_shared<CtrlFlowGraphNode>(); }
 
 void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) { predecessors.push_back(predecessor); }
