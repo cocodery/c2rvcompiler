@@ -18,6 +18,8 @@ class ReturnInst : public Instruction {
 
     static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     const BaseValueList UsedValue();
 
     std::string tollvmIR();
@@ -37,6 +39,8 @@ class JumpInst : public Instruction {
     static JumpInstPtr CreatePtr(CfgNodePtr, CfgNodePtr);
 
     void setTarget(CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 
@@ -60,6 +64,8 @@ class BranchInst : public Instruction {
 
     void setTrueTarget(CfgNodePtr);
     void setFalseTarget(CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 

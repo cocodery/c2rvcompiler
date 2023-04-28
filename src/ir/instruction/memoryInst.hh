@@ -24,6 +24,8 @@ class AllocaInst : public Instruction {
     const BaseTypePtr GetAllocaType() const;
     const BaseValuePtr GetAllocaAddr() const;
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     const BaseValueList UsedValue();
 
     std::string tollvmIR();
@@ -47,6 +49,9 @@ class StoreInst : public Instruction {
 
     bool IsStoreInst() const;
     const BaseValuePtr GetStoreAddr() const;
+    BaseValuePtr GetStoreValue() const;
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 
@@ -90,6 +95,8 @@ class GetElementPtrInst : public Instruction {
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
     bool IsGepInst() const;
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 

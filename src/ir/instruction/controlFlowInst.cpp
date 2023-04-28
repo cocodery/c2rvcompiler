@@ -20,6 +20,14 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
     return inst;
 }
 
+bool ReturnInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    if (replacee == ret_value) {
+        ret_value = replacer;
+        return true;
+    }
+    return false;
+}
+
 const BaseValueList ReturnInst::UsedValue() {
     BaseValueList valuelist = BaseValueList();
     if (!ret_type->VoidType()) valuelist.push_back(ret_value);
@@ -59,6 +67,8 @@ void JumpInst::setTarget(CfgNodePtr _dest) {
     parent->AddSuccessor(dest);
     dest->AddPredcessor(parent);
 }
+
+bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
 const BaseValueList JumpInst::UsedValue() { return BaseValueList(); }
 
@@ -105,6 +115,14 @@ void BranchInst::setFalseTarget(CfgNodePtr _iffalse) {
     iffalse = _iffalse;
     parent->AddSuccessor(iffalse);
     iffalse->AddPredcessor(parent);
+}
+
+bool BranchInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    if (replacee == cond) {
+        cond = replacer;
+        return true;
+    }
+    return false;
 }
 
 const BaseValueList BranchInst::UsedValue() { return BaseValueList({cond}); }

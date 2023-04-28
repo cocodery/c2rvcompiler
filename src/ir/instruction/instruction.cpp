@@ -25,6 +25,17 @@ bool Instruction::IsPhiInst() const { return false; }
 UnaryInstruction::UnaryInstruction(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr node)
     : result(_res), oprand(_opr), Instruction(node) {}
 
+BaseValuePtr UnaryInstruction::GetResult() const { return result; }
+BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
+
+bool UnaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    if (replacee == oprand) {
+        oprand = replacer;
+        return true;
+    }
+    return false;
+}
+
 const BaseValueList UnaryInstruction::UsedValue() { return BaseValueList({oprand}); }
 
 //===-----------------------------------------------------------===//
@@ -35,7 +46,37 @@ BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr 
                                      CfgNodePtr node)
     : result(_res), op(_op), lhs(_lhs), rhs(_rhs), Instruction(node) {}
 
+BaseValuePtr BinaryInstruction::GetResult() const { return result; }
+BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
+BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
+
+bool BinaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (replacee == lhs) {
+        lhs = replacer;
+        ret = true;
+    }
+    if (replacee == rhs) {
+        rhs = replacer;
+        ret = true;
+    }
+    return ret;
+}
+
 const BaseValueList BinaryInstruction::UsedValue() { return BaseValueList({lhs, rhs}); }
+
+//===-----------------------------------------------------------===//
+//                     ReplaceSRC Implementation
+//===-----------------------------------------------------------===//
+
+void ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    auto &&use_list = replacee->GetUserList();
+    std::for_each(use_list.begin(), use_list.end(), [&replacee, &replacer](const auto &inst) {
+        if (inst->ReplaceSRC(replacee, replacer)) {
+            replacer->InsertUser(inst);
+        }
+    });
+}
 
 //===-----------------------------------------------------------===//
 //                     RemoveInst Implementation

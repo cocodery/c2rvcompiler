@@ -30,6 +30,17 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, R
     return _ret;
 }
 
+bool CallInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    for (auto &&param : rparam_list) {
+        if (param == replacee) {
+            param = replacer;
+            ret = true;
+        }
+    }
+    return ret;
+}
+
 const BaseValueList CallInst::UsedValue() {
     BaseValueList valuelist = BaseValueList();
     std::for_each(rparam_list.begin(), rparam_list.end(),
@@ -106,12 +117,25 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     return inst;
 }
 
+VariablePtr PhiInst::GetResult() { return result; }
+
 void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr block) {
     inst->datalist.push_back({_value, block});
     _value->InsertUser(inst);
 }
 
 bool PhiInst::IsPhiInst() const { return true; }
+
+bool PhiInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    for (auto &&pair : datalist) {
+        if (replacee == pair.first) {
+            pair.first = replacer;
+            ret = true;
+        }
+    }
+    return ret;
+}
 
 const BaseValueList PhiInst::UsedValue() {
     BaseValueList valuelist = BaseValueList();
@@ -127,7 +151,7 @@ std::string PhiInst::tollvmIR() {
     auto &&iter = datalist.begin();
     ss << '[' << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
     for (iter++; iter != datalist.end(); iter++) {
-        ss << ", " << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
+        ss << ", [" << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
     }
 
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();

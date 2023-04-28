@@ -28,6 +28,8 @@ bool AllocaInst::IsAllocaInst() const { return true; }
 const BaseTypePtr AllocaInst::GetAllocaType() const { return type_stored; }
 const BaseValuePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
 
+bool AllocaInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
+
 const BaseValueList AllocaInst::UsedValue() { return BaseValueList(); }
 
 std::string AllocaInst::tollvmIR() {
@@ -66,6 +68,20 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
 
 bool StoreInst::IsStoreInst() const { return true; }
 const BaseValuePtr StoreInst::GetStoreAddr() const { return store_addr; }
+BaseValuePtr StoreInst::GetStoreValue() const { return store_value; }
+
+bool StoreInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (store_addr == replacee) {
+        store_addr = replacer;
+        ret = true;
+    }
+    if (store_value == replacee) {
+        store_value = replacer;
+        ret = true;
+    }
+    return ret;
+}
 
 const BaseValueList StoreInst::UsedValue() { return BaseValueList({store_addr, store_value}); }
 
@@ -154,6 +170,21 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
 }
 
 bool GetElementPtrInst::IsGepInst() const { return true; }
+
+bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (base_addr == replacee) {
+        base_addr = replacer;
+        ret = true;
+    }
+    for (auto &&offset : offset_list) {
+        if (offset == replacee) {
+            offset = replacer;
+            ret = true;
+        }
+    }
+    return ret;
+}
 
 const BaseValueList GetElementPtrInst::UsedValue() {
     BaseValueList value_list = BaseValueList({base_addr});

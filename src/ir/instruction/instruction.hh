@@ -53,6 +53,8 @@ class Instruction {
 
     virtual bool IsPhiInst() const;
 
+    virtual bool ReplaceSRC(BaseValuePtr, BaseValuePtr) = 0;
+
     virtual const BaseValueList UsedValue() = 0;
 
     virtual std::string tollvmIR() = 0;
@@ -66,6 +68,11 @@ class UnaryInstruction : public Instruction {
    public:
     UnaryInstruction(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~UnaryInstruction() = default;
+
+    BaseValuePtr GetResult() const;
+    BaseValuePtr GetOprand() const;
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 
@@ -83,9 +90,16 @@ class BinaryInstruction : public Instruction {
     BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BinaryInstruction() = default;
 
+    BaseValuePtr GetResult() const;
+    BaseValuePtr GetLHS() const;
+    BaseValuePtr GetRHS() const;
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     const BaseValueList UsedValue();
 
     virtual std::string tollvmIR() = 0;
 };
 
+void ReplaceSRC(BaseValuePtr, BaseValuePtr);
 void RemoveInst(InstPtr);
