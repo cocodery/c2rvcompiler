@@ -301,7 +301,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
             ? nullptr
             : AllocaInst::DoAllocaAddr(ret_type, (ret_type->IntType() ? type_int_ptr_L : type_float_ptr_L), cur_block);
 
-    // create a local-table layer for func-parameter to convenient resolveTable
+    // create a local-table layer for func-parameter to convenient ResolveTable
     SymbolTable *last_table = cur_table;
     cur_table = initParamList(cur_block, last_table, param_name);
 
@@ -581,7 +581,7 @@ std::any AstVisitor::visitExp(SysYParser::ExpContext *ctx) {
 
 std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     std::string name = ctx->Identifier()->getText();
-    BaseValuePtr address = resolveTable(name);
+    BaseValuePtr address = ResolveTable(name);
     if (address->IsConstant()) return address;
 
     BaseTypePtr type_addr = address->getBaseType();
@@ -883,7 +883,7 @@ void AstVisitor::clearTableList() {
     table_list.clear();
 }
 
-BaseValuePtr AstVisitor::resolveTable(std::string &name) {
+BaseValuePtr AstVisitor::ResolveTable(std::string &name) {
     SymbolTable *itre_table = cur_table;
     while (itre_table != nullptr) {
         auto &&sym_table = itre_table->GetNameValueMap();

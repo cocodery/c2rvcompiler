@@ -15,7 +15,13 @@ bool BaseValue::IsConstant() { return false; }
 
 void BaseValue::fixValue(ATTR_TYPE) { return; }
 
-std::ostream &operator<<(std::ostream &os, BaseValuePtr value) {
-    os << value->tollvmIR();
-    return os;
+InstList BaseValue::GetUserList() const { return use_list; }
+
+void BaseValue::InsertUser(InstPtr inst) {
+    if (IsConstant()) return;
+    if (std::find(use_list.begin(), use_list.end(), inst) != use_list.end()) {
+        use_list.push_back(inst);
+    }
 }
+
+void BaseValue::RemoveUser(InstPtr inst) { use_list.remove(inst); }

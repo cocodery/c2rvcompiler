@@ -19,6 +19,8 @@ VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
     VariablePtr _res = Variable::CreatePtr(type_int_L, nullptr);
     auto &&inst = CreatePtr(_res, _op, _lhs, _rhs, block);
     _res->SetParent(inst);
+    _lhs->InsertUser(inst);
+    _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
 }
@@ -70,6 +72,8 @@ VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
     VariablePtr _res = Variable::CreatePtr(type_float_L, nullptr);
     auto &&inst = CreatePtr(_res, _op, _lhs, _rhs, block);
     _res->SetParent(inst);
+    _lhs->InsertUser(inst);
+    _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
 }

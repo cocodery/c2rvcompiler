@@ -15,7 +15,9 @@ ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value, CfgNodePtr bloc
 }
 
 RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNodePtr block) {
-    return std::make_shared<ReturnInst>(_type, _value, block);
+    auto &&inst = std::make_shared<ReturnInst>(_type, _value, block);
+    if (_value != nullptr) _value->InsertUser(inst);
+    return inst;
 }
 
 std::string ReturnInst::tollvmIR() {
@@ -78,7 +80,9 @@ BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, Cfg
 }
 
 BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, CfgNodePtr block) {
-    return std::make_shared<BranchInst>(_cond, _br1, _br2, block);
+    auto &&inst = std::make_shared<BranchInst>(_cond, _br1, _br2, block);
+    _cond->InsertUser(inst);
+    return inst;
 }
 
 void BranchInst::setTrueTarget(CfgNodePtr _iftrue) {

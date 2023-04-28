@@ -8,6 +8,7 @@
 #include "type/baseType.hh"
 #include "type/listType.hh"
 #include "type/scalarType.hh"
+#include "use.hh"
 
 class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;
@@ -15,7 +16,7 @@ using BaseValuePtr = std::shared_ptr<BaseValue>;
 class Instruction;
 using InstPtr = std::shared_ptr<Instruction>;
 
-class BaseValue {
+class BaseValue : public Use {
    protected:
     BaseTypePtr base_type;
 
@@ -33,7 +34,9 @@ class BaseValue {
 
     virtual void fixValue(ATTR_TYPE);
 
+    InstList GetUserList() const;
+    void InsertUser(InstPtr);
+    void RemoveUser(InstPtr);
+
     virtual std::string tollvmIR() = 0;
 };
-
-std::ostream &operator<<(std::ostream &, BaseValuePtr);

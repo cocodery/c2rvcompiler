@@ -7,13 +7,13 @@
 
 class BasicBlock;
 
-using InstListType = std::list<InstPtr>;
+using InstList = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
 class BasicBlock {
    protected:
     size_t idx;
-    InstListType inst_list;
+    InstList inst_list;
 
     static size_t blk_idx;
 
@@ -23,7 +23,7 @@ class BasicBlock {
 
     size_t GetBlockIdx();
 
-    InstListType &GetInstList();
+    InstList &GetInstList();
 
     void InsertInstBack(InstPtr);
     void InsertInstFront(InstPtr);

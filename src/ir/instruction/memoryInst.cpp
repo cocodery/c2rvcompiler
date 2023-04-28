@@ -56,7 +56,10 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     // for store, only two target type, `INT` and `FLOAT`
     assert(value->IsOprand());
     BaseValuePtr convertee = Value::ScalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
-    block->InsertInstBack(CreatePtr(addr, convertee, block));
+    auto &&inst = CreatePtr(addr, convertee, block);
+    addr->InsertUser(inst);
+    convertee->InsertUser(inst);
+    block->InsertInstBack(inst);
 }
 
 bool StoreInst::IsStoreInst() const { return true; }
@@ -94,6 +97,7 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(value, addr, block);
     value->SetParent(inst);
+    addr->InsertUser(inst);
     block->InsertInstBack(inst);
     return value;
 }
@@ -139,6 +143,8 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
     auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);
     _ptr->SetParent(inst);
+    _addr->InsertUser(inst);
+    std::for_each(_off.begin(), _off.end(), [&inst](const auto &offset) { offset->InsertUser(inst); });
     block->InsertInstBack(inst);
     return _ptr;
 }

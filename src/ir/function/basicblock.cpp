@@ -2,11 +2,11 @@
 
 size_t BasicBlock::blk_idx = 1;
 
-BasicBlock::BasicBlock() : idx(blk_idx++), inst_list(InstListType()) {}
+BasicBlock::BasicBlock() : idx(blk_idx++), inst_list(InstList()) {}
 
 size_t BasicBlock::GetBlockIdx() { return idx; }
 
-InstListType &BasicBlock::GetInstList() { return inst_list; }
+InstList &BasicBlock::GetInstList() { return inst_list; }
 
 void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }

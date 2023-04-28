@@ -59,7 +59,7 @@ class PhiInst : public Instruction {
 
     static PhiInstPtr CreatePtr(BaseTypePtr, CfgNodePtr);
 
-    void insertPhiData(BaseValuePtr, CfgNodePtr);
+    static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 
     bool IsPhiInst() const;
 

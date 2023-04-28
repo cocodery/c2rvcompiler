@@ -189,7 +189,7 @@ class AstVisitor : public SysYBaseVisitor {
     SymbolTable *newLocalTable(SymbolTable *);
     void clearTableList();
 
-    BaseValuePtr resolveTable(std::string &name);
+    BaseValuePtr ResolveTable(std::string &name);
 
     SymbolTable *initParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
 
