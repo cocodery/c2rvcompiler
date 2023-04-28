@@ -48,4 +48,4 @@ class CtrlFlowGraphNode : public BasicBlock {
     std::string tollvmIR();
 };
 
-void RemoveSelf(CfgNodePtr node);
+void RemoveNode(CfgNodePtr node);

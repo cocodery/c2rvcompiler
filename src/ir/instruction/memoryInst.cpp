@@ -32,6 +32,11 @@ std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+
+    // cout << addr_alloca->tollvmIR() << " use-list :" << endl;
+    // for (auto &&inst : addr_alloca->GetUserList()) {
+    //     cout << inst->tollvmIR() << endl;
+    // }
     return ss.str();
 }
 
@@ -117,7 +122,7 @@ std::string LoadInst::tollvmIR() {
 //                     GetElementPtrInst Implementation
 //===-----------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
+GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                      CfgNodePtr block)
     : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(block) {
     assert(target_ptr->getBaseType()->getAttrType() == store_type->getAttrType());
@@ -133,12 +138,13 @@ GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseVa
     }
 }
 
-GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
+GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                         CfgNodePtr block) {
     return std::make_shared<GetElementPtrInst>(_ptr, _type, _addr, _off, block);
 }
 
-VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, CfgNodePtr block) {
+VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
+                                            CfgNodePtr block) {
     // only have INT-array or FLOAT-array
     VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
     auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);

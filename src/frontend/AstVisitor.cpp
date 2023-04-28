@@ -604,7 +604,7 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
             offset = Value::BinaryOperate(OP_ADD, offset, cur_off, cur_block);
         }
         ptr_or_not = last_ptr_or_not;
-        OffsetList off_list = type_addr->IsScalar() ? OffsetList() : OffsetList(1, zero_int32);
+        BaseValueList off_list = type_addr->IsScalar() ? BaseValueList() : BaseValueList(1, zero_int32);
         off_list.push_back(offset);
         BaseTypePtr base_type =
             type_addr->IsScalar() ? std::static_pointer_cast<BaseType>(type_addr->IntType() ? type_int_L : type_float_L)
@@ -935,7 +935,7 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             size_t cnt = 0;
             for (auto &&child : node->initVal()) {
                 if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
-                    OffsetList off_list = OffsetList(1, zero_int32);
+                    BaseValueList off_list = BaseValueList(1, zero_int32);
                     ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
                     off_list.push_back(offset);
                     BaseValuePtr store_addr =
@@ -961,7 +961,7 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                 }
             }
             while (cnt < total_size) {
-                OffsetList off_list = OffsetList(1, zero_int32);
+                BaseValueList off_list = BaseValueList(1, zero_int32);
                 ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
                 off_list.push_back(offset);
                 BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);

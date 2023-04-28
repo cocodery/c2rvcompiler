@@ -69,7 +69,7 @@ std::string CtrlFlowGraphNode::tollvmIR() {
 // clear instructions of del-node
 // remove del-node from its predcessors and successors
 // clear predcessors and successors of del-node
-void RemoveSelf(CfgNodePtr node) {
+void RemoveNode(CfgNodePtr node) {
     node->GetInstList().clear();
     auto &&predcessor = node->GetPredcessors();
     auto &&successor = node->GetSuccessors();

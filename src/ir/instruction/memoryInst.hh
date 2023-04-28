@@ -72,22 +72,21 @@ class LoadInst : public Instruction {
 
 class GetElementPtrInst;
 using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
-using OffsetList = std::list<BaseValuePtr>;
 
 class GetElementPtrInst : public Instruction {
    private:
     VariablePtr target_ptr;
     BaseTypePtr store_type;
     BaseValuePtr base_addr;
-    OffsetList offset_list;
+    BaseValueList offset_list;
 
-    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
    public:
-    GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
     ~GetElementPtrInst() = default;
 
-    static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
+    static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
     bool IsGepInst() const;
 
