@@ -19,7 +19,7 @@ InstList BaseValue::GetUserList() const { return use_list; }
 
 void BaseValue::InsertUser(InstPtr inst) {
     if (IsConstant()) return;
-    if (std::find(use_list.begin(), use_list.end(), inst) != use_list.end()) {
+    if (std::find(use_list.begin(), use_list.end(), inst) == use_list.end()) {
         use_list.push_back(inst);
     }
 }

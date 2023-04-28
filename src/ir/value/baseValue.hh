@@ -12,6 +12,7 @@
 
 class BaseValue;
 using BaseValuePtr = std::shared_ptr<BaseValue>;
+using BaseValueList = std::list<BaseValuePtr>;
 
 class Instruction;
 using InstPtr = std::shared_ptr<Instruction>;
