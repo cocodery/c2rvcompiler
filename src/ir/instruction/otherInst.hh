@@ -44,3 +44,24 @@ class BitCastInst : public Instruction {
 
     std::string tollvmIR();
 };
+
+class PhiInst;
+using PhiInstPtr = std::shared_ptr<PhiInst>;
+
+class PhiInst : public Instruction {
+   private:
+    VariablePtr result;
+    std::list<std::pair<BaseValuePtr, BlockPtr>> datalist;
+
+   public:
+    PhiInst(VariablePtr, CfgNodePtr);
+    ~PhiInst() = default;
+
+    static PhiInstPtr CreatePtr(BaseTypePtr, CfgNodePtr);
+
+    void insertPhiData(BaseValuePtr, CfgNodePtr);
+
+    bool IsPhiInst() const;
+
+    std::string tollvmIR();
+};

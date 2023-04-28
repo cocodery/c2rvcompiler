@@ -7,6 +7,7 @@
 AllocaInst::AllocaInst(BaseTypePtr _ty_stored, BaseValuePtr _addr, CfgNodePtr block)
     : type_stored(_ty_stored), addr_alloca(_addr), Instruction(block) {
     BaseTypePtr type_alloca = addr_alloca->getBaseType();
+    assert(type_stored->IntType() || type_stored->FloatType());
     assert(type_stored->getAttrType() == type_alloca->getAttrType());
     assert(type_stored->IsNotPtr() && type_alloca->IsPointer());
 }
@@ -141,6 +142,8 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     block->InsertInst(inst);
     return _ptr;
 }
+
+bool GetElementPtrInst::IsGepInst() const { return true; }
 
 std::string GetElementPtrInst::tollvmIR() {
     std::stringstream ss;

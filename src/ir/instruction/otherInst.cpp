@@ -82,3 +82,35 @@ std::string BitCastInst::tollvmIR() {
     ss << "; " << parent->GetBlockIdx();
     return ss.str();
 }
+
+//===-----------------------------------------------------------===//
+//                     PhiInst Implementation
+//===-----------------------------------------------------------===//
+
+PhiInst::PhiInst(VariablePtr _res, CfgNodePtr block) : result(_res), Instruction(block) {}
+
+PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
+    assert(_type->IsScalar() && _type->IsNotPtr());
+    VariablePtr _res = Variable::CreatePtr(_type, nullptr);
+    auto &&inst = std::make_shared<PhiInst>(_res, block);
+    _res->SetParent(inst);
+    block->InsertInstFront(inst);
+    return inst;
+}
+
+void PhiInst::insertPhiData(BaseValuePtr _value, CfgNodePtr block) { datalist.push_back({_value, block}); }
+
+bool PhiInst::IsPhiInst() const { return true; }
+
+std::string PhiInst::tollvmIR() {
+    std::stringstream ss;
+
+    ss << result->tollvmIR() << " = phi " << result->getBaseType()->tollvmIR() << ' ';
+    auto &&iter = datalist.begin();
+    ss << '[' << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
+    for (iter++; iter != datalist.end(); iter++) {
+        ss << ", " << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
+    }
+
+    return ss.str();
+}

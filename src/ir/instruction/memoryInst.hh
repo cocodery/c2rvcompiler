@@ -89,5 +89,7 @@ class GetElementPtrInst : public Instruction {
 
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
+    bool IsGepInst() const;
+
     std::string tollvmIR();
 };

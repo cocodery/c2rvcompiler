@@ -44,6 +44,9 @@ class Instruction {
     virtual bool IsAllocaInst() const;
     virtual bool IsStoreInst() const;
     virtual bool IsLoadInst() const;
+    virtual bool IsGepInst() const;
+
+    virtual bool IsPhiInst() const;
 
     virtual std::string tollvmIR() = 0;
 };
