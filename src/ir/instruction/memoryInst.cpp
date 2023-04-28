@@ -34,11 +34,6 @@ std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
-
-    cout << addr_alloca->tollvmIR() << " use-list :" << endl;
-    for (auto &&inst : addr_alloca->GetUserList()) {
-        cout << inst->tollvmIR() << endl;
-    }
     return ss.str();
 }
 
