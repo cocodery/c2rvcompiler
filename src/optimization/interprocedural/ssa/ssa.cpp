@@ -34,7 +34,7 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
             if (inst->IsStoreInst()) {
                 auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
                 auto &&inst_gen_store_addr = store_inst->GetStoreAddr()->GetParent();
-                if (inst_gen_store_addr->IsAllocaInst()) {
+                if (inst_gen_store_addr && inst_gen_store_addr->IsAllocaInst()) {
                     auto &&alloca_inst = std::static_pointer_cast<AllocaInst>(inst_gen_store_addr);
                     if (allocaLookUp.find(alloca_inst) != allocaLookUp.end()) {
                         defBlocks[allocaLookUp[alloca_inst]].insert(node);
@@ -112,7 +112,7 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
             } else if (inst->IsLoadInst()) {
                 auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
                 auto &&inst_gen_load_addr = load_inst->GetOprand()->GetParent();
-                if (inst_gen_load_addr->IsAllocaInst()) {
+                if (inst_gen_load_addr && inst_gen_load_addr->IsAllocaInst()) {
                     auto &&alloca_inst = std::static_pointer_cast<AllocaInst>(inst_gen_load_addr);
                     int32_t allocaIndex = allocaLookUp[alloca_inst];
                     auto &&load_result = load_inst->GetResult();
@@ -124,7 +124,7 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
             } else if (inst->IsStoreInst()) {
                 auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
                 auto &&inst_gen_store_addr = store_inst->GetStoreAddr()->GetParent();
-                if (inst_gen_store_addr->IsAllocaInst()) {
+                if (inst_gen_store_addr && inst_gen_store_addr->IsAllocaInst()) {
                     auto &&alloca_inst = std::static_pointer_cast<AllocaInst>(inst_gen_store_addr);
                     int32_t allocaIndex = allocaLookUp[alloca_inst];
                     cur_valuelist[allocaIndex] = store_inst->GetStoreValue();
