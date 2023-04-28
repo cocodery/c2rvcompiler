@@ -20,7 +20,7 @@ VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_all
     VariablePtr _addr = Variable::CreatePtr(_ty_alloca, nullptr);
     auto &&inst = CreatePtr(_ty_stored, _addr, block);
     _addr->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _addr;
 }
 
@@ -56,7 +56,7 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     // for store, only two target type, `INT` and `FLOAT`
     assert(value->IsOprand());
     BaseValuePtr convertee = Value::ScalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
-    block->InsertInst(CreatePtr(addr, convertee, block));
+    block->InsertInstBack(CreatePtr(addr, convertee, block));
 }
 
 bool StoreInst::IsStoreInst() const { return true; }
@@ -94,7 +94,7 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(value, addr, block);
     value->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return value;
 }
 
@@ -139,7 +139,7 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
     auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);
     _ptr->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _ptr;
 }
 

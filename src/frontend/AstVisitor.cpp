@@ -308,12 +308,12 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     ctx->block()->accept(this);
 
     ret_block = cur_func->CreateExit();
-    cur_block->InsertInst(JumpInst::CreatePtr(ret_block, cur_block));
+    cur_block->InsertInstBack(JumpInst::CreatePtr(ret_block, cur_block));
 
     for (auto &&ret_inst : return_list) {
         ret_inst->setTarget(ret_block);
     }
-    ret_block->InsertInst(ReturnInst::CreatePtr(
+    ret_block->InsertInstBack(ReturnInst::CreatePtr(
         ret_type, ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block), ret_block));
     cur_position = GLOBAL;
     cur_table = last_table;
@@ -467,14 +467,14 @@ std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
 
-    last_block->InsertInst(BranchInst::CreatePtr(cond, branch_true, branch_false, last_block));
+    last_block->InsertInstBack(BranchInst::CreatePtr(cond, branch_true, branch_false, last_block));
 
     CfgNodePtr branch_out = cur_func->CreateCfgNode();  // after-branch
     cur_table = last_table;
     cur_block = branch_out;
 
-    true_end->InsertInst(JumpInst::CreatePtr(branch_out, true_end));
-    false_end->InsertInst(JumpInst::CreatePtr(branch_out, false_end));
+    true_end->InsertInstBack(JumpInst::CreatePtr(branch_out, true_end));
+    false_end->InsertInstBack(JumpInst::CreatePtr(branch_out, false_end));
 
     return nullptr;
 }
@@ -509,14 +509,14 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
     ctx->stmt()->accept(this);
-    block_before_cond->InsertInst(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
+    block_before_cond->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
     CfgNodePtr loop_end = cur_block;
 
-    loop_end->InsertInst(JumpInst::CreatePtr(cond_block_begin, loop_end));
+    loop_end->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, loop_end));
 
     CfgNodePtr loop_exit = cur_func->CreateCfgNode();  // exit-block-of-loop
 
-    cond_block_end->InsertInst(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
+    cond_block_end->InsertInstBack(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
 
     for (auto &&break_inst : break_list) {
         break_inst->setTarget(loop_exit);
@@ -542,14 +542,14 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
 std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
-    cur_block->InsertInst(JumpInst::CreatePtr(target_continue, cur_block));
+    cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
 std::any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
-    cur_block->InsertInst(break_inst);
+    cur_block->InsertInstBack(break_inst);
     break_list.push_back(break_inst);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
@@ -567,7 +567,7 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
-    cur_block->InsertInst(ret_inst);
+    cur_block->InsertInstBack(ret_inst);
     return_list.push_back(ret_inst);
 
     cur_block = cur_func->CreateCfgNode();
@@ -816,7 +816,7 @@ std::any AstVisitor::visitLAnd2(SysYParser::LAnd2Context *ctx) {
     CfgNodePtr lAnd_true = cur_func->CreateCfgNode();
 
     BranchInstPtr br_inst = BranchInst::CreatePtr(lAnd_node, lAnd_true, nullptr, cur_block);
-    cur_block->InsertInst(br_inst);
+    cur_block->InsertInstBack(br_inst);
     lAnd_list.push_back(br_inst);
 
     cur_block = lAnd_true;
@@ -840,7 +840,7 @@ std::any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     lAnd_list = last_lAnd_list;
 
     BranchInstPtr br_inst = BranchInst::CreatePtr(lOr_node, nullptr, lOr_false, cur_block);
-    cur_block->InsertInst(br_inst);
+    cur_block->InsertInstBack(br_inst);
     lOr_list.push_back(br_inst);
 
     cur_block = lOr_false;

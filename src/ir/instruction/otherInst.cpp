@@ -25,7 +25,7 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, R
         (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(_type, _ret, _name, _list, block);
     if (_ret != nullptr) _ret->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _ret;
 }
 
@@ -68,7 +68,7 @@ VariablePtr BitCastInst::DoBitCast(BaseValuePtr _opr, CfgNodePtr block) {
     VariablePtr _res = Variable::CreatePtr(type_char_ptr, nullptr);
     auto &&inst = CreatePtr(_res, _opr, block);
     _res->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _res;
 }
 

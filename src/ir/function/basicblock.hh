@@ -25,7 +25,8 @@ class BasicBlock {
 
     InstListType &GetInstList();
 
-    void InsertInst(InstPtr);
+    void InsertInstBack(InstPtr);
+    void InsertInstFront(InstPtr);
     void RemoveInst(InstPtr);
 
     static void ResetBlkIdx();

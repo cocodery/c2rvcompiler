@@ -18,7 +18,7 @@ VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, CfgNodePtr block) {
     VariablePtr _fp = Variable::CreatePtr(type_float_L, nullptr);
     auto &&inst = CreatePtr(_fp, _si, block);
     _fp->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _fp;
 }
 
@@ -49,7 +49,7 @@ VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, CfgNodePtr b
     VariablePtr _si = Variable::CreatePtr((_type == INT) ? type_int_L : type_bool, nullptr);
     auto &&inst = CreatePtr(_si, _fp, block);
     _si->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _si;
 }
 
@@ -79,7 +79,7 @@ VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, CfgNodePtr block) {
     VariablePtr _lv = Variable::CreatePtr(type_int_L, nullptr);
     auto &&inst = CreatePtr(_lv, _sv, block);
     _lv->SetParent(inst);
-    block->InsertInst(inst);
+    block->InsertInstBack(inst);
     return _lv;
 }
 
