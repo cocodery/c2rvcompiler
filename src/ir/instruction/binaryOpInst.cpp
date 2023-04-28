@@ -5,9 +5,9 @@
 //===-----------------------------------------------------------===//
 
 IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
-    : i_res(_res), i_op(_op), i_lhs(_lhs), i_rhs(_rhs), Instruction(block) {
-    assert(i_lhs->getBaseType()->IntType() && i_lhs->IsOprand());
-    assert(i_rhs->getBaseType()->IntType() && i_rhs->IsOprand());
+    : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
+    assert(lhs->getBaseType()->IntType() && lhs->IsOprand());
+    assert(rhs->getBaseType()->IntType() && rhs->IsOprand());
 }
 
 IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
@@ -27,8 +27,8 @@ VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
 
 std::string IBinaryInst::tollvmIR() {
     std::stringstream ss;
-    ss << i_res->tollvmIR() << " = ";
-    switch (i_op) {
+    ss << result->tollvmIR() << " = ";
+    switch (op) {
         case OP_ADD:
             ss << "add";
             break;
@@ -48,7 +48,7 @@ std::string IBinaryInst::tollvmIR() {
             assert(0);
             break;
     }
-    ss << " i32 " << i_lhs->tollvmIR() << ", " << i_rhs->tollvmIR();
+    ss << " i32 " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
@@ -58,9 +58,9 @@ std::string IBinaryInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
-    : f_res(_res), f_op(_op), f_lhs(_lhs), f_rhs(_rhs), Instruction(block) {
-    assert(f_lhs->getBaseType()->FloatType() && f_lhs->IsOprand());
-    assert(f_rhs->getBaseType()->FloatType() && f_rhs->IsOprand());
+    : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
+    assert(lhs->getBaseType()->FloatType() && lhs->IsOprand());
+    assert(rhs->getBaseType()->FloatType() && rhs->IsOprand());
 }
 
 FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
@@ -80,8 +80,8 @@ VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
 
 std::string FBinaryInst::tollvmIR() {
     std::stringstream ss;
-    ss << f_res->tollvmIR() << " = ";
-    switch (f_op) {
+    ss << result->tollvmIR() << " = ";
+    switch (op) {
         case OP_ADD:
             ss << "fadd";
             break;
@@ -98,7 +98,7 @@ std::string FBinaryInst::tollvmIR() {
             assert(0);
             break;
     }
-    ss << " float " << f_lhs->tollvmIR() << ", " << f_rhs->tollvmIR();
+    ss << " float " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

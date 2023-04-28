@@ -55,3 +55,29 @@ class Instruction {
 
     virtual std::string tollvmIR() = 0;
 };
+
+class UnaryInstruction : public Instruction {
+   protected:
+    VariablePtr result;
+    BaseValuePtr oprand;
+
+   public:
+    UnaryInstruction(VariablePtr, BaseValuePtr, CfgNodePtr);
+    ~UnaryInstruction() = default;
+
+    virtual std::string tollvmIR() = 0;
+};
+
+class BinaryInstruction : public Instruction {
+   protected:
+    VariablePtr result;
+    OpCode op;
+    BaseValuePtr lhs;
+    BaseValuePtr rhs;
+
+   public:
+    BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
+    ~BinaryInstruction() = default;
+
+    virtual std::string tollvmIR() = 0;
+};

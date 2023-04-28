@@ -29,11 +29,8 @@ class CallInst : public Instruction {
 class BitCastInst;
 using BitCastInstPtr = std::shared_ptr<BitCastInst>;
 
-class BitCastInst : public Instruction {
+class BitCastInst : public UnaryInstruction {
    private:
-    VariablePtr result;
-    BaseValuePtr oprand;
-
     static BitCastInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
    public:

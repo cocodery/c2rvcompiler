@@ -5,9 +5,9 @@
 //===-----------------------------------------------------------===//
 
 SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : fp_value(_value1), si_value(_value2), Instruction(block) {
-    assert(si_value->getBaseType()->IntType() || si_value->getBaseType()->BoolType());
-    assert(si_value->IsOprand());
+    : UnaryInstruction(_value1, _value2, block) {
+    assert(oprand->getBaseType()->IntType() || oprand->getBaseType()->BoolType());
+    assert(oprand->IsOprand());
 }
 
 SitoFpInstPtr SitoFpInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block) {
@@ -25,8 +25,8 @@ VariablePtr SitoFpInst::DoSitoFp(BaseValuePtr _si, CfgNodePtr block) {
 
 std::string SitoFpInst::tollvmIR() {
     std::stringstream ss;
-    ss << fp_value->tollvmIR() << " = sitofp " << si_value->getBaseType()->tollvmIR();
-    ss << ' ' << si_value->tollvmIR() << " to " << fp_value->getBaseType()->tollvmIR();
+    ss << result->tollvmIR() << " = sitofp " << oprand->getBaseType()->tollvmIR();
+    ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
@@ -36,9 +36,9 @@ std::string SitoFpInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : si_value(_value1), fp_value(_value2), Instruction(block) {
-    assert(fp_value->getBaseType()->FloatType());
-    assert(fp_value->IsOprand());
+    : UnaryInstruction(_value1, _value2, block) {
+    assert(oprand->getBaseType()->FloatType());
+    assert(oprand->IsOprand());
 }
 
 FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block) {
@@ -57,8 +57,8 @@ VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, CfgNodePtr b
 
 std::string FptoSiInst::tollvmIR() {
     std::stringstream ss;
-    ss << si_value->tollvmIR() << " = fptosi " << fp_value->getBaseType()->tollvmIR();
-    ss << ' ' << fp_value->tollvmIR() << " to " << si_value->getBaseType()->tollvmIR();
+    ss << result->tollvmIR() << " = fptosi " << oprand->getBaseType()->tollvmIR();
+    ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
@@ -68,9 +68,9 @@ std::string FptoSiInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : l_value(_value1), s_value(_value2), Instruction(block) {
-    assert(s_value->getBaseType()->BoolType());
-    assert(s_value->IsOprand());
+    : UnaryInstruction(_value1, _value2, block) {
+    assert(oprand->getBaseType()->BoolType());
+    assert(oprand->IsOprand());
 }
 
 ZextInstPtr ZextInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block) {
@@ -88,8 +88,8 @@ VariablePtr ZextInst::DoZeroExt(BaseValuePtr _sv, CfgNodePtr block) {
 
 std::string ZextInst::tollvmIR() {
     std::stringstream ss;
-    ss << l_value->tollvmIR() << " = zext " << s_value->getBaseType()->tollvmIR();
-    ss << ' ' << s_value->tollvmIR() << " to " << l_value->getBaseType()->tollvmIR();
+    ss << result->tollvmIR() << " = zext " << oprand->getBaseType()->tollvmIR();
+    ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

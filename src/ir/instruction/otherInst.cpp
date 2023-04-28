@@ -54,8 +54,7 @@ std::string CallInst::tollvmIR() {
 //                     BitCastInst Implementation
 //===-----------------------------------------------------------===//
 
-BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block)
-    : result(_res), oprand(_opr), Instruction(block) {
+BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block) : UnaryInstruction(_res, _opr, block) {
     assert(result->getBaseType()->CharType() && result->getBaseType()->IsPointer());
     assert((oprand->getBaseType()->IntType() || oprand->getBaseType()->FloatType()) &&
            result->getBaseType()->IsPointer());

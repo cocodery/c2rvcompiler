@@ -6,13 +6,8 @@
 class IBinaryInst;
 using IBinaryInstPtr = std::shared_ptr<IBinaryInst>;
 
-class IBinaryInst : public Instruction {
+class IBinaryInst : public BinaryInstruction {
    private:
-    VariablePtr i_res;
-    OpCode i_op;
-    BaseValuePtr i_lhs;
-    BaseValuePtr i_rhs;
-
     static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
@@ -27,13 +22,8 @@ class IBinaryInst : public Instruction {
 class FBinaryInst;
 using FBinaryInstPtr = std::shared_ptr<FBinaryInst>;
 
-class FBinaryInst : public Instruction {
+class FBinaryInst : public BinaryInstruction {
    private:
-    VariablePtr f_res;
-    OpCode f_op;
-    BaseValuePtr f_lhs;
-    BaseValuePtr f_rhs;
-
     static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:
