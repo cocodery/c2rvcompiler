@@ -28,15 +28,17 @@ bool AllocaInst::IsAllocaInst() const { return true; }
 const BaseTypePtr AllocaInst::GetAllocaType() const { return type_stored; }
 const BaseValuePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
 
+const BaseValueList AllocaInst::UsedValue() { return BaseValueList(); }
+
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
 
-    // cout << addr_alloca->tollvmIR() << " use-list :" << endl;
-    // for (auto &&inst : addr_alloca->GetUserList()) {
-    //     cout << inst->tollvmIR() << endl;
-    // }
+    cout << addr_alloca->tollvmIR() << " use-list :" << endl;
+    for (auto &&inst : addr_alloca->GetUserList()) {
+        cout << inst->tollvmIR() << endl;
+    }
     return ss.str();
 }
 
@@ -70,6 +72,8 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
 bool StoreInst::IsStoreInst() const { return true; }
 const BaseValuePtr StoreInst::GetStoreAddr() const { return store_addr; }
 
+const BaseValueList StoreInst::UsedValue() { return BaseValueList({store_addr, store_value}); }
+
 std::string StoreInst::tollvmIR() {
     std::stringstream ss;
     ss << "store " << store_value->getBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
@@ -83,10 +87,9 @@ std::string StoreInst::tollvmIR() {
 //                     LoadInst Implementation
 //===-----------------------------------------------------------===//
 
-LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block)
-    : load_value(value), load_addr(addr), Instruction(block) {
-    BaseTypePtr type_addr = load_addr->getBaseType();
-    BaseTypePtr type_value = load_value->getBaseType();
+LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block) : UnaryInstruction(value, addr, block) {
+    BaseTypePtr type_addr = oprand->getBaseType();
+    BaseTypePtr type_value = result->getBaseType();
     assert(type_addr->getAttrType() == type_value->getAttrType());
     assert(type_addr->IsPointer() && type_value->IsNotPtr());
     assert(type_addr->IsScalar() && type_value->IsScalar());
@@ -111,8 +114,8 @@ bool LoadInst::IsLoadInst() const { return true; }
 
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;
-    ss << load_value->tollvmIR() << " = load " << load_value->getBaseType()->tollvmIR();
-    ss << ", " << load_addr->getBaseType()->tollvmIR() << ' ' << load_addr->tollvmIR();
+    ss << result->tollvmIR() << " = load " << result->getBaseType()->tollvmIR();
+    ss << ", " << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
     ss << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
@@ -156,6 +159,13 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
 }
 
 bool GetElementPtrInst::IsGepInst() const { return true; }
+
+const BaseValueList GetElementPtrInst::UsedValue() {
+    BaseValueList value_list = BaseValueList({base_addr});
+    std::for_each(offset_list.begin(), offset_list.end(),
+                  [&value_list](const auto &off) { value_list.push_back(off); });
+    return value_list;
+}
 
 std::string GetElementPtrInst::tollvmIR() {
     std::stringstream ss;

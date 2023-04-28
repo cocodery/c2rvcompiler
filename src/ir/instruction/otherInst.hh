@@ -23,6 +23,8 @@ class CallInst : public Instruction {
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, std::string &, RParamList &, CfgNodePtr);
 
+    const BaseValueList UsedValue();
+
     std::string tollvmIR();
 };
 
@@ -59,6 +61,8 @@ class PhiInst : public Instruction {
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 
     bool IsPhiInst() const;
+
+    const BaseValueList UsedValue();
 
     std::string tollvmIR();
 };

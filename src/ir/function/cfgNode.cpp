@@ -70,7 +70,9 @@ std::string CtrlFlowGraphNode::tollvmIR() {
 // remove del-node from its predcessors and successors
 // clear predcessors and successors of del-node
 void RemoveNode(CfgNodePtr node) {
-    node->GetInstList().clear();
+    auto &&inst_list = node->GetInstList();
+    std::for_each(inst_list.begin(), inst_list.end(), RemoveInst);
+    inst_list.clear();
     auto &&predcessor = node->GetPredcessors();
     auto &&successor = node->GetSuccessors();
     std::for_each(predcessor.begin(), predcessor.end(),

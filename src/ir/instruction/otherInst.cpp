@@ -30,6 +30,13 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, R
     return _ret;
 }
 
+const BaseValueList CallInst::UsedValue() {
+    BaseValueList valuelist = BaseValueList();
+    std::for_each(rparam_list.begin(), rparam_list.end(),
+                  [&valuelist](const auto &param) { valuelist.push_back(param); });
+    return valuelist;
+}
+
 std::string CallInst::tollvmIR() {
     std::stringstream ss;
     if (ret_value != nullptr) {
@@ -105,6 +112,13 @@ void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr blo
 }
 
 bool PhiInst::IsPhiInst() const { return true; }
+
+const BaseValueList PhiInst::UsedValue() {
+    BaseValueList valuelist = BaseValueList();
+    std::for_each(datalist.begin(), datalist.end(),
+                  [&valuelist](const auto &pair) { valuelist.push_back(pair.first); });
+    return valuelist;
+}
 
 std::string PhiInst::tollvmIR() {
     std::stringstream ss;

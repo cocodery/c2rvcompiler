@@ -53,6 +53,8 @@ class Instruction {
 
     virtual bool IsPhiInst() const;
 
+    virtual const BaseValueList UsedValue() = 0;
+
     virtual std::string tollvmIR() = 0;
 };
 
@@ -64,6 +66,8 @@ class UnaryInstruction : public Instruction {
    public:
     UnaryInstruction(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~UnaryInstruction() = default;
+
+    const BaseValueList UsedValue();
 
     virtual std::string tollvmIR() = 0;
 };
@@ -79,5 +83,9 @@ class BinaryInstruction : public Instruction {
     BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BinaryInstruction() = default;
 
+    const BaseValueList UsedValue();
+
     virtual std::string tollvmIR() = 0;
 };
+
+void RemoveInst(InstPtr);

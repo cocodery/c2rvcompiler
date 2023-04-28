@@ -24,6 +24,8 @@ class AllocaInst : public Instruction {
     const BaseTypePtr GetAllocaType() const;
     const BaseValuePtr GetAllocaAddr() const;
 
+    const BaseValueList UsedValue();
+
     std::string tollvmIR();
 };
 
@@ -46,17 +48,16 @@ class StoreInst : public Instruction {
     bool IsStoreInst() const;
     const BaseValuePtr GetStoreAddr() const;
 
+    const BaseValueList UsedValue();
+
     std::string tollvmIR();
 };
 
 class LoadInst;
 using LoadInstPtr = std::shared_ptr<LoadInst>;
 
-class LoadInst : public Instruction {
+class LoadInst : public UnaryInstruction {
    private:
-    VariablePtr load_value;
-    BaseValuePtr load_addr;
-
     static LoadInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
    public:
@@ -89,6 +90,8 @@ class GetElementPtrInst : public Instruction {
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
     bool IsGepInst() const;
+
+    const BaseValueList UsedValue();
 
     std::string tollvmIR();
 };

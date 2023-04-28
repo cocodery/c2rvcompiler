@@ -20,6 +20,12 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
     return inst;
 }
 
+const BaseValueList ReturnInst::UsedValue() {
+    BaseValueList valuelist = BaseValueList();
+    if (!ret_type->VoidType()) valuelist.push_back(ret_value);
+    return valuelist;
+}
+
 std::string ReturnInst::tollvmIR() {
     std::stringstream ss;
     if (ret_type->VoidType()) {
@@ -53,6 +59,8 @@ void JumpInst::setTarget(CfgNodePtr _dest) {
     parent->AddSuccessor(dest);
     dest->AddPredcessor(parent);
 }
+
+const BaseValueList JumpInst::UsedValue() { return BaseValueList(); }
 
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
@@ -98,6 +106,8 @@ void BranchInst::setFalseTarget(CfgNodePtr _iffalse) {
     parent->AddSuccessor(iffalse);
     iffalse->AddPredcessor(parent);
 }
+
+const BaseValueList BranchInst::UsedValue() { return BaseValueList({cond}); }
 
 std::string BranchInst::tollvmIR() {
     std::stringstream ss;
