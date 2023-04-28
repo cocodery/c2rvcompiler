@@ -47,7 +47,7 @@ std::string IBinaryInst::tollvmIR() {
             break;
     }
     ss << " i32 " << i_lhs->tollvmIR() << ", " << i_rhs->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -95,6 +95,6 @@ std::string FBinaryInst::tollvmIR() {
             break;
     }
     ss << " float " << f_lhs->tollvmIR() << ", " << f_rhs->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

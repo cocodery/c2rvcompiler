@@ -26,7 +26,7 @@ std::string SitoFpInst::tollvmIR() {
     std::stringstream ss;
     ss << fp_value->tollvmIR() << " = sitofp " << si_value->getBaseType()->tollvmIR();
     ss << ' ' << si_value->tollvmIR() << " to " << fp_value->getBaseType()->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -57,7 +57,7 @@ std::string FptoSiInst::tollvmIR() {
     std::stringstream ss;
     ss << si_value->tollvmIR() << " = fptosi " << fp_value->getBaseType()->tollvmIR();
     ss << ' ' << fp_value->tollvmIR() << " to " << si_value->getBaseType()->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -87,6 +87,6 @@ std::string ZextInst::tollvmIR() {
     std::stringstream ss;
     ss << l_value->tollvmIR() << " = zext " << s_value->getBaseType()->tollvmIR();
     ss << ' ' << s_value->tollvmIR() << " to " << l_value->getBaseType()->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

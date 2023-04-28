@@ -31,7 +31,7 @@ const BaseValuePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -67,7 +67,7 @@ std::string StoreInst::tollvmIR() {
     ss << "store " << store_value->getBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
     ss << ", " << store_addr->getBaseType()->tollvmIR() << ' ' << store_addr->tollvmIR();
     ss << ", align 4";
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -105,7 +105,7 @@ std::string LoadInst::tollvmIR() {
     ss << load_value->tollvmIR() << " = load " << load_value->getBaseType()->tollvmIR();
     ss << ", " << load_addr->getBaseType()->tollvmIR() << ' ' << load_addr->tollvmIR();
     ss << ", align 4";
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -152,6 +152,6 @@ std::string GetElementPtrInst::tollvmIR() {
     for (auto &&offset : offset_list) {
         ss << ", " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
     }
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

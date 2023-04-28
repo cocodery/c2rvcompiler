@@ -51,7 +51,7 @@ std::string ICmpInst::tollvmIR() {
             break;
     }
     ss << " " << lhs->getBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -106,6 +106,6 @@ std::string FCmpInst::tollvmIR() {
             break;
     }
     ss << " float " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

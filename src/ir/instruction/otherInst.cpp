@@ -45,7 +45,7 @@ std::string CallInst::tollvmIR() {
         }
     }
     ss << ")";
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -79,7 +79,7 @@ std::string BitCastInst::tollvmIR() {
     ss << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
     ss << " to " << result->getBaseType()->tollvmIR();
 
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -112,5 +112,6 @@ std::string PhiInst::tollvmIR() {
         ss << ", " << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
     }
 
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

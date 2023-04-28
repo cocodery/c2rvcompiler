@@ -25,7 +25,7 @@ std::string ReturnInst::tollvmIR() {
     } else {
         ss << "ret " << ret_type->tollvmIR() << ' ' << ret_value->tollvmIR();
     }
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -55,7 +55,7 @@ void JumpInst::setTarget(CfgNodePtr _dest) {
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
     ss << "br label %Block_" << dest->GetBlockIdx();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }
 
@@ -100,6 +100,6 @@ std::string BranchInst::tollvmIR() {
     ss << "br i1 " << cond->tollvmIR() << ", ";
     ss << "label %Block_" << iftrue->GetBlockIdx() << ", ";
     ss << "label %Block_" << iffalse->GetBlockIdx();
-    ss << "; " << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
     return ss.str();
 }

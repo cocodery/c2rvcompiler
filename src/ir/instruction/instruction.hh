@@ -36,12 +36,14 @@ class Instruction {
     size_t idx;
     CfgNodePtr parent;
 
+   private:
     static size_t inst_idx;
 
    public:
     Instruction(CfgNodePtr);
     ~Instruction() = default;
 
+    const size_t GetInstIdx() const;
     const CfgNodePtr GetParent() const;
 
     virtual bool IsAllocaInst() const;
