@@ -23,5 +23,5 @@ void DeadCodeElimination::EliminateUnreachableCode(CfgNodePtr exit, CfgNodeList 
     assert(nodeQueue.empty());
 
     // remove dead-node
-    std::for_each(delNodeSet.begin(), delNodeSet.end(), RemoveSelf);
+    std::for_each(delNodeSet.begin(), delNodeSet.end(), RemoveNode);
 }
