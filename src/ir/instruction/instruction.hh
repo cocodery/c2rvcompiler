@@ -33,7 +33,10 @@ using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
 
 class Instruction {
    protected:
+    size_t idx;
     CfgNodePtr parent;
+
+    static size_t inst_idx;
 
    public:
     Instruction(CfgNodePtr);
