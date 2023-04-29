@@ -4,7 +4,6 @@
 
 #include "function/cfgNode.hh"
 #include "instHeader.hh"
-#include "instruction/memoryInst.hh"
 #include "value/baseValue.hh"
 #include "value/constant.hh"
 #include "value/constarray.hh"

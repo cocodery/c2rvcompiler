@@ -35,25 +35,25 @@ std::string CtrlFlowGraphNode::tollvmIR() {
     }
     ss << '\n';
 
-    ss << "\t; Successors  : ";
+    ss << "\t; Successors: ";
     for (auto &&succ : successors) {
         ss << succ->idx << ' ';
     }
     ss << '\n';
 
-    ss << "\t; DominatorSet  : ";
+    ss << "\t; DominatorSet: ";
     for (auto &&node : dominator_set) {
         ss << node->idx << ' ';
     }
     ss << '\n';
 
-    ss << "\t; ImmediateDominator  : ";
+    ss << "\t; ImmediateDominator: ";
     if (immediate_dominator != nullptr) {
         ss << immediate_dominator->idx;
     }
     ss << '\n';
 
-    ss << "\t; DominanceFrontier  : ";
+    ss << "\t; DominanceFrontier: ";
     for (auto &&node : dominance_frontier) {
         ss << node->idx << ' ';
     }

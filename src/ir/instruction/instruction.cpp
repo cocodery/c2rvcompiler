@@ -10,6 +10,8 @@ Instruction::Instruction(CfgNodePtr _parent) : idx(inst_idx++), parent(_parent) 
 
 const size_t Instruction::GetInstIdx() const { return idx; }
 const CfgNodePtr Instruction::GetParent() const { return parent; }
+void Instruction::SetParent(CfgNodePtr node) { parent = node; }
+void Instruction::ClearParent() { SetParent(nullptr); }
 
 bool Instruction::IsAllocaInst() const { return false; }
 bool Instruction::IsLoadInst() const { return false; }

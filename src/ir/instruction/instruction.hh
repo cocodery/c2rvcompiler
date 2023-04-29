@@ -45,6 +45,8 @@ class Instruction {
 
     const size_t GetInstIdx() const;
     const CfgNodePtr GetParent() const;
+    void SetParent(CfgNodePtr);
+    void ClearParent();
 
     virtual bool IsAllocaInst() const;
     virtual bool IsStoreInst() const;

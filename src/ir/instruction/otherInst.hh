@@ -1,27 +1,29 @@
 #pragma once
 
+#include "basefunc.hh"
 #include "cfgNode.hh"
 #include "instruction.hh"
-#include "scalarType.hh"
+
+class BaseFunction;
+using BaseFuncPtr = std::shared_ptr<BaseFunction>;
 
 class CallInst;
 using CallInstPtr = std::shared_ptr<CallInst>;
-using RParamList = std::vector<BaseValuePtr>;
 
 class CallInst : public Instruction {
    private:
     ScalarTypePtr ret_type;
     VariablePtr ret_value;
-    std::string callee_name;
-    RParamList rparam_list;
+    BaseFuncPtr callee_func;
+    ParamList rparam_list;
 
-    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, std::string &, RParamList &, CfgNodePtr);
+    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
    public:
-    CallInst(ScalarTypePtr, VariablePtr, std::string &, RParamList &, CfgNodePtr);
+    CallInst(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
     ~CallInst() = default;
 
-    static BaseValuePtr DoCallFunction(ScalarTypePtr, std::string &, RParamList &, CfgNodePtr);
+    static BaseValuePtr DoCallFunction(ScalarTypePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

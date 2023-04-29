@@ -638,7 +638,7 @@ std::any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
 }
 
 std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
-    RParamList rparam_list;
+    ParamList rparam_list;
 
     auto &&rparam_node = ctx->funcRParam();
     auto &&fparam_list = callee_func->GetParamList();
@@ -676,6 +676,8 @@ std::any AstVisitor::visitUnary1(SysYParser::Unary1Context *ctx) {
 }
 
 std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
+    BaseFuncPtr last_callee_func = callee_func;
+
     std::string callee_name = ctx->Identifier()->getText();
     bool time_function = false;
     if (callee_name == "starttime" || callee_name == "stoptime") {
@@ -685,12 +687,14 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     callee_func = comp_unit.GetFunction(callee_name);
     ScalarTypePtr ret_type = callee_func->GetReturnType();
 
-    RParamList rparam_list =
-        time_function ? RParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
-                      : (ctx->funcRParams() != nullptr ? std::any_cast<RParamList>(ctx->funcRParams()->accept(this))
-                                                       : RParamList());
+    ParamList rparam_list =
+        time_function ? ParamList(1, Constant::CreatePtr(type_const_int, static_cast<int32_t>(ctx->start->getLine())))
+                      : (ctx->funcRParams() != nullptr ? std::any_cast<ParamList>(ctx->funcRParams()->accept(this))
+                                                       : ParamList());
+    auto &&call_inst = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
+    callee_func = last_callee_func;
 
-    return CallInst::DoCallFunction(ret_type, callee_name, rparam_list, cur_block);
+    return call_inst;
 }
 
 std::any AstVisitor::visitUnary3(SysYParser::Unary3Context *ctx) {

@@ -4,8 +4,8 @@
 //                     CallInst Implementation
 //===-----------------------------------------------------------===//
 
-CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, std::string &_name, RParamList &_list, CfgNodePtr block)
-    : ret_type(_type), ret_value(_ret), callee_name(_name), rparam_list(_list), Instruction(block) {
+CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block)
+    : ret_type(_type), ret_value(_ret), callee_func(_func), rparam_list(_list), Instruction(block) {
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
@@ -15,15 +15,15 @@ CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, std::string &_name, RP
     // param-type have been checked at `visitFuncRParams`
 }
 
-CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, std::string &_name, RParamList &_list,
+CallInstPtr CallInst::CreatePtr(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list,
                                 CfgNodePtr block) {
-    return std::make_shared<CallInst>(_type, _ret, _name, _list, block);
+    return std::make_shared<CallInst>(_type, _ret, _func, _list, block);
 }
 
-BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, std::string &_name, RParamList &_list, CfgNodePtr block) {
+BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block) {
     VariablePtr _ret =
         (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L, nullptr);
-    auto &&inst = CreatePtr(_type, _ret, _name, _list, block);
+    auto &&inst = CreatePtr(_type, _ret, _func, _list, block);
     if (_ret != nullptr) _ret->SetParent(inst);
     std::for_each(_list.begin(), _list.end(), [&inst](const auto &param) { param->InsertUser(inst); });
     block->InsertInstBack(inst);
@@ -53,7 +53,7 @@ std::string CallInst::tollvmIR() {
     if (ret_value != nullptr) {
         ss << ret_value->tollvmIR() << " = ";
     }
-    ss << "call " << ret_type->tollvmIR() << " @" << callee_name;
+    ss << "call " << ret_type->tollvmIR() << " @" << callee_func->GetFuncName();
     ss << "(";
     size_t rparam_size = rparam_list.size();
     if (rparam_size > 0) {

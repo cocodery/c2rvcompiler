@@ -3,31 +3,8 @@
 #include <queue>
 #include <vector>
 
+#include "basefunc.hh"
 #include "cfgNode.hh"
-#include "valueHeader.hh"
-
-class BaseFunction;
-using BaseFuncPtr = std::shared_ptr<BaseFunction>;
-using ParamList = std::vector<BaseValuePtr>;
-
-class BaseFunction {
-   protected:
-    ScalarTypePtr ret_type;
-    std::string func_name;
-    ParamList param_list;
-
-   public:
-    BaseFunction(ScalarTypePtr, std::string &, ParamList &);
-    ~BaseFunction() = default;
-
-    ScalarTypePtr GetReturnType();
-
-    std::string &GetFuncName();
-
-    ParamList &GetParamList();
-
-    virtual std::string tollvmIR() = 0;
-};
 
 class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
