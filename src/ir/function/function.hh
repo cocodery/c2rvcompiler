@@ -51,6 +51,7 @@ class NormalFunction : public BaseFunction {
 
     CfgNodePtr GetEntryNode();
     CfgNodePtr GetExitNode();
+    CfgNodeList GetAllNodes();
 
     void SetVarIdx(size_t);
     size_t GetVarIdx();

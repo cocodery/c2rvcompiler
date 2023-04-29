@@ -35,6 +35,25 @@ CfgNodePtr NormalFunction::CreateCfgNode() { return CtrlFlowGraphNode::CreatePtr
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 
+CfgNodeList NormalFunction::GetAllNodes() {
+    CfgNodeList allNodes;
+    std::queue<CfgNodePtr> nodeQueue;
+    nodeQueue.push(entry);
+    while (!nodeQueue.empty()) {
+        auto &&front = nodeQueue.front();
+        nodeQueue.pop();
+        // if queue-front not in visitMap
+        if (std::find(allNodes.begin(), allNodes.end(), front) == allNodes.end()) {
+            allNodes.push_back(front);
+            for (auto &&node : front->GetSuccessors()) {
+                nodeQueue.push(node);
+            }
+        }
+    }
+    assert(nodeQueue.empty());
+    return allNodes;
+}
+
 void NormalFunction::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
 size_t NormalFunction::GetVarIdx() { return var_idx; }
 
@@ -60,22 +79,7 @@ std::string NormalFunction::tollvmIR() {
 
     ss << ") {" << endl;
 
-    CfgNodeList allNodes;
-    std::queue<CfgNodePtr> nodeQueue;
-    nodeQueue.push(entry);
-    while (!nodeQueue.empty()) {
-        auto &&front = nodeQueue.front();
-        nodeQueue.pop();
-        // if queue-front not in visitMap
-        if (std::find(allNodes.begin(), allNodes.end(), front) == allNodes.end()) {
-            allNodes.push_back(front);
-            for (auto &&node : front->GetSuccessors()) {
-                nodeQueue.push(node);
-            }
-        }
-    }
-    assert(nodeQueue.empty());
-    for (auto &&node : allNodes) {
+    for (auto &&node : GetAllNodes()) {
         ss << node->tollvmIR() << endl;
     }
 

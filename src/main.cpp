@@ -5,9 +5,11 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "AstVisitor.hh"
+#include "Pass.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
 
@@ -58,9 +60,13 @@ int main(int argc, char *argv[]) {
     SysYParser::CompilationUnitContext *root = parser.compilationUnit();
 
     CompilationUnit comp_unit;
-    AstVisitor visitor(comp_unit);
 
-    visitor.visitCompilationUnit(root);
+    std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
+    visitor->visitCompilationUnit(root);
+    visitor = nullptr;
+
+    Optimization optimizer(comp_unit);
+    optimizer.DoOptimization();
 
     comp_unit.generatellvmIR(irfile);
 
