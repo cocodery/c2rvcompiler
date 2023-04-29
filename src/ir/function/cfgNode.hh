@@ -22,7 +22,7 @@ class CtrlFlowGraphNode : public BasicBlock {
     DominatorSet dominance_frontier;
 
    public:
-    CtrlFlowGraphNode();
+    CtrlFlowGraphNode(BlockAttr);
     ~CtrlFlowGraphNode() = default;
 
     bool GetDirty();
@@ -43,7 +43,7 @@ class CtrlFlowGraphNode : public BasicBlock {
     void InsertDomFrontier(CfgNodePtr);
     DominatorSet &GetDomFrontier();
 
-    static CfgNodePtr CreatePtr();
+    static CfgNodePtr CreatePtr(BlockAttr);
 
     std::string tollvmIR();
 };

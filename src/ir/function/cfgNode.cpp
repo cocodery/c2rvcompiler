@@ -1,11 +1,11 @@
 #include "cfgNode.hh"
 
-CtrlFlowGraphNode::CtrlFlowGraphNode() : BasicBlock() {}
+CtrlFlowGraphNode::CtrlFlowGraphNode(BlockAttr _attr) : BasicBlock(_attr) {}
 
 bool CtrlFlowGraphNode::GetDirty() { return dirty; }
 void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
 
-CfgNodePtr CtrlFlowGraphNode::CreatePtr() { return std::make_shared<CtrlFlowGraphNode>(); }
+CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr) { return std::make_shared<CtrlFlowGraphNode>(_attr); }
 
 void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) { predecessors.push_back(predecessor); }
 void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.push_back(successor); }
@@ -28,7 +28,7 @@ DominatorSet &CtrlFlowGraphNode::GetDomFrontier() { return dominance_frontier; }
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
 
-    ss << "Block_" << idx << ":" << endl;
+    ss << "Block_" << idx << ": ; " << AttrToStr(block_attr) << endl;
     ss << "\t; Predecessors: ";
     for (auto &&pred : predecessors) {
         ss << pred->idx << ' ';

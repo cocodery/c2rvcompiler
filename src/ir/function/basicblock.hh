@@ -10,15 +10,31 @@ class BasicBlock;
 using InstList = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
+enum BlockAttr {
+    NORMAL,
+    ENTRY,
+    LOOPBEGIN,
+    LOOPEND,
+    LOOPOUT,
+    BREAK,
+    CONTINUE,
+    GORETURN,
+    EXIT,
+};
+
+std::string AttrToStr(BlockAttr);
+
 class BasicBlock {
    protected:
     size_t idx;
     InstList inst_list;
 
+    BlockAttr block_attr;
+
     static size_t blk_idx;
 
    public:
-    BasicBlock();
+    BasicBlock(BlockAttr);
     ~BasicBlock() = default;
 
     size_t GetBlockIdx();
@@ -28,6 +44,9 @@ class BasicBlock {
     void InsertInstBack(InstPtr);
     void InsertInstFront(InstPtr);
     void RemoveInst(InstPtr);
+
+    void SetBlockAttr(BlockAttr);
+    BlockAttr GetBlockAttr() const;
 
     static void ResetBlkIdx();
     static size_t GetBlkIdx();
