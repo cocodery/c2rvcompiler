@@ -8,16 +8,16 @@ NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamLis
     : BaseFunction(_type, _name, _list) {}
 
 CfgNodePtr NormalFunction::CreateEntry() {
-    entry = CtrlFlowGraphNode::CreatePtr();
+    entry = CtrlFlowGraphNode::CreatePtr(ENTRY);
     return entry;
 }
 
 CfgNodePtr NormalFunction::CreateExit() {
-    exit = CtrlFlowGraphNode::CreatePtr();
+    exit = CtrlFlowGraphNode::CreatePtr(EXIT);
     return exit;
 }
 
-CfgNodePtr NormalFunction::CreateCfgNode() { return CtrlFlowGraphNode::CreatePtr(); }
+CfgNodePtr NormalFunction::CreateCfgNode(BlockAttr _attr) { return CtrlFlowGraphNode::CreatePtr(_attr); }
 
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }
@@ -40,6 +40,34 @@ CfgNodeList NormalFunction::GetAllNodes() {
     assert(nodeQueue.empty());
     return allNodes;
 }
+
+CfgNodeList NormalFunction::TopoSortFromEntry() {
+    std::map<CfgNodePtr, bool> visit;
+    CfgNodeList preorder_node = CfgNodeList();
+
+    auto &&PredAllVisited = [&visit](CfgNodePtr succ) {
+        for (auto &&pred : succ->GetPredcessors()) {
+            BlockAttr pred_attr = pred->GetBlockAttr();
+            if (pred_attr == CONTINUE || pred_attr == LOOPEND) continue;
+            if (visit[pred] == false) return false;
+        }
+        return true;
+    };
+
+    std::function<void(CfgNodePtr)> DepthFirstSearch = [&](CfgNodePtr node) {
+        visit[node] = true;
+        preorder_node.push_back(node);
+        for (auto &&succ : node->GetSuccessors()) {
+            if (!visit[succ] && PredAllVisited(succ)) {
+                DepthFirstSearch(succ);
+            }
+        }
+    };
+    DepthFirstSearch(entry);
+    return preorder_node;
+}
+
+CfgNodeList NormalFunction::TopoSortFromExit() { assert(false); }
 
 void NormalFunction::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
 size_t NormalFunction::GetVarIdx() { return var_idx; }
@@ -66,7 +94,7 @@ std::string NormalFunction::tollvmIR() {
 
     ss << ") {" << endl;
 
-    for (auto &&node : GetAllNodes()) {
+    for (auto &&node : TopoSortFromEntry()) {
         ss << node->tollvmIR() << endl;
     }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <queue>
 #include <vector>
 
@@ -24,11 +25,14 @@ class NormalFunction : public BaseFunction {
 
     CfgNodePtr CreateEntry();
     CfgNodePtr CreateExit();
-    CfgNodePtr CreateCfgNode();
+    CfgNodePtr CreateCfgNode(BlockAttr _attr = NORMAL);
 
     CfgNodePtr GetEntryNode();
     CfgNodePtr GetExitNode();
+
     CfgNodeList GetAllNodes();
+    CfgNodeList TopoSortFromEntry();
+    CfgNodeList TopoSortFromExit();
 
     void SetVarIdx(size_t);
     size_t GetVarIdx();

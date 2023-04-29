@@ -544,7 +544,8 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
-    cur_block = cur_func->CreateCfgNode(CONTINUE);
+    cur_block->SetBlockAttr(CONTINUE);
+    cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
@@ -552,7 +553,8 @@ std::any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(break_inst);
     break_list.push_back(break_inst);
-    cur_block = cur_func->CreateCfgNode(BREAK);
+    cur_block->SetBlockAttr(BREAK);
+    cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
@@ -570,9 +572,8 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(ret_inst);
     return_list.push_back(ret_inst);
-
-    cur_block = cur_func->CreateCfgNode(GORETURN);
-
+    cur_block->SetBlockAttr(GORETURN);
+    cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
 
