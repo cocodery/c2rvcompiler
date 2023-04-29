@@ -49,6 +49,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
         for (auto &&pred : succ->GetPredcessors()) {
             BlockAttr pred_attr = pred->GetBlockAttr();
             if (pred_attr == CONTINUE || pred_attr == LOOPEND) continue;
+            if (pred->GetDominatorSet().size() == 0) continue;
             if (visit[pred] == false) return false;
         }
         return true;
