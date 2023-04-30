@@ -1,8 +1,8 @@
 #include "constant.hh"
 
 Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), value(_value) {
-    // BOOL || INT32 || FLOAT
-    assert(base_type->BoolType() || base_type->IntType() || base_type->FloatType());
+    // NONE-VOID
+    assert(!base_type->VoidType());
     // Immutable, NotPtr, Scalar
     assert(base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
 }

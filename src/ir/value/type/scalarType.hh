@@ -28,10 +28,12 @@ static const ScalarTypePtr type_float_G = ScalarType::CreatePtr(FLOAT, MUTABLE, 
 static const ScalarTypePtr type_float_ptr_G = ScalarType::CreatePtr(FLOAT, MUTABLE, POINTER, SCALAR, GLOBAL);
 // CONSTANT USE
 static const ScalarTypePtr type_const_bool = ScalarType::CreatePtr(BOOL, IMMUTABLE, NOTPTR, SCALAR, NONE4);
+static const ScalarTypePtr type_const_char = ScalarType::CreatePtr(CHAR, IMMUTABLE, NOTPTR, SCALAR, NONE4);
 static const ScalarTypePtr type_const_int = ScalarType::CreatePtr(INT32, IMMUTABLE, NOTPTR, SCALAR, NONE4);
 static const ScalarTypePtr type_const_int_ptr = ScalarType::CreatePtr(INT32, IMMUTABLE, POINTER, SCALAR, NONE4);
 static const ScalarTypePtr type_const_float = ScalarType::CreatePtr(FLOAT, IMMUTABLE, NOTPTR, SCALAR, NONE4);
 static const ScalarTypePtr type_const_float_ptr = ScalarType::CreatePtr(FLOAT, IMMUTABLE, POINTER, SCALAR, NONE4);
+static const ScalarTypePtr type_const_longlong = ScalarType::CreatePtr(INT64, IMMUTABLE, NOTPTR, SCALAR, NONE4);
 // PARAMETER USE
 static const ScalarTypePtr param_bool = ScalarType::CreatePtr(BOOL, MUTABLE, NOTPTR, SCALAR, PARAMETER);
 static const ScalarTypePtr param_char = ScalarType::CreatePtr(CHAR, MUTABLE, NOTPTR, SCALAR, PARAMETER);
