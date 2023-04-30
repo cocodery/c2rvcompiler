@@ -4,7 +4,7 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
     // dominator-set
     DominatorSet allNodeSet = DominatorSet(allNodes.begin(), allNodes.end());
 
-    auto &&InitDominatorSet = [&entry, &allNodes, &allNodeSet]() {
+    auto InitDominatorSet = [&entry, &allNodes, &allNodeSet]() {
         entry->InsertDominator(entry);
 
         for (auto &&node : allNodes) {
@@ -13,7 +13,7 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
         }
     };
 
-    auto &&ComputeDominatorSet = [&entry, &allNodes, &allNodeSet] {
+    auto ComputeDominatorSet = [&entry, &allNodes, &allNodeSet] {
         auto &&IntersectPredecessorsDom = [&](CfgNodePtr node) {
             DominatorSet dom_set = allNodeSet;
             auto &&predcessors = node->GetPredcessors();
@@ -45,7 +45,7 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
     InitDominatorSet();
     ComputeDominatorSet();
 
-    auto &&ComputeImmediateDominator = [&entry](const auto &node) {
+    auto ComputeImmediateDominator = [&entry](const auto &node) {
         DominatorSet dominator_set = node->GetDominatorSet();
         for (auto &&dominator : dominator_set) {
             if (dominator == node) continue;

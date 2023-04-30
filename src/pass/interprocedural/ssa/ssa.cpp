@@ -19,7 +19,7 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
 
     Variable::SetVarIdx(var_idx);
 
-    auto &&InsertPhiFunction = [&allNodes, &defBlocks, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
+    auto InsertPhiFunction = [&allNodes, &defBlocks, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
         for (auto &&node : allNodes) {
             for (auto &&inst : node->GetInstList()) {
                 if (inst->IsAllocaInst()) {
@@ -47,29 +47,30 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
             }
         }
 
-        auto &&inDefBlocks = [&defBlocks](int32_t index, CfgNodePtr node) {
+        auto InDefBlocks = [&defBlocks](int32_t index, CfgNodePtr node) {
             auto &&blockSet = defBlocks[index];
             if (blockSet.find(node) != blockSet.end()) {
                 return true;
             }
             return false;
         };
-        std::queue<CfgNodePtr> W;
+        std::queue<CfgNodePtr> WorkList;
         for (auto &&alloca_inst : allocaInsts) {
             int32_t index = allocaLookUp[alloca_inst];
             BaseTypePtr type = alloca_inst->GetAllocaType();
             std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) { node->SetDirty(false); });
-            std::for_each(defBlocks[index].begin(), defBlocks[index].end(), [&W](const auto &node) { W.push(node); });
-            while (!W.empty()) {
-                CfgNodePtr front = W.front();
-                W.pop();
+            std::for_each(defBlocks[index].begin(), defBlocks[index].end(),
+                          [&WorkList](const auto &node) { WorkList.push(node); });
+            while (!WorkList.empty()) {
+                CfgNodePtr front = WorkList.front();
+                WorkList.pop();
                 for (auto &&df : front->GetDomFrontier()) {
                     if (!df->GetDirty()) {
                         df->SetDirty(true);
                         auto &&phi_inst = PhiInst::CreatePtr(type, df);
                         phi2AllocaMap[phi_inst] = index;
-                        if (!inDefBlocks(index, df)) {
-                            W.push(df);
+                        if (!InDefBlocks(index, df)) {
+                            WorkList.push(df);
                         }
                     }
                 }
@@ -77,7 +78,7 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
         }
     };
 
-    auto &&VariableRename = [&entry, &allNodes, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
+    auto VariableRename = [&entry, &allNodes, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
         ValueVector valuelist;
         std::for_each(allocaInsts.begin(), allocaInsts.end(), [&valuelist](const auto &inst) {
             valuelist.push_back(inst->GetAllocaType()->IntType() ? zero_int32 : zero_float);
