@@ -1,7 +1,7 @@
 #include "uninitvar.hh"
 
 UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
-    // INT || FLOAT
+    // INT32 || FLOAT
     assert(base_type->IntType() || base_type->FloatType());
     // MUTABLE, NOTPTR, GLOBAL
     assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());

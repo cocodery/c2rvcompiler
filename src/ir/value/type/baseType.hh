@@ -10,7 +10,7 @@
 using std::cout;
 using std::endl;
 
-enum ATTR_TYPE { VOID, BOOL, CHAR, INT, FLOAT };
+enum ATTR_TYPE { VOID, BOOL, CHAR, INT32, FLOAT, INT64 };
 
 enum ATTR_MUTABLE {
     NONE1 = 5,  // ignore attribute mutable

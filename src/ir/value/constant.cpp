@@ -1,7 +1,7 @@
 #include "constant.hh"
 
 Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), value(_value) {
-    // BOOL || INT || FLOAT
+    // BOOL || INT32 || FLOAT
     assert(base_type->BoolType() || base_type->IntType() || base_type->FloatType());
     // Immutable, NotPtr, Scalar
     assert(base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
@@ -18,7 +18,7 @@ void Constant::fixValue(ATTR_TYPE _type) {
                 case BOOL:
                     _value = static_cast<bool>(arg);
                     return;
-                case INT:
+                case INT32:
                     _value = static_cast<int32_t>(arg);
                     return;
                 case FLOAT:
@@ -33,7 +33,7 @@ void Constant::fixValue(ATTR_TYPE _type) {
     // its base_type come from ScalarType::{ type_const_bool, type_const_int, type_const_float }
     // if directly modify their ATTR_TYPE, will distory later use
     // so replace original type with an allocated one
-    base_type = (_type == INT) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
+    base_type = (_type == INT32) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
 }
 
 ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {

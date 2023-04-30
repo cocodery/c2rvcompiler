@@ -46,8 +46,8 @@ FptoSiInstPtr FptoSiInst::CreatePtr(VariablePtr _value1, BaseValuePtr _value2, C
 }
 
 VariablePtr FptoSiInst::DoFptoSi(ATTR_TYPE _type, BaseValuePtr _fp, CfgNodePtr block) {
-    assert(_type == BOOL || _type == INT);
-    VariablePtr _si = Variable::CreatePtr((_type == INT) ? type_int_L : type_bool, nullptr);
+    assert(_type == BOOL || _type == INT32);
+    VariablePtr _si = Variable::CreatePtr((_type == INT32) ? type_int_L : type_bool, nullptr);
     auto &&inst = CreatePtr(_si, _fp, block);
     _si->SetParent(inst);
     _fp->InsertUser(inst);

@@ -4,12 +4,16 @@ FunctionTable::FunctionTable() {
     // void, i32, float
     ScalarTypePtr ret_type[3] = {type_void, type_int_L, type_float_L};
 
+    VariablePtr bool_param = Variable::CreatePtr(param_bool, nullptr);
+    VariablePtr char_param = Variable::CreatePtr(param_char, nullptr);
+    VariablePtr charp_param = Variable::CreatePtr(param_charp, nullptr);
     VariablePtr i32_param = Variable::CreatePtr(param_int, nullptr);
-    VariablePtr float_param = Variable::CreatePtr(param_float, nullptr);
     VariablePtr i32p_param = Variable::CreatePtr(param_intp, nullptr);
+    VariablePtr float_param = Variable::CreatePtr(param_float, nullptr);
     VariablePtr floatp_param = Variable::CreatePtr(param_floatp, nullptr);
+    VariablePtr longlong_param = Variable::CreatePtr(param_longlong, nullptr);
     // 0 - no parameters
-    ParamList param_list[7];
+    ParamList param_list[8];
     // 1 - i32
     param_list[1].push_back(i32_param);
     // 2 - float
@@ -24,12 +28,18 @@ FunctionTable::FunctionTable() {
     // 6 - i32, float *
     param_list[6].push_back(i32_param);
     param_list[6].push_back(floatp_param);
+    // 7 - i8 *, i8, i64, i1
+    param_list[7].push_back(charp_param);
+    param_list[7].push_back(char_param);
+    param_list[7].push_back(longlong_param);
+    param_list[7].push_back(bool_param);
 
     // 0 - getint | 1 - getch | 2 - getfloat | 3 - getarray | 4 - getfarray
     // 5 - putint | 6 - putch | 7 - putfloat | 8 - putarray | 9 - putfarray
     // 10 - _sysy_starttime
     // 11 - _sysy_stoptime
-    LibFuncPtr lib_func[12];
+    // 12 - llvm.memset.p0i8.i64
+    LibFuncPtr lib_func[13];
     lib_func[0] = LibraryFunction::CreatePtr(ret_type[1], "getint", param_list[0]);
     lib_func[1] = LibraryFunction::CreatePtr(ret_type[1], "getch", param_list[0]);
     lib_func[2] = LibraryFunction::CreatePtr(ret_type[2], "getfloat", param_list[0]);
@@ -42,6 +52,7 @@ FunctionTable::FunctionTable() {
     lib_func[9] = LibraryFunction::CreatePtr(ret_type[0], "putfarray", param_list[6]);
     lib_func[10] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_starttime", param_list[1]);
     lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
+    lib_func[12] = LibraryFunction::CreatePtr(ret_type[0], "llvm.memset.p0i8.i64", param_list[7]);
 
     for (auto &&func_ptr : lib_func) {
         libraryFuncTable.push_back(func_ptr);

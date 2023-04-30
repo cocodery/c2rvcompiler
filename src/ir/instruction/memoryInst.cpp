@@ -57,7 +57,7 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value, CfgNode
 }
 
 void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block) {
-    // for store, only two target type, `INT` and `FLOAT`
+    // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
     BaseValuePtr convertee = Value::ScalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
     auto &&inst = CreatePtr(addr, convertee, block);
@@ -159,7 +159,7 @@ GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, Bas
 
 VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                             CfgNodePtr block) {
-    // only have INT-array or FLOAT-array
+    // only have INT32-array or FLOAT-array
     VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
     auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);
     _ptr->SetParent(inst);

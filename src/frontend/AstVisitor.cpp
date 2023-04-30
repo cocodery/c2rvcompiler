@@ -123,7 +123,7 @@ std::any AstVisitor::visitDecl(SysYParser::DeclContext *ctx) {
 std::any AstVisitor::visitBType(SysYParser::BTypeContext *ctx) {
     std::string type_name = ctx->getText();
     if (type_name == "int") {
-        return INT;
+        return INT32;
     } else if (type_name == "float") {
         return FLOAT;
     }
@@ -206,10 +206,10 @@ std::any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) {
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_G : type_float_G)
-                                                           : (cur_type == INT ? type_int_L : type_float_L);
-        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_ptr_G : type_float_ptr_G)
-                                                           : (cur_type == INT ? type_int_ptr_L : type_float_ptr_L);
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT32 ? type_int_G : type_float_G)
+                                                           : (cur_type == INT32 ? type_int_L : type_float_L);
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT32 ? type_int_ptr_G : type_float_ptr_G)
+                                                           : (cur_type == INT32 ? type_int_ptr_L : type_float_ptr_L);
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, UnInitVar::CreatePtr(ty_stored));
         } else {
@@ -240,10 +240,10 @@ std::any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
     // and ty_alloca is used to create addr_alloca
     // so no need to check type
     if (dims_vec.size() == 0) {
-        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_G : type_float_G)
-                                                           : (cur_type == INT ? type_int_L : type_float_L);
-        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT ? type_int_ptr_G : type_float_ptr_G)
-                                                           : (cur_type == INT ? type_int_ptr_L : type_float_ptr_L);
+        ScalarTypePtr ty_stored = (cur_position == GLOBAL) ? (cur_type == INT32 ? type_int_G : type_float_G)
+                                                           : (cur_type == INT32 ? type_int_L : type_float_L);
+        ScalarTypePtr ty_alloca = (cur_position == GLOBAL) ? (cur_type == INT32 ? type_int_ptr_G : type_float_ptr_G)
+                                                           : (cur_type == INT32 ? type_int_ptr_L : type_float_ptr_L);
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, std::any_cast<BaseValuePtr>(init_val->accept(this)));
         } else {
@@ -370,13 +370,13 @@ std::any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
     std::string param_name = ctx->Identifier()->getText();
     BaseValuePtr value = nullptr;
     if (ctx->getText().find("[") == std::string::npos) {
-        value = Variable::CreatePtr((_type == INT) ? param_int : param_float, nullptr);
+        value = Variable::CreatePtr((_type == INT32) ? param_int : param_float, nullptr);
     } else {
         auto &&dims_vec = ctx->constExp();
         ArrDims arr_dims = GetArrayDims(dims_vec);
         arr_dims.insert(arr_dims.begin(), 1);
         ListTypePtr ty_stored = ListType::CreatePtr(_type, MUTABLE, NOTPTR, ARRAY, PARAMETER, arr_dims);
-        value = Variable::CreatePtr((_type == INT) ? param_intp : param_floatp, nullptr);
+        value = Variable::CreatePtr((_type == INT32) ? param_intp : param_floatp, nullptr);
         addrTypeTable[value] = ty_stored;
     }
     return std::make_pair(param_name, value);
@@ -874,7 +874,7 @@ ArrDims AstVisitor::GetArrayDims(std::vector<SysYParser::ConstExpContext *> &con
     for (auto &&const_exp : constExpVec) {
         BaseValuePtr value = std::any_cast<BaseValuePtr>(const_exp->accept(this));
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
-        constant->fixValue(INT);
+        constant->fixValue(INT32);
         arr_dims.push_back(std::get<int32_t>(constant->getValue()));
     }
     return arr_dims;
@@ -918,8 +918,8 @@ SymbolTable *AstVisitor::InitParamList(CfgNodePtr first_block, SymbolTable *pare
             new_table->InsertSymbol(name, param);
         } else {
             ATTR_TYPE _type = param->getBaseType()->getAttrType();
-            BaseTypePtr ty_stored = (_type == INT) ? type_int_L : type_float_L;
-            BaseTypePtr ty_alloca = (_type == INT) ? type_int_ptr_L : type_float_ptr_L;
+            BaseTypePtr ty_stored = (_type == INT32) ? type_int_L : type_float_L;
+            BaseTypePtr ty_alloca = (_type == INT32) ? type_int_ptr_L : type_float_ptr_L;
             BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, first_block);
             StoreInst::DoStoreValue(addr_alloca, param, first_block);
             new_table->InsertSymbol(name, addr_alloca);
@@ -932,7 +932,7 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                                     CfgNodePtr cur_block) {
     ATTR_TYPE _type = list_type->getAttrType();
 
-    ConstantPtr zero = (_type == INT) ? zero_int32 : zero_float;
+    ConstantPtr zero = (_type == INT32) ? zero_int32 : zero_float;
     ArrDims dim_size = list_type->GetDimSize();
 
     std::function<size_t(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> function =

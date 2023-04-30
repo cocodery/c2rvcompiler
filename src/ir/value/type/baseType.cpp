@@ -11,7 +11,7 @@ BaseType::BaseType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer
 bool BaseType::VoidType() const { return (attr_type == VOID); }
 bool BaseType::BoolType() const { return (attr_type == BOOL); }
 bool BaseType::CharType() const { return (attr_type == CHAR); }
-bool BaseType::IntType() const { return (attr_type == INT); }
+bool BaseType::IntType() const { return (attr_type == INT32); }
 bool BaseType::FloatType() const { return (attr_type == FLOAT); }
 
 bool BaseType::IsMutable() const { return (attr_mutable == MUTABLE); }

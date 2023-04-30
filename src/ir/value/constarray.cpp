@@ -1,7 +1,7 @@
 #include "constarray.hh"
 
 ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr) : BaseValue(list_type), const_arr(_arr) {
-    // INT || FLOAT
+    // INT32 || FLOAT
     assert(base_type->IntType() || base_type->FloatType());
     // Immutable, NotPtr
     assert(base_type->IsNotPtr() && base_type->IsArray());

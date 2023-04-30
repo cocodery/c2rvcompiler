@@ -4,7 +4,7 @@ size_t GlobalValue::glb_idx = 1;
 
 GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value)
     : BaseValue(_type), idx(glb_idx++), init_value(_value) {
-    // INT || FLOAT
+    // INT32 || FLOAT
     if (base_type->getAttrType() != init_value->getBaseType()->getAttrType()) {
         init_value->fixValue(base_type->getAttrType());
     }

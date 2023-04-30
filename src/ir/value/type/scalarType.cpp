@@ -24,11 +24,14 @@ std::string ScalarType::tollvmIR() {
         case CHAR:
             ss << "i8";
             break;
-        case INT:
+        case INT32:
             ss << "i32";
             break;
         case FLOAT:
             ss << "float";
+            break;
+        case INT64:
+            ss << "i64";
             break;
         default:
             assert(0);
