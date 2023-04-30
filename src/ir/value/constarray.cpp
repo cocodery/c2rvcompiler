@@ -6,7 +6,7 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr) : BaseValue(list_t
     // Immutable, NotPtr
     assert(base_type->IsNotPtr() && base_type->IsArray());
     // capacity == arr_size
-    assert(const_arr.size() == list_type->getArrSize());
+    assert(const_arr.size() == list_type->GetCapacity());
 }
 
 void ConstArray::fixValue(ATTR_TYPE _type) {

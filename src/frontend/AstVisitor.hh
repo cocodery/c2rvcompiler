@@ -184,14 +184,14 @@ class AstVisitor : public SysYBaseVisitor {
     virtual std::any visitConstExp(SysYParser::ConstExpContext *ctx) override;
 
     // support function to parse
-    ArrDims getArrayDims(std::vector<SysYParser::ConstExpContext *> &);
+    ArrDims GetArrayDims(std::vector<SysYParser::ConstExpContext *> &);
 
-    SymbolTable *newLocalTable(SymbolTable *);
-    void clearTableList();
+    SymbolTable *NewLocalTable(SymbolTable *);
+    void ClearTableList();
 
     BaseValuePtr ResolveTable(std::string &name);
 
-    SymbolTable *initParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
+    SymbolTable *InitParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
 
-    void parseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, CfgNodePtr);
+    void ParseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr, CfgNodePtr);
 };

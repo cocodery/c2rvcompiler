@@ -8,18 +8,23 @@ class ListType;
 using ListTypePtr = std::shared_ptr<ListType>;
 using ArrDims = std::vector<size_t>;
 
+constexpr size_t ARR_SIZE_ALIGN = 4;
+
 class ListType : public BaseType {
    private:
     ArrDims dims;
+    size_t capacity;
 
    public:
     ListType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 
-    size_t getArrSize() const;
+    size_t GetArrSize() const;
 
-    const ArrDims getDimSize() const;
+    const ArrDims GetDimSize() const;
 
-    const ArrDims getArrDims() const;
+    const ArrDims GetArrDims() const;
+
+    size_t GetCapacity() const;
 
     static ListTypePtr CreatePtr(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION, ArrDims &);
 

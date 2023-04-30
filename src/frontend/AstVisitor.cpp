@@ -13,21 +13,21 @@ std::vector<_Type *> getInitVal(_ListType *list) {
 }
 
 template <typename _Type, typename _ListType, typename _ScalarType>
-BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_this) {
+BaseValuePtr ParseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisitor *_this) {
     ConstArr const_arr;
-    const_arr.reserve(list_type->getArrSize());
+    const_arr.reserve(list_type->GetArrSize());
 
-    const ArrDims arr_dims = list_type->getArrDims();
-    const ArrDims dim_size = list_type->getDimSize();
+    const ArrDims arr_dims = list_type->GetArrDims();
+    const ArrDims dim_size = list_type->GetDimSize();
     ConstantPtr zero = (list_type->IntType()) ? zero_int32 : zero_float;
 
-    std::function<void(_ListType *, ConstArr &, size_t)> function = [&](_ListType *node, ConstArr &const_arr,
-                                                                        size_t level) {
+    std::function<size_t(_ListType *, ConstArr &, size_t)> function = [&](_ListType *node, ConstArr &const_arr,
+                                                                          size_t level) {
         size_t total_size = 1;
         for (size_t idx = level; idx < arr_dims.size(); ++idx) {
             total_size *= arr_dims[idx];
         }
-        if (total_size == 0) return;
+        if (total_size == 0) return total_size;
         size_t cnt = 0;
         for (auto &&child : getInitVal<_Type, _ListType>(node)) {
             if (auto &&scalar_node = dynamic_cast<_ScalarType *>(child)) {
@@ -52,9 +52,13 @@ BaseValuePtr parseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
             const_arr.push_back(zero);
             ++cnt;
         }
-        return;
+        return total_size;
     };
-    function(node, const_arr, 0);
+    size_t init_size = function(node, const_arr, 0);
+    while (init_size < list_type->GetCapacity()) {
+        const_arr.push_back(zero);
+        ++init_size;
+    }
 
     return ConstArray::CreatePtr(list_type, const_arr);
 }
@@ -156,11 +160,11 @@ std::any AstVisitor::visitConstDef(SysYParser::ConstDefContext *ctx) {
         value = std::any_cast<BaseValuePtr>(init_val->accept(this));
     } else {
         // Const-Array is always GLOBAL no matter GLOBAL or LOCAL
-        auto &&arr_dims = getArrayDims(dims_vec);
+        auto &&arr_dims = GetArrayDims(dims_vec);
         ListTypePtr ty_stored = ListType::CreatePtr(cur_type, IMMUTABLE, NOTPTR, ARRAY, GLOBAL, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, IMMUTABLE, POINTER, ARRAY, GLOBAL, arr_dims);
         BaseValuePtr init_value =
-            parseGlobalListInit<SysYParser::ConstInitValContext, SysYParser::ListConstInitValContext,
+            ParseGlobalListInit<SysYParser::ConstInitValContext, SysYParser::ListConstInitValContext,
                                 SysYParser::ScalarConstInitValContext>(
                 dynamic_cast<SysYParser::ListConstInitValContext *>(init_val), ty_stored, this);
         value = GlobalValue::CreatePtr(ty_alloca, init_value);
@@ -212,7 +216,7 @@ std::any AstVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext *ctx) {
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
         }
     } else {
-        ArrDims &&arr_dims = getArrayDims(dims_vec);
+        ArrDims &&arr_dims = GetArrayDims(dims_vec);
         ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR, ARRAY, cur_position, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, MUTABLE, POINTER, ARRAY, cur_position, arr_dims);
         if (cur_position == GLOBAL) {
@@ -247,17 +251,17 @@ std::any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
             StoreInst::DoStoreValue(address, std::any_cast<BaseValuePtr>(init_val->accept(this)), cur_block);
         }
     } else {
-        auto &&arr_dims = getArrayDims(dims_vec);
+        auto &&arr_dims = GetArrayDims(dims_vec);
         ListTypePtr ty_stored = ListType::CreatePtr(cur_type, MUTABLE, NOTPTR, ARRAY, cur_position, arr_dims);
         ListTypePtr ty_alloca = ListType::CreatePtr(cur_type, MUTABLE, POINTER, ARRAY, cur_position, arr_dims);
         if (cur_position == GLOBAL) {
-            BaseValuePtr init_value = parseGlobalListInit<SysYParser::InitValContext, SysYParser::ListInitvalContext,
+            BaseValuePtr init_value = ParseGlobalListInit<SysYParser::InitValContext, SysYParser::ListInitvalContext,
                                                           SysYParser::ScalarInitValContext>(
                 dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, this);
             address = GlobalValue::CreatePtr(ty_alloca, init_value);
         } else {
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
-            parseLocalListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, address, cur_block);
+            ParseLocalListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, address, cur_block);
         }
         addrTypeTable[address] = ty_stored;
     }
@@ -303,7 +307,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
 
     // create a local-table layer for func-parameter to convenient ResolveTable
     SymbolTable *last_table = cur_table;
-    cur_table = initParamList(cur_block, last_table, param_name);
+    cur_table = InitParamList(cur_block, last_table, param_name);
 
     ctx->block()->accept(this);
 
@@ -328,7 +332,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_func = nullptr;
     callee_func = nullptr;
     assert(cur_table == &comp_unit.getGlbTable());
-    clearTableList();
+    ClearTableList();
     return_list.clear();
     target_continue = nullptr;
     break_list.clear();
@@ -369,7 +373,7 @@ std::any AstVisitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
         value = Variable::CreatePtr((_type == INT) ? param_int : param_float, nullptr);
     } else {
         auto &&dims_vec = ctx->constExp();
-        ArrDims arr_dims = getArrayDims(dims_vec);
+        ArrDims arr_dims = GetArrayDims(dims_vec);
         arr_dims.insert(arr_dims.begin(), 1);
         ListTypePtr ty_stored = ListType::CreatePtr(_type, MUTABLE, NOTPTR, ARRAY, PARAMETER, arr_dims);
         value = Variable::CreatePtr((_type == INT) ? param_intp : param_floatp, nullptr);
@@ -424,7 +428,7 @@ std::any AstVisitor::visitExpStmt(SysYParser::ExpStmtContext *ctx) {
 
 std::any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
     SymbolTable *last_table = cur_table;
-    SymbolTable *new_table = newLocalTable(last_table);
+    SymbolTable *new_table = NewLocalTable(last_table);
     cur_table = new_table;
     ctx->block()->accept(this);
     cur_table = last_table;
@@ -441,8 +445,8 @@ std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     CfgNodePtr last_block = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
-    SymbolTable *table_true = newLocalTable(last_table);
-    SymbolTable *table_false = newLocalTable(last_table);
+    SymbolTable *table_true = NewLocalTable(last_table);
+    SymbolTable *table_false = NewLocalTable(last_table);
 
     CfgNodePtr branch_true = cur_func->CreateCfgNode();  // first-block-of-true-branch
     cur_table = table_true;
@@ -505,7 +509,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     CfgNodePtr cond_block_end = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
-    cur_table = newLocalTable(last_table);
+    cur_table = NewLocalTable(last_table);
     CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
     ctx->stmt()->accept(this);
@@ -594,7 +598,7 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     } else {  // For Array or Pointer-Parameter
         assert(type_addr->IsPointer() && (type_addr->IsArray() || type_addr->IsParameter()));
         ListTypePtr list_type = addrTypeTable[address];
-        ArrDims arr_dims = list_type->getDimSize();
+        ArrDims arr_dims = list_type->GetDimSize();
 
         BaseValuePtr offset = zero_int32;
         ATTR_POINTER last_ptr_or_not = ptr_or_not;
@@ -865,7 +869,7 @@ std::any AstVisitor::visitConstExp(SysYParser::ConstExpContext *ctx) {
     return constant;
 }
 
-ArrDims AstVisitor::getArrayDims(std::vector<SysYParser::ConstExpContext *> &constExpVec) {
+ArrDims AstVisitor::GetArrayDims(std::vector<SysYParser::ConstExpContext *> &constExpVec) {
     ArrDims arr_dims;
     for (auto &&const_exp : constExpVec) {
         BaseValuePtr value = std::any_cast<BaseValuePtr>(const_exp->accept(this));
@@ -876,13 +880,13 @@ ArrDims AstVisitor::getArrayDims(std::vector<SysYParser::ConstExpContext *> &con
     return arr_dims;
 }
 
-SymbolTable *AstVisitor::newLocalTable(SymbolTable *parent) {
+SymbolTable *AstVisitor::NewLocalTable(SymbolTable *parent) {
     SymbolTable *table = new SymbolTable(parent);
     table_list.push_back(table);
     return table;
 }
 
-void AstVisitor::clearTableList() {
+void AstVisitor::ClearTableList() {
     for (auto &&table : table_list) {
         delete table;
     }
@@ -901,9 +905,9 @@ BaseValuePtr AstVisitor::ResolveTable(std::string &name) {
     assert(0);
 }
 
-SymbolTable *AstVisitor::initParamList(CfgNodePtr first_block, SymbolTable *parent,
+SymbolTable *AstVisitor::InitParamList(CfgNodePtr first_block, SymbolTable *parent,
                                        std::vector<std::string> param_name) {
-    SymbolTable *new_table = newLocalTable(parent);
+    SymbolTable *new_table = NewLocalTable(parent);
 
     size_t size = param_name.size();
     auto &&param_list = cur_func->GetParamList();
@@ -924,20 +928,20 @@ SymbolTable *AstVisitor::initParamList(CfgNodePtr first_block, SymbolTable *pare
     return new_table;
 }
 
-void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
+void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
                                     CfgNodePtr cur_block) {
     ATTR_TYPE _type = list_type->getAttrType();
 
     ConstantPtr zero = (_type == INT) ? zero_int32 : zero_float;
-    ArrDims dim_size = list_type->getDimSize();
+    ArrDims dim_size = list_type->GetDimSize();
 
-    std::function<void(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> function =
+    std::function<size_t(SysYParser::ListInitvalContext *, const ArrDims &, int32_t, size_t)> function =
         [&](SysYParser::ListInitvalContext *node, const ArrDims &arr_dims, size_t idx_offset, size_t level) {
             size_t total_size = 1;
             for (size_t idx = level; idx < arr_dims.size(); ++idx) {
                 total_size *= arr_dims[idx];
             }
-            if (total_size == 0) return;
+            if (total_size == 0) total_size;
             size_t cnt = 0;
             for (auto &&child : node->initVal()) {
                 if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
@@ -975,8 +979,16 @@ void AstVisitor::parseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                 ++cnt;
                 ++idx_offset;
             }
-            return;
+            return total_size;
         };
-    function(ctx, list_type->getArrDims(), 0, 0);
+    size_t init_size = function(ctx, list_type->GetArrDims(), 0, 0);
+    while (init_size < list_type->GetCapacity()) {
+        BaseValueList off_list = BaseValueList(1, zero_int32);
+        ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(init_size));
+        off_list.push_back(offset);
+        BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
+        StoreInst::DoStoreValue(store_addr, zero, cur_block);
+        ++init_size;
+    }
     return;
 }

@@ -147,7 +147,7 @@ GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseVa
     } else {
         ListTypePtr list1 = std::static_pointer_cast<ListType>(store_type);
         ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->getBaseType());
-        assert(list1->getArrSize() == list2->getArrSize());
+        assert(list1->GetArrSize() == list2->GetArrSize());
         // assert(offset_list.size() == 2);
     }
 }
