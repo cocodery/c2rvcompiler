@@ -68,7 +68,30 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
     return preorder_node;
 }
 
-CfgNodeList NormalFunction::TopoSortFromExit() { assert(false); }
+CfgNodeList NormalFunction::TopoSortFromExit() {
+    std::map<CfgNodePtr, bool> visit;
+    CfgNodeList postorder_node = CfgNodeList();
+
+    auto SuccAllVisited = [&visit](CfgNodePtr pred) {
+        if (pred->GetBlockAttr() == LOOPBEGIN) return true;
+        for (auto &&succ : pred->GetSuccessors()) {
+            if (visit[succ] == false) return false;
+        }
+        return true;
+    };
+
+    std::function<void(CfgNodePtr)> DepthFirstSearch = [&](CfgNodePtr node) {
+        visit[node] = true;
+        postorder_node.push_back(node);
+        for (auto &&pred : node->GetPredcessors()) {
+            if (!visit[pred]) {
+                DepthFirstSearch(pred);
+            }
+        }
+    };
+    DepthFirstSearch(exit);
+    return postorder_node;
+}
 
 void NormalFunction::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
 size_t NormalFunction::GetVarIdx() { return var_idx; }
