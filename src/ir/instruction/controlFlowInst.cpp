@@ -20,6 +20,8 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
     return inst;
 }
 
+bool ReturnInst::IsReturnInst() const { return true; }
+
 bool ReturnInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == ret_value) {
         ret_value = replacer;
@@ -60,6 +62,8 @@ JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : dest(_dest), Instructio
 JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _dest, CfgNodePtr _block) {
     return std::make_shared<JumpInst>(_dest, _block);
 }
+
+bool JumpInst::IsJumpInst() const { return true; }
 
 void JumpInst::setTarget(CfgNodePtr _dest) {
     assert(dest == nullptr);
@@ -102,6 +106,8 @@ BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNode
     _cond->InsertUser(inst);
     return inst;
 }
+
+bool BranchInst::IsBranchInst() const { return true; }
 
 void BranchInst::setTrueTarget(CfgNodePtr _iftrue) {
     assert(iftrue == nullptr);

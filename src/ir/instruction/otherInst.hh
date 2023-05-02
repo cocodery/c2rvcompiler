@@ -25,6 +25,8 @@ class CallInst : public Instruction {
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
+    bool IsCallInst() const;
+
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();

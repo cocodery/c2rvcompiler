@@ -48,12 +48,22 @@ class Instruction {
     void SetParent(CfgNodePtr);
     void ClearParent();
 
+    virtual bool IsTwoOprandInst() const;
+    virtual bool IsOneOprandInst() const;
+
+    virtual bool IsReturnInst() const;
+    virtual bool IsJumpInst() const;
+    virtual bool IsBranchInst() const;
+
     virtual bool IsAllocaInst() const;
     virtual bool IsStoreInst() const;
     virtual bool IsLoadInst() const;
     virtual bool IsGepInst() const;
 
+    virtual bool IsCallInst() const;
     virtual bool IsPhiInst() const;
+
+    bool IsCriticalOperation() const;
 
     virtual bool ReplaceSRC(BaseValuePtr, BaseValuePtr) = 0;
 
@@ -73,6 +83,8 @@ class UnaryInstruction : public Instruction {
 
     BaseValuePtr GetResult() const;
     BaseValuePtr GetOprand() const;
+
+    bool IsOneOprandInst() const;
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -95,6 +107,8 @@ class BinaryInstruction : public Instruction {
     BaseValuePtr GetResult() const;
     BaseValuePtr GetLHS() const;
     BaseValuePtr GetRHS() const;
+
+    bool IsTwoOprandInst() const;
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

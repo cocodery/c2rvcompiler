@@ -30,6 +30,8 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
     return _ret;
 }
 
+bool CallInst::IsCallInst() const { return true; }
+
 bool CallInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     for (auto &&param : rparam_list) {

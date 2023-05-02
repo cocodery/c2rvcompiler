@@ -18,6 +18,8 @@ class ReturnInst : public Instruction {
 
     static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
 
+    bool IsReturnInst() const;
+
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
@@ -37,6 +39,8 @@ class JumpInst : public Instruction {
     ~JumpInst() = default;
 
     static JumpInstPtr CreatePtr(CfgNodePtr, CfgNodePtr);
+
+    bool IsJumpInst() const;
 
     void setTarget(CfgNodePtr);
 
@@ -61,6 +65,8 @@ class BranchInst : public Instruction {
     ~BranchInst() = default;
 
     static BranchInstPtr CreatePtr(BaseValuePtr, CfgNodePtr, CfgNodePtr, CfgNodePtr);
+
+    bool IsBranchInst() const;
 
     void setTrueTarget(CfgNodePtr);
     void setFalseTarget(CfgNodePtr);

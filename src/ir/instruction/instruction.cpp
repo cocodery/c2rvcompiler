@@ -13,12 +13,24 @@ const CfgNodePtr Instruction::GetParent() const { return parent; }
 void Instruction::SetParent(CfgNodePtr node) { parent = node; }
 void Instruction::ClearParent() { SetParent(nullptr); }
 
+bool Instruction::IsTwoOprandInst() const { return false; }
+bool Instruction::IsOneOprandInst() const { return false; }
+
+bool Instruction::IsReturnInst() const { return false; }
+bool Instruction::IsJumpInst() const { return false; }
+bool Instruction::IsBranchInst() const { return false; }
+
 bool Instruction::IsAllocaInst() const { return false; }
 bool Instruction::IsLoadInst() const { return false; }
 bool Instruction::IsStoreInst() const { return false; }
 bool Instruction::IsGepInst() const { return false; }
 
+bool Instruction::IsCallInst() const { return false; }
 bool Instruction::IsPhiInst() const { return false; }
+
+bool Instruction::IsCriticalOperation() const {
+    return IsStoreInst() || IsCallInst() || IsReturnInst() || IsBranchInst();
+}
 
 //===-----------------------------------------------------------===//
 //                     UnaryInstruction Implementation
@@ -29,6 +41,8 @@ UnaryInstruction::UnaryInstruction(VariablePtr _res, BaseValuePtr _opr, CfgNodeP
 
 BaseValuePtr UnaryInstruction::GetResult() const { return result; }
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
+
+bool UnaryInstruction::IsOneOprandInst() const { return true; }
 
 bool UnaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == oprand) {
@@ -64,6 +78,8 @@ bool BinaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer)
     }
     return ret;
 }
+
+bool BinaryInstruction::IsTwoOprandInst() const { return true; }
 
 const BaseValueList BinaryInstruction::UsedValue() { return BaseValueList({lhs, rhs}); }
 
