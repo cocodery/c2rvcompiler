@@ -11,5 +11,7 @@ void Optimization::DoOptimization() {
         DeadCodeElimination::EliminateUnreachableCode(exit, allNodes);
 
         StaticSingleAssignment::SSAConstruction(entry, allNodes, normal_func->GetVarIdx());
+
+        DeadCodeElimination::EliminateUselessCode(allNodes);
     }
 }

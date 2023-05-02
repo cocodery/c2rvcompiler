@@ -7,7 +7,7 @@
 #include "IR.hh"
 
 namespace DeadCodeElimination {
-// void EliminateUselessCode();
+void EliminateUselessCode(CfgNodeList);
 // void EliminateUselessControlFlow();
 void EliminateUnreachableCode(CfgNodePtr, CfgNodeList);
 }  // namespace DeadCodeElimination
