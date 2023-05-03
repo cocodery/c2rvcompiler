@@ -315,7 +315,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_block->InsertInstBack(JumpInst::CreatePtr(ret_block, cur_block));
 
     for (auto &&ret_inst : return_list) {
-        ret_inst->setTarget(ret_block);
+        ret_inst->SetTarget(ret_block);
     }
     ret_block->InsertInstBack(ReturnInst::CreatePtr(
         ret_type, ret_type->VoidType() ? nullptr : LoadInst::DoLoadValue(ret_addr, ret_block), ret_block));
@@ -463,10 +463,10 @@ std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     CfgNodePtr false_end = cur_block;  // last-block-of-false-branch
 
     for (auto &&lAnd_inst : lAnd_list) {
-        lAnd_inst->setFalseTarget(branch_false);
+        lAnd_inst->SetFalseTarget(branch_false);
     }
     for (auto &&lOr_inst : lOr_list) {
-        lOr_inst->setTrueTarget(branch_true);
+        lOr_inst->SetTrueTarget(branch_true);
     }
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
@@ -524,15 +524,15 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     cond_block_end->InsertInstBack(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
 
     for (auto &&break_inst : break_list) {
-        break_inst->setTarget(loop_exit);
+        break_inst->SetTarget(loop_exit);
     }
     break_list = last_break_list;
 
     for (auto &&lAnd_inst : lAnd_list) {
-        lAnd_inst->setFalseTarget(loop_exit);
+        lAnd_inst->SetFalseTarget(loop_exit);
     }
     for (auto &&lOr_inst : lOr_list) {
-        lOr_inst->setTrueTarget(loop_begin);
+        lOr_inst->SetTrueTarget(loop_begin);
     }
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
@@ -845,7 +845,7 @@ std::any AstVisitor::visitLOr2(SysYParser::LOr2Context *ctx) {
     CfgNodePtr lOr_false = cur_func->CreateCfgNode();
 
     for (auto &&lAnd_inst : lAnd_list) {
-        lAnd_inst->setFalseTarget(lOr_false);
+        lAnd_inst->SetFalseTarget(lOr_false);
     }
     lAnd_list = last_lAnd_list;
 
