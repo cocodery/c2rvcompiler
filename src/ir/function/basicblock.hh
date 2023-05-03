@@ -41,6 +41,10 @@ class BasicBlock {
 
     InstList &GetInstList();
 
+    size_t GetInstCnt() const;
+
+    InstPtr &GetLastInst();
+
     void InsertInstBack(InstPtr);
     void InsertInstFront(InstPtr);
     void RemoveInst(InstPtr);

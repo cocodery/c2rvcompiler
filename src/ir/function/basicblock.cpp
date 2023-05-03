@@ -34,6 +34,10 @@ size_t BasicBlock::GetBlockIdx() { return idx; }
 
 InstList &BasicBlock::GetInstList() { return inst_list; }
 
+size_t BasicBlock::GetInstCnt() const { return inst_list.size(); }
+
+InstPtr &BasicBlock::GetLastInst() { return (*inst_list.rbegin()); }
+
 void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }
 void BasicBlock::RemoveInst(InstPtr inst) { inst_list.remove(inst); }

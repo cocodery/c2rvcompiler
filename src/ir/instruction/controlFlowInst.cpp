@@ -65,12 +65,14 @@ JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _dest, CfgNodePtr _block) {
 
 bool JumpInst::IsJumpInst() const { return true; }
 
-void JumpInst::setTarget(CfgNodePtr _dest) {
+void JumpInst::SetTarget(CfgNodePtr _dest) {
     assert(dest == nullptr);
     dest = _dest;
     parent->AddSuccessor(dest);
     dest->AddPredcessor(parent);
 }
+
+CfgNodePtr JumpInst::GetTarget() { return dest; }
 
 bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
@@ -109,19 +111,22 @@ BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNode
 
 bool BranchInst::IsBranchInst() const { return true; }
 
-void BranchInst::setTrueTarget(CfgNodePtr _iftrue) {
+void BranchInst::SetTrueTarget(CfgNodePtr _iftrue) {
     assert(iftrue == nullptr);
     iftrue = _iftrue;
     parent->AddSuccessor(iftrue);
     iftrue->AddPredcessor(parent);
 }
 
-void BranchInst::setFalseTarget(CfgNodePtr _iffalse) {
+void BranchInst::SetFalseTarget(CfgNodePtr _iffalse) {
     assert(iffalse == nullptr);
     iffalse = _iffalse;
     parent->AddSuccessor(iffalse);
     iffalse->AddPredcessor(parent);
 }
+
+CfgNodePtr BranchInst::GetTrueTarget() { return iftrue; }
+CfgNodePtr BranchInst::GetFalseTarget() { return iffalse; }
 
 bool BranchInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == cond) {

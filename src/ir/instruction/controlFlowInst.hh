@@ -42,7 +42,9 @@ class JumpInst : public Instruction {
 
     bool IsJumpInst() const;
 
-    void setTarget(CfgNodePtr);
+    void SetTarget(CfgNodePtr);
+
+    CfgNodePtr GetTarget();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -68,8 +70,11 @@ class BranchInst : public Instruction {
 
     bool IsBranchInst() const;
 
-    void setTrueTarget(CfgNodePtr);
-    void setFalseTarget(CfgNodePtr);
+    void SetTrueTarget(CfgNodePtr);
+    void SetFalseTarget(CfgNodePtr);
+
+    CfgNodePtr GetTrueTarget();
+    CfgNodePtr GetFalseTarget();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
