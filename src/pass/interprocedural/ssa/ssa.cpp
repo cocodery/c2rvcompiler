@@ -8,7 +8,7 @@ StaticSingleAssignment::RenameDatePtr StaticSingleAssignment::RenameData::Create
     return std::make_shared<RenameData>(_node, _pred, _valuelist);
 }
 
-void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNodes, size_t var_idx) {
+void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNodes) {
     DominanceAnalysis::ComputeDominanceInfo(entry, allNodes);
     DominanceAnalysis::ComputeDominanceFrontier(allNodes);
 
@@ -16,8 +16,6 @@ void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNo
     std::list<AllocaInstPtr> allocaInsts;
     std::unordered_map<AllocaInstPtr, int32_t> allocaLookUp;
     std::unordered_map<PhiInstPtr, int32_t> phi2AllocaMap;
-
-    Variable::SetVarIdx(var_idx);
 
     auto InsertPhiFunction = [&allNodes, &defBlocks, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
         for (auto &&node : allNodes) {
