@@ -1,29 +1,19 @@
 #include "basicblock.hh"
 
 std::string AttrToStr(BlockAttr attr) {
-    switch (attr) {
-        case NORMAL:
-            return "normal";
-        case ENTRY:
-            return "entry";
-        case LOOPBEGIN:
-            return "loop-begin";
-        case LOOPEND:
-            return "loop-end";
-        case LOOPOUT:
-            return "loop-out";
-        case BREAK:
-            return "break";
-        case CONTINUE:
-            return "continue";
-        case GORETURN:
-            return "go-return";
-        case EXIT:
-            return "exit";
+    std::stringstream ss;
 
-        default:
-            assert(false);
-    }
+    if (attr & NORMAL) ss << " normal";
+    if (attr & ENTRY) ss << " entry";
+    if (attr & LOOPBEGIN) ss << " loop-begin";
+    if (attr & LOOPEND) ss << " loop-end";
+    if (attr & LOOPEND) ss << " loop-out";
+    if (attr & BREAK) ss << " break";
+    if (attr & CONTINUE) ss << " continue";
+    if (attr & GORETURN) ss << " go-return";
+    if (attr & EXIT) ss << " exit";
+
+    return ss.str();
 }
 
 size_t BasicBlock::blk_idx = 1;
@@ -37,12 +27,13 @@ InstList &BasicBlock::GetInstList() { return inst_list; }
 size_t BasicBlock::GetInstCnt() const { return inst_list.size(); }
 
 InstPtr &BasicBlock::GetLastInst() { return (*inst_list.rbegin()); }
+void BasicBlock::RemoveLastInst() { inst_list.pop_back(); }
 
 void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }
 void BasicBlock::RemoveInst(InstPtr inst) { inst_list.remove(inst); }
 
-void BasicBlock::SetBlockAttr(BlockAttr _attr) { block_attr = _attr; }
+void BasicBlock::AppendBlkAttr(BlockAttr _attr) { block_attr |= _attr; }
 BlockAttr BasicBlock::GetBlockAttr() const { return block_attr; }
 
 void BasicBlock::ResetBlkIdx() { blk_idx = 1; }

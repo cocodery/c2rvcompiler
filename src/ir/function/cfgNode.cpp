@@ -28,7 +28,7 @@ DominatorSet &CtrlFlowGraphNode::GetDomFrontier() { return dominance_frontier; }
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
 
-    ss << "Block_" << idx << ": ; " << AttrToStr(block_attr) << endl;
+    ss << "Block_" << idx << ": ;" << AttrToStr(block_attr) << endl;
     ss << "\t; Predecessors: ";
     for (auto &&pred : predecessors) {
         ss << pred->idx << ' ';

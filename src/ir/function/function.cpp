@@ -22,6 +22,9 @@ CfgNodePtr NormalFunction::CreateCfgNode(BlockAttr _attr) { return CtrlFlowGraph
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 
+void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
+void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
+
 CfgNodeList NormalFunction::GetAllNodes() {
     CfgNodeList allNodes;
     std::queue<CfgNodePtr> nodeQueue;
