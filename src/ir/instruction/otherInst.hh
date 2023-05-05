@@ -27,6 +27,8 @@ class CallInst : public Instruction {
 
     bool IsCallInst() const;
 
+    void RemoveResParent();
+
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
@@ -69,6 +71,8 @@ class PhiInst : public Instruction {
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 
     bool IsPhiInst() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

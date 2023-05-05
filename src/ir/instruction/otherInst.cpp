@@ -32,6 +32,12 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
 
 bool CallInst::IsCallInst() const { return true; }
 
+void CallInst::RemoveResParent() {
+    if (ret_value != nullptr) {
+        ret_value->SetParent(nullptr);
+    }
+}
+
 bool CallInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     for (auto &&param : rparam_list) {
@@ -66,7 +72,12 @@ std::string CallInst::tollvmIR() {
         }
     }
     ss << ")";
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -100,7 +111,12 @@ std::string BitCastInst::tollvmIR() {
     ss << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
     ss << " to " << result->getBaseType()->tollvmIR();
 
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -127,6 +143,8 @@ void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr blo
 }
 
 bool PhiInst::IsPhiInst() const { return true; }
+
+void PhiInst::RemoveResParent() { result->SetParent(nullptr); }
 
 bool PhiInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
@@ -156,6 +174,11 @@ std::string PhiInst::tollvmIR() {
         ss << ", [" << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
     }
 
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }

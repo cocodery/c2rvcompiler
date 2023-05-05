@@ -27,7 +27,12 @@ std::string SitoFpInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = sitofp " << oprand->getBaseType()->tollvmIR();
     ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -59,7 +64,12 @@ std::string FptoSiInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = fptosi " << oprand->getBaseType()->tollvmIR();
     ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -90,6 +100,11 @@ std::string ZextInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = zext " << oprand->getBaseType()->tollvmIR();
     ss << ' ' << oprand->tollvmIR() << " to " << result->getBaseType()->tollvmIR();
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }

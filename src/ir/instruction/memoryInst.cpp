@@ -4,7 +4,7 @@
 //                     AllocaInst Implementation
 //===-----------------------------------------------------------===//
 
-AllocaInst::AllocaInst(BaseTypePtr _ty_stored, BaseValuePtr _addr, CfgNodePtr block)
+AllocaInst::AllocaInst(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block)
     : type_stored(_ty_stored), addr_alloca(_addr), Instruction(block) {
     BaseTypePtr type_alloca = addr_alloca->getBaseType();
     assert(type_stored->IntType() || type_stored->FloatType());
@@ -12,7 +12,7 @@ AllocaInst::AllocaInst(BaseTypePtr _ty_stored, BaseValuePtr _addr, CfgNodePtr bl
     assert(type_stored->IsNotPtr() && type_alloca->IsPointer());
 }
 
-AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, BaseValuePtr _addr, CfgNodePtr block) {
+AllocaInstPtr AllocaInst::CreatePtr(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block) {
     return std::make_shared<AllocaInst>(_ty_stored, _addr, block);
 }
 
@@ -26,7 +26,9 @@ VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_all
 
 bool AllocaInst::IsAllocaInst() const { return true; }
 const BaseTypePtr AllocaInst::GetAllocaType() const { return type_stored; }
-const BaseValuePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
+const VariablePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
+
+void AllocaInst::RemoveResParent() { addr_alloca->SetParent(nullptr); }
 
 bool AllocaInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
@@ -35,7 +37,12 @@ const BaseValueList AllocaInst::UsedValue() { return BaseValueList(); }
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
     ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -70,6 +77,8 @@ bool StoreInst::IsStoreInst() const { return true; }
 const BaseValuePtr StoreInst::GetStoreAddr() const { return store_addr; }
 BaseValuePtr StoreInst::GetStoreValue() const { return store_value; }
 
+void StoreInst::RemoveResParent() { return; }
+
 bool StoreInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     if (store_addr == replacee) {
@@ -90,7 +99,12 @@ std::string StoreInst::tollvmIR() {
     ss << "store " << store_value->getBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
     ss << ", " << store_addr->getBaseType()->tollvmIR() << ' ' << store_addr->tollvmIR();
     ss << ", align 4";
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -128,7 +142,12 @@ std::string LoadInst::tollvmIR() {
     ss << result->tollvmIR() << " = load " << result->getBaseType()->tollvmIR();
     ss << ", " << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
     ss << ", align 4";
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -171,6 +190,8 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
 
 bool GetElementPtrInst::IsGepInst() const { return true; }
 
+void GetElementPtrInst::RemoveResParent() { target_ptr->SetParent(nullptr); }
+
 bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     if (base_addr == replacee) {
@@ -200,6 +221,11 @@ std::string GetElementPtrInst::tollvmIR() {
     for (auto &&offset : offset_list) {
         ss << ", " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
     }
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }

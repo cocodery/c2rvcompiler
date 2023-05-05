@@ -44,6 +44,8 @@ BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
 bool UnaryInstruction::IsOneOprandInst() const { return true; }
 
+void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
+
 bool UnaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == oprand) {
         oprand = replacer;
@@ -65,6 +67,8 @@ BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr 
 BaseValuePtr BinaryInstruction::GetResult() const { return result; }
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
+
+void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
 bool BinaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
@@ -103,4 +107,5 @@ void ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
 void RemoveInst(InstPtr inst) {
     auto &&used_value = inst->UsedValue();
     std::for_each(used_value.begin(), used_value.end(), [&inst](BaseValuePtr value) { value->RemoveUser(inst); });
+    inst->RemoveResParent();
 }

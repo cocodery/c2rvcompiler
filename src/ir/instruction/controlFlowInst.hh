@@ -20,6 +20,8 @@ class ReturnInst : public Instruction {
 
     bool IsReturnInst() const;
 
+    void RemoveResParent();
+
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
@@ -45,6 +47,8 @@ class JumpInst : public Instruction {
     void SetTarget(CfgNodePtr);
 
     CfgNodePtr GetTarget();
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -75,6 +79,8 @@ class BranchInst : public Instruction {
 
     CfgNodePtr GetTrueTarget();
     CfgNodePtr GetFalseTarget();
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

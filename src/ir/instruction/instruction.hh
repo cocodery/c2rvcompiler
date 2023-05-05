@@ -65,6 +65,8 @@ class Instruction {
 
     bool IsCriticalOperation() const;
 
+    virtual void RemoveResParent() = 0;
+
     virtual bool ReplaceSRC(BaseValuePtr, BaseValuePtr) = 0;
 
     virtual const BaseValueList UsedValue() = 0;
@@ -85,6 +87,8 @@ class UnaryInstruction : public Instruction {
     BaseValuePtr GetOprand() const;
 
     bool IsOneOprandInst() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -109,6 +113,8 @@ class BinaryInstruction : public Instruction {
     BaseValuePtr GetRHS() const;
 
     bool IsTwoOprandInst() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

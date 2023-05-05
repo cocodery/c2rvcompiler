@@ -22,6 +22,8 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
 
 bool ReturnInst::IsReturnInst() const { return true; }
 
+void ReturnInst::RemoveResParent() { return; }
+
 bool ReturnInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == ret_value) {
         ret_value = replacer;
@@ -43,7 +45,12 @@ std::string ReturnInst::tollvmIR() {
     } else {
         ss << "ret " << ret_type->tollvmIR() << ' ' << ret_value->tollvmIR();
     }
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -74,6 +81,8 @@ void JumpInst::SetTarget(CfgNodePtr _dest) {
 
 CfgNodePtr JumpInst::GetTarget() { return dest; }
 
+void JumpInst::RemoveResParent() { return; }
+
 bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
 const BaseValueList JumpInst::UsedValue() { return BaseValueList(); }
@@ -81,7 +90,12 @@ const BaseValueList JumpInst::UsedValue() { return BaseValueList(); }
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
     ss << "br label %Block_" << dest->GetBlockIdx();
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -128,6 +142,8 @@ void BranchInst::SetFalseTarget(CfgNodePtr _iffalse) {
 CfgNodePtr BranchInst::GetTrueTarget() { return iftrue; }
 CfgNodePtr BranchInst::GetFalseTarget() { return iffalse; }
 
+void BranchInst::RemoveResParent() { return; }
+
 bool BranchInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     if (replacee == cond) {
         cond = replacer;
@@ -143,6 +159,11 @@ std::string BranchInst::tollvmIR() {
     ss << "br i1 " << cond->tollvmIR() << ", ";
     ss << "label %Block_" << iftrue->GetBlockIdx() << ", ";
     ss << "label %Block_" << iffalse->GetBlockIdx();
-    ss << "; Inst_" << GetInstIdx() << " from Block_" << parent->GetBlockIdx();
+    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }

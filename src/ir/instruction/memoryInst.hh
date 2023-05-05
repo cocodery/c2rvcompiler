@@ -10,19 +10,21 @@ using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 class AllocaInst : public Instruction {
    private:
     BaseTypePtr type_stored;
-    BaseValuePtr addr_alloca;
+    VariablePtr addr_alloca;
 
-    static AllocaInstPtr CreatePtr(BaseTypePtr, BaseValuePtr, CfgNodePtr);
+    static AllocaInstPtr CreatePtr(BaseTypePtr, VariablePtr, CfgNodePtr);
 
    public:
-    AllocaInst(BaseTypePtr, BaseValuePtr, CfgNodePtr);
+    AllocaInst(BaseTypePtr, VariablePtr, CfgNodePtr);
     ~AllocaInst() = default;
 
     static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 
     bool IsAllocaInst() const;
     const BaseTypePtr GetAllocaType() const;
-    const BaseValuePtr GetAllocaAddr() const;
+    const VariablePtr GetAllocaAddr() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -50,6 +52,8 @@ class StoreInst : public Instruction {
     bool IsStoreInst() const;
     const BaseValuePtr GetStoreAddr() const;
     BaseValuePtr GetStoreValue() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
@@ -95,6 +99,8 @@ class GetElementPtrInst : public Instruction {
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
     bool IsGepInst() const;
+
+    void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 

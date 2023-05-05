@@ -9,10 +9,7 @@ Variable::Variable(BaseTypePtr _type, InstPtr inst) : BaseValue(_type), idx(var_
     assert(base_type->IsParameter() || base_type->IsLocal());
 }
 
-void Variable::SetParent(InstPtr inst) {
-    assert(parent == nullptr);
-    parent = inst;
-}
+void Variable::SetParent(InstPtr inst) { parent = inst; }
 const InstPtr Variable::GetParent() const { return parent; }
 
 void Variable::ResetVarIdx() { var_idx = 1; }
