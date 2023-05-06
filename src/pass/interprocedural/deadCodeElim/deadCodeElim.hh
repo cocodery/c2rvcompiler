@@ -8,6 +8,6 @@
 
 namespace DeadCodeElimination {
 void EliminateUselessCode(CfgNodeList);
-// void EliminateUselessControlFlow();
+void EliminateUselessControlFlow(NormalFuncPtr);
 void EliminateUnreachableCode(CfgNodePtr, CfgNodeList);
 }  // namespace DeadCodeElimination

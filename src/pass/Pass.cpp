@@ -16,5 +16,7 @@ void Optimization::DoOptimization() {
         StaticSingleAssignment::SSAConstruction(entry, allNodes);
 
         DeadCodeElimination::EliminateUselessCode(allNodes);
+
+        DeadCodeElimination::EliminateUselessControlFlow(normal_func);
     }
 }

@@ -53,14 +53,13 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
             dom_set_of_dom.insert(node);
             if (dom_set_of_dom == dominator_set) return dominator;
         }
-        // unreachable!
-        assert(node == entry);
-        return CfgNodePtr(nullptr);
+        assert(false);
     };
 
-    std::for_each(allNodes.begin(), allNodes.end(), [&ComputeImmediateDominator](const auto &node) {
+    for (auto &&node : allNodes) {
+        if (node == entry) continue;
         node->SetImmediateDominator(ComputeImmediateDominator(node));
-    });
+    }
 }
 
 void DominanceAnalysis::ComputeDominanceFrontier(CfgNodeList allNodes) {
