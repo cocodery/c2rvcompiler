@@ -55,7 +55,23 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
         i->InsertInstBack(JumpInst::CreatePtr(j, i));
     };
 
-    // auto RemoveEmptyBranch = []() {};
+    auto RemoveEmptyBlock = [&normal_func](CfgNodePtr i, CfgNodePtr j) {
+        if (i->FindBlkAttr(ENTRY)) {
+            j->AppendBlkAttr(ENTRY);
+            normal_func->SetEntryNode(j);
+            RemoveNode(i);
+            return true;
+        } else {
+            // for (auto &&pred : i->GetPredcessors()) {
+            //     pred->AddSuccessor(j);
+            //     j->AddPredcessor(pred);
+            //     pred->GetLastInst()->ReplaceTarget(i, j);
+            // }
+            // RemoveNode(i);
+            // return true;
+        }
+        return false;
+    };
 
     auto CombineBlocks = [&normal_func](CfgNodePtr i, CfgNodePtr j) {
         i->RemoveLastInst();
@@ -65,7 +81,7 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
         i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
         j_inst_list = std::move(i_inst_list);
         j->AppendBlkAttr(i->GetBlockAttr());
-        if (j->FindBlkAttr(GORETURN | EXIT)) j->ClearSpecAttr(GORETURN);
+        // if (j->FindBlkAttr(GORETURN | EXIT)) j->ClearSpecAttr(GORETURN);
         if (j->FindBlkAttr(ENTRY)) normal_func->SetEntryNode(j);
         // ReplacePredSucc(i, j);
         for (auto &&pred : i->GetPredcessors()) {
@@ -77,7 +93,6 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
     };
 
     auto HoistBranch = [](CfgNodePtr i, CfgNodePtr j) {
-        auto &&jump_inst = std::static_pointer_cast<JumpInst>(i->GetLastInst());
         auto &&j_branch_inst = std::static_pointer_cast<BranchInst>(j->GetLastInst());
         auto &&i_branch_inst = BranchInst::CreatePtr(j_branch_inst->GetCondition(), j_branch_inst->GetTrueTarget(),
                                                      j_branch_inst->GetFalseTarget(), i);
@@ -104,10 +119,11 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
                 auto &&jump_inst = std::static_pointer_cast<JumpInst>(last_inst);
                 auto &&j = jump_inst->GetTarget();
                 // case 2, remove empty block
-                if (i->GetInstCnt() == 1) {
-                    // RemoveEmptyBlock(i, j);
-                    // iter = post_order.erase(iter);
-                    // continue;
+                if (i->GetInstCnt() == 1 && !j->FindBlkAttr(LOOPBEGIN)) {
+                    if (RemoveEmptyBlock(i, j)) {
+                        iter = post_order.erase(iter);
+                        continue;
+                    }
                 }
                 // case 3, combine i and j
                 if (j->GetPredcessors().size() == 1) {
@@ -117,7 +133,7 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
                 }
                 // case 4, hoist a branch
                 if (j->GetInstCnt() == 1 && j->GetLastInst()->IsBranchInst()) {
-                    HoistBranch(i, j);
+                    // HoistBranch(i, j);
                 }
             }
             ++iter;
