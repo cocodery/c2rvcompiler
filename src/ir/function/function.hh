@@ -33,7 +33,6 @@ class NormalFunction : public BaseFunction {
     void SetEntryNode(CfgNodePtr);
     void SetExitNode(CfgNodePtr);
 
-    CfgNodeList GetAllNodes();
     CfgNodeList TopoSortFromEntry();
     CfgNodeList TopoSortFromExit();
 

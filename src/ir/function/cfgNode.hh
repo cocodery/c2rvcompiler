@@ -3,6 +3,7 @@
 #include <set>
 
 #include "basicblock.hh"
+#include "controlFlowInst.hh"
 
 class CtrlFlowGraphNode;
 using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;

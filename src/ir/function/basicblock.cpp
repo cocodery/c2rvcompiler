@@ -26,14 +26,25 @@ InstList &BasicBlock::GetInstList() { return inst_list; }
 
 size_t BasicBlock::GetInstCnt() const { return inst_list.size(); }
 
-InstPtr &BasicBlock::GetLastInst() { return (*inst_list.rbegin()); }
-void BasicBlock::RemoveLastInst() { inst_list.pop_back(); }
+InstPtr &BasicBlock::GetLastInst() {
+    auto &&last_inst = (*inst_list.rbegin());
+    assert(last_inst->IsJumpInst() || last_inst->IsBranchInst() || last_inst->IsReturnInst());
+    return last_inst;
+}
+
+void BasicBlock::RemoveLastInst() {
+    auto &&last_inst = GetLastInst();
+    assert(last_inst->IsJumpInst() || last_inst->IsBranchInst());
+    inst_list.pop_back();
+}
 
 void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }
 void BasicBlock::RemoveInst(InstPtr inst) { inst_list.remove(inst); }
 
+bool BasicBlock::FindBlkAttr(BlockAttr _attr) { return ((block_attr & _attr) != 0); };
 void BasicBlock::AppendBlkAttr(BlockAttr _attr) { block_attr |= _attr; }
+void BasicBlock::ClearSpecAttr(BlockAttr _attr) { block_attr &= ~_attr; }
 BlockAttr BasicBlock::GetBlockAttr() const { return block_attr; }
 
 void BasicBlock::ResetBlkIdx() { blk_idx = 1; }

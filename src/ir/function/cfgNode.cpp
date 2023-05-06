@@ -7,8 +7,19 @@ void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
 
 CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr) { return std::make_shared<CtrlFlowGraphNode>(_attr); }
 
-void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) { predecessors.push_back(predecessor); }
-void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.push_back(successor); }
+void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) {
+    // avoid redundant same predcessor
+    if (std::find(predecessors.begin(), predecessors.end(), predecessor) == predecessors.end()) {
+        predecessors.push_back(predecessor);
+    }
+}
+
+void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) {
+    // avoid redundant same successor
+    if (std::find(successors.begin(), successors.end(), successor) == successors.end()) {
+        successors.push_back(successor);
+    }
+}
 CfgNodeList &CtrlFlowGraphNode::GetPredcessors() { return predecessors; }
 CfgNodeList &CtrlFlowGraphNode::GetSuccessors() { return successors; }
 
@@ -81,4 +92,7 @@ void RemoveNode(CfgNodePtr node) {
                   [&node](const auto &succ) { succ->GetPredcessors().remove(node); });
     predcessor.clear();
     successor.clear();
+    node->GetDominatorSet().clear();
+    node->GetDomFrontier().clear();
+    node->SetImmediateDominator(nullptr);
 }

@@ -63,6 +63,8 @@ class Instruction {
     virtual bool IsCallInst() const;
     virtual bool IsPhiInst() const;
 
+    virtual void ReplaceTarget(CfgNodePtr, CfgNodePtr);
+
     bool IsCriticalOperation() const;
 
     virtual void RemoveResParent() = 0;

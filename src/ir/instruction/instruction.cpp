@@ -28,6 +28,8 @@ bool Instruction::IsGepInst() const { return false; }
 bool Instruction::IsCallInst() const { return false; }
 bool Instruction::IsPhiInst() const { return false; }
 
+void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
+
 bool Instruction::IsCriticalOperation() const {
     return IsStoreInst() || IsCallInst() || IsReturnInst() || IsBranchInst();
 }

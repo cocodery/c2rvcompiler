@@ -48,6 +48,8 @@ class JumpInst : public Instruction {
 
     CfgNodePtr GetTarget();
 
+    void ReplaceTarget(CfgNodePtr, CfgNodePtr);
+
     void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
@@ -77,8 +79,11 @@ class BranchInst : public Instruction {
     void SetTrueTarget(CfgNodePtr);
     void SetFalseTarget(CfgNodePtr);
 
+    BaseValuePtr GetCondition();
     CfgNodePtr GetTrueTarget();
     CfgNodePtr GetFalseTarget();
+
+    void ReplaceTarget(CfgNodePtr, CfgNodePtr);
 
     void RemoveResParent();
 

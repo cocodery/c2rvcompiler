@@ -50,7 +50,9 @@ class BasicBlock {
     void InsertInstFront(InstPtr);
     void RemoveInst(InstPtr);
 
+    bool FindBlkAttr(BlockAttr);
     void AppendBlkAttr(BlockAttr);
+    void ClearSpecAttr(BlockAttr);
     BlockAttr GetBlockAttr() const;
 
     static void ResetBlkIdx();

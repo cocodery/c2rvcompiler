@@ -81,6 +81,14 @@ void JumpInst::SetTarget(CfgNodePtr _dest) {
 
 CfgNodePtr JumpInst::GetTarget() { return dest; }
 
+void JumpInst::ReplaceTarget(CfgNodePtr i, CfgNodePtr j) {
+    if (dest == i) {
+        dest = j;
+    } else {
+        assert(false);
+    }
+}
+
 void JumpInst::RemoveResParent() { return; }
 
 bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
@@ -139,8 +147,19 @@ void BranchInst::SetFalseTarget(CfgNodePtr _iffalse) {
     iffalse->AddPredcessor(parent);
 }
 
+BaseValuePtr BranchInst::GetCondition() { return cond; }
 CfgNodePtr BranchInst::GetTrueTarget() { return iftrue; }
 CfgNodePtr BranchInst::GetFalseTarget() { return iffalse; }
+
+void BranchInst::ReplaceTarget(CfgNodePtr i, CfgNodePtr j) {
+    if (iftrue == i) {
+        iftrue = j;
+    } else if (iffalse == i) {
+        iffalse = j;
+    } else {
+        assert(false);
+    }
+}
 
 void BranchInst::RemoveResParent() { return; }
 

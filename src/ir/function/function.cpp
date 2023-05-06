@@ -8,12 +8,12 @@ NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamLis
     : BaseFunction(_type, _name, _list) {}
 
 CfgNodePtr NormalFunction::CreateEntry() {
-    entry = CtrlFlowGraphNode::CreatePtr(ENTRY);
+    entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL);
     return entry;
 }
 
 CfgNodePtr NormalFunction::CreateExit() {
-    exit = CtrlFlowGraphNode::CreatePtr(EXIT);
+    exit = CtrlFlowGraphNode::CreatePtr(EXIT | NORMAL);
     return exit;
 }
 
@@ -25,33 +25,13 @@ CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
 
-CfgNodeList NormalFunction::GetAllNodes() {
-    CfgNodeList allNodes;
-    std::queue<CfgNodePtr> nodeQueue;
-    nodeQueue.push(entry);
-    while (!nodeQueue.empty()) {
-        auto &&front = nodeQueue.front();
-        nodeQueue.pop();
-        // if queue-front not in visitMap
-        if (std::find(allNodes.begin(), allNodes.end(), front) == allNodes.end()) {
-            allNodes.push_back(front);
-            for (auto &&node : front->GetSuccessors()) {
-                nodeQueue.push(node);
-            }
-        }
-    }
-    assert(nodeQueue.empty());
-    return allNodes;
-}
-
 CfgNodeList NormalFunction::TopoSortFromEntry() {
     std::map<CfgNodePtr, bool> visit;
     CfgNodeList preorder_node = CfgNodeList();
 
     auto PredAllVisited = [&visit](CfgNodePtr succ) {
         for (auto &&pred : succ->GetPredcessors()) {
-            BlockAttr pred_attr = pred->GetBlockAttr();
-            if (pred_attr == CONTINUE || pred_attr == LOOPEND) continue;
+            if (pred->FindBlkAttr(CONTINUE) || pred->FindBlkAttr(LOOPEND)) continue;
             if (pred->GetDominatorSet().size() == 0) continue;
             if (visit[pred] == false) return false;
         }
