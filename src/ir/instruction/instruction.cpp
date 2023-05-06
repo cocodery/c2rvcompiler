@@ -6,27 +6,28 @@
 
 size_t Instruction::inst_idx = 1;
 
-Instruction::Instruction(CfgNodePtr _parent) : idx(inst_idx++), parent(_parent) {}
+Instruction::Instruction(OpCode _code, CfgNodePtr _parent) : idx(inst_idx++), opcode(_code), parent(_parent) {}
 
+const OpCode Instruction::GetOpCode() const { return opcode; }
 const size_t Instruction::GetInstIdx() const { return idx; }
 const CfgNodePtr Instruction::GetParent() const { return parent; }
 void Instruction::SetParent(CfgNodePtr node) { parent = node; }
 void Instruction::ClearParent() { SetParent(nullptr); }
 
-bool Instruction::IsTwoOprandInst() const { return false; }
-bool Instruction::IsOneOprandInst() const { return false; }
+bool Instruction::IsTwoOprandInst() const { return (OP_ADD <= opcode && opcode <= OP_NEQ); }
+bool Instruction::IsOneOprandInst() const { return (Load <= opcode && opcode <= Zext); }
 
-bool Instruction::IsReturnInst() const { return false; }
-bool Instruction::IsJumpInst() const { return false; }
-bool Instruction::IsBranchInst() const { return false; }
+bool Instruction::IsReturnInst() const { return opcode == Ret; }
+bool Instruction::IsJumpInst() const { return opcode == Jump; }
+bool Instruction::IsBranchInst() const { return opcode == Branch; }
 
-bool Instruction::IsAllocaInst() const { return false; }
-bool Instruction::IsLoadInst() const { return false; }
-bool Instruction::IsStoreInst() const { return false; }
-bool Instruction::IsGepInst() const { return false; }
+bool Instruction::IsAllocaInst() const { return opcode == Alloca; }
+bool Instruction::IsLoadInst() const { return opcode == Load; }
+bool Instruction::IsStoreInst() const { return opcode == Store; }
+bool Instruction::IsGepInst() const { return opcode == Gep; }
 
-bool Instruction::IsCallInst() const { return false; }
-bool Instruction::IsPhiInst() const { return false; }
+bool Instruction::IsCallInst() const { return opcode == Call; }
+bool Instruction::IsPhiInst() const { return opcode == Phi; }
 
 void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
 
@@ -38,13 +39,11 @@ bool Instruction::IsCriticalOperation() const {
 //                     UnaryInstruction Implementation
 //===-----------------------------------------------------------===//
 
-UnaryInstruction::UnaryInstruction(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr node)
-    : result(_res), oprand(_opr), Instruction(node) {}
+UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _opr, CfgNodePtr node)
+    : result(_res), oprand(_opr), Instruction(_op, node) {}
 
 BaseValuePtr UnaryInstruction::GetResult() const { return result; }
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
-
-bool UnaryInstruction::IsOneOprandInst() const { return true; }
 
 void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
@@ -64,7 +63,7 @@ const BaseValueList UnaryInstruction::UsedValue() { return BaseValueList({oprand
 
 BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
                                      CfgNodePtr node)
-    : result(_res), op(_op), lhs(_lhs), rhs(_rhs), Instruction(node) {}
+    : result(_res), lhs(_lhs), rhs(_rhs), Instruction(_op, node) {}
 
 BaseValuePtr BinaryInstruction::GetResult() const { return result; }
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
@@ -84,8 +83,6 @@ bool BinaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer)
     }
     return ret;
 }
-
-bool BinaryInstruction::IsTwoOprandInst() const { return true; }
 
 const BaseValueList BinaryInstruction::UsedValue() { return BaseValueList({lhs, rhs}); }
 

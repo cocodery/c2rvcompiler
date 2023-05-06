@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 AllocaInst::AllocaInst(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block)
-    : type_stored(_ty_stored), addr_alloca(_addr), Instruction(block) {
+    : type_stored(_ty_stored), addr_alloca(_addr), Instruction(Alloca, block) {
     BaseTypePtr type_alloca = addr_alloca->getBaseType();
     assert(type_stored->IntType() || type_stored->FloatType());
     assert(type_stored->getAttrType() == type_alloca->getAttrType());
@@ -24,7 +24,6 @@ VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_all
     return _addr;
 }
 
-bool AllocaInst::IsAllocaInst() const { return true; }
 const BaseTypePtr AllocaInst::GetAllocaType() const { return type_stored; }
 const VariablePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
 
@@ -51,7 +50,7 @@ std::string AllocaInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block)
-    : store_addr(addr), store_value(value), Instruction(block) {
+    : store_addr(addr), store_value(value), Instruction(Store, block) {
     BaseTypePtr type_addr = store_addr->getBaseType();
     BaseTypePtr type_value = store_value->getBaseType();
     assert(type_addr->getAttrType() == type_value->getAttrType());
@@ -73,7 +72,6 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     block->InsertInstBack(inst);
 }
 
-bool StoreInst::IsStoreInst() const { return true; }
 const BaseValuePtr StoreInst::GetStoreAddr() const { return store_addr; }
 BaseValuePtr StoreInst::GetStoreValue() const { return store_value; }
 
@@ -112,7 +110,8 @@ std::string StoreInst::tollvmIR() {
 //                     LoadInst Implementation
 //===-----------------------------------------------------------===//
 
-LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block) : UnaryInstruction(value, addr, block) {
+LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block)
+    : UnaryInstruction(value, Load, addr, block) {
     BaseTypePtr type_addr = oprand->getBaseType();
     BaseTypePtr type_value = result->getBaseType();
     assert(type_addr->getAttrType() == type_value->getAttrType());
@@ -135,8 +134,6 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     return value;
 }
 
-bool LoadInst::IsLoadInst() const { return true; }
-
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = load " << result->getBaseType()->tollvmIR();
@@ -157,7 +154,7 @@ std::string LoadInst::tollvmIR() {
 
 GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                      CfgNodePtr block)
-    : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(block) {
+    : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(Gep, block) {
     assert(target_ptr->getBaseType()->getAttrType() == store_type->getAttrType());
     assert(target_ptr->getBaseType()->getAttrType() == base_addr->getBaseType()->getAttrType());
     assert(store_type->IsNotPtr() && base_addr->getBaseType()->IsPointer());
@@ -187,8 +184,6 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     block->InsertInstBack(inst);
     return _ptr;
 }
-
-bool GetElementPtrInst::IsGepInst() const { return true; }
 
 void GetElementPtrInst::RemoveResParent() { target_ptr->SetParent(nullptr); }
 

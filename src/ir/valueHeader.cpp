@@ -137,7 +137,7 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     ATTR_TYPE lhs_type = lhs->getBaseType()->getAttrType();
     ATTR_TYPE rhs_type = rhs->getBaseType()->getAttrType();
 
-    if ((op & (OP_ADD | OP_SUB | OP_MUL | OP_DIV | OP_REM | OP_LSHIFT | OP_RSHIFT)) != 0) {
+    if (OP_ADD <= op && op <= OP_RSHIFT) {
         // when do arithmetic operation, lhs_type == rhs_type in { INT32, FLOAT }
         if ((lhs_type != rhs_type) || ((lhs_type & rhs_type) == BOOL)) {
             if (lhs_type == FLOAT || rhs_type == FLOAT) {
@@ -156,7 +156,7 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
         } else {
             return FBinaryInst::DoFBinOperate(op, f_lhs, f_rhs, block);
         }
-    } else if ((op & (OP_LTH | OP_LEQ | OP_GTH | OP_GEQ | OP_EQU | OP_NEQ)) != 0) {
+    } else if (OP_LTH <= op && op <= OP_NEQ) {
         // when do compare operation, lhs_type == rhs_type in { BOOL, INT32, FLOAT }
         if (lhs_type != rhs_type) {
             if (lhs_type == BOOL || rhs_type == BOOL) {  // if one is BOOL, convert the other to BOOL

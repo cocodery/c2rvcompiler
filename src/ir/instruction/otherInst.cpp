@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block)
-    : ret_type(_type), ret_value(_ret), callee_func(_func), rparam_list(_list), Instruction(block) {
+    : ret_type(_type), ret_value(_ret), callee_func(_func), rparam_list(_list), Instruction(Call, block) {
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
@@ -29,8 +29,6 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
     block->InsertInstBack(inst);
     return _ret;
 }
-
-bool CallInst::IsCallInst() const { return true; }
 
 void CallInst::RemoveResParent() {
     if (ret_value != nullptr) {
@@ -85,7 +83,8 @@ std::string CallInst::tollvmIR() {
 //                     BitCastInst Implementation
 //===-----------------------------------------------------------===//
 
-BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block) : UnaryInstruction(_res, _opr, block) {
+BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block)
+    : UnaryInstruction(_res, BitCast, _opr, block) {
     assert(result->getBaseType()->CharType() && result->getBaseType()->IsPointer());
     assert((oprand->getBaseType()->IntType() || oprand->getBaseType()->FloatType()) &&
            result->getBaseType()->IsPointer());
@@ -124,7 +123,7 @@ std::string BitCastInst::tollvmIR() {
 //                     PhiInst Implementation
 //===-----------------------------------------------------------===//
 
-PhiInst::PhiInst(VariablePtr _res, CfgNodePtr block) : result(_res), Instruction(block) {}
+PhiInst::PhiInst(VariablePtr _res, CfgNodePtr block) : result(_res), Instruction(Phi, block) {}
 
 PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     assert(_type->IsScalar() && _type->IsNotPtr());
@@ -141,8 +140,6 @@ void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr blo
     inst->datalist.push_back({_value, block});
     _value->InsertUser(inst);
 }
-
-bool PhiInst::IsPhiInst() const { return true; }
 
 void PhiInst::RemoveResParent() { result->SetParent(nullptr); }
 

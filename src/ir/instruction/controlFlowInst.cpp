@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value, CfgNodePtr block)
-    : ret_type(_type), ret_value(_value), Instruction(block) {
+    : ret_type(_type), ret_value(_value), Instruction(Ret, block) {
     if (ret_type->VoidType()) {
         assert(_value == nullptr);
     } else {
@@ -19,8 +19,6 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
     if (_value != nullptr) _value->InsertUser(inst);
     return inst;
 }
-
-bool ReturnInst::IsReturnInst() const { return true; }
 
 void ReturnInst::RemoveResParent() { return; }
 
@@ -58,7 +56,7 @@ std::string ReturnInst::tollvmIR() {
 //                     JumpInst Implementation
 //===-----------------------------------------------------------===//
 
-JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : dest(_dest), Instruction(block) {
+JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : dest(_dest), Instruction(Jump, block) {
     assert(block != nullptr);
     if (dest != nullptr) {
         parent->AddSuccessor(dest);
@@ -69,8 +67,6 @@ JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : dest(_dest), Instructio
 JumpInstPtr JumpInst::CreatePtr(CfgNodePtr _dest, CfgNodePtr _block) {
     return std::make_shared<JumpInst>(_dest, _block);
 }
-
-bool JumpInst::IsJumpInst() const { return true; }
 
 void JumpInst::SetTarget(CfgNodePtr _dest) {
     assert(dest == nullptr);
@@ -112,7 +108,7 @@ std::string JumpInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, CfgNodePtr block)
-    : cond(_cond), iftrue(_br1), iffalse(_br2), Instruction(block) {
+    : cond(_cond), iftrue(_br1), iffalse(_br2), Instruction(Branch, block) {
     assert(cond->getBaseType()->BoolType());
     assert(parent != nullptr);
     if (iftrue != nullptr) {
@@ -130,8 +126,6 @@ BranchInstPtr BranchInst::CreatePtr(BaseValuePtr _cond, CfgNodePtr _br1, CfgNode
     _cond->InsertUser(inst);
     return inst;
 }
-
-bool BranchInst::IsBranchInst() const { return true; }
 
 void BranchInst::SetTrueTarget(CfgNodePtr _iftrue) {
     assert(iftrue == nullptr);

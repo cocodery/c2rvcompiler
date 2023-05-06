@@ -20,7 +20,6 @@ class AllocaInst : public Instruction {
 
     static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 
-    bool IsAllocaInst() const;
     const BaseTypePtr GetAllocaType() const;
     const VariablePtr GetAllocaAddr() const;
 
@@ -49,7 +48,6 @@ class StoreInst : public Instruction {
 
     static void DoStoreValue(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-    bool IsStoreInst() const;
     const BaseValuePtr GetStoreAddr() const;
     BaseValuePtr GetStoreValue() const;
 
@@ -75,8 +73,6 @@ class LoadInst : public UnaryInstruction {
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
 
-    bool IsLoadInst() const;
-
     std::string tollvmIR();
 };
 
@@ -97,8 +93,6 @@ class GetElementPtrInst : public Instruction {
     ~GetElementPtrInst() = default;
 
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
-
-    bool IsGepInst() const;
 
     void RemoveResParent();
 

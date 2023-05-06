@@ -28,7 +28,7 @@ VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
 std::string IBinaryInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = ";
-    switch (op) {
+    switch (opcode) {
         case OP_ADD:
             ss << "add";
             break;
@@ -50,7 +50,11 @@ std::string IBinaryInst::tollvmIR() {
     }
     ss << " i32 " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_";
-if (parent == nullptr) {ss << "None"; } else {ss << parent->GetBlockIdx();}
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }
 
@@ -82,7 +86,7 @@ VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
 std::string FBinaryInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = ";
-    switch (op) {
+    switch (opcode) {
         case OP_ADD:
             ss << "fadd";
             break;
@@ -101,6 +105,10 @@ std::string FBinaryInst::tollvmIR() {
     }
     ss << " float " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_";
-if (parent == nullptr) {ss << "None"; } else {ss << parent->GetBlockIdx();}
+    if (parent == nullptr) {
+        ss << "None";
+    } else {
+        ss << parent->GetBlockIdx();
+    }
     return ss.str();
 }

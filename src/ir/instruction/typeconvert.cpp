@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 SitoFpInst::SitoFpInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : UnaryInstruction(_value1, _value2, block) {
+    : UnaryInstruction(_value1, SiToFp, _value2, block) {
     assert(oprand->getBaseType()->IntType() || oprand->getBaseType()->BoolType());
     assert(oprand->IsOprand());
 }
@@ -41,7 +41,7 @@ std::string SitoFpInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 FptoSiInst::FptoSiInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : UnaryInstruction(_value1, _value2, block) {
+    : UnaryInstruction(_value1, FpToSi, _value2, block) {
     assert(oprand->getBaseType()->FloatType());
     assert(oprand->IsOprand());
 }
@@ -78,7 +78,7 @@ std::string FptoSiInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 ZextInst::ZextInst(VariablePtr _value1, BaseValuePtr _value2, CfgNodePtr block)
-    : UnaryInstruction(_value1, _value2, block) {
+    : UnaryInstruction(_value1, Zext, _value2, block) {
     assert(oprand->getBaseType()->BoolType());
     assert(oprand->IsOprand());
 }

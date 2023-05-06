@@ -8,22 +8,43 @@
 #include "baseValue.hh"
 #include "variable.hh"
 
-using OpCode = uint64_t;
-constexpr OpCode OP_ADD = (1ul << 0x0000);     // binary add
-constexpr OpCode OP_SUB = (1ul << 0x0001);     // binary sub
-constexpr OpCode OP_MUL = (1ul << 0x0002);     // binary mul
-constexpr OpCode OP_DIV = (1ul << 0x0003);     // binary div
-constexpr OpCode OP_REM = (1ul << 0x0004);     // binary rem
-constexpr OpCode OP_NOT = (1ul << 0x0005);     // unary not
-constexpr OpCode OP_MINUS = (1ul << 0x0006);   // unary minus
-constexpr OpCode OP_LSHIFT = (1ul << 0x0007);  // left shift
-constexpr OpCode OP_RSHIFT = (1ul << 0x0008);  // right shift
-constexpr OpCode OP_LTH = (1ul << 0x0009);     // less than
-constexpr OpCode OP_LEQ = (1ul << 0x000A);     // less or equal
-constexpr OpCode OP_GTH = (1ul << 0x000B);     // greater
-constexpr OpCode OP_GEQ = (1ul << 0x000C);     // greater or equal
-constexpr OpCode OP_EQU = (1ul << 0x000D);     // equal
-constexpr OpCode OP_NEQ = (1ul << 0x000E);     // not equal
+enum OpCode {
+    None,
+    Ret,
+    Jump,
+    Branch,
+    Alloca,
+    Store,
+    Gep,
+    Call,
+    Phi,
+    // Unary
+    Load,
+    BitCast,
+    SiToFp,
+    FpToSi,
+    Zext,
+    // Binary
+    // IBinary
+    // FBinary
+    OP_ADD,     // binary add
+    OP_SUB,     // binary sub
+    OP_MUL,     // binary mul
+    OP_DIV,     // binary div
+    OP_REM,     // binary rem
+    OP_NOT,     // unary not
+    OP_MINUS,   // unary minus
+    OP_LSHIFT,  // left shift
+    OP_RSHIFT,  // right shift
+    // ICmp
+    // FCmp
+    OP_LTH,  // less than
+    OP_LEQ,  // less or equal
+    OP_GTH,  // greater
+    OP_GEQ,  // greater or equal
+    OP_EQU,  // equal
+    OP_NEQ,  // not equal
+};
 
 class Instruction;
 using InstPtr = std::shared_ptr<Instruction>;
@@ -35,33 +56,35 @@ class Instruction {
    protected:
     size_t idx;
     CfgNodePtr parent;
+    OpCode opcode;
 
    private:
     static size_t inst_idx;
 
    public:
-    Instruction(CfgNodePtr);
+    Instruction(OpCode, CfgNodePtr);
     ~Instruction() = default;
 
+    const OpCode GetOpCode() const;
     const size_t GetInstIdx() const;
     const CfgNodePtr GetParent() const;
     void SetParent(CfgNodePtr);
     void ClearParent();
 
-    virtual bool IsTwoOprandInst() const;
-    virtual bool IsOneOprandInst() const;
+    bool IsTwoOprandInst() const;
+    bool IsOneOprandInst() const;
 
-    virtual bool IsReturnInst() const;
-    virtual bool IsJumpInst() const;
-    virtual bool IsBranchInst() const;
+    bool IsReturnInst() const;
+    bool IsJumpInst() const;
+    bool IsBranchInst() const;
 
-    virtual bool IsAllocaInst() const;
-    virtual bool IsStoreInst() const;
-    virtual bool IsLoadInst() const;
-    virtual bool IsGepInst() const;
+    bool IsAllocaInst() const;
+    bool IsStoreInst() const;
+    bool IsLoadInst() const;
+    bool IsGepInst() const;
 
-    virtual bool IsCallInst() const;
-    virtual bool IsPhiInst() const;
+    bool IsCallInst() const;
+    bool IsPhiInst() const;
 
     virtual void ReplaceTarget(CfgNodePtr, CfgNodePtr);
 
@@ -82,13 +105,11 @@ class UnaryInstruction : public Instruction {
     BaseValuePtr oprand;
 
    public:
-    UnaryInstruction(VariablePtr, BaseValuePtr, CfgNodePtr);
+    UnaryInstruction(VariablePtr, OpCode, BaseValuePtr, CfgNodePtr);
     ~UnaryInstruction() = default;
 
     BaseValuePtr GetResult() const;
     BaseValuePtr GetOprand() const;
-
-    bool IsOneOprandInst() const;
 
     void RemoveResParent();
 
@@ -102,7 +123,6 @@ class UnaryInstruction : public Instruction {
 class BinaryInstruction : public Instruction {
    protected:
     VariablePtr result;
-    OpCode op;
     BaseValuePtr lhs;
     BaseValuePtr rhs;
 
@@ -113,8 +133,6 @@ class BinaryInstruction : public Instruction {
     BaseValuePtr GetResult() const;
     BaseValuePtr GetLHS() const;
     BaseValuePtr GetRHS() const;
-
-    bool IsTwoOprandInst() const;
 
     void RemoveResParent();
 

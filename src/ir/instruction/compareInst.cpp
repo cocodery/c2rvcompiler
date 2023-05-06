@@ -28,7 +28,7 @@ VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
 std::string ICmpInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = icmp ";
-    switch (op) {
+    switch (opcode) {
         case OP_LTH:
             ss << "slt";
             break;
@@ -89,7 +89,7 @@ VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
 std::string FCmpInst::tollvmIR() {
     std::stringstream ss;
     ss << result->tollvmIR() << " = fcmp ";
-    switch (op) {
+    switch (opcode) {
         case OP_LTH:
             ss << "olt";
             break;

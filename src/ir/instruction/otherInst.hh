@@ -25,8 +25,6 @@ class CallInst : public Instruction {
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
-    bool IsCallInst() const;
-
     void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
@@ -54,11 +52,12 @@ class BitCastInst : public UnaryInstruction {
 
 class PhiInst;
 using PhiInstPtr = std::shared_ptr<PhiInst>;
+using PhiInstList = std::list<PhiInstPtr>;
 
 class PhiInst : public Instruction {
    private:
     VariablePtr result;
-    std::list<std::pair<BaseValuePtr, BlockPtr>> datalist;
+    std::list<std::pair<BaseValuePtr, CfgNodePtr>> datalist;
 
    public:
     PhiInst(VariablePtr, CfgNodePtr);
@@ -69,8 +68,6 @@ class PhiInst : public Instruction {
     VariablePtr GetResult();
 
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
-
-    bool IsPhiInst() const;
 
     void RemoveResParent();
 
