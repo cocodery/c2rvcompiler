@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "exprFlod.hh"
 #include "function/cfgNode.hh"
 #include "instHeader.hh"
 #include "value/baseValue.hh"
@@ -12,10 +13,6 @@
 #include "value/variable.hh"
 
 namespace Value {
-
-BaseValuePtr UnaryOperate(const OpCode, const ConstantPtr);
-
-BaseValuePtr BinaryOperate(const OpCode, const ConstantPtr, const ConstantPtr);
 
 BaseValuePtr UnaryOperate(const OpCode, BaseValuePtr, CfgNodePtr);
 
