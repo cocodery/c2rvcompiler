@@ -9,7 +9,7 @@ CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, Par
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
-        assert(ret_type->getAttrType() == ret_value->getBaseType()->getAttrType());
+        assert(ret_type->GetAttrType() == ret_value->GetBaseType()->GetAttrType());
         assert(ret_value->IsOprand());
     }
     // param-type have been checked at `visitFuncRParams`
@@ -40,6 +40,9 @@ bool CallInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     for (auto &&param : rparam_list) {
         if (param == replacee) {
+            assert(param->GetBaseType()->GetAttrType() == replacer->GetBaseType()->GetAttrType());
+            assert(param->GetBaseType()->GetAttrPointer() == replacer->GetBaseType()->GetAttrPointer());
+            assert(param->GetBaseType()->GetAttrScalar() == replacer->GetBaseType()->GetAttrScalar());
             param = replacer;
             ret = true;
         }
@@ -64,9 +67,9 @@ std::string CallInst::tollvmIR() {
     size_t rparam_size = rparam_list.size();
     if (rparam_size > 0) {
         size_t idx = 0;
-        ss << rparam_list[idx]->getBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
+        ss << rparam_list[idx]->GetBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
         for (idx = 1; idx < rparam_size; ++idx) {
-            ss << ", " << rparam_list[idx]->getBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
+            ss << ", " << rparam_list[idx]->GetBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
         }
     }
     ss << ")";
@@ -85,9 +88,9 @@ std::string CallInst::tollvmIR() {
 
 BitCastInst::BitCastInst(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block)
     : UnaryInstruction(_res, BitCast, _opr, block) {
-    assert(result->getBaseType()->CharType() && result->getBaseType()->IsPointer());
-    assert((oprand->getBaseType()->IntType() || oprand->getBaseType()->FloatType()) &&
-           result->getBaseType()->IsPointer());
+    assert(result->GetBaseType()->CharType() && result->GetBaseType()->IsPointer());
+    assert((oprand->GetBaseType()->IntType() || oprand->GetBaseType()->FloatType()) &&
+           result->GetBaseType()->IsPointer());
 }
 
 BitCastInstPtr BitCastInst::CreatePtr(VariablePtr _res, BaseValuePtr _opr, CfgNodePtr block) {
@@ -103,12 +106,23 @@ VariablePtr BitCastInst::DoBitCast(BaseValuePtr _opr, CfgNodePtr block) {
     return _res;
 }
 
+bool BitCastInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (oprand == replacee) {
+        assert((replacer->GetBaseType()->IntType() || replacer->GetBaseType()->FloatType()) &&
+               replacer->GetBaseType()->IsPointer());
+        oprand = replacer;
+        ret = true;
+    }
+    return ret;
+}
+
 std::string BitCastInst::tollvmIR() {
     std::stringstream ss;
 
     ss << result->tollvmIR() << " = bitcast ";
-    ss << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
-    ss << " to " << result->getBaseType()->tollvmIR();
+    ss << oprand->GetBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
+    ss << " to " << result->GetBaseType()->tollvmIR();
 
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
@@ -137,6 +151,7 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
 VariablePtr PhiInst::GetResult() { return result; }
 
 void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr block) {
+    assert(inst->result->GetBaseType()->GetAttrType() == _value->GetBaseType()->GetAttrType() && _value->IsOprand());
     inst->datalist.push_back({_value, block});
     _value->InsertUser(inst);
 }
@@ -147,6 +162,7 @@ bool PhiInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     for (auto &&pair : datalist) {
         if (replacee == pair.first) {
+            assert(replacer->IsOprand());
             pair.first = replacer;
             ret = true;
         }
@@ -164,7 +180,7 @@ const BaseValueList PhiInst::UsedValue() {
 std::string PhiInst::tollvmIR() {
     std::stringstream ss;
 
-    ss << result->tollvmIR() << " = phi " << result->getBaseType()->tollvmIR() << ' ';
+    ss << result->tollvmIR() << " = phi " << result->GetBaseType()->tollvmIR() << ' ';
     auto &&iter = datalist.begin();
     ss << '[' << (*iter).first->tollvmIR() << ", %Block_" << (*iter).second->GetBlockIdx() << ']';
     for (iter++; iter != datalist.end(); iter++) {

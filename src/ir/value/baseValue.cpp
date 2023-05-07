@@ -5,7 +5,7 @@ BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type) {
     assert(!base_type->VoidType());
 }
 
-BaseTypePtr BaseValue::getBaseType() { return this->base_type; }
+BaseTypePtr BaseValue::GetBaseType() { return this->base_type; }
 
 bool BaseValue::IsOprand() { return (!base_type->VoidType() && base_type->IsNotPtr() && base_type->IsScalar()); }
 
@@ -13,7 +13,7 @@ const InstPtr BaseValue::GetParent() const { return InstPtr(nullptr); }
 
 bool BaseValue::IsConstant() { return false; }
 
-void BaseValue::fixValue(ATTR_TYPE) { return; }
+void BaseValue::FixValue(ATTR_TYPE) { return; }
 
 InstList BaseValue::GetUserList() const { return use_list; }
 

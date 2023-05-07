@@ -47,6 +47,8 @@ class BitCastInst : public UnaryInstruction {
 
     static VariablePtr DoBitCast(BaseValuePtr, CfgNodePtr);
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     std::string tollvmIR();
 };
 

@@ -6,9 +6,9 @@
 
 AllocaInst::AllocaInst(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block)
     : type_stored(_ty_stored), addr_alloca(_addr), Instruction(Alloca, block) {
-    BaseTypePtr type_alloca = addr_alloca->getBaseType();
+    BaseTypePtr type_alloca = addr_alloca->GetBaseType();
     assert(type_stored->IntType() || type_stored->FloatType());
-    assert(type_stored->getAttrType() == type_alloca->getAttrType());
+    assert(type_stored->GetAttrType() == type_alloca->GetAttrType());
     assert(type_stored->IsNotPtr() && type_alloca->IsPointer());
 }
 
@@ -51,9 +51,9 @@ std::string AllocaInst::tollvmIR() {
 
 StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block)
     : store_addr(addr), store_value(value), Instruction(Store, block) {
-    BaseTypePtr type_addr = store_addr->getBaseType();
-    BaseTypePtr type_value = store_value->getBaseType();
-    assert(type_addr->getAttrType() == type_value->getAttrType());
+    BaseTypePtr type_addr = store_addr->GetBaseType();
+    BaseTypePtr type_value = store_value->GetBaseType();
+    assert(type_addr->GetAttrType() == type_value->GetAttrType());
     assert(type_addr->IsPointer() && type_value->IsNotPtr());
     assert(type_addr->IsScalar() && type_value->IsScalar());
 }
@@ -65,7 +65,7 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value, CfgNode
 void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block) {
     // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
-    BaseValuePtr convertee = Value::ScalarTypeConvert(addr->getBaseType()->getAttrType(), value, block);
+    BaseValuePtr convertee = Value::ScalarTypeConvert(addr->GetBaseType()->GetAttrType(), value, block);
     auto &&inst = CreatePtr(addr, convertee, block);
     addr->InsertUser(inst);
     convertee->InsertUser(inst);
@@ -80,10 +80,14 @@ void StoreInst::RemoveResParent() { return; }
 bool StoreInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     if (store_addr == replacee) {
+        assert(replacer->GetBaseType()->GetAttrType() == store_addr->GetBaseType()->GetAttrType());
+        assert(replacer->GetBaseType()->IsPointer() && replacer->GetBaseType()->IsScalar());
         store_addr = replacer;
         ret = true;
     }
     if (store_value == replacee) {
+        assert(replacer->GetBaseType()->GetAttrType() == store_value->GetBaseType()->GetAttrType());
+        assert(replacer->GetBaseType()->IsNotPtr() && replacer->GetBaseType()->IsScalar());
         store_value = replacer;
         ret = true;
     }
@@ -94,8 +98,8 @@ const BaseValueList StoreInst::UsedValue() { return BaseValueList({store_addr, s
 
 std::string StoreInst::tollvmIR() {
     std::stringstream ss;
-    ss << "store " << store_value->getBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
-    ss << ", " << store_addr->getBaseType()->tollvmIR() << ' ' << store_addr->tollvmIR();
+    ss << "store " << store_value->GetBaseType()->tollvmIR() << ' ' << store_value->tollvmIR();
+    ss << ", " << store_addr->GetBaseType()->tollvmIR() << ' ' << store_addr->tollvmIR();
     ss << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
@@ -112,9 +116,9 @@ std::string StoreInst::tollvmIR() {
 
 LoadInst::LoadInst(VariablePtr value, BaseValuePtr addr, CfgNodePtr block)
     : UnaryInstruction(value, Load, addr, block) {
-    BaseTypePtr type_addr = oprand->getBaseType();
-    BaseTypePtr type_value = result->getBaseType();
-    assert(type_addr->getAttrType() == type_value->getAttrType());
+    BaseTypePtr type_addr = oprand->GetBaseType();
+    BaseTypePtr type_value = result->GetBaseType();
+    assert(type_addr->GetAttrType() == type_value->GetAttrType());
     assert(type_addr->IsPointer() && type_value->IsNotPtr());
     assert(type_addr->IsScalar() && type_value->IsScalar());
 }
@@ -124,7 +128,7 @@ LoadInstPtr LoadInst::CreatePtr(VariablePtr value, BaseValuePtr addr, CfgNodePtr
 }
 
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
-    BaseTypePtr addr_type = addr->getBaseType();
+    BaseTypePtr addr_type = addr->GetBaseType();
     assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->IntType() || addr_type->FloatType()));
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(value, addr, block);
@@ -134,10 +138,21 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     return value;
 }
 
+bool LoadInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (oprand == replacee) {
+        assert(replacer->GetBaseType()->GetAttrType() == oprand->GetBaseType()->GetAttrType());
+        assert(replacer->GetBaseType()->IsPointer() && replacer->GetBaseType()->IsScalar());
+        oprand = replacer;
+        ret = true;
+    }
+    return ret;
+}
+
 std::string LoadInst::tollvmIR() {
     std::stringstream ss;
-    ss << result->tollvmIR() << " = load " << result->getBaseType()->tollvmIR();
-    ss << ", " << oprand->getBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
+    ss << result->tollvmIR() << " = load " << result->GetBaseType()->tollvmIR();
+    ss << ", " << oprand->GetBaseType()->tollvmIR() << ' ' << oprand->tollvmIR();
     ss << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
@@ -155,14 +170,14 @@ std::string LoadInst::tollvmIR() {
 GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                      CfgNodePtr block)
     : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(Gep, block) {
-    assert(target_ptr->getBaseType()->getAttrType() == store_type->getAttrType());
-    assert(target_ptr->getBaseType()->getAttrType() == base_addr->getBaseType()->getAttrType());
-    assert(store_type->IsNotPtr() && base_addr->getBaseType()->IsPointer());
+    assert(target_ptr->GetBaseType()->GetAttrType() == store_type->GetAttrType());
+    assert(target_ptr->GetBaseType()->GetAttrType() == base_addr->GetBaseType()->GetAttrType());
+    assert(store_type->IsNotPtr() && base_addr->GetBaseType()->IsPointer());
     if (store_type->IsScalar()) {
         assert(offset_list.size() == 1);
     } else {
         ListTypePtr list1 = std::static_pointer_cast<ListType>(store_type);
-        ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->getBaseType());
+        ListTypePtr list2 = std::static_pointer_cast<ListType>(base_addr->GetBaseType());
         assert(list1->GetArrSize() == list2->GetArrSize());
         // assert(offset_list.size() == 2);
     }
@@ -190,11 +205,15 @@ void GetElementPtrInst::RemoveResParent() { target_ptr->SetParent(nullptr); }
 bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     if (base_addr == replacee) {
+        assert(replacer->GetBaseType()->GetAttrType() == base_addr->GetBaseType()->GetAttrType());
+        assert(replacer->GetBaseType()->IsPointer() && replacer->GetBaseType()->IsScalar());
         base_addr = replacer;
         ret = true;
     }
     for (auto &&offset : offset_list) {
         if (offset == replacee) {
+            assert(replacer->GetBaseType()->IntType() && replacer->GetBaseType()->IsNotPtr() &&
+                   replacer->GetBaseType()->IsScalar());
             offset = replacer;
             ret = true;
         }
@@ -212,9 +231,9 @@ const BaseValueList GetElementPtrInst::UsedValue() {
 std::string GetElementPtrInst::tollvmIR() {
     std::stringstream ss;
     ss << target_ptr->tollvmIR() << " = getelementptr inbounds " << store_type->tollvmIR();
-    ss << ", " << base_addr->getBaseType()->tollvmIR() << ' ' << base_addr->tollvmIR();
+    ss << ", " << base_addr->GetBaseType()->tollvmIR() << ' ' << base_addr->tollvmIR();
     for (auto &&offset : offset_list) {
-        ss << ", " << offset->getBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
+        ss << ", " << offset->GetBaseType()->tollvmIR() << ' ' << offset->tollvmIR();
     }
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {

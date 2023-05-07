@@ -7,11 +7,11 @@ Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), va
     assert(base_type->IsImMutable() && base_type->IsNotPtr() && base_type->IsScalar());
 }
 
-const ConstType &Constant::getValue() const { return this->value; }
+const ConstType &Constant::GetValue() const { return this->value; }
 
 bool Constant::IsConstant() { return true; }
 
-void Constant::fixValue(ATTR_TYPE _type) {
+void Constant::FixValue(ATTR_TYPE _type) {
     std::visit(
         [&_value = this->value, _type](auto &&arg) {
             switch (_type) {
@@ -43,7 +43,7 @@ ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {
 std::string Constant::tollvmIR() {
     std::stringstream ss;
 
-    BaseTypePtr base_type = this->getBaseType();
+    BaseTypePtr base_type = this->GetBaseType();
     std::visit(
         [&ss, base_type](auto &&arg) {
             using T = std::decay_t<decltype(arg)>;

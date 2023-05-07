@@ -47,14 +47,6 @@ BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
 void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
-bool UnaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
-    if (replacee == oprand) {
-        oprand = replacer;
-        return true;
-    }
-    return false;
-}
-
 const BaseValueList UnaryInstruction::UsedValue() { return BaseValueList({oprand}); }
 
 //===-----------------------------------------------------------===//
@@ -70,19 +62,6 @@ BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
 
 void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
-
-bool BinaryInstruction::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
-    bool ret = false;
-    if (replacee == lhs) {
-        lhs = replacer;
-        ret = true;
-    }
-    if (replacee == rhs) {
-        rhs = replacer;
-        ret = true;
-    }
-    return ret;
-}
 
 const BaseValueList BinaryInstruction::UsedValue() { return BaseValueList({lhs, rhs}); }
 

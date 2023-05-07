@@ -16,6 +16,8 @@ class ICmpInst : public BinaryInstruction {
 
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     std::string tollvmIR();
 };
 
@@ -31,6 +33,8 @@ class FCmpInst : public BinaryInstruction {
     ~FCmpInst() = default;
 
     static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
 };

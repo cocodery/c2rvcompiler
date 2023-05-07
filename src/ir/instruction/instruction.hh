@@ -113,8 +113,6 @@ class UnaryInstruction : public Instruction {
 
     void RemoveResParent();
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
-
     const BaseValueList UsedValue();
 
     virtual std::string tollvmIR() = 0;
@@ -135,8 +133,6 @@ class BinaryInstruction : public Instruction {
     BaseValuePtr GetRHS() const;
 
     void RemoveResParent();
-
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList UsedValue();
 

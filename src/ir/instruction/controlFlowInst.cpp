@@ -9,7 +9,7 @@ ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value, CfgNodePtr bloc
     if (ret_type->VoidType()) {
         assert(_value == nullptr);
     } else {
-        assert(ret_type->getAttrType() == ret_value->getBaseType()->getAttrType());
+        assert(ret_type->GetAttrType() == ret_value->GetBaseType()->GetAttrType());
         assert(ret_value->IsOprand());
     }
 }
@@ -23,6 +23,7 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
 void ReturnInst::RemoveResParent() { return; }
 
 bool ReturnInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert((ret_type->GetAttrType() == replacer->GetBaseType()->GetAttrType()) && replacer->IsOprand());
     if (replacee == ret_value) {
         ret_value = replacer;
         return true;
@@ -109,7 +110,7 @@ std::string JumpInst::tollvmIR() {
 
 BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, CfgNodePtr block)
     : cond(_cond), iftrue(_br1), iffalse(_br2), Instruction(Branch, block) {
-    assert(cond->getBaseType()->BoolType());
+    assert(cond->GetBaseType()->BoolType() && cond->IsOprand());
     assert(parent != nullptr);
     if (iftrue != nullptr) {
         parent->AddSuccessor(iftrue);
@@ -158,6 +159,7 @@ void BranchInst::ReplaceTarget(CfgNodePtr i, CfgNodePtr j) {
 void BranchInst::RemoveResParent() { return; }
 
 bool BranchInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert(replacer->GetBaseType()->BoolType() && replacer->IsOprand());
     if (replacee == cond) {
         cond = replacer;
         return true;

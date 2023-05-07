@@ -6,8 +6,8 @@
 
 IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
     : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
-    assert(lhs->getBaseType()->IntType() && lhs->IsOprand());
-    assert(rhs->getBaseType()->IntType() && rhs->IsOprand());
+    assert(lhs->GetBaseType()->IntType() && lhs->IsOprand());
+    assert(rhs->GetBaseType()->IntType() && rhs->IsOprand());
 }
 
 IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
@@ -23,6 +23,20 @@ VariablePtr IBinaryInst::DoIBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
     _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
+}
+
+bool IBinaryInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert(replacer->GetBaseType()->IntType() && replacer->IsOprand());
+    bool ret = false;
+    if (replacee == lhs) {
+        lhs = replacer;
+        ret = true;
+    }
+    if (replacee == rhs) {
+        rhs = replacer;
+        ret = true;
+    }
+    return ret;
 }
 
 std::string IBinaryInst::tollvmIR() {
@@ -64,8 +78,8 @@ std::string IBinaryInst::tollvmIR() {
 
 FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
     : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
-    assert(lhs->getBaseType()->FloatType() && lhs->IsOprand());
-    assert(rhs->getBaseType()->FloatType() && rhs->IsOprand());
+    assert(lhs->GetBaseType()->FloatType() && lhs->IsOprand());
+    assert(rhs->GetBaseType()->FloatType() && rhs->IsOprand());
 }
 
 FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
@@ -81,6 +95,20 @@ VariablePtr FBinaryInst::DoFBinOperate(OpCode _op, BaseValuePtr _lhs, BaseValueP
     _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
+}
+
+bool FBinaryInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert(replacer->GetBaseType()->FloatType() && replacer->IsOprand());
+    bool ret = false;
+    if (replacee == lhs) {
+        lhs = replacer;
+        ret = true;
+    }
+    if (replacee == rhs) {
+        rhs = replacer;
+        ret = true;
+    }
+    return ret;
 }
 
 std::string FBinaryInst::tollvmIR() {

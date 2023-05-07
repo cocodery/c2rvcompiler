@@ -9,9 +9,9 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr) : BaseValue(list_t
     assert(const_arr.size() == list_type->GetCapacity());
 }
 
-void ConstArray::fixValue(ATTR_TYPE _type) {
+void ConstArray::FixValue(ATTR_TYPE _type) {
     for (auto &&value : const_arr) {
-        value->fixValue(_type);
+        value->FixValue(_type);
     }
 }
 
@@ -24,9 +24,9 @@ std::string ConstArray::tollvmIR() {
 
     ss << '[';
     size_t size = const_arr.size();
-    ss << const_arr[0]->getBaseType()->tollvmIR() << ' ' << const_arr[0]->tollvmIR();
+    ss << const_arr[0]->GetBaseType()->tollvmIR() << ' ' << const_arr[0]->tollvmIR();
     for (size_t idx = 1; idx < size; ++idx) {
-        ss << ", " << const_arr[idx]->getBaseType()->tollvmIR() << ' ' << const_arr[idx]->tollvmIR();
+        ss << ", " << const_arr[idx]->GetBaseType()->tollvmIR() << ' ' << const_arr[idx]->tollvmIR();
     }
 
     ss << ']';

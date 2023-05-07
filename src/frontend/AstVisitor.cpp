@@ -136,12 +136,12 @@ std::any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
 
     for (auto &&def_node : ctx->constDef()) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
-        value->fixValue(cur_type);
+        value->FixValue(cur_type);
 
         cur_table->InsertSymbol(name, value);
         // for Local Constant-Array
         // store one copy at Global-Table to generate in .data section
-        if (cur_position == LOCAL && value->getBaseType()->IsArray()) {
+        if (cur_position == LOCAL && value->GetBaseType()->IsArray()) {
             comp_unit.InsertSymbol(name, value);
         }
     }
@@ -189,7 +189,7 @@ std::any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
 
     for (auto &&def_node : var_def) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
-        value->fixValue(cur_type);
+        value->FixValue(cur_type);
 
         cur_table->InsertSymbol(name, value);
     }
@@ -409,7 +409,7 @@ std::any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
     ptr_or_not = POINTER;
     BaseValuePtr store_addr = std::any_cast<BaseValuePtr>(ctx->lVal()->accept(this));
     ptr_or_not = NOTPTR;
-    assert(store_addr->getBaseType()->IsMutable());
+    assert(store_addr->GetBaseType()->IsMutable());
     // in SysY, only care about '='
     StoreInst::DoStoreValue(store_addr, store_value, cur_block);
     return nullptr;
@@ -570,7 +570,7 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
         assert(ctx->exp() != nullptr);
         ptr_or_not = NOTPTR;
         BaseValuePtr ret_value = Value::ScalarTypeConvert(
-            ret_type->getAttrType(), std::any_cast<BaseValuePtr>(ctx->exp()->accept(this)), cur_block);
+            ret_type->GetAttrType(), std::any_cast<BaseValuePtr>(ctx->exp()->accept(this)), cur_block);
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
@@ -590,7 +590,7 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
     BaseValuePtr address = ResolveTable(name);
     if (address->IsConstant()) return address;
 
-    BaseTypePtr type_addr = address->getBaseType();
+    BaseTypePtr type_addr = address->GetBaseType();
     assert(type_addr->IsPointer());
     auto &&exp_list = ctx->exp();
     if (type_addr->IsScalar() && !type_addr->IsParameter()) {
@@ -656,15 +656,15 @@ std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
     ATTR_POINTER last_ptr_or_not = ptr_or_not;
     for (size_t idx = 0; idx < rparam_size; ++idx) {
         BaseValuePtr fparam = fparam_list[idx];
-        ptr_or_not = fparam->getBaseType()->getAttrPointer();
+        ptr_or_not = fparam->GetBaseType()->GetAttrPointer();
         BaseValuePtr rparam = std::any_cast<BaseValuePtr>(rparam_node[idx]->accept(this));
 
-        BaseTypePtr type_rparam = rparam->getBaseType();
-        BaseTypePtr type_fparam = fparam->getBaseType();
+        BaseTypePtr type_rparam = rparam->GetBaseType();
+        BaseTypePtr type_fparam = fparam->GetBaseType();
 
         if (type_fparam->IsNotPtr()) {
             assert(type_rparam->IsScalar());
-            rparam = Value::ScalarTypeConvert(type_fparam->getAttrType(), rparam, cur_block);
+            rparam = Value::ScalarTypeConvert(type_fparam->GetAttrType(), rparam, cur_block);
         }
         rparam_list.push_back(rparam);
     }
@@ -874,8 +874,8 @@ ArrDims AstVisitor::GetArrayDims(std::vector<SysYParser::ConstExpContext *> &con
     for (auto &&const_exp : constExpVec) {
         BaseValuePtr value = std::any_cast<BaseValuePtr>(const_exp->accept(this));
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
-        constant->fixValue(INT32);
-        arr_dims.push_back(std::get<int32_t>(constant->getValue()));
+        constant->FixValue(INT32);
+        arr_dims.push_back(std::get<int32_t>(constant->GetValue()));
     }
     return arr_dims;
 }
@@ -914,10 +914,10 @@ SymbolTable *AstVisitor::InitParamList(CfgNodePtr first_block, SymbolTable *pare
     for (size_t idx = 0; idx < size; ++idx) {
         auto &&name = param_name[idx];
         auto &&param = param_list[idx];
-        if (param->getBaseType()->IsPointer()) {
+        if (param->GetBaseType()->IsPointer()) {
             new_table->InsertSymbol(name, param);
         } else {
-            ATTR_TYPE _type = param->getBaseType()->getAttrType();
+            ATTR_TYPE _type = param->GetBaseType()->GetAttrType();
             BaseTypePtr ty_stored = (_type == INT32) ? type_int_L : type_float_L;
             BaseTypePtr ty_alloca = (_type == INT32) ? type_int_ptr_L : type_float_ptr_L;
             BaseValuePtr addr_alloca = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, first_block);
@@ -930,7 +930,7 @@ SymbolTable *AstVisitor::InitParamList(CfgNodePtr first_block, SymbolTable *pare
 
 void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
                                     CfgNodePtr cur_block) {
-    ATTR_TYPE _type = list_type->getAttrType();
+    ATTR_TYPE _type = list_type->GetAttrType();
 
     ConstantPtr zero = (_type == INT32) ? zero_int32 : zero_float;
     ArrDims dim_size = list_type->GetDimSize();

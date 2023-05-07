@@ -27,10 +27,10 @@ bool BaseType::IsLocal() const { return (attr_position == LOCAL); }
 bool BaseType::IsParameter() const { return (attr_position == PARAMETER); }
 bool BaseType::IsGlobal() const { return (attr_position == GLOBAL); }
 
-ATTR_TYPE BaseType::getAttrType() const { return attr_type; }
+ATTR_TYPE BaseType::GetAttrType() const { return attr_type; }
 
-ATTR_MUTABLE BaseType::getAttrMutable() const { return attr_mutable; }
+ATTR_MUTABLE BaseType::GetAttrMutable() const { return attr_mutable; }
 
-ATTR_POINTER BaseType::getAttrPointer() const { return attr_pointer; }
+ATTR_POINTER BaseType::GetAttrPointer() const { return attr_pointer; }
 
-ATTR_SCALAR BaseType::getAttrScalar() const { return attr_scalar; }
+ATTR_SCALAR BaseType::GetAttrScalar() const { return attr_scalar; }

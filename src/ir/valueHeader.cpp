@@ -25,7 +25,7 @@ BaseValuePtr Value::UnaryOperate(const OpCode op, const ConstantPtr oprand) {
                     assert(false);
             }
         },
-        oprand->getValue());
+        oprand->GetValue());
 
     ScalarTypePtr _stype = (_type == INT32) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
     return Constant::CreatePtr(_stype, _value);
@@ -98,7 +98,7 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, const ConstantPtr lhs, const 
                     assert(false);
             }
         },
-        lhs->getValue(), rhs->getValue());
+        lhs->GetValue(), rhs->GetValue());
 
     ScalarTypePtr _stype = (_type == INT32) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
 
@@ -111,7 +111,7 @@ BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePt
     if (oprand->IsConstant()) {
         return UnaryOperate(op, std::static_pointer_cast<Constant>(oprand));
     } else {
-        ATTR_TYPE _type = oprand->getBaseType()->getAttrType();
+        ATTR_TYPE _type = oprand->GetBaseType()->GetAttrType();
         ConstantPtr zero = (_type == BOOL) ? zero_bool : ((_type == INT32) ? zero_int32 : zero_float);
         if (op == OP_MINUS) {
             return BinaryOperate(OP_SUB, zero, oprand, block);
@@ -134,8 +134,8 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
     BaseValuePtr i_lhs = lhs, f_lhs = lhs;
     BaseValuePtr i_rhs = rhs, f_rhs = rhs;
 
-    ATTR_TYPE lhs_type = lhs->getBaseType()->getAttrType();
-    ATTR_TYPE rhs_type = rhs->getBaseType()->getAttrType();
+    ATTR_TYPE lhs_type = lhs->GetBaseType()->GetAttrType();
+    ATTR_TYPE rhs_type = rhs->GetBaseType()->GetAttrType();
 
     if (OP_ADD <= op && op <= OP_RSHIFT) {
         // when do arithmetic operation, lhs_type == rhs_type in { INT32, FLOAT }
@@ -181,7 +181,7 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
 
 BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr convertee, CfgNodePtr block) {
     assert(convertee->IsOprand());
-    ATTR_TYPE type_convertee = convertee->getBaseType()->getAttrType();
+    ATTR_TYPE type_convertee = convertee->GetBaseType()->GetAttrType();
     // if type_convert == type_convertee, no need to convert
     if (type_convert == type_convertee) {
         return convertee;
@@ -192,8 +192,8 @@ BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
         ScalarTypePtr _stype = (type_convertee == INT32)   ? type_const_int
                                : (type_convertee == FLOAT) ? type_const_float
                                                            : type_const_bool;
-        ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->getValue());
-        constant->fixValue(type_convert);
+        ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->GetValue());
+        constant->FixValue(type_convert);
         return constant;
     }
     // use instruction to convert

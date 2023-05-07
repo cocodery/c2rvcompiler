@@ -93,9 +93,9 @@ std::string NormalFunction::tollvmIR() {
     size_t param_size = param_list.size();
     if (param_size > 0) {
         size_t idx = 0;
-        ss << param_list[idx]->getBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
+        ss << param_list[idx]->GetBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
         for (idx = 1; idx < param_size; ++idx) {
-            ss << ", " << param_list[idx]->getBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
+            ss << ", " << param_list[idx]->GetBaseType()->tollvmIR() << " " << param_list[idx]->tollvmIR();
         }
     }
 
@@ -128,9 +128,9 @@ std::string LibraryFunction::tollvmIR() {
     size_t param_size = param_list.size();
     if (param_size > 0) {
         size_t idx = 0;
-        ss << param_list[idx]->getBaseType()->tollvmIR();
+        ss << param_list[idx]->GetBaseType()->tollvmIR();
         for (idx = 1; idx < param_size; ++idx) {
-            ss << ", " << param_list[idx]->getBaseType()->tollvmIR();
+            ss << ", " << param_list[idx]->GetBaseType()->tollvmIR();
         }
     }
     ss << ")";

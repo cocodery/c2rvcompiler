@@ -18,7 +18,7 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
     }
     llir << "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"" << endl;
     for (auto [name, glb_value] : glb_table.GetNameValueMap()) {
-        BaseTypePtr &&type = glb_value->getBaseType();
+        BaseTypePtr &&type = glb_value->GetBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->IsImMutable() && type->IsScalar()) {
             llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4";
@@ -30,9 +30,9 @@ void CompilationUnit::generatellvmIR(std::string &irfile) {
                 llir << "global ";
             }
             BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
-            llir << init_value->getBaseType()->tollvmIR() << " " << init_value->tollvmIR() << ", align 4";
+            llir << init_value->GetBaseType()->tollvmIR() << " " << init_value->tollvmIR() << ", align 4";
         }
-        llir << "; " << name << ' ' << glb_value->getBaseType()->tollvmIR() << endl;
+        llir << "; " << name << ' ' << glb_value->GetBaseType()->tollvmIR() << endl;
     }
     llir << endl << this->func_talbe << endl;
 }

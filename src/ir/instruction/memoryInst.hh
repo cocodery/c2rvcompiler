@@ -73,6 +73,8 @@ class LoadInst : public UnaryInstruction {
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     std::string tollvmIR();
 };
 

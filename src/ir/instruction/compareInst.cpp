@@ -7,8 +7,8 @@
 ICmpInst::ICmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
     : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
-    assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
-    assert(lhs->getBaseType()->BoolType() || lhs->getBaseType()->IntType());
+    assert(lhs->GetBaseType()->GetAttrType() == rhs->GetBaseType()->GetAttrType());
+    assert(lhs->GetBaseType()->BoolType() || lhs->GetBaseType()->IntType());
 }
 
 ICmpInstPtr ICmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
@@ -23,6 +23,20 @@ VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
     _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
+}
+
+bool ICmpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert(replacer->GetBaseType()->IntType() && replacer->IsOprand());
+    bool ret = false;
+    if (replacee == lhs) {
+        lhs = replacer;
+        ret = true;
+    }
+    if (replacee == rhs) {
+        rhs = replacer;
+        ret = true;
+    }
+    return ret;
 }
 
 std::string ICmpInst::tollvmIR() {
@@ -51,7 +65,7 @@ std::string ICmpInst::tollvmIR() {
             assert(0);
             break;
     }
-    ss << " " << lhs->getBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
+    ss << " " << lhs->GetBaseType()->tollvmIR() << " " << lhs->tollvmIR() << ", " << rhs->tollvmIR();
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
         ss << "None";
@@ -68,8 +82,8 @@ std::string ICmpInst::tollvmIR() {
 FCmpInst::FCmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block)
     : BinaryInstruction(_res, _op, _lhs, _rhs, block) {
     assert(lhs->IsOprand() && rhs->IsOprand());
-    assert(lhs->getBaseType()->getAttrType() == rhs->getBaseType()->getAttrType());
-    assert(lhs->getBaseType()->FloatType());
+    assert(lhs->GetBaseType()->GetAttrType() == rhs->GetBaseType()->GetAttrType());
+    assert(lhs->GetBaseType()->FloatType());
 }
 
 FCmpInstPtr FCmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
@@ -84,6 +98,20 @@ VariablePtr FCmpInst::DoFCompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
     _rhs->InsertUser(inst);
     block->InsertInstBack(inst);
     return _res;
+}
+
+bool FCmpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    assert(replacer->GetBaseType()->FloatType() && replacer->IsOprand());
+    bool ret = false;
+    if (replacee == lhs) {
+        lhs = replacer;
+        ret = true;
+    }
+    if (replacee == rhs) {
+        rhs = replacer;
+        ret = true;
+    }
+    return ret;
 }
 
 std::string FCmpInst::tollvmIR() {

@@ -16,6 +16,8 @@ class IBinaryInst : public BinaryInstruction {
 
     static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
     std::string tollvmIR();
 };
 
@@ -31,6 +33,8 @@ class FBinaryInst : public BinaryInstruction {
     ~FBinaryInst() = default;
 
     static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
 };

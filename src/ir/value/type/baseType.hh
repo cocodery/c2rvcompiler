@@ -71,13 +71,13 @@ class BaseType {
     bool IsParameter() const;
     bool IsGlobal() const;
 
-    ATTR_TYPE getAttrType() const;
+    ATTR_TYPE GetAttrType() const;
 
-    ATTR_MUTABLE getAttrMutable() const;
+    ATTR_MUTABLE GetAttrMutable() const;
 
-    ATTR_POINTER getAttrPointer() const;
+    ATTR_POINTER GetAttrPointer() const;
 
-    ATTR_SCALAR getAttrScalar() const;
+    ATTR_SCALAR GetAttrScalar() const;
 
     virtual std::string tollvmIR() = 0;
 };

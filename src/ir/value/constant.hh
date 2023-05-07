@@ -18,11 +18,11 @@ class Constant : public BaseValue {
     Constant(ScalarTypePtr, ConstType);
     ~Constant() = default;
 
-    const ConstType &getValue() const;
+    const ConstType &GetValue() const;
 
     bool IsConstant();
 
-    void fixValue(ATTR_TYPE);
+    void FixValue(ATTR_TYPE);
 
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 

@@ -26,7 +26,7 @@ class BaseValue : public Use {
     BaseValue(BaseTypePtr);
     ~BaseValue() = default;
 
-    BaseTypePtr getBaseType();
+    BaseTypePtr GetBaseType();
 
     bool IsOprand();
 
@@ -34,7 +34,7 @@ class BaseValue : public Use {
 
     virtual bool IsConstant();
 
-    virtual void fixValue(ATTR_TYPE);
+    virtual void FixValue(ATTR_TYPE);
 
     InstList GetUserList() const;
     void InsertUser(InstPtr);
