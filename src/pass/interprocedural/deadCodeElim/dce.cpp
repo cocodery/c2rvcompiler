@@ -1,4 +1,4 @@
-#include "deadCodeElim.hh"
+#include "dce.hh"
 
 void DeadCodeElimination::EliminateUselessCode(CfgNodeList allNodes) {
     std::map<InstPtr, bool> visitMap;
