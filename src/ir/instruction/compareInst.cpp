@@ -26,7 +26,8 @@ VariablePtr ICmpInst::DoICompare(OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rh
 }
 
 bool ICmpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
-    assert(replacer->GetBaseType()->IntType() && replacer->IsOprand());
+    assert(replacer->IsOprand());
+    assert(replacer->GetBaseType()->BoolType() || replacer->GetBaseType()->IntType());
     bool ret = false;
     if (replacee == lhs) {
         lhs = replacer;
