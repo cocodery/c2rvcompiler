@@ -17,8 +17,8 @@ enum OpCode {
     FpToSi,
     Zext,
     // only exist in front-end
-    OP_NOT,     // unary not, replaced by OP_EQU in expr
-    OP_MINUS,   // unary minus, replaced by OP_SUB in expr
+    OP_NOT,    // unary not, replaced by OP_EQU in expr
+    OP_MINUS,  // unary minus, replaced by OP_SUB in expr
     // Binary
     // IBinary
     // FBinary
@@ -38,3 +38,5 @@ enum OpCode {
     OP_EQU,  // equal
     OP_NEQ,  // not equal
 };
+
+bool IsCommutative(OpCode);

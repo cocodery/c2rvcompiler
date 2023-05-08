@@ -73,6 +73,8 @@ class Instruction {
     virtual std::string tollvmIR() = 0;
 };
 
+class UnaryInstruction;
+using UnaryInstPtr = std::shared_ptr<UnaryInstruction>;
 class UnaryInstruction : public Instruction {
    protected:
     BaseValuePtr oprand;
@@ -92,6 +94,8 @@ class UnaryInstruction : public Instruction {
     virtual std::string tollvmIR() = 0;
 };
 
+class BinaryInstruction;
+using BinaryInstPtr = std::shared_ptr<BinaryInstruction>;
 class BinaryInstruction : public Instruction {
    protected:
     BaseValuePtr lhs;
