@@ -5,8 +5,8 @@
 //===-----------------------------------------------------------===//
 
 AllocaInst::AllocaInst(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block)
-    : type_stored(_ty_stored), addr_alloca(_addr), Instruction(Alloca, block) {
-    BaseTypePtr type_alloca = addr_alloca->GetBaseType();
+    : type_stored(_ty_stored), Instruction(_addr, Alloca, block) {
+    BaseTypePtr type_alloca = result->GetBaseType();
     assert(type_stored->IntType() || type_stored->FloatType());
     assert(type_stored->GetAttrType() == type_alloca->GetAttrType());
     assert(type_stored->IsNotPtr() && type_alloca->IsPointer());
@@ -25,9 +25,9 @@ VariablePtr AllocaInst::DoAllocaAddr(BaseTypePtr _ty_stored, BaseTypePtr _ty_all
 }
 
 const BaseTypePtr AllocaInst::GetAllocaType() const { return type_stored; }
-const VariablePtr AllocaInst::GetAllocaAddr() const { return addr_alloca; }
+const VariablePtr AllocaInst::GetAllocaAddr() const { return result; }
 
-void AllocaInst::RemoveResParent() { addr_alloca->SetParent(nullptr); }
+void AllocaInst::RemoveResParent() { result->SetParent(nullptr); }
 
 bool AllocaInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
@@ -35,7 +35,7 @@ const BaseValueList AllocaInst::UsedValue() { return BaseValueList(); }
 
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
-    ss << addr_alloca->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
+    ss << result->tollvmIR() << " = alloca " << type_stored->tollvmIR() << ", align 4";
     ss << "; Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
         ss << "None";
@@ -50,7 +50,7 @@ std::string AllocaInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block)
-    : store_addr(addr), store_value(value), Instruction(Store, block) {
+    : store_addr(addr), store_value(value), Instruction(nullptr, Store, block) {
     BaseTypePtr type_addr = store_addr->GetBaseType();
     BaseTypePtr type_value = store_value->GetBaseType();
     assert(type_addr->GetAttrType() == type_value->GetAttrType());
@@ -169,9 +169,9 @@ std::string LoadInst::tollvmIR() {
 
 GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                      CfgNodePtr block)
-    : target_ptr(_ptr), store_type(_type), base_addr(_addr), offset_list(_off), Instruction(Gep, block) {
-    assert(target_ptr->GetBaseType()->GetAttrType() == store_type->GetAttrType());
-    assert(target_ptr->GetBaseType()->GetAttrType() == base_addr->GetBaseType()->GetAttrType());
+    : store_type(_type), base_addr(_addr), offset_list(_off), Instruction(_ptr, Gep, block) {
+    assert(result->GetBaseType()->GetAttrType() == store_type->GetAttrType());
+    assert(result->GetBaseType()->GetAttrType() == base_addr->GetBaseType()->GetAttrType());
     assert(store_type->IsNotPtr() && base_addr->GetBaseType()->IsPointer());
     if (store_type->IsScalar()) {
         assert(offset_list.size() == 1);
@@ -200,7 +200,7 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     return _ptr;
 }
 
-void GetElementPtrInst::RemoveResParent() { target_ptr->SetParent(nullptr); }
+void GetElementPtrInst::RemoveResParent() { result->SetParent(nullptr); }
 
 bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
@@ -230,7 +230,7 @@ const BaseValueList GetElementPtrInst::UsedValue() {
 
 std::string GetElementPtrInst::tollvmIR() {
     std::stringstream ss;
-    ss << target_ptr->tollvmIR() << " = getelementptr inbounds " << store_type->tollvmIR();
+    ss << result->tollvmIR() << " = getelementptr inbounds " << store_type->tollvmIR();
     ss << ", " << base_addr->GetBaseType()->tollvmIR() << ' ' << base_addr->tollvmIR();
     for (auto &&offset : offset_list) {
         ss << ", " << offset->GetBaseType()->tollvmIR() << ' ' << offset->tollvmIR();

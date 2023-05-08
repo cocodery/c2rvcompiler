@@ -6,7 +6,8 @@
 
 size_t Instruction::inst_idx = 1;
 
-Instruction::Instruction(OpCode _code, CfgNodePtr _parent) : idx(inst_idx++), opcode(_code), parent(_parent) {}
+Instruction::Instruction(VariablePtr _res, OpCode _code, CfgNodePtr _parent)
+    : idx(inst_idx++), result(_res), opcode(_code), parent(_parent) {}
 
 const OpCode Instruction::GetOpCode() const { return opcode; }
 const size_t Instruction::GetInstIdx() const { return idx; }
@@ -33,6 +34,10 @@ bool Instruction::IsCriticalOperation() const {
     return IsStoreInst() || IsCallInst() || IsReturnInst() || IsBranchInst();
 }
 
+bool Instruction::IsValueNumberInst() const { return IsTwoOprandInst() || IsGepInst(); }
+
+VariablePtr Instruction::GetResult() const { return result; }
+
 std::pair<BaseValuePtr, BaseValuePtr> Instruction::DoFlod() const { return {nullptr, nullptr}; }
 
 void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
@@ -42,9 +47,8 @@ void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
 //===-----------------------------------------------------------===//
 
 UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _opr, CfgNodePtr node)
-    : result(_res), oprand(_opr), Instruction(_op, node) {}
+    : oprand(_opr), Instruction(_res, _op, node) {}
 
-BaseValuePtr UnaryInstruction::GetResult() const { return result; }
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
 std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
@@ -97,9 +101,8 @@ const BaseValueList UnaryInstruction::UsedValue() { return BaseValueList({oprand
 
 BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
                                      CfgNodePtr node)
-    : result(_res), lhs(_lhs), rhs(_rhs), Instruction(_op, node) {}
+    : lhs(_lhs), rhs(_rhs), Instruction(_res, _op, node) {}
 
-BaseValuePtr BinaryInstruction::GetResult() const { return result; }
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
 

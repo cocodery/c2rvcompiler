@@ -13,7 +13,6 @@ using CallInstPtr = std::shared_ptr<CallInst>;
 class CallInst : public Instruction {
    private:
     ScalarTypePtr ret_type;
-    VariablePtr ret_value;
     BaseFuncPtr callee_func;
     ParamList rparam_list;
 
@@ -58,7 +57,6 @@ using PhiInstList = std::list<PhiInstPtr>;
 
 class PhiInst : public Instruction {
    private:
-    VariablePtr result;
     std::list<std::pair<BaseValuePtr, CfgNodePtr>> datalist;
 
    public:
@@ -66,8 +64,6 @@ class PhiInst : public Instruction {
     ~PhiInst() = default;
 
     static PhiInstPtr CreatePtr(BaseTypePtr, CfgNodePtr);
-
-    VariablePtr GetResult();
 
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 

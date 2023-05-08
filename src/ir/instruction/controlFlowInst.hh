@@ -18,6 +18,8 @@ class ReturnInst : public Instruction {
 
     static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
 
+    BaseValuePtr GetRetValue() const;
+
     void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);

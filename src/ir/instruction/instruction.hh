@@ -20,14 +20,17 @@ using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
 class Instruction {
    protected:
     size_t idx;
-    CfgNodePtr parent;
+
+    VariablePtr result;
     OpCode opcode;
+
+    CfgNodePtr parent;
 
    private:
     static size_t inst_idx;
 
    public:
-    Instruction(OpCode, CfgNodePtr);
+    Instruction(VariablePtr, OpCode, CfgNodePtr);
     ~Instruction() = default;
 
     const OpCode GetOpCode() const;
@@ -51,7 +54,11 @@ class Instruction {
     bool IsCallInst() const;
     bool IsPhiInst() const;
 
+    bool IsValueNumberInst() const;
+
     bool IsCriticalOperation() const;
+
+    VariablePtr GetResult() const;
 
     virtual std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
 
@@ -68,14 +75,12 @@ class Instruction {
 
 class UnaryInstruction : public Instruction {
    protected:
-    VariablePtr result;
     BaseValuePtr oprand;
 
    public:
     UnaryInstruction(VariablePtr, OpCode, BaseValuePtr, CfgNodePtr);
     ~UnaryInstruction() = default;
 
-    BaseValuePtr GetResult() const;
     BaseValuePtr GetOprand() const;
 
     std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
@@ -89,7 +94,6 @@ class UnaryInstruction : public Instruction {
 
 class BinaryInstruction : public Instruction {
    protected:
-    VariablePtr result;
     BaseValuePtr lhs;
     BaseValuePtr rhs;
 
@@ -97,7 +101,6 @@ class BinaryInstruction : public Instruction {
     BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BinaryInstruction() = default;
 
-    BaseValuePtr GetResult() const;
     BaseValuePtr GetLHS() const;
     BaseValuePtr GetRHS() const;
 

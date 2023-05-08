@@ -10,7 +10,6 @@ using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 class AllocaInst : public Instruction {
    private:
     BaseTypePtr type_stored;
-    VariablePtr addr_alloca;
 
     static AllocaInstPtr CreatePtr(BaseTypePtr, VariablePtr, CfgNodePtr);
 
@@ -83,7 +82,6 @@ using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
 
 class GetElementPtrInst : public Instruction {
    private:
-    VariablePtr target_ptr;
     BaseTypePtr store_type;
     BaseValuePtr base_addr;
     BaseValueList offset_list;

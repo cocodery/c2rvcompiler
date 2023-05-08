@@ -5,12 +5,12 @@
 //===-----------------------------------------------------------===//
 
 CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block)
-    : ret_type(_type), ret_value(_ret), callee_func(_func), rparam_list(_list), Instruction(Call, block) {
+    : ret_type(_type), callee_func(_func), rparam_list(_list), Instruction(_ret, Call, block) {
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
-        assert(ret_type->GetAttrType() == ret_value->GetBaseType()->GetAttrType());
-        assert(ret_value->IsOprand());
+        assert(ret_type->GetAttrType() == result->GetBaseType()->GetAttrType());
+        assert(result->IsOprand());
     }
     // param-type have been checked at `visitFuncRParams`
 }
@@ -31,8 +31,8 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
 }
 
 void CallInst::RemoveResParent() {
-    if (ret_value != nullptr) {
-        ret_value->SetParent(nullptr);
+    if (result != nullptr) {
+        result->SetParent(nullptr);
     }
 }
 
@@ -59,8 +59,8 @@ const BaseValueList CallInst::UsedValue() {
 
 std::string CallInst::tollvmIR() {
     std::stringstream ss;
-    if (ret_value != nullptr) {
-        ss << ret_value->tollvmIR() << " = ";
+    if (result != nullptr) {
+        ss << result->tollvmIR() << " = ";
     }
     ss << "call " << ret_type->tollvmIR() << " @" << callee_func->GetFuncName();
     ss << "(";
@@ -137,7 +137,7 @@ std::string BitCastInst::tollvmIR() {
 //                     PhiInst Implementation
 //===-----------------------------------------------------------===//
 
-PhiInst::PhiInst(VariablePtr _res, CfgNodePtr block) : result(_res), Instruction(Phi, block) {}
+PhiInst::PhiInst(VariablePtr _res, CfgNodePtr block) : Instruction(_res, Phi, block) {}
 
 PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     assert(_type->IsScalar() && _type->IsNotPtr());
@@ -147,8 +147,6 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     block->InsertInstFront(inst);
     return inst;
 }
-
-VariablePtr PhiInst::GetResult() { return result; }
 
 void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr block) {
     assert(inst->result->GetBaseType()->GetAttrType() == _value->GetBaseType()->GetAttrType() && _value->IsOprand());
