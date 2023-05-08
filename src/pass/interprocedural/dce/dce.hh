@@ -6,8 +6,8 @@
 
 #include "IR.hh"
 
-namespace DeadCodeElimination {
+namespace DCE {
 void EliminateUselessCode(NormalFuncPtr);
 void EliminateUselessControlFlow(NormalFuncPtr);
 void EliminateUnreachableCode(NormalFuncPtr);
-}  // namespace DeadCodeElimination
+}  // namespace DCE

@@ -1,19 +1,15 @@
 #include "ssa.hh"
 
-StaticSingleAssignment::RenameData::RenameData(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _v)
+SSA::RenameData::RenameData(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _v)
     : node(_node), pred(_pred), valuelist(_v) {}
 
-StaticSingleAssignment::RenameDatePtr StaticSingleAssignment::RenameData::CreatePtr(CfgNodePtr _node, CfgNodePtr _pred,
-                                                                                    ValueVector _valuelist) {
+SSA::RenameDatePtr SSA::RenameData::CreatePtr(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _valuelist) {
     return std::make_shared<RenameData>(_node, _pred, _valuelist);
 }
 
-void StaticSingleAssignment::SSAConstruction(NormalFuncPtr func) {
+void SSA::SSAConstruction(NormalFuncPtr func) {
     auto entry = func->GetEntryNode();
     auto allNodes = func->TopoSortFromEntry();
-
-    DominanceAnalysis::ComputeDominanceInfo(entry, allNodes);
-    DominanceAnalysis::ComputeDominanceFrontier(allNodes);
 
     std::vector<std::set<CfgNodePtr>> defBlocks;
     std::list<AllocaInstPtr> allocaInsts;

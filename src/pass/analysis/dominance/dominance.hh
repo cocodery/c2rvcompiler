@@ -5,7 +5,9 @@
 
 #include "IR.hh"
 
-namespace DominanceAnalysis {
+namespace Dominance {
 void ComputeDominanceInfo(CfgNodePtr, CfgNodeList);
 void ComputeDominanceFrontier(CfgNodeList);
-}  // namespace DominanceAnalysis
+
+void DominanceAnalysis(NormalFuncPtr);
+}  // namespace Dominance

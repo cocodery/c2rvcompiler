@@ -1,21 +1,10 @@
-#include "domAnalysis.hh"
+#include "dominance.hh"
 
-void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
+void Dominance::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
     // dominator-set
-    DominatorSet allNodeSet = DominatorSet(allNodes.begin(), allNodes.end());
-
-    auto InitDominatorSet = [&entry, &allNodes, &allNodeSet]() {
-        entry->InsertDominator(entry);
-
-        for (auto &&node : allNodes) {
-            if (node == entry) continue;
-            node->SetDominatorSet(allNodeSet);
-        }
-    };
-
-    auto ComputeDominatorSet = [&entry, &allNodes, &allNodeSet] {
+    auto ComputeDominatorSet = [&entry, &allNodes] {
         auto &&IntersectPredecessorsDom = [&](CfgNodePtr node) {
-            DominatorSet dom_set = allNodeSet;
+            DominatorSet dom_set = node->GetDominatorSet();
             auto &&predcessors = node->GetPredcessors();
             std::for_each(predcessors.begin(), predcessors.end(), [&dom_set](const auto &pred) {
                 DominatorSet temp = DominatorSet();  // To Collect Intersection
@@ -41,10 +30,9 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
             }
         }
     };
-
-    InitDominatorSet();
     ComputeDominatorSet();
 
+    // immediate-dominator
     auto ComputeImmediateDominator = [&entry](const auto &node) {
         DominatorSet dominator_set = node->GetDominatorSet();
         for (auto &&dominator : dominator_set) {
@@ -64,7 +52,7 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
     }
 }
 
-void DominanceAnalysis::ComputeDominanceFrontier(CfgNodeList allNodes) {
+void Dominance::ComputeDominanceFrontier(CfgNodeList allNodes) {
     std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) { node->GetDomFrontier().clear(); });
     std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) {
         if (node->GetPredcessors().size() > 1) {
@@ -77,4 +65,26 @@ void DominanceAnalysis::ComputeDominanceFrontier(CfgNodeList allNodes) {
             }
         }
     });
+}
+
+void Dominance::DominanceAnalysis(NormalFuncPtr func) {
+    auto entry = func->GetEntryNode();
+    auto allNodes = func->TopoSortFromEntry();
+
+    auto Initialization = [&entry, &allNodes]() {
+        DominatorSet allNodeSet = DominatorSet(allNodes.begin(), allNodes.end());
+        entry->InsertDominator(entry);
+
+        for (auto &&node : allNodes) {
+            node->SetImmediateDominator(nullptr);
+            node->GetDominateChildren().clear();
+            node->GetDomFrontier().clear();
+            if (node == entry) continue;
+            node->SetDominatorSet(allNodeSet);
+        }
+    };
+
+    Initialization();
+    ComputeDominanceInfo(entry, allNodes);
+    ComputeDominanceFrontier(allNodes);
 }

@@ -9,9 +9,8 @@
 #include <vector>
 
 #include "IR.hh"
-#include "domAnalysis.hh"
 
-namespace StaticSingleAssignment {
+namespace SSA {
 
 using ValueVector = std::vector<BaseValuePtr>;
 
@@ -28,4 +27,4 @@ struct RenameData {
 };
 
 void SSAConstruction(NormalFuncPtr);
-}  // namespace StaticSingleAssignment
+}  // namespace SSA

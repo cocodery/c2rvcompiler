@@ -3,20 +3,20 @@
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
 void Optimization::DoOptimization() {
-    for (auto &&normal_func : comp_unit.GetNormalFuncTable()) {
-        CfgNodePtr entry = normal_func->GetEntryNode();
-        CfgNodePtr exit = normal_func->GetExitNode();
-        CfgNodeList allNodes = normal_func->TopoSortFromEntry();
+    for (auto &&func : comp_unit.GetNormalFuncTable()) {
+        Variable::SetVarIdx(func->GetVarIdx());
+        BasicBlock::SetBlkIdx(func->GetBlkIdx());
 
-        Variable::SetVarIdx(normal_func->GetVarIdx());
-        BasicBlock::SetBlkIdx(normal_func->GetBlkIdx());
+        DCE::EliminateUnreachableCode(func);
 
-        DeadCodeElimination::EliminateUnreachableCode(exit, allNodes);
+        Dominance::DominanceAnalysis(func);
 
-        StaticSingleAssignment::SSAConstruction(entry, allNodes);
+        SSA::SSAConstruction(func);
 
-        DeadCodeElimination::EliminateUselessCode(allNodes);
+        GVN::DVNT(func);
 
-        DeadCodeElimination::EliminateUselessControlFlow(normal_func);
+        DCE::EliminateUselessCode(func);
+
+        DCE::EliminateUselessControlFlow(func);
     }
 }

@@ -1,6 +1,6 @@
 #include "dce.hh"
 
-void DeadCodeElimination::EliminateUselessCode(NormalFuncPtr func) {
+void DCE::EliminateUselessCode(NormalFuncPtr func) {
     auto allNodes = func->TopoSortFromEntry();
 
     std::map<InstPtr, bool> visitMap;
@@ -18,7 +18,7 @@ void DeadCodeElimination::EliminateUselessCode(NormalFuncPtr func) {
         while (!WorkList.empty()) {
             auto &&front = WorkList.front();
             WorkList.pop();
-            for (auto &&value : front->UsedValue()) {
+            for (auto &&value : front->GetOprands()) {
                 auto &&inst_def_value = value->GetParent();
                 if (inst_def_value == nullptr) continue;
                 if (visitMap[inst_def_value] == false) {
@@ -51,7 +51,7 @@ void DeadCodeElimination::EliminateUselessCode(NormalFuncPtr func) {
     Sweep();
 }
 
-void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr func) {
+void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     auto FoldRedundantBranch = [](CfgNodePtr i, CfgNodePtr j) {
         i->RemoveLastInst();
         i->InsertInstBack(JumpInst::CreatePtr(j, i));
@@ -153,7 +153,7 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr func) {
     Clean();
 }
 
-void DeadCodeElimination::EliminateUnreachableCode(NormalFuncPtr func) {
+void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
     auto exit = func->GetExitNode();
     auto allNodes = func->TopoSortFromEntry();
     // Solve the control flow graph from exit
