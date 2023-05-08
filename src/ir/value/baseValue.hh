@@ -32,7 +32,8 @@ class BaseValue : public Use {
 
     virtual const InstPtr GetParent() const;
 
-    virtual bool IsConstant();
+    virtual bool IsConstant() const;
+    virtual bool IsVariable() const;
 
     virtual void FixValue(ATTR_TYPE);
 

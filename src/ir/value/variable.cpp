@@ -12,6 +12,8 @@ Variable::Variable(BaseTypePtr _type, InstPtr inst) : BaseValue(_type), idx(var_
 void Variable::SetParent(InstPtr inst) { parent = inst; }
 const InstPtr Variable::GetParent() const { return parent; }
 
+bool Variable::IsVariable() const { return true; }
+
 void Variable::ResetVarIdx() { var_idx = 1; }
 size_t Variable::GetVarIdx() { return var_idx; }
 void Variable::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }

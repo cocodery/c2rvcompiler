@@ -19,6 +19,8 @@ class Variable : public BaseValue {
     void SetParent(InstPtr);
     const InstPtr GetParent() const;
 
+    bool IsVariable() const;
+
     static void ResetVarIdx();
     static size_t GetVarIdx();
     static void SetVarIdx(size_t);

@@ -20,4 +20,6 @@ BaseValuePtr BinaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr)
 
 BaseValuePtr ScalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
+bool ValueCompare(const BaseValuePtr, const BaseValuePtr);
+
 }  // namespace Value
