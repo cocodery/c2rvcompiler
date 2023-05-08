@@ -20,6 +20,8 @@ class CtrlFlowGraphNode : public BasicBlock {
     DominatorSet dominator_set;
 
     CfgNodePtr immediate_dominator;
+    DominatorSet dominate_children;
+
     DominatorSet dominance_frontier;
 
    public:
@@ -40,6 +42,9 @@ class CtrlFlowGraphNode : public BasicBlock {
 
     CfgNodePtr GetImmediateDominator();
     void SetImmediateDominator(CfgNodePtr);
+
+    DominatorSet &GetDominateChildren();
+    void InsertDominateChild(CfgNodePtr);
 
     void InsertDomFrontier(CfgNodePtr);
     DominatorSet &GetDomFrontier();

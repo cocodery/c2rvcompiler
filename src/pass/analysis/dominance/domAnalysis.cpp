@@ -58,7 +58,9 @@ void DominanceAnalysis::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNo
 
     for (auto &&node : allNodes) {
         if (node == entry) continue;
-        node->SetImmediateDominator(ComputeImmediateDominator(node));
+        auto idom = ComputeImmediateDominator(node);
+        node->SetImmediateDominator(idom);
+        idom->InsertDominateChild(node);
     }
 }
 
