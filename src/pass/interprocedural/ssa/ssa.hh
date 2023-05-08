@@ -27,5 +27,5 @@ struct RenameData {
     static RenameDatePtr CreatePtr(CfgNodePtr, CfgNodePtr, ValueVector);
 };
 
-void SSAConstruction(CfgNodePtr, CfgNodeList);
+void SSAConstruction(NormalFuncPtr);
 }  // namespace StaticSingleAssignment

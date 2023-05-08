@@ -8,7 +8,10 @@ StaticSingleAssignment::RenameDatePtr StaticSingleAssignment::RenameData::Create
     return std::make_shared<RenameData>(_node, _pred, _valuelist);
 }
 
-void StaticSingleAssignment::SSAConstruction(CfgNodePtr entry, CfgNodeList allNodes) {
+void StaticSingleAssignment::SSAConstruction(NormalFuncPtr func) {
+    auto entry = func->GetEntryNode();
+    auto allNodes = func->TopoSortFromEntry();
+
     DominanceAnalysis::ComputeDominanceInfo(entry, allNodes);
     DominanceAnalysis::ComputeDominanceFrontier(allNodes);
 

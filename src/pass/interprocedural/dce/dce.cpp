@@ -1,6 +1,8 @@
 #include "dce.hh"
 
-void DeadCodeElimination::EliminateUselessCode(CfgNodeList allNodes) {
+void DeadCodeElimination::EliminateUselessCode(NormalFuncPtr func) {
+    auto allNodes = func->TopoSortFromEntry();
+
     std::map<InstPtr, bool> visitMap;
     std::queue<InstPtr> WorkList;
 
@@ -49,16 +51,16 @@ void DeadCodeElimination::EliminateUselessCode(CfgNodeList allNodes) {
     Sweep();
 }
 
-void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func) {
+void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr func) {
     auto FoldRedundantBranch = [](CfgNodePtr i, CfgNodePtr j) {
         i->RemoveLastInst();
         i->InsertInstBack(JumpInst::CreatePtr(j, i));
     };
 
-    auto RemoveEmptyBlock = [&normal_func](CfgNodePtr i, CfgNodePtr j) {
+    auto RemoveEmptyBlock = [&func](CfgNodePtr i, CfgNodePtr j) {
         if (i->FindBlkAttr(ENTRY)) {
             j->AppendBlkAttr(ENTRY);
-            normal_func->SetEntryNode(j);
+            func->SetEntryNode(j);
             RemoveNode(i);
             return true;
         } else {
@@ -73,7 +75,7 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
         return false;
     };
 
-    auto CombineBlocks = [&normal_func](CfgNodePtr i, CfgNodePtr j) {
+    auto CombineBlocks = [&func](CfgNodePtr i, CfgNodePtr j) {
         i->RemoveLastInst();
         auto &&i_inst_list = i->GetInstList();
         auto &&j_inst_list = j->GetInstList();
@@ -82,7 +84,7 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
         j_inst_list = std::move(i_inst_list);
         j->AppendBlkAttr(i->GetBlockAttr());
         // if (j->FindBlkAttr(GORETURN | EXIT)) j->ClearSpecAttr(GORETURN);
-        if (j->FindBlkAttr(ENTRY)) normal_func->SetEntryNode(j);
+        if (j->FindBlkAttr(ENTRY)) func->SetEntryNode(j);
         // ReplacePredSucc(i, j);
         for (auto &&pred : i->GetPredcessors()) {
             pred->AddSuccessor(j);
@@ -141,9 +143,9 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
         return changed;
     };
 
-    auto Clean = [&OnePass, &normal_func]() {
+    auto Clean = [&OnePass, &func]() {
         while (true) {
-            auto &&post_order = normal_func->TopoSortFromExit();
+            auto &&post_order = func->TopoSortFromExit();
             if (!OnePass(post_order)) break;
         }
     };
@@ -151,7 +153,9 @@ void DeadCodeElimination::EliminateUselessControlFlow(NormalFuncPtr normal_func)
     Clean();
 }
 
-void DeadCodeElimination::EliminateUnreachableCode(CfgNodePtr exit, CfgNodeList allNodes) {
+void DeadCodeElimination::EliminateUnreachableCode(NormalFuncPtr func) {
+    auto exit = func->GetExitNode();
+    auto allNodes = func->TopoSortFromEntry();
     // Solve the control flow graph from exit
     // Identify the unreachable nodes in the control flow
     std::queue<CfgNodePtr> nodeQueue;
