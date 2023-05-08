@@ -33,7 +33,7 @@ bool ReturnInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     return false;
 }
 
-const BaseValueList ReturnInst::UsedValue() {
+const BaseValueList ReturnInst::GetOprands() const {
     BaseValueList valuelist = BaseValueList();
     if (!ret_type->VoidType()) valuelist.push_back(ret_value);
     return valuelist;
@@ -92,7 +92,7 @@ void JumpInst::RemoveResParent() { return; }
 
 bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
-const BaseValueList JumpInst::UsedValue() { return BaseValueList(); }
+const BaseValueList JumpInst::GetOprands() const { return BaseValueList(); }
 
 std::string JumpInst::tollvmIR() {
     std::stringstream ss;
@@ -169,7 +169,7 @@ bool BranchInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     return false;
 }
 
-const BaseValueList BranchInst::UsedValue() { return BaseValueList({cond}); }
+const BaseValueList BranchInst::GetOprands() const { return BaseValueList({cond}); }
 
 std::string BranchInst::tollvmIR() {
     std::stringstream ss;

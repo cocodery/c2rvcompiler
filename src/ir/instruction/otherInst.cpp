@@ -50,7 +50,7 @@ bool CallInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     return ret;
 }
 
-const BaseValueList CallInst::UsedValue() {
+const BaseValueList CallInst::GetOprands() const {
     BaseValueList valuelist = BaseValueList();
     std::for_each(rparam_list.begin(), rparam_list.end(),
                   [&valuelist](const auto &param) { valuelist.push_back(param); });
@@ -168,7 +168,7 @@ bool PhiInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     return ret;
 }
 
-const BaseValueList PhiInst::UsedValue() {
+const BaseValueList PhiInst::GetOprands() const {
     BaseValueList valuelist = BaseValueList();
     std::for_each(datalist.begin(), datalist.end(),
                   [&valuelist](const auto &pair) { valuelist.push_back(pair.first); });

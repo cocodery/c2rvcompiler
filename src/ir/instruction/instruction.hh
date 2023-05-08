@@ -60,6 +60,8 @@ class Instruction {
 
     VariablePtr GetResult() const;
 
+    virtual const BaseValueList GetOprands() const = 0;
+
     virtual std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
 
     virtual void ReplaceTarget(CfgNodePtr, CfgNodePtr);
@@ -67,8 +69,6 @@ class Instruction {
     virtual void RemoveResParent() = 0;
 
     virtual bool ReplaceSRC(BaseValuePtr, BaseValuePtr) = 0;
-
-    virtual const BaseValueList UsedValue() = 0;
 
     virtual std::string tollvmIR() = 0;
 };
@@ -89,7 +89,7 @@ class UnaryInstruction : public Instruction {
 
     void RemoveResParent();
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     virtual std::string tollvmIR() = 0;
 };
@@ -112,7 +112,7 @@ class BinaryInstruction : public Instruction {
 
     void RemoveResParent();
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     virtual std::string tollvmIR() = 0;
 };

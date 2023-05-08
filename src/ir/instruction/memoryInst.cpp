@@ -31,7 +31,7 @@ void AllocaInst::RemoveResParent() { result->SetParent(nullptr); }
 
 bool AllocaInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
 
-const BaseValueList AllocaInst::UsedValue() { return BaseValueList(); }
+const BaseValueList AllocaInst::GetOprands() const { return BaseValueList(); }
 
 std::string AllocaInst::tollvmIR() {
     std::stringstream ss;
@@ -94,7 +94,7 @@ bool StoreInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     return ret;
 }
 
-const BaseValueList StoreInst::UsedValue() { return BaseValueList({store_addr, store_value}); }
+const BaseValueList StoreInst::GetOprands() const { return BaseValueList({store_addr, store_value}); }
 
 std::string StoreInst::tollvmIR() {
     std::stringstream ss;
@@ -221,7 +221,7 @@ bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer)
     return ret;
 }
 
-const BaseValueList GetElementPtrInst::UsedValue() {
+const BaseValueList GetElementPtrInst::GetOprands() const {
     BaseValueList value_list = BaseValueList({base_addr});
     std::for_each(offset_list.begin(), offset_list.end(),
                   [&value_list](const auto &off) { value_list.push_back(off); });

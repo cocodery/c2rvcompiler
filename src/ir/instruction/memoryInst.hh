@@ -26,7 +26,7 @@ class AllocaInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
@@ -54,7 +54,7 @@ class StoreInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
@@ -98,7 +98,7 @@ class GetElementPtrInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };

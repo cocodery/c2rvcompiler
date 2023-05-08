@@ -28,7 +28,7 @@ class CallInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
@@ -71,7 +71,7 @@ class PhiInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };

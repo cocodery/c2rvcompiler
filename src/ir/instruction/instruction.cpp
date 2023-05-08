@@ -93,7 +93,7 @@ std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
 
 void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
-const BaseValueList UnaryInstruction::UsedValue() { return BaseValueList({oprand}); }
+const BaseValueList UnaryInstruction::GetOprands() const { return BaseValueList({oprand}); }
 
 //===-----------------------------------------------------------===//
 //                     BinaryInstruction Implementation
@@ -178,7 +178,7 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
 
 void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
-const BaseValueList BinaryInstruction::UsedValue() { return BaseValueList({lhs, rhs}); }
+const BaseValueList BinaryInstruction::GetOprands() const { return BaseValueList({lhs, rhs}); }
 
 //===-----------------------------------------------------------===//
 //                     ReplaceSRC Implementation
@@ -199,7 +199,7 @@ void ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
 //===-----------------------------------------------------------===//
 
 void RemoveInst(InstPtr inst) {
-    auto &&used_value = inst->UsedValue();
+    auto &&used_value = inst->GetOprands();
     std::for_each(used_value.begin(), used_value.end(), [&inst](BaseValuePtr value) { value->RemoveUser(inst); });
     inst->RemoveResParent();
 }

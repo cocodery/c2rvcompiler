@@ -24,7 +24,7 @@ class ReturnInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
@@ -52,7 +52,7 @@ class JumpInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
@@ -85,7 +85,7 @@ class BranchInst : public Instruction {
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
-    const BaseValueList UsedValue();
+    const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
 };
