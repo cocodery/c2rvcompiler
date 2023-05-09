@@ -41,6 +41,8 @@ BaseValuePtr GetVN(BaseValuePtr);
 bool IsMeaingLess(InstPtr);
 bool IsRedundant(CfgNodePtr, InstPtr);
 
+bool IsPhiOprandSame(InstPtr);
+
 void AdjustPhiInst(CfgNodePtr, PhiInstPtr);
 
 void DoDVNT(CfgNodePtr, VNScope *);

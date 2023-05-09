@@ -34,16 +34,21 @@ void GVN::VNScope::Set(BinaryInstPtr inst) {
 BaseValuePtr GVN::GetVN(BaseValuePtr v) { return VN[v]; }
 
 bool GVN::IsMeaingLess(InstPtr inst) {
+    // all inputs have same value-number
     assert(inst->IsPhiInst());
-    auto &&phi_oprands = inst->GetOprands();
-    if (phi_oprands.size() < 2) {
+    auto &&oprands = inst->GetOprands();
+    if (oprands.size() < 2) {
         return true;
     }
-    auto BeginVN = GetVN((*phi_oprands.begin()));
-    return std::all_of(phi_oprands.begin(), phi_oprands.end(), [&](auto &i) -> bool { return BeginVN == GetVN(i); });
+    auto BeginVN = GetVN((*oprands.begin()));
+    if (BeginVN == nullptr) return false;
+    // TODO: need to fix
+    return std::all_of(oprands.begin(), oprands.end(),
+                       [&](auto &i) -> bool { return Value::ValueCompare(BeginVN, GetVN(i)); });
 }
 
 bool GVN::IsRedundant(CfgNodePtr node, InstPtr inst) {
+    // compute same value as another phi-function
     assert(inst->IsPhiInst());
     auto phi_vn = GetVN(inst->GetResult());
     for (auto &&inst_ : node->GetInstList()) {
@@ -55,25 +60,44 @@ bool GVN::IsRedundant(CfgNodePtr node, InstPtr inst) {
     return false;
 }
 
+bool GVN::IsPhiOprandSame(InstPtr inst) {
+    assert(inst->IsPhiInst());
+    auto &&oprands = inst->GetOprands();
+    auto begin = (*oprands.begin());
+    return std::all_of(oprands.begin(), oprands.end(), [&](auto &i) -> bool { return Value::ValueCompare(begin, i); });
+}
+
+void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
+    if (auto oprand = inst->FindInComingUse(node)) {
+        if (auto vn = GetVN(oprand)) {
+            inst->ReplaceSRC(oprand, vn);
+        }
+    }
+}
+
 void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
-    VNScope scope = VNScope(outer);
+    VNScope Scope = VNScope(outer);
     auto &&inst_list = node->GetInstList();
 
-    // for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
-    //     auto inst = (*iter);
-    //     if (inst->IsPhiInst()) {
-    //         auto result = inst->GetResult();
-    //         if (IsMeaingLess(inst) || IsRedundant(node, inst)) {
-    //             assert(inst->GetOprands().size() > 0);
-    //             VN[result] = GetVN(result);
-    //             iter = inst_list.erase(iter);
-    //             continue;
-    //         } else {
-    //             VN[result] = result;
-    //         }
-    //     }
-    //     ++iter;
-    // }
+    for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
+        auto inst = (*iter);
+        if (inst->IsPhiInst()) {
+            auto result = inst->GetResult();
+            if (IsMeaingLess(inst) || IsRedundant(node, inst)) {
+                assert(inst->GetOprands().size() > 0);
+                VN[result] = GetVN((*inst->GetOprands().begin()));
+                iter = inst_list.erase(iter);
+                continue;
+            } else if (IsPhiOprandSame(inst)) {
+                VN[result] = (*inst->GetOprands().begin());
+                iter = inst_list.erase(iter);
+                continue;
+            } else {
+                VN[result] = result;
+            }
+        }
+        ++iter;
+    }
 
     for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
         auto inst = (*iter);
@@ -88,30 +112,39 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
             iter = inst_list.erase(iter);
             continue;
         }
-        if (inst->IsTwoOprandInst() && inst->GetOpCode() <= OP_RSHIFT) {
+        if (inst->IsTwoOprandInst()) {
             auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
             auto result = bin_inst->GetResult();
 
-            if (auto res = scope.Get(bin_inst)) {
+            if (auto res = Scope.Get(bin_inst)) {
                 VN[result] = res;
                 iter = inst_list.erase(iter);
                 continue;
             } else {
                 VN[result] = result;
-                scope.Set(bin_inst);
+                Scope.Set(bin_inst);
             }
         }
         ++iter;
     }
+    for (auto succ : node->GetSuccessors()) {
+        for (auto inst : succ->GetInstList()) {
+            if (inst->IsPhiInst()) {
+                AdjustPhiInst(succ, std::static_pointer_cast<PhiInst>(inst));
+            }
+        }
+    }
 
     for (auto child : node->GetDominateChildren()) {
-        DoDVNT(child, &scope);
+        DoDVNT(child, &Scope);
     }
 }
 
 void GVN::DVNT(NormalFuncPtr func) {
+    assert(VN.empty());
     for (auto param : func->GetParamList()) {
         VN[param] = param;
     }
     DoDVNT(func->GetEntryNode(), nullptr);
+    VN.clear();
 }

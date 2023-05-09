@@ -117,6 +117,7 @@ BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
 }
 
 bool Value::ValueCompare(const BaseValuePtr lhs, const BaseValuePtr rhs) {
+    if (lhs == nullptr || rhs == nullptr) return false;
     if (lhs->IsConstant() && rhs->IsConstant()) {
         auto constant_lhs = std::static_pointer_cast<Constant>(lhs);
         auto constant_rhs = std::static_pointer_cast<Constant>(rhs);

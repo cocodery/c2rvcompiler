@@ -69,6 +69,8 @@ class PhiInst : public Instruction {
 
     void RemoveResParent();
 
+    BaseValuePtr FindInComingUse(CfgNodePtr);
+
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList GetOprands() const;

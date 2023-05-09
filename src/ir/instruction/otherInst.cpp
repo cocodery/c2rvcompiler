@@ -156,6 +156,15 @@ void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr blo
 
 void PhiInst::RemoveResParent() { result->SetParent(nullptr); }
 
+BaseValuePtr PhiInst::FindInComingUse(CfgNodePtr node) {
+    for (auto [value, block] : datalist) {
+        if (node == block) {
+            return value;
+        }
+    }
+    return nullptr;
+}
+
 bool PhiInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
     bool ret = false;
     for (auto &&pair : datalist) {
