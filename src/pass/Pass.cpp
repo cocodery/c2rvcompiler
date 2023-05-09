@@ -7,8 +7,6 @@ void Optimization::DoOptimization() {
         Variable::SetVarIdx(func->GetVarIdx());
         BasicBlock::SetBlkIdx(func->GetBlkIdx());
 
-        DCE::EliminateUnreachableCode(func);
-
         Dominance::DominanceAnalysis(func);
 
         SSA::SSAConstruction(func);
