@@ -262,7 +262,7 @@ std::any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
             address = GlobalValue::CreatePtr(ty_alloca, init_value);
         } else {
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
-            ParseLocalListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, address, cur_block);
+            ParseLocalListInit(dynamic_cast<SysYParser::ListInitvalContext *>(init_val), ty_stored, address);
         }
         addrTypeTable[address] = ty_stored;
     }
@@ -705,12 +705,9 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
 
     // only user-defined, non-recursive function can be inline
     if (!callee_func->IsLibFunction() && !callee_func->GetRecursive() && callee_name == "param16") {
-        cout << cur_func->GetFuncName() << " inline " << callee_name << endl;
-        cout << cur_block->GetBlockIdx() << endl;
         auto &&[ret_value, ret_block] =
             Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block);
-        cout << ret_block->GetBlockIdx() << endl;
         call_ret_value = ret_value;
         cur_block = ret_block;
     } else {
@@ -956,8 +953,8 @@ SymbolTable *AstVisitor::InitParamList(CfgNodePtr first_block, SymbolTable *pare
     return new_table;
 }
 
-void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type, BaseValuePtr base_addr,
-                                    CfgNodePtr cur_block) {
+void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTypePtr list_type,
+                                    BaseValuePtr base_addr) {
     ATTR_TYPE _type = list_type->GetAttrType();
 
     ConstantPtr zero = (_type == INT32) ? zero_int32 : zero_float;
