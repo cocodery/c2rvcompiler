@@ -9,6 +9,8 @@
 
 #include "IR.hh"
 #include "SysYBaseVisitor.h"
+#include "dce.hh"
+#include "inline.hh"
 
 using std::cout;
 using std::endl;

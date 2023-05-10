@@ -322,6 +322,8 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_position = GLOBAL;
     cur_table = last_table;
 
+    DCE::EliminateUnreachableCode(cur_func);
+
     cur_func->SetVarIdx(Variable::GetVarIdx());
     cur_func->SetBlkIdx(BasicBlock::GetBlkIdx());
 
@@ -698,6 +700,9 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
                       : (ctx->funcRParams() != nullptr ? std::any_cast<ParamList>(ctx->funcRParams()->accept(this))
                                                        : ParamList());
     auto &&call_ret_value = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
+    cur_func->InsertCallWho(callee_func);
+    callee_func->InsertWhoCall(cur_func);
+
     callee_func = last_callee_func;
 
     return call_ret_value;
@@ -942,6 +947,8 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
 
     std::string memset = "llvm.memset.p0i8.i64";
     BaseFuncPtr callee = comp_unit.GetFunction(memset);
+    cur_func->InsertCallWho(callee);
+    callee->InsertWhoCall(cur_func);
 
     ParamList param_list = ParamList();
     param_list.push_back(i8_addr);
@@ -988,25 +995,8 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                     idx_offset += dim_size[level - 1];
                 }
             }
-            // while (cnt < total_size) {
-            //     BaseValueList off_list = BaseValueList(1, zero_int32);
-            //     ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
-            //     off_list.push_back(offset);
-            //     BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-            //     StoreInst::DoStoreValue(store_addr, zero, cur_block);
-            //     ++cnt;
-            //     ++idx_offset;
-            // }
             return total_size;
         };
     size_t init_size = function(ctx, list_type->GetArrDims(), 0, 0);
-    // while (init_size < list_type->GetCapacity()) {
-    //     BaseValueList off_list = BaseValueList(1, zero_int32);
-    //     ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(init_size));
-    //     off_list.push_back(offset);
-    //     BaseValuePtr store_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-    //     StoreInst::DoStoreValue(store_addr, zero, cur_block);
-    //     ++init_size;
-    // }
     return;
 }
