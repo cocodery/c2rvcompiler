@@ -32,8 +32,8 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
     CfgNodeList preorder_node = CfgNodeList();
 
     auto PredAllVisited = [&visit](CfgNodePtr succ) {
+        if (succ->FindBlkAttr(LOOPBEGIN)) return true;
         for (auto &&pred : succ->GetPredcessors()) {
-            if (pred->FindBlkAttr(CONTINUE) || pred->FindBlkAttr(LOOPEND)) continue;
             if (pred->GetDominatorSet().size() == 0) continue;
             if (visit[pred] == false) return false;
         }
@@ -44,7 +44,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
         visit[node] = true;
         preorder_node.push_back(node);
         for (auto &&succ : node->GetSuccessors()) {
-            if (!visit[succ] && PredAllVisited(succ)) {
+            if (!visit[succ]) {
                 DepthFirstSearch(succ);
             }
         }

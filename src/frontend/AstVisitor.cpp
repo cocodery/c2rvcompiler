@@ -704,7 +704,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     if (callee_name == cur_func->GetFuncName()) cur_func->SetRecursive(true);
 
     // only user-defined, non-recursive function can be inline
-    if (!callee_func->IsLibFunction() && !callee_func->GetRecursive() && callee_name == "param16") {
+    if (!callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
         auto &&[ret_value, ret_block] =
             Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block);
