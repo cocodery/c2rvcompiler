@@ -24,6 +24,10 @@ class CallInst : public Instruction {
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
+    ScalarTypePtr GetRetType() const;
+    BaseFuncPtr GetCalleeFunc() const;
+    const ParamList &GetParamList() const;
+
     void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);

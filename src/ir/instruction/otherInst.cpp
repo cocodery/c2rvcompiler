@@ -30,6 +30,10 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
     return _ret;
 }
 
+ScalarTypePtr CallInst::GetRetType() const { return ret_type; }
+BaseFuncPtr CallInst::GetCalleeFunc() const { return callee_func; }
+const ParamList &CallInst::GetParamList() const { return rparam_list; }
+
 void CallInst::RemoveResParent() {
     if (result != nullptr) {
         result->SetParent(nullptr);

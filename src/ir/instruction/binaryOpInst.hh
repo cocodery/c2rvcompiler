@@ -14,6 +14,8 @@ class IBinaryInst : public BinaryInstruction {
     IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~IBinaryInst() = default;
 
+    bool IsIBinaryInst() const;
+
     static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
@@ -31,6 +33,8 @@ class FBinaryInst : public BinaryInstruction {
    public:
     FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FBinaryInst() = default;
+
+    bool IsFBinaryInst() const;
 
     static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 

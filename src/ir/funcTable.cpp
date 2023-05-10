@@ -79,10 +79,10 @@ NormalFuncList &FunctionTable::GetNormalFuncTable() { return normalFuncTable; }
 
 std::ostream &operator<<(std::ostream &os, FunctionTable _func_table) {
     for (auto &&normal_func : _func_table.normalFuncTable) {
-        os << std::static_pointer_cast<BaseFunction>(normal_func) << endl;
+        if (normal_func->IsBeUsed()) os << std::static_pointer_cast<BaseFunction>(normal_func) << endl;
     }
     for (auto &&lib_func : _func_table.libraryFuncTable) {
-        os << std::static_pointer_cast<BaseFunction>(lib_func) << endl;
+        if (lib_func->IsBeUsed()) os << std::static_pointer_cast<BaseFunction>(lib_func) << endl;
     }
     return os;
 }

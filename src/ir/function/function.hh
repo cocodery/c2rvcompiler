@@ -1,7 +1,9 @@
 #pragma once
 
+#include <list>
 #include <map>
 #include <queue>
+#include <set>
 #include <vector>
 
 #include "basefunc.hh"
@@ -22,6 +24,8 @@ class NormalFunction : public BaseFunction {
    public:
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
+
+    bool IsLibFunction() const;
 
     CfgNodePtr CreateEntry();
     CfgNodePtr CreateExit();
@@ -54,6 +58,8 @@ class LibraryFunction : public BaseFunction {
    public:
     LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
     ~LibraryFunction() = default;
+
+    bool IsLibFunction() const;
 
     static LibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &);
 

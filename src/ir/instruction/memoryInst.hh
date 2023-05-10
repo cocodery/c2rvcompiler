@@ -94,6 +94,10 @@ class GetElementPtrInst : public Instruction {
 
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
 
+    BaseTypePtr GetStoreType() const;
+    BaseValuePtr GetBaseAddr() const;
+    BaseValueList GetOffList() const;
+
     void RemoveResParent();
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);

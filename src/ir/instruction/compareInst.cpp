@@ -11,6 +11,8 @@ ICmpInst::ICmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr
     assert(lhs->GetBaseType()->BoolType() || lhs->GetBaseType()->IntType());
 }
 
+bool ICmpInst::IsICmpInst() const { return true; }
+
 ICmpInstPtr ICmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     return std::make_shared<ICmpInst>(_res, _op, _lhs, _rhs, block);
 }
@@ -86,6 +88,8 @@ FCmpInst::FCmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr
     assert(lhs->GetBaseType()->GetAttrType() == rhs->GetBaseType()->GetAttrType());
     assert(lhs->GetBaseType()->FloatType());
 }
+
+bool FCmpInst::IsFCmpInst() const { return true; }
 
 FCmpInstPtr FCmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     return std::make_shared<FCmpInst>(_res, _op, _lhs, _rhs, block);

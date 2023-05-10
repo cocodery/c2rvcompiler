@@ -108,6 +108,11 @@ class BinaryInstruction : public Instruction {
     BaseValuePtr GetLHS() const;
     BaseValuePtr GetRHS() const;
 
+    virtual bool IsIBinaryInst() const;
+    virtual bool IsFBinaryInst() const;
+    virtual bool IsICmpInst() const;
+    virtual bool IsFCmpInst() const;
+
     std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
 
     void RemoveResParent();

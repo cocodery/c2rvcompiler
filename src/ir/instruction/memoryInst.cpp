@@ -200,6 +200,10 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
     return _ptr;
 }
 
+BaseTypePtr GetElementPtrInst::GetStoreType() const { return store_type; }
+BaseValuePtr GetElementPtrInst::GetBaseAddr() const { return base_addr; }
+BaseValueList GetElementPtrInst::GetOffList() const { return offset_list; }
+
 void GetElementPtrInst::RemoveResParent() { result->SetParent(nullptr); }
 
 bool GetElementPtrInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {

@@ -12,6 +12,8 @@ CfgNodePtr NormalFunction::CreateEntry() {
     return entry;
 }
 
+bool NormalFunction::IsLibFunction() const { return false; }
+
 CfgNodePtr NormalFunction::CreateExit() {
     exit = CtrlFlowGraphNode::CreatePtr(EXIT | NORMAL);
     return exit;
@@ -115,11 +117,14 @@ std::string NormalFunction::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list) {}
+    : BaseFunction(_type, _name, _list, true) {
+    assert(side_effect == true && recursive == false);
+}
 
 LibFuncPtr LibraryFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
     return std::make_shared<LibraryFunction>(_type, _name, _list);
 }
+bool LibraryFunction::IsLibFunction() const { return true; }
 
 std::string LibraryFunction::tollvmIR() {
     std::stringstream ss;

@@ -14,6 +14,8 @@ class ICmpInst : public BinaryInstruction {
     ICmpInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~ICmpInst() = default;
 
+    bool IsICmpInst() const;
+
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
@@ -31,6 +33,8 @@ class FCmpInst : public BinaryInstruction {
    public:
     FCmpInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FCmpInst() = default;
+
+    bool IsFCmpInst() const;
 
     static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 

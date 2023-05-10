@@ -10,6 +10,8 @@ IBinaryInst::IBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseVa
     assert(rhs->GetBaseType()->IntType() && rhs->IsOprand());
 }
 
+bool IBinaryInst::IsIBinaryInst() const { return true; }
+
 IBinaryInstPtr IBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
                                       CfgNodePtr block) {
     return std::make_shared<IBinaryInst>(_res, _op, _lhs, _rhs, block);
@@ -81,6 +83,8 @@ FBinaryInst::FBinaryInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseVa
     assert(lhs->GetBaseType()->FloatType() && lhs->IsOprand());
     assert(rhs->GetBaseType()->FloatType() && rhs->IsOprand());
 }
+
+bool FBinaryInst::IsFBinaryInst() const { return true; }
 
 FBinaryInstPtr FBinaryInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
                                       CfgNodePtr block) {

@@ -106,6 +106,11 @@ BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr 
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
 
+bool BinaryInstruction::IsIBinaryInst() const { return false; }
+bool BinaryInstruction::IsFBinaryInst() const { return false; }
+bool BinaryInstruction::IsICmpInst() const { return false; }
+bool BinaryInstruction::IsFCmpInst() const { return false; }
+
 std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
     BaseValuePtr replacee = nullptr;
     BaseValuePtr replacer = nullptr;
