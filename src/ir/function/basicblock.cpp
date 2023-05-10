@@ -38,7 +38,12 @@ void BasicBlock::RemoveLastInst() {
     inst_list.pop_back();
 }
 
-void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
+void BasicBlock::InsertInstBack(InstPtr inst) {
+    inst_list.push_back(inst);
+    if (!(inst->IsJumpInst() || inst->IsBranchInst())) {
+        cout << inst->tollvmIR() << ' ' << idx << endl;
+    }
+}
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }
 void BasicBlock::RemoveInst(InstPtr inst) { inst_list.remove(inst); }
 

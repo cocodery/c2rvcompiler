@@ -247,8 +247,9 @@ std::any AstVisitor::visitInitVarDef(SysYParser::InitVarDefContext *ctx) {
         if (cur_position == GLOBAL) {
             address = GlobalValue::CreatePtr(ty_alloca, std::any_cast<BaseValuePtr>(init_val->accept(this)));
         } else {
+            BaseValuePtr init_value = std::any_cast<BaseValuePtr>(init_val->accept(this));
             address = AllocaInst::DoAllocaAddr(ty_stored, ty_alloca, (in_loop ? out_loop_block : cur_block));
-            StoreInst::DoStoreValue(address, std::any_cast<BaseValuePtr>(init_val->accept(this)), cur_block);
+            StoreInst::DoStoreValue(address, init_value, cur_block);
         }
     } else {
         auto &&arr_dims = GetArrayDims(dims_vec);
@@ -700,9 +701,23 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
                                                        : ParamList());
     BaseValuePtr call_ret_value = nullptr;
 
-    call_ret_value = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
-    cur_func->InsertCallWho(callee_func);
-    callee_func->InsertWhoCall(cur_func);
+    if (callee_name == cur_func->GetFuncName()) cur_func->SetRecursive(true);
+
+    // only user-defined, non-recursive function can be inline
+    if (!callee_func->IsLibFunction() && !callee_func->GetRecursive() && callee_name == "param16") {
+        cout << cur_func->GetFuncName() << " inline " << callee_name << endl;
+        cout << cur_block->GetBlockIdx() << endl;
+        auto &&[ret_value, ret_block] =
+            Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
+                           comp_unit.getGlbTable().GetNameValueMap(), cur_block);
+        cout << ret_block->GetBlockIdx() << endl;
+        call_ret_value = ret_value;
+        cur_block = ret_block;
+    } else {
+        call_ret_value = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
+        cur_func->InsertCallWho(callee_func);
+        callee_func->InsertWhoCall(cur_func);
+    }
 
     callee_func = last_callee_func;
 
@@ -981,11 +996,9 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                     BaseValueList off_list = BaseValueList(1, zero_int32);
                     ConstantPtr offset = Constant::CreatePtr(type_const_int, static_cast<int32_t>(idx_offset));
                     off_list.push_back(offset);
-                    BaseValuePtr store_addr =
-                        GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
-
                     BaseValuePtr value = std::any_cast<BaseValuePtr>(scalar_node->exp()->accept(this));
-                    StoreInst::DoStoreValue(store_addr, value, cur_block);
+                    BaseValuePtr addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
+                    StoreInst::DoStoreValue(addr, value, cur_block);
                     ++cnt;
                     ++idx_offset;
                 } else {
