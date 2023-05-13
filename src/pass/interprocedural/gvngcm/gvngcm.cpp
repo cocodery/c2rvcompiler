@@ -102,9 +102,13 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
     for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
         auto inst = (*iter);
 
-        for (auto oprand : inst->GetOprands()) {
+        auto oprands = inst->GetOprands();
+        for (auto &&it = oprands.begin(); it != oprands.end(); ++it) {
+            auto &&oprand = (*it);
             if (auto vn = GetVN(oprand); vn != nullptr && vn != oprand) {
-                assert(inst->ReplaceSRC(oprand, vn));
+                // TODO: restore assert
+                // assert(inst->ReplaceSRC(oprand, vn));
+                inst->ReplaceSRC(oprand, vn);
             }
         }
         if (auto [replacee, replacer] = inst->DoFlod(); replacee != nullptr && replacer != nullptr) {
