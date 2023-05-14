@@ -105,12 +105,12 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         auto inst = (*iter);
 
         auto oprands = inst->GetOprands();
+        std::unordered_map<BaseValuePtr, BaseValuePtr> map;
         for (auto &&it = oprands.begin(); it != oprands.end(); ++it) {
             auto &&oprand = (*it);
-            if (auto vn = GetVN(oprand); vn != nullptr && vn != oprand) {
-                // TODO: restore assert
-                // assert(inst->ReplaceSRC(oprand, vn));
-                inst->ReplaceSRC(oprand, vn);
+            if (auto vn = GetVN(oprand); vn != nullptr && map[oprand] == nullptr && vn != oprand) {
+                map[oprand] = vn;
+                assert(inst->ReplaceSRC(oprand, vn));
             }
         }
         if (auto [replacee, replacer] = inst->DoFlod(); replacee != nullptr && replacer != nullptr) {
