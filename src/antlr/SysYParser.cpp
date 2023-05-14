@@ -1,5 +1,5 @@
 
-// Generated from SysY.g4 by ANTLR 4.8
+// Generated from SysY.g4 by ANTLR 4.12.0
 
 
 #include "SysYVisitor.h"
@@ -8,14 +8,238 @@
 
 
 using namespace antlrcpp;
+
 using namespace antlr4;
 
-SysYParser::SysYParser(TokenStream *input) : Parser(input) {
-  _interpreter = new atn::ParserATNSimulator(this, _atn, _decisionToDFA, _sharedContextCache);
+namespace {
+
+struct SysYParserStaticData final {
+  SysYParserStaticData(std::vector<std::string> ruleNames,
+                        std::vector<std::string> literalNames,
+                        std::vector<std::string> symbolicNames)
+      : ruleNames(std::move(ruleNames)), literalNames(std::move(literalNames)),
+        symbolicNames(std::move(symbolicNames)),
+        vocabulary(this->literalNames, this->symbolicNames) {}
+
+  SysYParserStaticData(const SysYParserStaticData&) = delete;
+  SysYParserStaticData(SysYParserStaticData&&) = delete;
+  SysYParserStaticData& operator=(const SysYParserStaticData&) = delete;
+  SysYParserStaticData& operator=(SysYParserStaticData&&) = delete;
+
+  std::vector<antlr4::dfa::DFA> decisionToDFA;
+  antlr4::atn::PredictionContextCache sharedContextCache;
+  const std::vector<std::string> ruleNames;
+  const std::vector<std::string> literalNames;
+  const std::vector<std::string> symbolicNames;
+  const antlr4::dfa::Vocabulary vocabulary;
+  antlr4::atn::SerializedATNView serializedATN;
+  std::unique_ptr<antlr4::atn::ATN> atn;
+};
+
+::antlr4::internal::OnceFlag sysyParserOnceFlag;
+SysYParserStaticData *sysyParserStaticData = nullptr;
+
+void sysyParserInitialize() {
+  assert(sysyParserStaticData == nullptr);
+  auto staticData = std::make_unique<SysYParserStaticData>(
+    std::vector<std::string>{
+      "compilationUnit", "translationUnit", "externalDeclaration", "decl", 
+      "constDecl", "bType", "constDef", "constInitVal", "varDecl", "varDef", 
+      "initVal", "funcDef", "funcType", "funcFParams", "funcFParam", "block", 
+      "blockItemList", "blockItem", "stmt", "assignStmt", "assignOp", "expStmt", 
+      "blockStmt", "seleStmt", "loopStmt", "jumpStmt", "exp", "constExp", 
+      "lVal", "primaryExp", "number", "funcRParams", "funcRParam", "unaryExp", 
+      "unaryOp", "mulExp", "mulOp", "addExp", "addOp", "relExp", "relOp", 
+      "eqExp", "eqOp", "lAndExp", "lOrExp", "condExp"
+    },
+    std::vector<std::string>{
+      "", "'float'", "'='", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", 
+      "'>>='", "'&='", "'^='", "'|='", "'&'", "'~'", "'int'", "'void'", 
+      "'const'", "'return'", "'if'", "'else'", "'while'", "'for'", "'do'", 
+      "'break'", "'continue'", "'('", "')'", "'['", "']'", "'{'", "'}'", 
+      "','", "';'", "'-'", "'+'", "'!'", "'*'", "'/'", "'%'", "'&&'", "'||'", 
+      "'=='", "'!='", "'<'", "'<='", "'>'", "'>='"
+    },
+    std::vector<std::string>{
+      "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Int", 
+      "Void", "Const", "Return", "If", "Else", "While", "For", "Do", "Break", 
+      "Continue", "Lparen", "Rparen", "Lbrkt", "Rbrkt", "Lbrace", "Rbrace", 
+      "Comma", "Semicolon", "Minus", "Addition", "Exclamation", "Multiplication", 
+      "Division", "Modulo", "LAND", "LOR", "EQ", "NEQ", "LT", "LE", "GT", 
+      "GE", "IntLiteral", "FloatLiteral", "Identifier", "Whitespace", "Newline", 
+      "BlockComment", "LineComment"
+    }
+  );
+  static const int32_t serializedATNSegment[] = {
+  	4,1,54,431,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+  	7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,
+  	14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,
+  	21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,2,27,7,27,2,28,7,
+  	28,2,29,7,29,2,30,7,30,2,31,7,31,2,32,7,32,2,33,7,33,2,34,7,34,2,35,7,
+  	35,2,36,7,36,2,37,7,37,2,38,7,38,2,39,7,39,2,40,7,40,2,41,7,41,2,42,7,
+  	42,2,43,7,43,2,44,7,44,2,45,7,45,1,0,3,0,94,8,0,1,0,1,0,1,1,4,1,99,8,
+  	1,11,1,12,1,100,1,2,1,2,1,2,3,2,106,8,2,1,3,1,3,3,3,110,8,3,1,4,1,4,1,
+  	4,1,4,1,4,5,4,117,8,4,10,4,12,4,120,9,4,1,4,1,4,1,5,1,5,1,6,1,6,1,6,1,
+  	6,1,6,5,6,131,8,6,10,6,12,6,134,9,6,1,6,1,6,1,6,1,7,1,7,1,7,1,7,1,7,5,
+  	7,144,8,7,10,7,12,7,147,9,7,3,7,149,8,7,1,7,3,7,152,8,7,1,8,1,8,1,8,1,
+  	8,5,8,158,8,8,10,8,12,8,161,9,8,1,8,1,8,1,9,1,9,1,9,1,9,1,9,5,9,170,8,
+  	9,10,9,12,9,173,9,9,1,9,1,9,1,9,1,9,1,9,5,9,180,8,9,10,9,12,9,183,9,9,
+  	1,9,1,9,3,9,187,8,9,1,10,1,10,1,10,1,10,1,10,5,10,194,8,10,10,10,12,10,
+  	197,9,10,3,10,199,8,10,1,10,3,10,202,8,10,1,11,1,11,1,11,1,11,3,11,208,
+  	8,11,1,11,1,11,1,11,1,12,1,12,1,13,1,13,1,13,5,13,218,8,13,10,13,12,13,
+  	221,9,13,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,5,14,231,8,14,10,14,
+  	12,14,234,9,14,3,14,236,8,14,1,15,1,15,3,15,240,8,15,1,15,1,15,1,16,4,
+  	16,245,8,16,11,16,12,16,246,1,17,1,17,3,17,251,8,17,1,18,1,18,1,18,1,
+  	18,1,18,1,18,3,18,259,8,18,1,19,1,19,1,19,1,19,1,19,1,20,1,20,1,21,3,
+  	21,269,8,21,1,21,1,21,1,22,1,22,1,23,1,23,1,23,1,23,1,23,1,23,1,23,3,
+  	23,282,8,23,1,24,1,24,1,24,1,24,1,24,1,24,1,25,1,25,1,25,1,25,1,25,1,
+  	25,3,25,296,8,25,1,25,3,25,299,8,25,1,26,1,26,1,27,1,27,1,28,1,28,1,28,
+  	1,28,1,28,5,28,310,8,28,10,28,12,28,313,9,28,1,29,1,29,1,29,1,29,1,29,
+  	1,29,3,29,321,8,29,1,30,1,30,3,30,325,8,30,1,31,1,31,1,31,5,31,330,8,
+  	31,10,31,12,31,333,9,31,1,32,1,32,1,33,1,33,1,33,1,33,3,33,341,8,33,1,
+  	33,1,33,1,33,1,33,3,33,347,8,33,1,34,1,34,1,35,1,35,1,35,1,35,1,35,1,
+  	35,1,35,5,35,358,8,35,10,35,12,35,361,9,35,1,36,1,36,1,37,1,37,1,37,1,
+  	37,1,37,1,37,1,37,5,37,372,8,37,10,37,12,37,375,9,37,1,38,1,38,1,39,1,
+  	39,1,39,1,39,1,39,1,39,1,39,5,39,386,8,39,10,39,12,39,389,9,39,1,40,1,
+  	40,1,41,1,41,1,41,1,41,1,41,1,41,1,41,5,41,400,8,41,10,41,12,41,403,9,
+  	41,1,42,1,42,1,43,1,43,1,43,1,43,1,43,1,43,5,43,413,8,43,10,43,12,43,
+  	416,9,43,1,44,1,44,1,44,1,44,1,44,1,44,5,44,424,8,44,10,44,12,44,427,
+  	9,44,1,45,1,45,1,45,0,6,70,74,78,82,86,88,46,0,2,4,6,8,10,12,14,16,18,
+  	20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,
+  	66,68,70,72,74,76,78,80,82,84,86,88,90,0,8,2,0,1,1,15,15,2,0,1,1,15,16,
+  	1,0,2,12,2,0,13,14,34,37,1,0,37,39,1,0,34,35,1,0,44,47,1,0,42,43,432,
+  	0,93,1,0,0,0,2,98,1,0,0,0,4,105,1,0,0,0,6,109,1,0,0,0,8,111,1,0,0,0,10,
+  	123,1,0,0,0,12,125,1,0,0,0,14,151,1,0,0,0,16,153,1,0,0,0,18,186,1,0,0,
+  	0,20,201,1,0,0,0,22,203,1,0,0,0,24,212,1,0,0,0,26,214,1,0,0,0,28,222,
+  	1,0,0,0,30,237,1,0,0,0,32,244,1,0,0,0,34,250,1,0,0,0,36,258,1,0,0,0,38,
+  	260,1,0,0,0,40,265,1,0,0,0,42,268,1,0,0,0,44,272,1,0,0,0,46,274,1,0,0,
+  	0,48,283,1,0,0,0,50,298,1,0,0,0,52,300,1,0,0,0,54,302,1,0,0,0,56,304,
+  	1,0,0,0,58,320,1,0,0,0,60,324,1,0,0,0,62,326,1,0,0,0,64,334,1,0,0,0,66,
+  	346,1,0,0,0,68,348,1,0,0,0,70,350,1,0,0,0,72,362,1,0,0,0,74,364,1,0,0,
+  	0,76,376,1,0,0,0,78,378,1,0,0,0,80,390,1,0,0,0,82,392,1,0,0,0,84,404,
+  	1,0,0,0,86,406,1,0,0,0,88,417,1,0,0,0,90,428,1,0,0,0,92,94,3,2,1,0,93,
+  	92,1,0,0,0,93,94,1,0,0,0,94,95,1,0,0,0,95,96,5,0,0,1,96,1,1,0,0,0,97,
+  	99,3,4,2,0,98,97,1,0,0,0,99,100,1,0,0,0,100,98,1,0,0,0,100,101,1,0,0,
+  	0,101,3,1,0,0,0,102,106,3,6,3,0,103,106,3,22,11,0,104,106,5,33,0,0,105,
+  	102,1,0,0,0,105,103,1,0,0,0,105,104,1,0,0,0,106,5,1,0,0,0,107,110,3,8,
+  	4,0,108,110,3,16,8,0,109,107,1,0,0,0,109,108,1,0,0,0,110,7,1,0,0,0,111,
+  	112,5,17,0,0,112,113,3,10,5,0,113,118,3,12,6,0,114,115,5,32,0,0,115,117,
+  	3,12,6,0,116,114,1,0,0,0,117,120,1,0,0,0,118,116,1,0,0,0,118,119,1,0,
+  	0,0,119,121,1,0,0,0,120,118,1,0,0,0,121,122,5,33,0,0,122,9,1,0,0,0,123,
+  	124,7,0,0,0,124,11,1,0,0,0,125,132,5,50,0,0,126,127,5,28,0,0,127,128,
+  	3,54,27,0,128,129,5,29,0,0,129,131,1,0,0,0,130,126,1,0,0,0,131,134,1,
+  	0,0,0,132,130,1,0,0,0,132,133,1,0,0,0,133,135,1,0,0,0,134,132,1,0,0,0,
+  	135,136,5,2,0,0,136,137,3,14,7,0,137,13,1,0,0,0,138,152,3,54,27,0,139,
+  	148,5,30,0,0,140,145,3,14,7,0,141,142,5,32,0,0,142,144,3,14,7,0,143,141,
+  	1,0,0,0,144,147,1,0,0,0,145,143,1,0,0,0,145,146,1,0,0,0,146,149,1,0,0,
+  	0,147,145,1,0,0,0,148,140,1,0,0,0,148,149,1,0,0,0,149,150,1,0,0,0,150,
+  	152,5,31,0,0,151,138,1,0,0,0,151,139,1,0,0,0,152,15,1,0,0,0,153,154,3,
+  	10,5,0,154,159,3,18,9,0,155,156,5,32,0,0,156,158,3,18,9,0,157,155,1,0,
+  	0,0,158,161,1,0,0,0,159,157,1,0,0,0,159,160,1,0,0,0,160,162,1,0,0,0,161,
+  	159,1,0,0,0,162,163,5,33,0,0,163,17,1,0,0,0,164,171,5,50,0,0,165,166,
+  	5,28,0,0,166,167,3,54,27,0,167,168,5,29,0,0,168,170,1,0,0,0,169,165,1,
+  	0,0,0,170,173,1,0,0,0,171,169,1,0,0,0,171,172,1,0,0,0,172,187,1,0,0,0,
+  	173,171,1,0,0,0,174,181,5,50,0,0,175,176,5,28,0,0,176,177,3,54,27,0,177,
+  	178,5,29,0,0,178,180,1,0,0,0,179,175,1,0,0,0,180,183,1,0,0,0,181,179,
+  	1,0,0,0,181,182,1,0,0,0,182,184,1,0,0,0,183,181,1,0,0,0,184,185,5,2,0,
+  	0,185,187,3,20,10,0,186,164,1,0,0,0,186,174,1,0,0,0,187,19,1,0,0,0,188,
+  	202,3,52,26,0,189,198,5,30,0,0,190,195,3,20,10,0,191,192,5,32,0,0,192,
+  	194,3,20,10,0,193,191,1,0,0,0,194,197,1,0,0,0,195,193,1,0,0,0,195,196,
+  	1,0,0,0,196,199,1,0,0,0,197,195,1,0,0,0,198,190,1,0,0,0,198,199,1,0,0,
+  	0,199,200,1,0,0,0,200,202,5,31,0,0,201,188,1,0,0,0,201,189,1,0,0,0,202,
+  	21,1,0,0,0,203,204,3,24,12,0,204,205,5,50,0,0,205,207,5,26,0,0,206,208,
+  	3,26,13,0,207,206,1,0,0,0,207,208,1,0,0,0,208,209,1,0,0,0,209,210,5,27,
+  	0,0,210,211,3,30,15,0,211,23,1,0,0,0,212,213,7,1,0,0,213,25,1,0,0,0,214,
+  	219,3,28,14,0,215,216,5,32,0,0,216,218,3,28,14,0,217,215,1,0,0,0,218,
+  	221,1,0,0,0,219,217,1,0,0,0,219,220,1,0,0,0,220,27,1,0,0,0,221,219,1,
+  	0,0,0,222,223,3,10,5,0,223,235,5,50,0,0,224,225,5,28,0,0,225,232,5,29,
+  	0,0,226,227,5,28,0,0,227,228,3,54,27,0,228,229,5,29,0,0,229,231,1,0,0,
+  	0,230,226,1,0,0,0,231,234,1,0,0,0,232,230,1,0,0,0,232,233,1,0,0,0,233,
+  	236,1,0,0,0,234,232,1,0,0,0,235,224,1,0,0,0,235,236,1,0,0,0,236,29,1,
+  	0,0,0,237,239,5,30,0,0,238,240,3,32,16,0,239,238,1,0,0,0,239,240,1,0,
+  	0,0,240,241,1,0,0,0,241,242,5,31,0,0,242,31,1,0,0,0,243,245,3,34,17,0,
+  	244,243,1,0,0,0,245,246,1,0,0,0,246,244,1,0,0,0,246,247,1,0,0,0,247,33,
+  	1,0,0,0,248,251,3,6,3,0,249,251,3,36,18,0,250,248,1,0,0,0,250,249,1,0,
+  	0,0,251,35,1,0,0,0,252,259,3,38,19,0,253,259,3,42,21,0,254,259,3,44,22,
+  	0,255,259,3,46,23,0,256,259,3,48,24,0,257,259,3,50,25,0,258,252,1,0,0,
+  	0,258,253,1,0,0,0,258,254,1,0,0,0,258,255,1,0,0,0,258,256,1,0,0,0,258,
+  	257,1,0,0,0,259,37,1,0,0,0,260,261,3,56,28,0,261,262,3,40,20,0,262,263,
+  	3,52,26,0,263,264,5,33,0,0,264,39,1,0,0,0,265,266,7,2,0,0,266,41,1,0,
+  	0,0,267,269,3,52,26,0,268,267,1,0,0,0,268,269,1,0,0,0,269,270,1,0,0,0,
+  	270,271,5,33,0,0,271,43,1,0,0,0,272,273,3,30,15,0,273,45,1,0,0,0,274,
+  	275,5,19,0,0,275,276,5,26,0,0,276,277,3,90,45,0,277,278,5,27,0,0,278,
+  	281,3,36,18,0,279,280,5,20,0,0,280,282,3,36,18,0,281,279,1,0,0,0,281,
+  	282,1,0,0,0,282,47,1,0,0,0,283,284,5,21,0,0,284,285,5,26,0,0,285,286,
+  	3,90,45,0,286,287,5,27,0,0,287,288,3,36,18,0,288,49,1,0,0,0,289,290,5,
+  	25,0,0,290,299,5,33,0,0,291,292,5,24,0,0,292,299,5,33,0,0,293,295,5,18,
+  	0,0,294,296,3,52,26,0,295,294,1,0,0,0,295,296,1,0,0,0,296,297,1,0,0,0,
+  	297,299,5,33,0,0,298,289,1,0,0,0,298,291,1,0,0,0,298,293,1,0,0,0,299,
+  	51,1,0,0,0,300,301,3,74,37,0,301,53,1,0,0,0,302,303,3,74,37,0,303,55,
+  	1,0,0,0,304,311,5,50,0,0,305,306,5,28,0,0,306,307,3,52,26,0,307,308,5,
+  	29,0,0,308,310,1,0,0,0,309,305,1,0,0,0,310,313,1,0,0,0,311,309,1,0,0,
+  	0,311,312,1,0,0,0,312,57,1,0,0,0,313,311,1,0,0,0,314,315,5,26,0,0,315,
+  	316,3,52,26,0,316,317,5,27,0,0,317,321,1,0,0,0,318,321,3,56,28,0,319,
+  	321,3,60,30,0,320,314,1,0,0,0,320,318,1,0,0,0,320,319,1,0,0,0,321,59,
+  	1,0,0,0,322,325,5,48,0,0,323,325,5,49,0,0,324,322,1,0,0,0,324,323,1,0,
+  	0,0,325,61,1,0,0,0,326,331,3,64,32,0,327,328,5,32,0,0,328,330,3,64,32,
+  	0,329,327,1,0,0,0,330,333,1,0,0,0,331,329,1,0,0,0,331,332,1,0,0,0,332,
+  	63,1,0,0,0,333,331,1,0,0,0,334,335,3,52,26,0,335,65,1,0,0,0,336,347,3,
+  	58,29,0,337,338,5,50,0,0,338,340,5,26,0,0,339,341,3,62,31,0,340,339,1,
+  	0,0,0,340,341,1,0,0,0,341,342,1,0,0,0,342,347,5,27,0,0,343,344,3,68,34,
+  	0,344,345,3,66,33,0,345,347,1,0,0,0,346,336,1,0,0,0,346,337,1,0,0,0,346,
+  	343,1,0,0,0,347,67,1,0,0,0,348,349,7,3,0,0,349,69,1,0,0,0,350,351,6,35,
+  	-1,0,351,352,3,66,33,0,352,359,1,0,0,0,353,354,10,1,0,0,354,355,3,72,
+  	36,0,355,356,3,66,33,0,356,358,1,0,0,0,357,353,1,0,0,0,358,361,1,0,0,
+  	0,359,357,1,0,0,0,359,360,1,0,0,0,360,71,1,0,0,0,361,359,1,0,0,0,362,
+  	363,7,4,0,0,363,73,1,0,0,0,364,365,6,37,-1,0,365,366,3,70,35,0,366,373,
+  	1,0,0,0,367,368,10,1,0,0,368,369,3,76,38,0,369,370,3,70,35,0,370,372,
+  	1,0,0,0,371,367,1,0,0,0,372,375,1,0,0,0,373,371,1,0,0,0,373,374,1,0,0,
+  	0,374,75,1,0,0,0,375,373,1,0,0,0,376,377,7,5,0,0,377,77,1,0,0,0,378,379,
+  	6,39,-1,0,379,380,3,74,37,0,380,387,1,0,0,0,381,382,10,1,0,0,382,383,
+  	3,80,40,0,383,384,3,74,37,0,384,386,1,0,0,0,385,381,1,0,0,0,386,389,1,
+  	0,0,0,387,385,1,0,0,0,387,388,1,0,0,0,388,79,1,0,0,0,389,387,1,0,0,0,
+  	390,391,7,6,0,0,391,81,1,0,0,0,392,393,6,41,-1,0,393,394,3,78,39,0,394,
+  	401,1,0,0,0,395,396,10,1,0,0,396,397,3,84,42,0,397,398,3,78,39,0,398,
+  	400,1,0,0,0,399,395,1,0,0,0,400,403,1,0,0,0,401,399,1,0,0,0,401,402,1,
+  	0,0,0,402,83,1,0,0,0,403,401,1,0,0,0,404,405,7,7,0,0,405,85,1,0,0,0,406,
+  	407,6,43,-1,0,407,408,3,82,41,0,408,414,1,0,0,0,409,410,10,1,0,0,410,
+  	411,5,40,0,0,411,413,3,82,41,0,412,409,1,0,0,0,413,416,1,0,0,0,414,412,
+  	1,0,0,0,414,415,1,0,0,0,415,87,1,0,0,0,416,414,1,0,0,0,417,418,6,44,-1,
+  	0,418,419,3,86,43,0,419,425,1,0,0,0,420,421,10,1,0,0,421,422,5,41,0,0,
+  	422,424,3,86,43,0,423,420,1,0,0,0,424,427,1,0,0,0,425,423,1,0,0,0,425,
+  	426,1,0,0,0,426,89,1,0,0,0,427,425,1,0,0,0,428,429,3,88,44,0,429,91,1,
+  	0,0,0,40,93,100,105,109,118,132,145,148,151,159,171,181,186,195,198,201,
+  	207,219,232,235,239,246,250,258,268,281,295,298,311,320,324,331,340,346,
+  	359,373,387,401,414,425
+  };
+  staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
+
+  antlr4::atn::ATNDeserializer deserializer;
+  staticData->atn = deserializer.deserialize(staticData->serializedATN);
+
+  const size_t count = staticData->atn->getNumberOfDecisions();
+  staticData->decisionToDFA.reserve(count);
+  for (size_t i = 0; i < count; i++) { 
+    staticData->decisionToDFA.emplace_back(staticData->atn->getDecisionState(i), i);
+  }
+  sysyParserStaticData = staticData.release();
+}
+
+}
+
+SysYParser::SysYParser(TokenStream *input) : SysYParser(input, antlr4::atn::ParserATNSimulatorOptions()) {}
+
+SysYParser::SysYParser(TokenStream *input, const antlr4::atn::ParserATNSimulatorOptions &options) : Parser(input) {
+  SysYParser::initialize();
+  _interpreter = new atn::ParserATNSimulator(this, *sysyParserStaticData->atn, sysyParserStaticData->decisionToDFA, sysyParserStaticData->sharedContextCache, options);
 }
 
 SysYParser::~SysYParser() {
   delete _interpreter;
+}
+
+const atn::ATN& SysYParser::getATN() const {
+  return *sysyParserStaticData->atn;
 }
 
 std::string SysYParser::getGrammarFileName() const {
@@ -23,11 +247,15 @@ std::string SysYParser::getGrammarFileName() const {
 }
 
 const std::vector<std::string>& SysYParser::getRuleNames() const {
-  return _ruleNames;
+  return sysyParserStaticData->ruleNames;
 }
 
-dfa::Vocabulary& SysYParser::getVocabulary() const {
-  return _vocabulary;
+const dfa::Vocabulary& SysYParser::getVocabulary() const {
+  return sysyParserStaticData->vocabulary;
+}
+
+antlr4::atn::SerializedATNView SysYParser::getSerializedATN() const {
+  return sysyParserStaticData->serializedATN;
 }
 
 
@@ -51,7 +279,7 @@ size_t SysYParser::CompilationUnitContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::CompilationUnitContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::CompilationUnitContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitCompilationUnit(this);
   else
@@ -63,7 +291,11 @@ SysYParser::CompilationUnitContext* SysYParser::compilationUnit() {
   enterRule(_localctx, 0, SysYParser::RuleCompilationUnit);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -73,11 +305,7 @@ SysYParser::CompilationUnitContext* SysYParser::compilationUnit() {
 
     _la = _input->LA(1);
     if ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__0)
-      | (1ULL << SysYParser::Int)
-      | (1ULL << SysYParser::Void)
-      | (1ULL << SysYParser::Const)
-      | (1ULL << SysYParser::Semicolon))) != 0)) {
+      ((1ULL << _la) & 8590163970) != 0)) {
       setState(92);
       translationUnit();
     }
@@ -114,7 +342,7 @@ size_t SysYParser::TranslationUnitContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::TranslationUnitContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::TranslationUnitContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitTranslationUnit(this);
   else
@@ -126,7 +354,11 @@ SysYParser::TranslationUnitContext* SysYParser::translationUnit() {
   enterRule(_localctx, 2, SysYParser::RuleTranslationUnit);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -141,11 +373,7 @@ SysYParser::TranslationUnitContext* SysYParser::translationUnit() {
       _errHandler->sync(this);
       _la = _input->LA(1);
     } while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__0)
-      | (1ULL << SysYParser::Int)
-      | (1ULL << SysYParser::Void)
-      | (1ULL << SysYParser::Const)
-      | (1ULL << SysYParser::Semicolon))) != 0));
+      ((1ULL << _la) & 8590163970) != 0));
    
   }
   catch (RecognitionException &e) {
@@ -181,7 +409,7 @@ size_t SysYParser::ExternalDeclarationContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ExternalDeclarationContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ExternalDeclarationContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitExternalDeclaration(this);
   else
@@ -192,7 +420,11 @@ SysYParser::ExternalDeclarationContext* SysYParser::externalDeclaration() {
   ExternalDeclarationContext *_localctx = _tracker.createInstance<ExternalDeclarationContext>(_ctx, getState());
   enterRule(_localctx, 4, SysYParser::RuleExternalDeclaration);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -220,6 +452,8 @@ SysYParser::ExternalDeclarationContext* SysYParser::externalDeclaration() {
       break;
     }
 
+    default:
+      break;
     }
    
   }
@@ -252,7 +486,7 @@ size_t SysYParser::DeclContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::DeclContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::DeclContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitDecl(this);
   else
@@ -263,7 +497,11 @@ SysYParser::DeclContext* SysYParser::decl() {
   DeclContext *_localctx = _tracker.createInstance<DeclContext>(_ctx, getState());
   enterRule(_localctx, 6, SysYParser::RuleDecl);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -339,7 +577,7 @@ size_t SysYParser::ConstDeclContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ConstDeclContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ConstDeclContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitConstDecl(this);
   else
@@ -351,7 +589,11 @@ SysYParser::ConstDeclContext* SysYParser::constDecl() {
   enterRule(_localctx, 8, SysYParser::RuleConstDecl);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -403,7 +645,7 @@ size_t SysYParser::BTypeContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::BTypeContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BTypeContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBType(this);
   else
@@ -415,7 +657,11 @@ SysYParser::BTypeContext* SysYParser::bType() {
   enterRule(_localctx, 10, SysYParser::RuleBType);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -486,7 +732,7 @@ size_t SysYParser::ConstDefContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ConstDefContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ConstDefContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitConstDef(this);
   else
@@ -498,7 +744,11 @@ SysYParser::ConstDefContext* SysYParser::constDef() {
   enterRule(_localctx, 12, SysYParser::RuleConstDef);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -578,7 +828,7 @@ tree::TerminalNode* SysYParser::ListConstInitValContext::Comma(size_t i) {
 SysYParser::ListConstInitValContext::ListConstInitValContext(ConstInitValContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ListConstInitValContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ListConstInitValContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitListConstInitVal(this);
   else
@@ -593,7 +843,7 @@ SysYParser::ConstExpContext* SysYParser::ScalarConstInitValContext::constExp() {
 SysYParser::ScalarConstInitValContext::ScalarConstInitValContext(ConstInitValContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ScalarConstInitValContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ScalarConstInitValContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitScalarConstInitVal(this);
   else
@@ -604,7 +854,11 @@ SysYParser::ConstInitValContext* SysYParser::constInitVal() {
   enterRule(_localctx, 14, SysYParser::RuleConstInitVal);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -621,7 +875,7 @@ SysYParser::ConstInitValContext* SysYParser::constInitVal() {
       case SysYParser::IntLiteral:
       case SysYParser::FloatLiteral:
       case SysYParser::Identifier: {
-        _localctx = dynamic_cast<ConstInitValContext *>(_tracker.createInstance<SysYParser::ScalarConstInitValContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ScalarConstInitValContext>(_localctx);
         enterOuterAlt(_localctx, 1);
         setState(138);
         constExp();
@@ -629,7 +883,7 @@ SysYParser::ConstInitValContext* SysYParser::constInitVal() {
       }
 
       case SysYParser::Lbrace: {
-        _localctx = dynamic_cast<ConstInitValContext *>(_tracker.createInstance<SysYParser::ListConstInitValContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ListConstInitValContext>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(139);
         match(SysYParser::Lbrace);
@@ -638,17 +892,7 @@ SysYParser::ConstInitValContext* SysYParser::constInitVal() {
 
         _la = _input->LA(1);
         if ((((_la & ~ 0x3fULL) == 0) &&
-          ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-          | (1ULL << SysYParser::T__13)
-          | (1ULL << SysYParser::Lparen)
-          | (1ULL << SysYParser::Lbrace)
-          | (1ULL << SysYParser::Minus)
-          | (1ULL << SysYParser::Addition)
-          | (1ULL << SysYParser::Exclamation)
-          | (1ULL << SysYParser::Multiplication)
-          | (1ULL << SysYParser::IntLiteral)
-          | (1ULL << SysYParser::FloatLiteral)
-          | (1ULL << SysYParser::Identifier))) != 0)) {
+          ((1ULL << _la) & 1970583675887616) != 0)) {
           setState(140);
           constInitVal();
           setState(145);
@@ -719,7 +963,7 @@ size_t SysYParser::VarDeclContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::VarDeclContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::VarDeclContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitVarDecl(this);
   else
@@ -731,7 +975,11 @@ SysYParser::VarDeclContext* SysYParser::varDecl() {
   enterRule(_localctx, 16, SysYParser::RuleVarDecl);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -813,7 +1061,7 @@ tree::TerminalNode* SysYParser::UninitVarDefContext::Rbrkt(size_t i) {
 SysYParser::UninitVarDefContext::UninitVarDefContext(VarDefContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::UninitVarDefContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::UninitVarDefContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitUninitVarDef(this);
   else
@@ -856,7 +1104,7 @@ tree::TerminalNode* SysYParser::InitVarDefContext::Rbrkt(size_t i) {
 SysYParser::InitVarDefContext::InitVarDefContext(VarDefContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::InitVarDefContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::InitVarDefContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitInitVarDef(this);
   else
@@ -867,7 +1115,11 @@ SysYParser::VarDefContext* SysYParser::varDef() {
   enterRule(_localctx, 18, SysYParser::RuleVarDef);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -875,7 +1127,7 @@ SysYParser::VarDefContext* SysYParser::varDef() {
     _errHandler->sync(this);
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 12, _ctx)) {
     case 1: {
-      _localctx = dynamic_cast<VarDefContext *>(_tracker.createInstance<SysYParser::UninitVarDefContext>(_localctx));
+      _localctx = _tracker.createInstance<SysYParser::UninitVarDefContext>(_localctx);
       enterOuterAlt(_localctx, 1);
       setState(164);
       match(SysYParser::Identifier);
@@ -897,7 +1149,7 @@ SysYParser::VarDefContext* SysYParser::varDef() {
     }
 
     case 2: {
-      _localctx = dynamic_cast<VarDefContext *>(_tracker.createInstance<SysYParser::InitVarDefContext>(_localctx));
+      _localctx = _tracker.createInstance<SysYParser::InitVarDefContext>(_localctx);
       enterOuterAlt(_localctx, 2);
       setState(174);
       match(SysYParser::Identifier);
@@ -922,6 +1174,8 @@ SysYParser::VarDefContext* SysYParser::varDef() {
       break;
     }
 
+    default:
+      break;
     }
    
   }
@@ -958,7 +1212,7 @@ SysYParser::ExpContext* SysYParser::ScalarInitValContext::exp() {
 SysYParser::ScalarInitValContext::ScalarInitValContext(InitValContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ScalarInitValContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ScalarInitValContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitScalarInitVal(this);
   else
@@ -993,7 +1247,7 @@ tree::TerminalNode* SysYParser::ListInitvalContext::Comma(size_t i) {
 SysYParser::ListInitvalContext::ListInitvalContext(InitValContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ListInitvalContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ListInitvalContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitListInitval(this);
   else
@@ -1004,7 +1258,11 @@ SysYParser::InitValContext* SysYParser::initVal() {
   enterRule(_localctx, 20, SysYParser::RuleInitVal);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1021,7 +1279,7 @@ SysYParser::InitValContext* SysYParser::initVal() {
       case SysYParser::IntLiteral:
       case SysYParser::FloatLiteral:
       case SysYParser::Identifier: {
-        _localctx = dynamic_cast<InitValContext *>(_tracker.createInstance<SysYParser::ScalarInitValContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ScalarInitValContext>(_localctx);
         enterOuterAlt(_localctx, 1);
         setState(188);
         exp();
@@ -1029,7 +1287,7 @@ SysYParser::InitValContext* SysYParser::initVal() {
       }
 
       case SysYParser::Lbrace: {
-        _localctx = dynamic_cast<InitValContext *>(_tracker.createInstance<SysYParser::ListInitvalContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ListInitvalContext>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(189);
         match(SysYParser::Lbrace);
@@ -1038,17 +1296,7 @@ SysYParser::InitValContext* SysYParser::initVal() {
 
         _la = _input->LA(1);
         if ((((_la & ~ 0x3fULL) == 0) &&
-          ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-          | (1ULL << SysYParser::T__13)
-          | (1ULL << SysYParser::Lparen)
-          | (1ULL << SysYParser::Lbrace)
-          | (1ULL << SysYParser::Minus)
-          | (1ULL << SysYParser::Addition)
-          | (1ULL << SysYParser::Exclamation)
-          | (1ULL << SysYParser::Multiplication)
-          | (1ULL << SysYParser::IntLiteral)
-          | (1ULL << SysYParser::FloatLiteral)
-          | (1ULL << SysYParser::Identifier))) != 0)) {
+          ((1ULL << _la) & 1970583675887616) != 0)) {
           setState(190);
           initVal();
           setState(195);
@@ -1119,7 +1367,7 @@ size_t SysYParser::FuncDefContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncDefContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncDefContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncDef(this);
   else
@@ -1131,7 +1379,11 @@ SysYParser::FuncDefContext* SysYParser::funcDef() {
   enterRule(_localctx, 22, SysYParser::RuleFuncDef);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1187,7 +1439,7 @@ size_t SysYParser::FuncTypeContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncTypeContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncTypeContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncType(this);
   else
@@ -1199,7 +1451,11 @@ SysYParser::FuncTypeContext* SysYParser::funcType() {
   enterRule(_localctx, 24, SysYParser::RuleFuncType);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1207,9 +1463,7 @@ SysYParser::FuncTypeContext* SysYParser::funcType() {
     setState(212);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__0)
-      | (1ULL << SysYParser::Int)
-      | (1ULL << SysYParser::Void))) != 0))) {
+      ((1ULL << _la) & 98306) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -1255,7 +1509,7 @@ size_t SysYParser::FuncFParamsContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncFParamsContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncFParamsContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncFParams(this);
   else
@@ -1267,7 +1521,11 @@ SysYParser::FuncFParamsContext* SysYParser::funcFParams() {
   enterRule(_localctx, 26, SysYParser::RuleFuncFParams);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1341,7 +1599,7 @@ size_t SysYParser::FuncFParamContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncFParamContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncFParamContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncFParam(this);
   else
@@ -1353,7 +1611,11 @@ SysYParser::FuncFParamContext* SysYParser::funcFParam() {
   enterRule(_localctx, 28, SysYParser::RuleFuncFParam);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1421,7 +1683,7 @@ size_t SysYParser::BlockContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::BlockContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BlockContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBlock(this);
   else
@@ -1433,7 +1695,11 @@ SysYParser::BlockContext* SysYParser::block() {
   enterRule(_localctx, 30, SysYParser::RuleBlock);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1445,26 +1711,7 @@ SysYParser::BlockContext* SysYParser::block() {
 
     _la = _input->LA(1);
     if ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__0)
-      | (1ULL << SysYParser::T__12)
-      | (1ULL << SysYParser::T__13)
-      | (1ULL << SysYParser::Int)
-      | (1ULL << SysYParser::Const)
-      | (1ULL << SysYParser::Return)
-      | (1ULL << SysYParser::If)
-      | (1ULL << SysYParser::While)
-      | (1ULL << SysYParser::Break)
-      | (1ULL << SysYParser::Continue)
-      | (1ULL << SysYParser::Lparen)
-      | (1ULL << SysYParser::Lbrace)
-      | (1ULL << SysYParser::Semicolon)
-      | (1ULL << SysYParser::Minus)
-      | (1ULL << SysYParser::Addition)
-      | (1ULL << SysYParser::Exclamation)
-      | (1ULL << SysYParser::Multiplication)
-      | (1ULL << SysYParser::IntLiteral)
-      | (1ULL << SysYParser::FloatLiteral)
-      | (1ULL << SysYParser::Identifier))) != 0)) {
+      ((1ULL << _la) & 1970592319201282) != 0)) {
       setState(238);
       blockItemList();
     }
@@ -1501,7 +1748,7 @@ size_t SysYParser::BlockItemListContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::BlockItemListContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BlockItemListContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBlockItemList(this);
   else
@@ -1513,7 +1760,11 @@ SysYParser::BlockItemListContext* SysYParser::blockItemList() {
   enterRule(_localctx, 32, SysYParser::RuleBlockItemList);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1528,26 +1779,7 @@ SysYParser::BlockItemListContext* SysYParser::blockItemList() {
       _errHandler->sync(this);
       _la = _input->LA(1);
     } while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__0)
-      | (1ULL << SysYParser::T__12)
-      | (1ULL << SysYParser::T__13)
-      | (1ULL << SysYParser::Int)
-      | (1ULL << SysYParser::Const)
-      | (1ULL << SysYParser::Return)
-      | (1ULL << SysYParser::If)
-      | (1ULL << SysYParser::While)
-      | (1ULL << SysYParser::Break)
-      | (1ULL << SysYParser::Continue)
-      | (1ULL << SysYParser::Lparen)
-      | (1ULL << SysYParser::Lbrace)
-      | (1ULL << SysYParser::Semicolon)
-      | (1ULL << SysYParser::Minus)
-      | (1ULL << SysYParser::Addition)
-      | (1ULL << SysYParser::Exclamation)
-      | (1ULL << SysYParser::Multiplication)
-      | (1ULL << SysYParser::IntLiteral)
-      | (1ULL << SysYParser::FloatLiteral)
-      | (1ULL << SysYParser::Identifier))) != 0));
+      ((1ULL << _la) & 1970592319201282) != 0));
    
   }
   catch (RecognitionException &e) {
@@ -1579,7 +1811,7 @@ size_t SysYParser::BlockItemContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::BlockItemContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BlockItemContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBlockItem(this);
   else
@@ -1590,7 +1822,11 @@ SysYParser::BlockItemContext* SysYParser::blockItem() {
   BlockItemContext *_localctx = _tracker.createInstance<BlockItemContext>(_ctx, getState());
   enterRule(_localctx, 34, SysYParser::RuleBlockItem);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1679,7 +1915,7 @@ size_t SysYParser::StmtContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::StmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::StmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitStmt(this);
   else
@@ -1690,7 +1926,11 @@ SysYParser::StmtContext* SysYParser::stmt() {
   StmtContext *_localctx = _tracker.createInstance<StmtContext>(_ctx, getState());
   enterRule(_localctx, 36, SysYParser::RuleStmt);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1739,6 +1979,8 @@ SysYParser::StmtContext* SysYParser::stmt() {
       break;
     }
 
+    default:
+      break;
     }
    
   }
@@ -1779,7 +2021,7 @@ size_t SysYParser::AssignStmtContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::AssignStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::AssignStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitAssignStmt(this);
   else
@@ -1790,7 +2032,11 @@ SysYParser::AssignStmtContext* SysYParser::assignStmt() {
   AssignStmtContext *_localctx = _tracker.createInstance<AssignStmtContext>(_ctx, getState());
   enterRule(_localctx, 38, SysYParser::RuleAssignStmt);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1826,7 +2072,7 @@ size_t SysYParser::AssignOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::AssignOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::AssignOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitAssignOp(this);
   else
@@ -1838,7 +2084,11 @@ SysYParser::AssignOpContext* SysYParser::assignOp() {
   enterRule(_localctx, 40, SysYParser::RuleAssignOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1846,17 +2096,7 @@ SysYParser::AssignOpContext* SysYParser::assignOp() {
     setState(265);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__1)
-      | (1ULL << SysYParser::T__2)
-      | (1ULL << SysYParser::T__3)
-      | (1ULL << SysYParser::T__4)
-      | (1ULL << SysYParser::T__5)
-      | (1ULL << SysYParser::T__6)
-      | (1ULL << SysYParser::T__7)
-      | (1ULL << SysYParser::T__8)
-      | (1ULL << SysYParser::T__9)
-      | (1ULL << SysYParser::T__10)
-      | (1ULL << SysYParser::T__11))) != 0))) {
+      ((1ULL << _la) & 8188) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -1894,7 +2134,7 @@ size_t SysYParser::ExpStmtContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ExpStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ExpStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitExpStmt(this);
   else
@@ -1906,7 +2146,11 @@ SysYParser::ExpStmtContext* SysYParser::expStmt() {
   enterRule(_localctx, 42, SysYParser::RuleExpStmt);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -1916,16 +2160,7 @@ SysYParser::ExpStmtContext* SysYParser::expStmt() {
 
     _la = _input->LA(1);
     if ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-      | (1ULL << SysYParser::T__13)
-      | (1ULL << SysYParser::Lparen)
-      | (1ULL << SysYParser::Minus)
-      | (1ULL << SysYParser::Addition)
-      | (1ULL << SysYParser::Exclamation)
-      | (1ULL << SysYParser::Multiplication)
-      | (1ULL << SysYParser::IntLiteral)
-      | (1ULL << SysYParser::FloatLiteral)
-      | (1ULL << SysYParser::Identifier))) != 0)) {
+      ((1ULL << _la) & 1970582602145792) != 0)) {
       setState(267);
       exp();
     }
@@ -1958,7 +2193,7 @@ size_t SysYParser::BlockStmtContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::BlockStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BlockStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBlockStmt(this);
   else
@@ -1969,7 +2204,11 @@ SysYParser::BlockStmtContext* SysYParser::blockStmt() {
   BlockStmtContext *_localctx = _tracker.createInstance<BlockStmtContext>(_ctx, getState());
   enterRule(_localctx, 44, SysYParser::RuleBlockStmt);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2035,7 +2274,7 @@ tree::TerminalNode* SysYParser::IfStmtContext::Else() {
 SysYParser::IfStmtContext::IfStmtContext(SeleStmtContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::IfStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::IfStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitIfStmt(this);
   else
@@ -2045,11 +2284,15 @@ SysYParser::SeleStmtContext* SysYParser::seleStmt() {
   SeleStmtContext *_localctx = _tracker.createInstance<SeleStmtContext>(_ctx, getState());
   enterRule(_localctx, 46, SysYParser::RuleSeleStmt);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
-    _localctx = dynamic_cast<SeleStmtContext *>(_tracker.createInstance<SysYParser::IfStmtContext>(_localctx));
+    _localctx = _tracker.createInstance<SysYParser::IfStmtContext>(_localctx);
     enterOuterAlt(_localctx, 1);
     setState(274);
     match(SysYParser::If);
@@ -2073,6 +2316,8 @@ SysYParser::SeleStmtContext* SysYParser::seleStmt() {
       break;
     }
 
+    default:
+      break;
     }
    
   }
@@ -2125,7 +2370,7 @@ SysYParser::StmtContext* SysYParser::WhileLoopContext::stmt() {
 SysYParser::WhileLoopContext::WhileLoopContext(LoopStmtContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::WhileLoopContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::WhileLoopContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitWhileLoop(this);
   else
@@ -2135,11 +2380,15 @@ SysYParser::LoopStmtContext* SysYParser::loopStmt() {
   LoopStmtContext *_localctx = _tracker.createInstance<LoopStmtContext>(_ctx, getState());
   enterRule(_localctx, 48, SysYParser::RuleLoopStmt);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
-    _localctx = dynamic_cast<LoopStmtContext *>(_tracker.createInstance<SysYParser::WhileLoopContext>(_localctx));
+    _localctx = _tracker.createInstance<SysYParser::WhileLoopContext>(_localctx);
     enterOuterAlt(_localctx, 1);
     setState(283);
     match(SysYParser::While);
@@ -2190,7 +2439,7 @@ tree::TerminalNode* SysYParser::BreakStmtContext::Semicolon() {
 SysYParser::BreakStmtContext::BreakStmtContext(JumpStmtContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::BreakStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::BreakStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitBreakStmt(this);
   else
@@ -2213,7 +2462,7 @@ SysYParser::ExpContext* SysYParser::ReturnStmtContext::exp() {
 SysYParser::ReturnStmtContext::ReturnStmtContext(JumpStmtContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ReturnStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ReturnStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitReturnStmt(this);
   else
@@ -2232,7 +2481,7 @@ tree::TerminalNode* SysYParser::ContinueStmtContext::Semicolon() {
 SysYParser::ContinueStmtContext::ContinueStmtContext(JumpStmtContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::ContinueStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ContinueStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitContinueStmt(this);
   else
@@ -2243,7 +2492,11 @@ SysYParser::JumpStmtContext* SysYParser::jumpStmt() {
   enterRule(_localctx, 50, SysYParser::RuleJumpStmt);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2251,7 +2504,7 @@ SysYParser::JumpStmtContext* SysYParser::jumpStmt() {
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case SysYParser::Continue: {
-        _localctx = dynamic_cast<JumpStmtContext *>(_tracker.createInstance<SysYParser::ContinueStmtContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ContinueStmtContext>(_localctx);
         enterOuterAlt(_localctx, 1);
         setState(289);
         match(SysYParser::Continue);
@@ -2261,7 +2514,7 @@ SysYParser::JumpStmtContext* SysYParser::jumpStmt() {
       }
 
       case SysYParser::Break: {
-        _localctx = dynamic_cast<JumpStmtContext *>(_tracker.createInstance<SysYParser::BreakStmtContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::BreakStmtContext>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(291);
         match(SysYParser::Break);
@@ -2271,7 +2524,7 @@ SysYParser::JumpStmtContext* SysYParser::jumpStmt() {
       }
 
       case SysYParser::Return: {
-        _localctx = dynamic_cast<JumpStmtContext *>(_tracker.createInstance<SysYParser::ReturnStmtContext>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::ReturnStmtContext>(_localctx);
         enterOuterAlt(_localctx, 3);
         setState(293);
         match(SysYParser::Return);
@@ -2280,16 +2533,7 @@ SysYParser::JumpStmtContext* SysYParser::jumpStmt() {
 
         _la = _input->LA(1);
         if ((((_la & ~ 0x3fULL) == 0) &&
-          ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-          | (1ULL << SysYParser::T__13)
-          | (1ULL << SysYParser::Lparen)
-          | (1ULL << SysYParser::Minus)
-          | (1ULL << SysYParser::Addition)
-          | (1ULL << SysYParser::Exclamation)
-          | (1ULL << SysYParser::Multiplication)
-          | (1ULL << SysYParser::IntLiteral)
-          | (1ULL << SysYParser::FloatLiteral)
-          | (1ULL << SysYParser::Identifier))) != 0)) {
+          ((1ULL << _la) & 1970582602145792) != 0)) {
           setState(294);
           exp();
         }
@@ -2328,7 +2572,7 @@ size_t SysYParser::ExpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ExpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ExpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitExp(this);
   else
@@ -2339,13 +2583,17 @@ SysYParser::ExpContext* SysYParser::exp() {
   ExpContext *_localctx = _tracker.createInstance<ExpContext>(_ctx, getState());
   enterRule(_localctx, 52, SysYParser::RuleExp);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
     setState(300);
-    addExp();
+    addExp(0);
    
   }
   catch (RecognitionException &e) {
@@ -2373,7 +2621,7 @@ size_t SysYParser::ConstExpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::ConstExpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::ConstExpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitConstExp(this);
   else
@@ -2384,13 +2632,17 @@ SysYParser::ConstExpContext* SysYParser::constExp() {
   ConstExpContext *_localctx = _tracker.createInstance<ConstExpContext>(_ctx, getState());
   enterRule(_localctx, 54, SysYParser::RuleConstExp);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
     setState(302);
-    addExp();
+    addExp(0);
    
   }
   catch (RecognitionException &e) {
@@ -2442,7 +2694,7 @@ size_t SysYParser::LValContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::LValContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::LValContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitLVal(this);
   else
@@ -2453,7 +2705,11 @@ SysYParser::LValContext* SysYParser::lVal() {
   LValContext *_localctx = _tracker.createInstance<LValContext>(_ctx, getState());
   enterRule(_localctx, 56, SysYParser::RuleLVal);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2512,7 +2768,7 @@ SysYParser::LValContext* SysYParser::PrimaryExp2Context::lVal() {
 SysYParser::PrimaryExp2Context::PrimaryExp2Context(PrimaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::PrimaryExp2Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::PrimaryExp2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitPrimaryExp2(this);
   else
@@ -2535,7 +2791,7 @@ tree::TerminalNode* SysYParser::PrimaryExp1Context::Rparen() {
 SysYParser::PrimaryExp1Context::PrimaryExp1Context(PrimaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::PrimaryExp1Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::PrimaryExp1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitPrimaryExp1(this);
   else
@@ -2550,7 +2806,7 @@ SysYParser::NumberContext* SysYParser::PrimaryExp3Context::number() {
 SysYParser::PrimaryExp3Context::PrimaryExp3Context(PrimaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::PrimaryExp3Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::PrimaryExp3Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitPrimaryExp3(this);
   else
@@ -2560,7 +2816,11 @@ SysYParser::PrimaryExpContext* SysYParser::primaryExp() {
   PrimaryExpContext *_localctx = _tracker.createInstance<PrimaryExpContext>(_ctx, getState());
   enterRule(_localctx, 58, SysYParser::RulePrimaryExp);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2568,7 +2828,7 @@ SysYParser::PrimaryExpContext* SysYParser::primaryExp() {
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case SysYParser::Lparen: {
-        _localctx = dynamic_cast<PrimaryExpContext *>(_tracker.createInstance<SysYParser::PrimaryExp1Context>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::PrimaryExp1Context>(_localctx);
         enterOuterAlt(_localctx, 1);
         setState(314);
         match(SysYParser::Lparen);
@@ -2580,7 +2840,7 @@ SysYParser::PrimaryExpContext* SysYParser::primaryExp() {
       }
 
       case SysYParser::Identifier: {
-        _localctx = dynamic_cast<PrimaryExpContext *>(_tracker.createInstance<SysYParser::PrimaryExp2Context>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::PrimaryExp2Context>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(318);
         lVal();
@@ -2589,7 +2849,7 @@ SysYParser::PrimaryExpContext* SysYParser::primaryExp() {
 
       case SysYParser::IntLiteral:
       case SysYParser::FloatLiteral: {
-        _localctx = dynamic_cast<PrimaryExpContext *>(_tracker.createInstance<SysYParser::PrimaryExp3Context>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::PrimaryExp3Context>(_localctx);
         enterOuterAlt(_localctx, 3);
         setState(319);
         number();
@@ -2634,7 +2894,7 @@ tree::TerminalNode* SysYParser::Number1Context::IntLiteral() {
 SysYParser::Number1Context::Number1Context(NumberContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::Number1Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::Number1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitNumber1(this);
   else
@@ -2649,7 +2909,7 @@ tree::TerminalNode* SysYParser::Number2Context::FloatLiteral() {
 SysYParser::Number2Context::Number2Context(NumberContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::Number2Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::Number2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitNumber2(this);
   else
@@ -2659,7 +2919,11 @@ SysYParser::NumberContext* SysYParser::number() {
   NumberContext *_localctx = _tracker.createInstance<NumberContext>(_ctx, getState());
   enterRule(_localctx, 60, SysYParser::RuleNumber);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2667,7 +2931,7 @@ SysYParser::NumberContext* SysYParser::number() {
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case SysYParser::IntLiteral: {
-        _localctx = dynamic_cast<NumberContext *>(_tracker.createInstance<SysYParser::Number1Context>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::Number1Context>(_localctx);
         enterOuterAlt(_localctx, 1);
         setState(322);
         match(SysYParser::IntLiteral);
@@ -2675,7 +2939,7 @@ SysYParser::NumberContext* SysYParser::number() {
       }
 
       case SysYParser::FloatLiteral: {
-        _localctx = dynamic_cast<NumberContext *>(_tracker.createInstance<SysYParser::Number2Context>(_localctx));
+        _localctx = _tracker.createInstance<SysYParser::Number2Context>(_localctx);
         enterOuterAlt(_localctx, 2);
         setState(323);
         match(SysYParser::FloatLiteral);
@@ -2724,7 +2988,7 @@ size_t SysYParser::FuncRParamsContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncRParamsContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncRParamsContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncRParams(this);
   else
@@ -2736,7 +3000,11 @@ SysYParser::FuncRParamsContext* SysYParser::funcRParams() {
   enterRule(_localctx, 62, SysYParser::RuleFuncRParams);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2782,7 +3050,7 @@ size_t SysYParser::FuncRParamContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::FuncRParamContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::FuncRParamContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitFuncRParam(this);
   else
@@ -2793,7 +3061,11 @@ SysYParser::FuncRParamContext* SysYParser::funcRParam() {
   FuncRParamContext *_localctx = _tracker.createInstance<FuncRParamContext>(_ctx, getState());
   enterRule(_localctx, 64, SysYParser::RuleFuncRParam);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2835,7 +3107,7 @@ SysYParser::PrimaryExpContext* SysYParser::Unary1Context::primaryExp() {
 SysYParser::Unary1Context::Unary1Context(UnaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::Unary1Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::Unary1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitUnary1(this);
   else
@@ -2862,7 +3134,7 @@ SysYParser::FuncRParamsContext* SysYParser::Unary2Context::funcRParams() {
 SysYParser::Unary2Context::Unary2Context(UnaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::Unary2Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::Unary2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitUnary2(this);
   else
@@ -2881,7 +3153,7 @@ SysYParser::UnaryExpContext* SysYParser::Unary3Context::unaryExp() {
 SysYParser::Unary3Context::Unary3Context(UnaryExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::Unary3Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::Unary3Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitUnary3(this);
   else
@@ -2892,7 +3164,11 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
   enterRule(_localctx, 66, SysYParser::RuleUnaryExp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -2900,7 +3176,7 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
     _errHandler->sync(this);
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 33, _ctx)) {
     case 1: {
-      _localctx = dynamic_cast<UnaryExpContext *>(_tracker.createInstance<SysYParser::Unary1Context>(_localctx));
+      _localctx = _tracker.createInstance<SysYParser::Unary1Context>(_localctx);
       enterOuterAlt(_localctx, 1);
       setState(336);
       primaryExp();
@@ -2908,7 +3184,7 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
     }
 
     case 2: {
-      _localctx = dynamic_cast<UnaryExpContext *>(_tracker.createInstance<SysYParser::Unary2Context>(_localctx));
+      _localctx = _tracker.createInstance<SysYParser::Unary2Context>(_localctx);
       enterOuterAlt(_localctx, 2);
       setState(337);
       match(SysYParser::Identifier);
@@ -2919,16 +3195,7 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
 
       _la = _input->LA(1);
       if ((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-        | (1ULL << SysYParser::T__13)
-        | (1ULL << SysYParser::Lparen)
-        | (1ULL << SysYParser::Minus)
-        | (1ULL << SysYParser::Addition)
-        | (1ULL << SysYParser::Exclamation)
-        | (1ULL << SysYParser::Multiplication)
-        | (1ULL << SysYParser::IntLiteral)
-        | (1ULL << SysYParser::FloatLiteral)
-        | (1ULL << SysYParser::Identifier))) != 0)) {
+        ((1ULL << _la) & 1970582602145792) != 0)) {
         setState(339);
         funcRParams();
       }
@@ -2938,7 +3205,7 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
     }
 
     case 3: {
-      _localctx = dynamic_cast<UnaryExpContext *>(_tracker.createInstance<SysYParser::Unary3Context>(_localctx));
+      _localctx = _tracker.createInstance<SysYParser::Unary3Context>(_localctx);
       enterOuterAlt(_localctx, 3);
       setState(343);
       unaryOp();
@@ -2947,6 +3214,8 @@ SysYParser::UnaryExpContext* SysYParser::unaryExp() {
       break;
     }
 
+    default:
+      break;
     }
    
   }
@@ -2987,7 +3256,7 @@ size_t SysYParser::UnaryOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::UnaryOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::UnaryOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitUnaryOp(this);
   else
@@ -2999,7 +3268,11 @@ SysYParser::UnaryOpContext* SysYParser::unaryOp() {
   enterRule(_localctx, 68, SysYParser::RuleUnaryOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
@@ -3007,12 +3280,7 @@ SysYParser::UnaryOpContext* SysYParser::unaryOp() {
     setState(348);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::T__12)
-      | (1ULL << SysYParser::T__13)
-      | (1ULL << SysYParser::Minus)
-      | (1ULL << SysYParser::Addition)
-      | (1ULL << SysYParser::Exclamation)
-      | (1ULL << SysYParser::Multiplication))) != 0))) {
+      ((1ULL << _la) & 257698062336) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -3036,69 +3304,115 @@ SysYParser::MulExpContext::MulExpContext(ParserRuleContext *parent, size_t invok
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<SysYParser::UnaryExpContext *> SysYParser::MulExpContext::unaryExp() {
-  return getRuleContexts<SysYParser::UnaryExpContext>();
-}
-
-SysYParser::UnaryExpContext* SysYParser::MulExpContext::unaryExp(size_t i) {
-  return getRuleContext<SysYParser::UnaryExpContext>(i);
-}
-
-std::vector<SysYParser::MulOpContext *> SysYParser::MulExpContext::mulOp() {
-  return getRuleContexts<SysYParser::MulOpContext>();
-}
-
-SysYParser::MulOpContext* SysYParser::MulExpContext::mulOp(size_t i) {
-  return getRuleContext<SysYParser::MulOpContext>(i);
-}
-
 
 size_t SysYParser::MulExpContext::getRuleIndex() const {
   return SysYParser::RuleMulExp;
 }
 
+void SysYParser::MulExpContext::copyFrom(MulExpContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-antlrcpp::Any SysYParser::MulExpContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- Mul2Context ------------------------------------------------------------------
+
+SysYParser::MulExpContext* SysYParser::Mul2Context::mulExp() {
+  return getRuleContext<SysYParser::MulExpContext>(0);
+}
+
+SysYParser::MulOpContext* SysYParser::Mul2Context::mulOp() {
+  return getRuleContext<SysYParser::MulOpContext>(0);
+}
+
+SysYParser::UnaryExpContext* SysYParser::Mul2Context::unaryExp() {
+  return getRuleContext<SysYParser::UnaryExpContext>(0);
+}
+
+SysYParser::Mul2Context::Mul2Context(MulExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Mul2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
-    return parserVisitor->visitMulExp(this);
+    return parserVisitor->visitMul2(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Mul1Context ------------------------------------------------------------------
+
+SysYParser::UnaryExpContext* SysYParser::Mul1Context::unaryExp() {
+  return getRuleContext<SysYParser::UnaryExpContext>(0);
+}
+
+SysYParser::Mul1Context::Mul1Context(MulExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Mul1Context::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
+    return parserVisitor->visitMul1(this);
   else
     return visitor->visitChildren(this);
 }
 
 SysYParser::MulExpContext* SysYParser::mulExp() {
-  MulExpContext *_localctx = _tracker.createInstance<MulExpContext>(_ctx, getState());
-  enterRule(_localctx, 70, SysYParser::RuleMulExp);
+   return mulExp(0);
+}
 
+SysYParser::MulExpContext* SysYParser::mulExp(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  SysYParser::MulExpContext *_localctx = _tracker.createInstance<MulExpContext>(_ctx, parentState);
+  SysYParser::MulExpContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 70;
+  enterRecursionRule(_localctx, 70, SysYParser::RuleMulExp, precedence);
+
+    
+
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
-    exitRule();
+#endif
+    unrollRecursionContexts(parentContext);
   });
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(350);
+    _localctx = _tracker.createInstance<Mul1Context>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(351);
     unaryExp();
-    setState(356);
+    _ctx->stop = _input->LT(-1);
+    setState(359);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 34, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
-        setState(351);
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<Mul2Context>(_tracker.createInstance<MulExpContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleMulExp);
+        setState(353);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(354);
         mulOp();
-        setState(352);
+        setState(355);
         unaryExp(); 
       }
-      setState(358);
+      setState(361);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 34, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -3126,7 +3440,7 @@ size_t SysYParser::MulOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::MulOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::MulOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitMulOp(this);
   else
@@ -3138,17 +3452,19 @@ SysYParser::MulOpContext* SysYParser::mulOp() {
   enterRule(_localctx, 72, SysYParser::RuleMulOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(359);
+    setState(362);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::Multiplication)
-      | (1ULL << SysYParser::Division)
-      | (1ULL << SysYParser::Modulo))) != 0))) {
+      ((1ULL << _la) & 962072674304) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -3172,69 +3488,115 @@ SysYParser::AddExpContext::AddExpContext(ParserRuleContext *parent, size_t invok
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<SysYParser::MulExpContext *> SysYParser::AddExpContext::mulExp() {
-  return getRuleContexts<SysYParser::MulExpContext>();
-}
-
-SysYParser::MulExpContext* SysYParser::AddExpContext::mulExp(size_t i) {
-  return getRuleContext<SysYParser::MulExpContext>(i);
-}
-
-std::vector<SysYParser::AddOpContext *> SysYParser::AddExpContext::addOp() {
-  return getRuleContexts<SysYParser::AddOpContext>();
-}
-
-SysYParser::AddOpContext* SysYParser::AddExpContext::addOp(size_t i) {
-  return getRuleContext<SysYParser::AddOpContext>(i);
-}
-
 
 size_t SysYParser::AddExpContext::getRuleIndex() const {
   return SysYParser::RuleAddExp;
 }
 
+void SysYParser::AddExpContext::copyFrom(AddExpContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-antlrcpp::Any SysYParser::AddExpContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- Add2Context ------------------------------------------------------------------
+
+SysYParser::AddExpContext* SysYParser::Add2Context::addExp() {
+  return getRuleContext<SysYParser::AddExpContext>(0);
+}
+
+SysYParser::AddOpContext* SysYParser::Add2Context::addOp() {
+  return getRuleContext<SysYParser::AddOpContext>(0);
+}
+
+SysYParser::MulExpContext* SysYParser::Add2Context::mulExp() {
+  return getRuleContext<SysYParser::MulExpContext>(0);
+}
+
+SysYParser::Add2Context::Add2Context(AddExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Add2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
-    return parserVisitor->visitAddExp(this);
+    return parserVisitor->visitAdd2(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Add1Context ------------------------------------------------------------------
+
+SysYParser::MulExpContext* SysYParser::Add1Context::mulExp() {
+  return getRuleContext<SysYParser::MulExpContext>(0);
+}
+
+SysYParser::Add1Context::Add1Context(AddExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Add1Context::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
+    return parserVisitor->visitAdd1(this);
   else
     return visitor->visitChildren(this);
 }
 
 SysYParser::AddExpContext* SysYParser::addExp() {
-  AddExpContext *_localctx = _tracker.createInstance<AddExpContext>(_ctx, getState());
-  enterRule(_localctx, 74, SysYParser::RuleAddExp);
+   return addExp(0);
+}
 
+SysYParser::AddExpContext* SysYParser::addExp(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  SysYParser::AddExpContext *_localctx = _tracker.createInstance<AddExpContext>(_ctx, parentState);
+  SysYParser::AddExpContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 74;
+  enterRecursionRule(_localctx, 74, SysYParser::RuleAddExp, precedence);
+
+    
+
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
-    exitRule();
+#endif
+    unrollRecursionContexts(parentContext);
   });
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(361);
-    mulExp();
-    setState(367);
+    _localctx = _tracker.createInstance<Add1Context>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(365);
+    mulExp(0);
+    _ctx->stop = _input->LT(-1);
+    setState(373);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 35, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
-        setState(362);
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<Add2Context>(_tracker.createInstance<AddExpContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleAddExp);
+        setState(367);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(368);
         addOp();
-        setState(363);
-        mulExp(); 
+        setState(369);
+        mulExp(0); 
       }
-      setState(369);
+      setState(375);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 35, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -3258,7 +3620,7 @@ size_t SysYParser::AddOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::AddOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::AddOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitAddOp(this);
   else
@@ -3270,12 +3632,16 @@ SysYParser::AddOpContext* SysYParser::addOp() {
   enterRule(_localctx, 76, SysYParser::RuleAddOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(370);
+    setState(376);
     _la = _input->LA(1);
     if (!(_la == SysYParser::Minus
 
@@ -3303,69 +3669,115 @@ SysYParser::RelExpContext::RelExpContext(ParserRuleContext *parent, size_t invok
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<SysYParser::AddExpContext *> SysYParser::RelExpContext::addExp() {
-  return getRuleContexts<SysYParser::AddExpContext>();
-}
-
-SysYParser::AddExpContext* SysYParser::RelExpContext::addExp(size_t i) {
-  return getRuleContext<SysYParser::AddExpContext>(i);
-}
-
-std::vector<SysYParser::RelOpContext *> SysYParser::RelExpContext::relOp() {
-  return getRuleContexts<SysYParser::RelOpContext>();
-}
-
-SysYParser::RelOpContext* SysYParser::RelExpContext::relOp(size_t i) {
-  return getRuleContext<SysYParser::RelOpContext>(i);
-}
-
 
 size_t SysYParser::RelExpContext::getRuleIndex() const {
   return SysYParser::RuleRelExp;
 }
 
+void SysYParser::RelExpContext::copyFrom(RelExpContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-antlrcpp::Any SysYParser::RelExpContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- Rel2Context ------------------------------------------------------------------
+
+SysYParser::RelExpContext* SysYParser::Rel2Context::relExp() {
+  return getRuleContext<SysYParser::RelExpContext>(0);
+}
+
+SysYParser::RelOpContext* SysYParser::Rel2Context::relOp() {
+  return getRuleContext<SysYParser::RelOpContext>(0);
+}
+
+SysYParser::AddExpContext* SysYParser::Rel2Context::addExp() {
+  return getRuleContext<SysYParser::AddExpContext>(0);
+}
+
+SysYParser::Rel2Context::Rel2Context(RelExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Rel2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
-    return parserVisitor->visitRelExp(this);
+    return parserVisitor->visitRel2(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Rel1Context ------------------------------------------------------------------
+
+SysYParser::AddExpContext* SysYParser::Rel1Context::addExp() {
+  return getRuleContext<SysYParser::AddExpContext>(0);
+}
+
+SysYParser::Rel1Context::Rel1Context(RelExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Rel1Context::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
+    return parserVisitor->visitRel1(this);
   else
     return visitor->visitChildren(this);
 }
 
 SysYParser::RelExpContext* SysYParser::relExp() {
-  RelExpContext *_localctx = _tracker.createInstance<RelExpContext>(_ctx, getState());
-  enterRule(_localctx, 78, SysYParser::RuleRelExp);
+   return relExp(0);
+}
 
+SysYParser::RelExpContext* SysYParser::relExp(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  SysYParser::RelExpContext *_localctx = _tracker.createInstance<RelExpContext>(_ctx, parentState);
+  SysYParser::RelExpContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 78;
+  enterRecursionRule(_localctx, 78, SysYParser::RuleRelExp, precedence);
+
+    
+
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
-    exitRule();
+#endif
+    unrollRecursionContexts(parentContext);
   });
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(372);
-    addExp();
-    setState(378);
+    _localctx = _tracker.createInstance<Rel1Context>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(379);
+    addExp(0);
+    _ctx->stop = _input->LT(-1);
+    setState(387);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 36, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
-        setState(373);
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<Rel2Context>(_tracker.createInstance<RelExpContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleRelExp);
+        setState(381);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(382);
         relOp();
-        setState(374);
-        addExp(); 
+        setState(383);
+        addExp(0); 
       }
-      setState(380);
+      setState(389);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 36, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -3397,7 +3809,7 @@ size_t SysYParser::RelOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::RelOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::RelOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitRelOp(this);
   else
@@ -3409,18 +3821,19 @@ SysYParser::RelOpContext* SysYParser::relOp() {
   enterRule(_localctx, 80, SysYParser::RuleRelOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(381);
+    setState(390);
     _la = _input->LA(1);
     if (!((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & ((1ULL << SysYParser::LT)
-      | (1ULL << SysYParser::LE)
-      | (1ULL << SysYParser::GT)
-      | (1ULL << SysYParser::GE))) != 0))) {
+      ((1ULL << _la) & 263882790666240) != 0))) {
     _errHandler->recoverInline(this);
     }
     else {
@@ -3444,69 +3857,115 @@ SysYParser::EqExpContext::EqExpContext(ParserRuleContext *parent, size_t invokin
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<SysYParser::RelExpContext *> SysYParser::EqExpContext::relExp() {
-  return getRuleContexts<SysYParser::RelExpContext>();
-}
-
-SysYParser::RelExpContext* SysYParser::EqExpContext::relExp(size_t i) {
-  return getRuleContext<SysYParser::RelExpContext>(i);
-}
-
-std::vector<SysYParser::EqOpContext *> SysYParser::EqExpContext::eqOp() {
-  return getRuleContexts<SysYParser::EqOpContext>();
-}
-
-SysYParser::EqOpContext* SysYParser::EqExpContext::eqOp(size_t i) {
-  return getRuleContext<SysYParser::EqOpContext>(i);
-}
-
 
 size_t SysYParser::EqExpContext::getRuleIndex() const {
   return SysYParser::RuleEqExp;
 }
 
+void SysYParser::EqExpContext::copyFrom(EqExpContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-antlrcpp::Any SysYParser::EqExpContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- Eq1Context ------------------------------------------------------------------
+
+SysYParser::RelExpContext* SysYParser::Eq1Context::relExp() {
+  return getRuleContext<SysYParser::RelExpContext>(0);
+}
+
+SysYParser::Eq1Context::Eq1Context(EqExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Eq1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
-    return parserVisitor->visitEqExp(this);
+    return parserVisitor->visitEq1(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Eq2Context ------------------------------------------------------------------
+
+SysYParser::EqExpContext* SysYParser::Eq2Context::eqExp() {
+  return getRuleContext<SysYParser::EqExpContext>(0);
+}
+
+SysYParser::EqOpContext* SysYParser::Eq2Context::eqOp() {
+  return getRuleContext<SysYParser::EqOpContext>(0);
+}
+
+SysYParser::RelExpContext* SysYParser::Eq2Context::relExp() {
+  return getRuleContext<SysYParser::RelExpContext>(0);
+}
+
+SysYParser::Eq2Context::Eq2Context(EqExpContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Eq2Context::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
+    return parserVisitor->visitEq2(this);
   else
     return visitor->visitChildren(this);
 }
 
 SysYParser::EqExpContext* SysYParser::eqExp() {
-  EqExpContext *_localctx = _tracker.createInstance<EqExpContext>(_ctx, getState());
-  enterRule(_localctx, 82, SysYParser::RuleEqExp);
+   return eqExp(0);
+}
 
+SysYParser::EqExpContext* SysYParser::eqExp(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  SysYParser::EqExpContext *_localctx = _tracker.createInstance<EqExpContext>(_ctx, parentState);
+  SysYParser::EqExpContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 82;
+  enterRecursionRule(_localctx, 82, SysYParser::RuleEqExp, precedence);
+
+    
+
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
-    exitRule();
+#endif
+    unrollRecursionContexts(parentContext);
   });
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(383);
-    relExp();
-    setState(389);
+    _localctx = _tracker.createInstance<Eq1Context>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(393);
+    relExp(0);
+    _ctx->stop = _input->LT(-1);
+    setState(401);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 37, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
-        setState(384);
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<Eq2Context>(_tracker.createInstance<EqExpContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleEqExp);
+        setState(395);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(396);
         eqOp();
-        setState(385);
-        relExp(); 
+        setState(397);
+        relExp(0); 
       }
-      setState(391);
+      setState(403);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 37, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -3530,7 +3989,7 @@ size_t SysYParser::EqOpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::EqOpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::EqOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitEqOp(this);
   else
@@ -3542,12 +4001,16 @@ SysYParser::EqOpContext* SysYParser::eqOp() {
   enterRule(_localctx, 84, SysYParser::RuleEqOp);
   size_t _la = 0;
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(392);
+    setState(404);
     _la = _input->LA(1);
     if (!(_la == SysYParser::EQ
 
@@ -3601,7 +4064,7 @@ SysYParser::EqExpContext* SysYParser::LAnd2Context::eqExp() {
 SysYParser::LAnd2Context::LAnd2Context(LAndExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::LAnd2Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::LAnd2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitLAnd2(this);
   else
@@ -3616,7 +4079,7 @@ SysYParser::EqExpContext* SysYParser::LAnd1Context::eqExp() {
 SysYParser::LAnd1Context::LAnd1Context(LAndExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::LAnd1Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::LAnd1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitLAnd1(this);
   else
@@ -3638,7 +4101,11 @@ SysYParser::LAndExpContext* SysYParser::lAndExp(int precedence) {
 
     
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     unrollRecursionContexts(parentContext);
   });
   try {
@@ -3648,10 +4115,10 @@ SysYParser::LAndExpContext* SysYParser::lAndExp(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(395);
-    eqExp();
+    setState(407);
+    eqExp(0);
     _ctx->stop = _input->LT(-1);
-    setState(402);
+    setState(414);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 38, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
@@ -3662,15 +4129,15 @@ SysYParser::LAndExpContext* SysYParser::lAndExp(int precedence) {
         auto newContext = _tracker.createInstance<LAnd2Context>(_tracker.createInstance<LAndExpContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleLAndExp);
-        setState(397);
+        setState(409);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(398);
+        setState(410);
         match(SysYParser::LAND);
-        setState(399);
-        eqExp(); 
+        setState(411);
+        eqExp(0); 
       }
-      setState(404);
+      setState(416);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 38, _ctx);
     }
@@ -3707,7 +4174,7 @@ SysYParser::LAndExpContext* SysYParser::LOr1Context::lAndExp() {
 SysYParser::LOr1Context::LOr1Context(LOrExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::LOr1Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::LOr1Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitLOr1(this);
   else
@@ -3730,7 +4197,7 @@ SysYParser::LAndExpContext* SysYParser::LOr2Context::lAndExp() {
 SysYParser::LOr2Context::LOr2Context(LOrExpContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any SysYParser::LOr2Context::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::LOr2Context::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitLOr2(this);
   else
@@ -3752,7 +4219,11 @@ SysYParser::LOrExpContext* SysYParser::lOrExp(int precedence) {
 
     
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     unrollRecursionContexts(parentContext);
   });
   try {
@@ -3762,10 +4233,10 @@ SysYParser::LOrExpContext* SysYParser::lOrExp(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(406);
+    setState(418);
     lAndExp(0);
     _ctx->stop = _input->LT(-1);
-    setState(413);
+    setState(425);
     _errHandler->sync(this);
     alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 39, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
@@ -3776,15 +4247,15 @@ SysYParser::LOrExpContext* SysYParser::lOrExp(int precedence) {
         auto newContext = _tracker.createInstance<LOr2Context>(_tracker.createInstance<LOrExpContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleLOrExp);
-        setState(408);
+        setState(420);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(409);
+        setState(421);
         match(SysYParser::LOR);
-        setState(410);
+        setState(422);
         lAndExp(0); 
       }
-      setState(415);
+      setState(427);
       _errHandler->sync(this);
       alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 39, _ctx);
     }
@@ -3813,7 +4284,7 @@ size_t SysYParser::CondExpContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any SysYParser::CondExpContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any SysYParser::CondExpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYVisitor*>(visitor))
     return parserVisitor->visitCondExp(this);
   else
@@ -3824,12 +4295,16 @@ SysYParser::CondExpContext* SysYParser::condExp() {
   CondExpContext *_localctx = _tracker.createInstance<CondExpContext>(_ctx, getState());
   enterRule(_localctx, 90, SysYParser::RuleCondExp);
 
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
   auto onExit = finally([=] {
+#endif
     exitRule();
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(416);
+    setState(428);
     lOrExp(0);
    
   }
@@ -3844,8 +4319,12 @@ SysYParser::CondExpContext* SysYParser::condExp() {
 
 bool SysYParser::sempred(RuleContext *context, size_t ruleIndex, size_t predicateIndex) {
   switch (ruleIndex) {
-    case 43: return lAndExpSempred(dynamic_cast<LAndExpContext *>(context), predicateIndex);
-    case 44: return lOrExpSempred(dynamic_cast<LOrExpContext *>(context), predicateIndex);
+    case 35: return mulExpSempred(antlrcpp::downCast<MulExpContext *>(context), predicateIndex);
+    case 37: return addExpSempred(antlrcpp::downCast<AddExpContext *>(context), predicateIndex);
+    case 39: return relExpSempred(antlrcpp::downCast<RelExpContext *>(context), predicateIndex);
+    case 41: return eqExpSempred(antlrcpp::downCast<EqExpContext *>(context), predicateIndex);
+    case 43: return lAndExpSempred(antlrcpp::downCast<LAndExpContext *>(context), predicateIndex);
+    case 44: return lOrExpSempred(antlrcpp::downCast<LOrExpContext *>(context), predicateIndex);
 
   default:
     break;
@@ -3853,7 +4332,7 @@ bool SysYParser::sempred(RuleContext *context, size_t ruleIndex, size_t predicat
   return true;
 }
 
-bool SysYParser::lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex) {
+bool SysYParser::mulExpSempred(MulExpContext *_localctx, size_t predicateIndex) {
   switch (predicateIndex) {
     case 0: return precpred(_ctx, 1);
 
@@ -3863,7 +4342,7 @@ bool SysYParser::lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex
   return true;
 }
 
-bool SysYParser::lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex) {
+bool SysYParser::addExpSempred(AddExpContext *_localctx, size_t predicateIndex) {
   switch (predicateIndex) {
     case 1: return precpred(_ctx, 1);
 
@@ -3873,352 +4352,46 @@ bool SysYParser::lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex) 
   return true;
 }
 
-// Static vars and initialization.
-std::vector<dfa::DFA> SysYParser::_decisionToDFA;
-atn::PredictionContextCache SysYParser::_sharedContextCache;
+bool SysYParser::relExpSempred(RelExpContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 2: return precpred(_ctx, 1);
 
-// We own the ATN which in turn owns the ATN states.
-atn::ATN SysYParser::_atn;
-std::vector<uint16_t> SysYParser::_serializedATN;
-
-std::vector<std::string> SysYParser::_ruleNames = {
-  "compilationUnit", "translationUnit", "externalDeclaration", "decl", "constDecl", 
-  "bType", "constDef", "constInitVal", "varDecl", "varDef", "initVal", "funcDef", 
-  "funcType", "funcFParams", "funcFParam", "block", "blockItemList", "blockItem", 
-  "stmt", "assignStmt", "assignOp", "expStmt", "blockStmt", "seleStmt", 
-  "loopStmt", "jumpStmt", "exp", "constExp", "lVal", "primaryExp", "number", 
-  "funcRParams", "funcRParam", "unaryExp", "unaryOp", "mulExp", "mulOp", 
-  "addExp", "addOp", "relExp", "relOp", "eqExp", "eqOp", "lAndExp", "lOrExp", 
-  "condExp"
-};
-
-std::vector<std::string> SysYParser::_literalNames = {
-  "", "'float'", "'='", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", 
-  "'>>='", "'&='", "'^='", "'|='", "'&'", "'~'", "'int'", "'void'", "'const'", 
-  "'return'", "'if'", "'else'", "'while'", "'for'", "'do'", "'break'", "'continue'", 
-  "'('", "')'", "'['", "']'", "'{'", "'}'", "','", "';'", "'-'", "'+'", 
-  "'!'", "'*'", "'/'", "'%'", "'&&'", "'||'", "'=='", "'!='", "'<'", "'<='", 
-  "'>'", "'>='"
-};
-
-std::vector<std::string> SysYParser::_symbolicNames = {
-  "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Int", "Void", 
-  "Const", "Return", "If", "Else", "While", "For", "Do", "Break", "Continue", 
-  "Lparen", "Rparen", "Lbrkt", "Rbrkt", "Lbrace", "Rbrace", "Comma", "Semicolon", 
-  "Minus", "Addition", "Exclamation", "Multiplication", "Division", "Modulo", 
-  "LAND", "LOR", "EQ", "NEQ", "LT", "LE", "GT", "GE", "IntLiteral", "FloatLiteral", 
-  "Identifier", "Whitespace", "Newline", "BlockComment", "LineComment"
-};
-
-dfa::Vocabulary SysYParser::_vocabulary(_literalNames, _symbolicNames);
-
-std::vector<std::string> SysYParser::_tokenNames;
-
-SysYParser::Initializer::Initializer() {
-	for (size_t i = 0; i < _symbolicNames.size(); ++i) {
-		std::string name = _vocabulary.getLiteralName(i);
-		if (name.empty()) {
-			name = _vocabulary.getSymbolicName(i);
-		}
-
-		if (name.empty()) {
-			_tokenNames.push_back("<INVALID>");
-		} else {
-      _tokenNames.push_back(name);
-    }
-	}
-
-  _serializedATN = {
-    0x3, 0x608b, 0xa72a, 0x8133, 0xb9ed, 0x417c, 0x3be7, 0x7786, 0x5964, 
-    0x3, 0x38, 0x1a5, 0x4, 0x2, 0x9, 0x2, 0x4, 0x3, 0x9, 0x3, 0x4, 0x4, 
-    0x9, 0x4, 0x4, 0x5, 0x9, 0x5, 0x4, 0x6, 0x9, 0x6, 0x4, 0x7, 0x9, 0x7, 
-    0x4, 0x8, 0x9, 0x8, 0x4, 0x9, 0x9, 0x9, 0x4, 0xa, 0x9, 0xa, 0x4, 0xb, 
-    0x9, 0xb, 0x4, 0xc, 0x9, 0xc, 0x4, 0xd, 0x9, 0xd, 0x4, 0xe, 0x9, 0xe, 
-    0x4, 0xf, 0x9, 0xf, 0x4, 0x10, 0x9, 0x10, 0x4, 0x11, 0x9, 0x11, 0x4, 
-    0x12, 0x9, 0x12, 0x4, 0x13, 0x9, 0x13, 0x4, 0x14, 0x9, 0x14, 0x4, 0x15, 
-    0x9, 0x15, 0x4, 0x16, 0x9, 0x16, 0x4, 0x17, 0x9, 0x17, 0x4, 0x18, 0x9, 
-    0x18, 0x4, 0x19, 0x9, 0x19, 0x4, 0x1a, 0x9, 0x1a, 0x4, 0x1b, 0x9, 0x1b, 
-    0x4, 0x1c, 0x9, 0x1c, 0x4, 0x1d, 0x9, 0x1d, 0x4, 0x1e, 0x9, 0x1e, 0x4, 
-    0x1f, 0x9, 0x1f, 0x4, 0x20, 0x9, 0x20, 0x4, 0x21, 0x9, 0x21, 0x4, 0x22, 
-    0x9, 0x22, 0x4, 0x23, 0x9, 0x23, 0x4, 0x24, 0x9, 0x24, 0x4, 0x25, 0x9, 
-    0x25, 0x4, 0x26, 0x9, 0x26, 0x4, 0x27, 0x9, 0x27, 0x4, 0x28, 0x9, 0x28, 
-    0x4, 0x29, 0x9, 0x29, 0x4, 0x2a, 0x9, 0x2a, 0x4, 0x2b, 0x9, 0x2b, 0x4, 
-    0x2c, 0x9, 0x2c, 0x4, 0x2d, 0x9, 0x2d, 0x4, 0x2e, 0x9, 0x2e, 0x4, 0x2f, 
-    0x9, 0x2f, 0x3, 0x2, 0x5, 0x2, 0x60, 0xa, 0x2, 0x3, 0x2, 0x3, 0x2, 0x3, 
-    0x3, 0x6, 0x3, 0x65, 0xa, 0x3, 0xd, 0x3, 0xe, 0x3, 0x66, 0x3, 0x4, 0x3, 
-    0x4, 0x3, 0x4, 0x5, 0x4, 0x6c, 0xa, 0x4, 0x3, 0x5, 0x3, 0x5, 0x5, 0x5, 
-    0x70, 0xa, 0x5, 0x3, 0x6, 0x3, 0x6, 0x3, 0x6, 0x3, 0x6, 0x3, 0x6, 0x7, 
-    0x6, 0x77, 0xa, 0x6, 0xc, 0x6, 0xe, 0x6, 0x7a, 0xb, 0x6, 0x3, 0x6, 0x3, 
-    0x6, 0x3, 0x7, 0x3, 0x7, 0x3, 0x8, 0x3, 0x8, 0x3, 0x8, 0x3, 0x8, 0x3, 
-    0x8, 0x7, 0x8, 0x85, 0xa, 0x8, 0xc, 0x8, 0xe, 0x8, 0x88, 0xb, 0x8, 0x3, 
-    0x8, 0x3, 0x8, 0x3, 0x8, 0x3, 0x9, 0x3, 0x9, 0x3, 0x9, 0x3, 0x9, 0x3, 
-    0x9, 0x7, 0x9, 0x92, 0xa, 0x9, 0xc, 0x9, 0xe, 0x9, 0x95, 0xb, 0x9, 0x5, 
-    0x9, 0x97, 0xa, 0x9, 0x3, 0x9, 0x5, 0x9, 0x9a, 0xa, 0x9, 0x3, 0xa, 0x3, 
-    0xa, 0x3, 0xa, 0x3, 0xa, 0x7, 0xa, 0xa0, 0xa, 0xa, 0xc, 0xa, 0xe, 0xa, 
-    0xa3, 0xb, 0xa, 0x3, 0xa, 0x3, 0xa, 0x3, 0xb, 0x3, 0xb, 0x3, 0xb, 0x3, 
-    0xb, 0x3, 0xb, 0x7, 0xb, 0xac, 0xa, 0xb, 0xc, 0xb, 0xe, 0xb, 0xaf, 0xb, 
-    0xb, 0x3, 0xb, 0x3, 0xb, 0x3, 0xb, 0x3, 0xb, 0x3, 0xb, 0x7, 0xb, 0xb6, 
-    0xa, 0xb, 0xc, 0xb, 0xe, 0xb, 0xb9, 0xb, 0xb, 0x3, 0xb, 0x3, 0xb, 0x5, 
-    0xb, 0xbd, 0xa, 0xb, 0x3, 0xc, 0x3, 0xc, 0x3, 0xc, 0x3, 0xc, 0x3, 0xc, 
-    0x7, 0xc, 0xc4, 0xa, 0xc, 0xc, 0xc, 0xe, 0xc, 0xc7, 0xb, 0xc, 0x5, 0xc, 
-    0xc9, 0xa, 0xc, 0x3, 0xc, 0x5, 0xc, 0xcc, 0xa, 0xc, 0x3, 0xd, 0x3, 0xd, 
-    0x3, 0xd, 0x3, 0xd, 0x5, 0xd, 0xd2, 0xa, 0xd, 0x3, 0xd, 0x3, 0xd, 0x3, 
-    0xd, 0x3, 0xe, 0x3, 0xe, 0x3, 0xf, 0x3, 0xf, 0x3, 0xf, 0x7, 0xf, 0xdc, 
-    0xa, 0xf, 0xc, 0xf, 0xe, 0xf, 0xdf, 0xb, 0xf, 0x3, 0x10, 0x3, 0x10, 
-    0x3, 0x10, 0x3, 0x10, 0x3, 0x10, 0x3, 0x10, 0x3, 0x10, 0x3, 0x10, 0x7, 
-    0x10, 0xe9, 0xa, 0x10, 0xc, 0x10, 0xe, 0x10, 0xec, 0xb, 0x10, 0x5, 0x10, 
-    0xee, 0xa, 0x10, 0x3, 0x11, 0x3, 0x11, 0x5, 0x11, 0xf2, 0xa, 0x11, 0x3, 
-    0x11, 0x3, 0x11, 0x3, 0x12, 0x6, 0x12, 0xf7, 0xa, 0x12, 0xd, 0x12, 0xe, 
-    0x12, 0xf8, 0x3, 0x13, 0x3, 0x13, 0x5, 0x13, 0xfd, 0xa, 0x13, 0x3, 0x14, 
-    0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x5, 0x14, 0x105, 
-    0xa, 0x14, 0x3, 0x15, 0x3, 0x15, 0x3, 0x15, 0x3, 0x15, 0x3, 0x15, 0x3, 
-    0x16, 0x3, 0x16, 0x3, 0x17, 0x5, 0x17, 0x10f, 0xa, 0x17, 0x3, 0x17, 
-    0x3, 0x17, 0x3, 0x18, 0x3, 0x18, 0x3, 0x19, 0x3, 0x19, 0x3, 0x19, 0x3, 
-    0x19, 0x3, 0x19, 0x3, 0x19, 0x3, 0x19, 0x5, 0x19, 0x11c, 0xa, 0x19, 
-    0x3, 0x1a, 0x3, 0x1a, 0x3, 0x1a, 0x3, 0x1a, 0x3, 0x1a, 0x3, 0x1a, 0x3, 
-    0x1b, 0x3, 0x1b, 0x3, 0x1b, 0x3, 0x1b, 0x3, 0x1b, 0x3, 0x1b, 0x5, 0x1b, 
-    0x12a, 0xa, 0x1b, 0x3, 0x1b, 0x5, 0x1b, 0x12d, 0xa, 0x1b, 0x3, 0x1c, 
-    0x3, 0x1c, 0x3, 0x1d, 0x3, 0x1d, 0x3, 0x1e, 0x3, 0x1e, 0x3, 0x1e, 0x3, 
-    0x1e, 0x3, 0x1e, 0x7, 0x1e, 0x138, 0xa, 0x1e, 0xc, 0x1e, 0xe, 0x1e, 
-    0x13b, 0xb, 0x1e, 0x3, 0x1f, 0x3, 0x1f, 0x3, 0x1f, 0x3, 0x1f, 0x3, 0x1f, 
-    0x3, 0x1f, 0x5, 0x1f, 0x143, 0xa, 0x1f, 0x3, 0x20, 0x3, 0x20, 0x5, 0x20, 
-    0x147, 0xa, 0x20, 0x3, 0x21, 0x3, 0x21, 0x3, 0x21, 0x7, 0x21, 0x14c, 
-    0xa, 0x21, 0xc, 0x21, 0xe, 0x21, 0x14f, 0xb, 0x21, 0x3, 0x22, 0x3, 0x22, 
-    0x3, 0x23, 0x3, 0x23, 0x3, 0x23, 0x3, 0x23, 0x5, 0x23, 0x157, 0xa, 0x23, 
-    0x3, 0x23, 0x3, 0x23, 0x3, 0x23, 0x3, 0x23, 0x5, 0x23, 0x15d, 0xa, 0x23, 
-    0x3, 0x24, 0x3, 0x24, 0x3, 0x25, 0x3, 0x25, 0x3, 0x25, 0x3, 0x25, 0x7, 
-    0x25, 0x165, 0xa, 0x25, 0xc, 0x25, 0xe, 0x25, 0x168, 0xb, 0x25, 0x3, 
-    0x26, 0x3, 0x26, 0x3, 0x27, 0x3, 0x27, 0x3, 0x27, 0x3, 0x27, 0x7, 0x27, 
-    0x170, 0xa, 0x27, 0xc, 0x27, 0xe, 0x27, 0x173, 0xb, 0x27, 0x3, 0x28, 
-    0x3, 0x28, 0x3, 0x29, 0x3, 0x29, 0x3, 0x29, 0x3, 0x29, 0x7, 0x29, 0x17b, 
-    0xa, 0x29, 0xc, 0x29, 0xe, 0x29, 0x17e, 0xb, 0x29, 0x3, 0x2a, 0x3, 0x2a, 
-    0x3, 0x2b, 0x3, 0x2b, 0x3, 0x2b, 0x3, 0x2b, 0x7, 0x2b, 0x186, 0xa, 0x2b, 
-    0xc, 0x2b, 0xe, 0x2b, 0x189, 0xb, 0x2b, 0x3, 0x2c, 0x3, 0x2c, 0x3, 0x2d, 
-    0x3, 0x2d, 0x3, 0x2d, 0x3, 0x2d, 0x3, 0x2d, 0x3, 0x2d, 0x7, 0x2d, 0x193, 
-    0xa, 0x2d, 0xc, 0x2d, 0xe, 0x2d, 0x196, 0xb, 0x2d, 0x3, 0x2e, 0x3, 0x2e, 
-    0x3, 0x2e, 0x3, 0x2e, 0x3, 0x2e, 0x3, 0x2e, 0x7, 0x2e, 0x19e, 0xa, 0x2e, 
-    0xc, 0x2e, 0xe, 0x2e, 0x1a1, 0xb, 0x2e, 0x3, 0x2f, 0x3, 0x2f, 0x3, 0x2f, 
-    0x2, 0x4, 0x58, 0x5a, 0x30, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x10, 
-    0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e, 0x20, 0x22, 0x24, 0x26, 0x28, 
-    0x2a, 0x2c, 0x2e, 0x30, 0x32, 0x34, 0x36, 0x38, 0x3a, 0x3c, 0x3e, 0x40, 
-    0x42, 0x44, 0x46, 0x48, 0x4a, 0x4c, 0x4e, 0x50, 0x52, 0x54, 0x56, 0x58, 
-    0x5a, 0x5c, 0x2, 0xa, 0x4, 0x2, 0x3, 0x3, 0x11, 0x11, 0x4, 0x2, 0x3, 
-    0x3, 0x11, 0x12, 0x3, 0x2, 0x4, 0xe, 0x4, 0x2, 0xf, 0x10, 0x24, 0x27, 
-    0x3, 0x2, 0x27, 0x29, 0x3, 0x2, 0x24, 0x25, 0x3, 0x2, 0x2e, 0x31, 0x3, 
-    0x2, 0x2c, 0x2d, 0x2, 0x1a6, 0x2, 0x5f, 0x3, 0x2, 0x2, 0x2, 0x4, 0x64, 
-    0x3, 0x2, 0x2, 0x2, 0x6, 0x6b, 0x3, 0x2, 0x2, 0x2, 0x8, 0x6f, 0x3, 0x2, 
-    0x2, 0x2, 0xa, 0x71, 0x3, 0x2, 0x2, 0x2, 0xc, 0x7d, 0x3, 0x2, 0x2, 0x2, 
-    0xe, 0x7f, 0x3, 0x2, 0x2, 0x2, 0x10, 0x99, 0x3, 0x2, 0x2, 0x2, 0x12, 
-    0x9b, 0x3, 0x2, 0x2, 0x2, 0x14, 0xbc, 0x3, 0x2, 0x2, 0x2, 0x16, 0xcb, 
-    0x3, 0x2, 0x2, 0x2, 0x18, 0xcd, 0x3, 0x2, 0x2, 0x2, 0x1a, 0xd6, 0x3, 
-    0x2, 0x2, 0x2, 0x1c, 0xd8, 0x3, 0x2, 0x2, 0x2, 0x1e, 0xe0, 0x3, 0x2, 
-    0x2, 0x2, 0x20, 0xef, 0x3, 0x2, 0x2, 0x2, 0x22, 0xf6, 0x3, 0x2, 0x2, 
-    0x2, 0x24, 0xfc, 0x3, 0x2, 0x2, 0x2, 0x26, 0x104, 0x3, 0x2, 0x2, 0x2, 
-    0x28, 0x106, 0x3, 0x2, 0x2, 0x2, 0x2a, 0x10b, 0x3, 0x2, 0x2, 0x2, 0x2c, 
-    0x10e, 0x3, 0x2, 0x2, 0x2, 0x2e, 0x112, 0x3, 0x2, 0x2, 0x2, 0x30, 0x114, 
-    0x3, 0x2, 0x2, 0x2, 0x32, 0x11d, 0x3, 0x2, 0x2, 0x2, 0x34, 0x12c, 0x3, 
-    0x2, 0x2, 0x2, 0x36, 0x12e, 0x3, 0x2, 0x2, 0x2, 0x38, 0x130, 0x3, 0x2, 
-    0x2, 0x2, 0x3a, 0x132, 0x3, 0x2, 0x2, 0x2, 0x3c, 0x142, 0x3, 0x2, 0x2, 
-    0x2, 0x3e, 0x146, 0x3, 0x2, 0x2, 0x2, 0x40, 0x148, 0x3, 0x2, 0x2, 0x2, 
-    0x42, 0x150, 0x3, 0x2, 0x2, 0x2, 0x44, 0x15c, 0x3, 0x2, 0x2, 0x2, 0x46, 
-    0x15e, 0x3, 0x2, 0x2, 0x2, 0x48, 0x160, 0x3, 0x2, 0x2, 0x2, 0x4a, 0x169, 
-    0x3, 0x2, 0x2, 0x2, 0x4c, 0x16b, 0x3, 0x2, 0x2, 0x2, 0x4e, 0x174, 0x3, 
-    0x2, 0x2, 0x2, 0x50, 0x176, 0x3, 0x2, 0x2, 0x2, 0x52, 0x17f, 0x3, 0x2, 
-    0x2, 0x2, 0x54, 0x181, 0x3, 0x2, 0x2, 0x2, 0x56, 0x18a, 0x3, 0x2, 0x2, 
-    0x2, 0x58, 0x18c, 0x3, 0x2, 0x2, 0x2, 0x5a, 0x197, 0x3, 0x2, 0x2, 0x2, 
-    0x5c, 0x1a2, 0x3, 0x2, 0x2, 0x2, 0x5e, 0x60, 0x5, 0x4, 0x3, 0x2, 0x5f, 
-    0x5e, 0x3, 0x2, 0x2, 0x2, 0x5f, 0x60, 0x3, 0x2, 0x2, 0x2, 0x60, 0x61, 
-    0x3, 0x2, 0x2, 0x2, 0x61, 0x62, 0x7, 0x2, 0x2, 0x3, 0x62, 0x3, 0x3, 
-    0x2, 0x2, 0x2, 0x63, 0x65, 0x5, 0x6, 0x4, 0x2, 0x64, 0x63, 0x3, 0x2, 
-    0x2, 0x2, 0x65, 0x66, 0x3, 0x2, 0x2, 0x2, 0x66, 0x64, 0x3, 0x2, 0x2, 
-    0x2, 0x66, 0x67, 0x3, 0x2, 0x2, 0x2, 0x67, 0x5, 0x3, 0x2, 0x2, 0x2, 
-    0x68, 0x6c, 0x5, 0x8, 0x5, 0x2, 0x69, 0x6c, 0x5, 0x18, 0xd, 0x2, 0x6a, 
-    0x6c, 0x7, 0x23, 0x2, 0x2, 0x6b, 0x68, 0x3, 0x2, 0x2, 0x2, 0x6b, 0x69, 
-    0x3, 0x2, 0x2, 0x2, 0x6b, 0x6a, 0x3, 0x2, 0x2, 0x2, 0x6c, 0x7, 0x3, 
-    0x2, 0x2, 0x2, 0x6d, 0x70, 0x5, 0xa, 0x6, 0x2, 0x6e, 0x70, 0x5, 0x12, 
-    0xa, 0x2, 0x6f, 0x6d, 0x3, 0x2, 0x2, 0x2, 0x6f, 0x6e, 0x3, 0x2, 0x2, 
-    0x2, 0x70, 0x9, 0x3, 0x2, 0x2, 0x2, 0x71, 0x72, 0x7, 0x13, 0x2, 0x2, 
-    0x72, 0x73, 0x5, 0xc, 0x7, 0x2, 0x73, 0x78, 0x5, 0xe, 0x8, 0x2, 0x74, 
-    0x75, 0x7, 0x22, 0x2, 0x2, 0x75, 0x77, 0x5, 0xe, 0x8, 0x2, 0x76, 0x74, 
-    0x3, 0x2, 0x2, 0x2, 0x77, 0x7a, 0x3, 0x2, 0x2, 0x2, 0x78, 0x76, 0x3, 
-    0x2, 0x2, 0x2, 0x78, 0x79, 0x3, 0x2, 0x2, 0x2, 0x79, 0x7b, 0x3, 0x2, 
-    0x2, 0x2, 0x7a, 0x78, 0x3, 0x2, 0x2, 0x2, 0x7b, 0x7c, 0x7, 0x23, 0x2, 
-    0x2, 0x7c, 0xb, 0x3, 0x2, 0x2, 0x2, 0x7d, 0x7e, 0x9, 0x2, 0x2, 0x2, 
-    0x7e, 0xd, 0x3, 0x2, 0x2, 0x2, 0x7f, 0x86, 0x7, 0x34, 0x2, 0x2, 0x80, 
-    0x81, 0x7, 0x1e, 0x2, 0x2, 0x81, 0x82, 0x5, 0x38, 0x1d, 0x2, 0x82, 0x83, 
-    0x7, 0x1f, 0x2, 0x2, 0x83, 0x85, 0x3, 0x2, 0x2, 0x2, 0x84, 0x80, 0x3, 
-    0x2, 0x2, 0x2, 0x85, 0x88, 0x3, 0x2, 0x2, 0x2, 0x86, 0x84, 0x3, 0x2, 
-    0x2, 0x2, 0x86, 0x87, 0x3, 0x2, 0x2, 0x2, 0x87, 0x89, 0x3, 0x2, 0x2, 
-    0x2, 0x88, 0x86, 0x3, 0x2, 0x2, 0x2, 0x89, 0x8a, 0x7, 0x4, 0x2, 0x2, 
-    0x8a, 0x8b, 0x5, 0x10, 0x9, 0x2, 0x8b, 0xf, 0x3, 0x2, 0x2, 0x2, 0x8c, 
-    0x9a, 0x5, 0x38, 0x1d, 0x2, 0x8d, 0x96, 0x7, 0x20, 0x2, 0x2, 0x8e, 0x93, 
-    0x5, 0x10, 0x9, 0x2, 0x8f, 0x90, 0x7, 0x22, 0x2, 0x2, 0x90, 0x92, 0x5, 
-    0x10, 0x9, 0x2, 0x91, 0x8f, 0x3, 0x2, 0x2, 0x2, 0x92, 0x95, 0x3, 0x2, 
-    0x2, 0x2, 0x93, 0x91, 0x3, 0x2, 0x2, 0x2, 0x93, 0x94, 0x3, 0x2, 0x2, 
-    0x2, 0x94, 0x97, 0x3, 0x2, 0x2, 0x2, 0x95, 0x93, 0x3, 0x2, 0x2, 0x2, 
-    0x96, 0x8e, 0x3, 0x2, 0x2, 0x2, 0x96, 0x97, 0x3, 0x2, 0x2, 0x2, 0x97, 
-    0x98, 0x3, 0x2, 0x2, 0x2, 0x98, 0x9a, 0x7, 0x21, 0x2, 0x2, 0x99, 0x8c, 
-    0x3, 0x2, 0x2, 0x2, 0x99, 0x8d, 0x3, 0x2, 0x2, 0x2, 0x9a, 0x11, 0x3, 
-    0x2, 0x2, 0x2, 0x9b, 0x9c, 0x5, 0xc, 0x7, 0x2, 0x9c, 0xa1, 0x5, 0x14, 
-    0xb, 0x2, 0x9d, 0x9e, 0x7, 0x22, 0x2, 0x2, 0x9e, 0xa0, 0x5, 0x14, 0xb, 
-    0x2, 0x9f, 0x9d, 0x3, 0x2, 0x2, 0x2, 0xa0, 0xa3, 0x3, 0x2, 0x2, 0x2, 
-    0xa1, 0x9f, 0x3, 0x2, 0x2, 0x2, 0xa1, 0xa2, 0x3, 0x2, 0x2, 0x2, 0xa2, 
-    0xa4, 0x3, 0x2, 0x2, 0x2, 0xa3, 0xa1, 0x3, 0x2, 0x2, 0x2, 0xa4, 0xa5, 
-    0x7, 0x23, 0x2, 0x2, 0xa5, 0x13, 0x3, 0x2, 0x2, 0x2, 0xa6, 0xad, 0x7, 
-    0x34, 0x2, 0x2, 0xa7, 0xa8, 0x7, 0x1e, 0x2, 0x2, 0xa8, 0xa9, 0x5, 0x38, 
-    0x1d, 0x2, 0xa9, 0xaa, 0x7, 0x1f, 0x2, 0x2, 0xaa, 0xac, 0x3, 0x2, 0x2, 
-    0x2, 0xab, 0xa7, 0x3, 0x2, 0x2, 0x2, 0xac, 0xaf, 0x3, 0x2, 0x2, 0x2, 
-    0xad, 0xab, 0x3, 0x2, 0x2, 0x2, 0xad, 0xae, 0x3, 0x2, 0x2, 0x2, 0xae, 
-    0xbd, 0x3, 0x2, 0x2, 0x2, 0xaf, 0xad, 0x3, 0x2, 0x2, 0x2, 0xb0, 0xb7, 
-    0x7, 0x34, 0x2, 0x2, 0xb1, 0xb2, 0x7, 0x1e, 0x2, 0x2, 0xb2, 0xb3, 0x5, 
-    0x38, 0x1d, 0x2, 0xb3, 0xb4, 0x7, 0x1f, 0x2, 0x2, 0xb4, 0xb6, 0x3, 0x2, 
-    0x2, 0x2, 0xb5, 0xb1, 0x3, 0x2, 0x2, 0x2, 0xb6, 0xb9, 0x3, 0x2, 0x2, 
-    0x2, 0xb7, 0xb5, 0x3, 0x2, 0x2, 0x2, 0xb7, 0xb8, 0x3, 0x2, 0x2, 0x2, 
-    0xb8, 0xba, 0x3, 0x2, 0x2, 0x2, 0xb9, 0xb7, 0x3, 0x2, 0x2, 0x2, 0xba, 
-    0xbb, 0x7, 0x4, 0x2, 0x2, 0xbb, 0xbd, 0x5, 0x16, 0xc, 0x2, 0xbc, 0xa6, 
-    0x3, 0x2, 0x2, 0x2, 0xbc, 0xb0, 0x3, 0x2, 0x2, 0x2, 0xbd, 0x15, 0x3, 
-    0x2, 0x2, 0x2, 0xbe, 0xcc, 0x5, 0x36, 0x1c, 0x2, 0xbf, 0xc8, 0x7, 0x20, 
-    0x2, 0x2, 0xc0, 0xc5, 0x5, 0x16, 0xc, 0x2, 0xc1, 0xc2, 0x7, 0x22, 0x2, 
-    0x2, 0xc2, 0xc4, 0x5, 0x16, 0xc, 0x2, 0xc3, 0xc1, 0x3, 0x2, 0x2, 0x2, 
-    0xc4, 0xc7, 0x3, 0x2, 0x2, 0x2, 0xc5, 0xc3, 0x3, 0x2, 0x2, 0x2, 0xc5, 
-    0xc6, 0x3, 0x2, 0x2, 0x2, 0xc6, 0xc9, 0x3, 0x2, 0x2, 0x2, 0xc7, 0xc5, 
-    0x3, 0x2, 0x2, 0x2, 0xc8, 0xc0, 0x3, 0x2, 0x2, 0x2, 0xc8, 0xc9, 0x3, 
-    0x2, 0x2, 0x2, 0xc9, 0xca, 0x3, 0x2, 0x2, 0x2, 0xca, 0xcc, 0x7, 0x21, 
-    0x2, 0x2, 0xcb, 0xbe, 0x3, 0x2, 0x2, 0x2, 0xcb, 0xbf, 0x3, 0x2, 0x2, 
-    0x2, 0xcc, 0x17, 0x3, 0x2, 0x2, 0x2, 0xcd, 0xce, 0x5, 0x1a, 0xe, 0x2, 
-    0xce, 0xcf, 0x7, 0x34, 0x2, 0x2, 0xcf, 0xd1, 0x7, 0x1c, 0x2, 0x2, 0xd0, 
-    0xd2, 0x5, 0x1c, 0xf, 0x2, 0xd1, 0xd0, 0x3, 0x2, 0x2, 0x2, 0xd1, 0xd2, 
-    0x3, 0x2, 0x2, 0x2, 0xd2, 0xd3, 0x3, 0x2, 0x2, 0x2, 0xd3, 0xd4, 0x7, 
-    0x1d, 0x2, 0x2, 0xd4, 0xd5, 0x5, 0x20, 0x11, 0x2, 0xd5, 0x19, 0x3, 0x2, 
-    0x2, 0x2, 0xd6, 0xd7, 0x9, 0x3, 0x2, 0x2, 0xd7, 0x1b, 0x3, 0x2, 0x2, 
-    0x2, 0xd8, 0xdd, 0x5, 0x1e, 0x10, 0x2, 0xd9, 0xda, 0x7, 0x22, 0x2, 0x2, 
-    0xda, 0xdc, 0x5, 0x1e, 0x10, 0x2, 0xdb, 0xd9, 0x3, 0x2, 0x2, 0x2, 0xdc, 
-    0xdf, 0x3, 0x2, 0x2, 0x2, 0xdd, 0xdb, 0x3, 0x2, 0x2, 0x2, 0xdd, 0xde, 
-    0x3, 0x2, 0x2, 0x2, 0xde, 0x1d, 0x3, 0x2, 0x2, 0x2, 0xdf, 0xdd, 0x3, 
-    0x2, 0x2, 0x2, 0xe0, 0xe1, 0x5, 0xc, 0x7, 0x2, 0xe1, 0xed, 0x7, 0x34, 
-    0x2, 0x2, 0xe2, 0xe3, 0x7, 0x1e, 0x2, 0x2, 0xe3, 0xea, 0x7, 0x1f, 0x2, 
-    0x2, 0xe4, 0xe5, 0x7, 0x1e, 0x2, 0x2, 0xe5, 0xe6, 0x5, 0x38, 0x1d, 0x2, 
-    0xe6, 0xe7, 0x7, 0x1f, 0x2, 0x2, 0xe7, 0xe9, 0x3, 0x2, 0x2, 0x2, 0xe8, 
-    0xe4, 0x3, 0x2, 0x2, 0x2, 0xe9, 0xec, 0x3, 0x2, 0x2, 0x2, 0xea, 0xe8, 
-    0x3, 0x2, 0x2, 0x2, 0xea, 0xeb, 0x3, 0x2, 0x2, 0x2, 0xeb, 0xee, 0x3, 
-    0x2, 0x2, 0x2, 0xec, 0xea, 0x3, 0x2, 0x2, 0x2, 0xed, 0xe2, 0x3, 0x2, 
-    0x2, 0x2, 0xed, 0xee, 0x3, 0x2, 0x2, 0x2, 0xee, 0x1f, 0x3, 0x2, 0x2, 
-    0x2, 0xef, 0xf1, 0x7, 0x20, 0x2, 0x2, 0xf0, 0xf2, 0x5, 0x22, 0x12, 0x2, 
-    0xf1, 0xf0, 0x3, 0x2, 0x2, 0x2, 0xf1, 0xf2, 0x3, 0x2, 0x2, 0x2, 0xf2, 
-    0xf3, 0x3, 0x2, 0x2, 0x2, 0xf3, 0xf4, 0x7, 0x21, 0x2, 0x2, 0xf4, 0x21, 
-    0x3, 0x2, 0x2, 0x2, 0xf5, 0xf7, 0x5, 0x24, 0x13, 0x2, 0xf6, 0xf5, 0x3, 
-    0x2, 0x2, 0x2, 0xf7, 0xf8, 0x3, 0x2, 0x2, 0x2, 0xf8, 0xf6, 0x3, 0x2, 
-    0x2, 0x2, 0xf8, 0xf9, 0x3, 0x2, 0x2, 0x2, 0xf9, 0x23, 0x3, 0x2, 0x2, 
-    0x2, 0xfa, 0xfd, 0x5, 0x8, 0x5, 0x2, 0xfb, 0xfd, 0x5, 0x26, 0x14, 0x2, 
-    0xfc, 0xfa, 0x3, 0x2, 0x2, 0x2, 0xfc, 0xfb, 0x3, 0x2, 0x2, 0x2, 0xfd, 
-    0x25, 0x3, 0x2, 0x2, 0x2, 0xfe, 0x105, 0x5, 0x28, 0x15, 0x2, 0xff, 0x105, 
-    0x5, 0x2c, 0x17, 0x2, 0x100, 0x105, 0x5, 0x2e, 0x18, 0x2, 0x101, 0x105, 
-    0x5, 0x30, 0x19, 0x2, 0x102, 0x105, 0x5, 0x32, 0x1a, 0x2, 0x103, 0x105, 
-    0x5, 0x34, 0x1b, 0x2, 0x104, 0xfe, 0x3, 0x2, 0x2, 0x2, 0x104, 0xff, 
-    0x3, 0x2, 0x2, 0x2, 0x104, 0x100, 0x3, 0x2, 0x2, 0x2, 0x104, 0x101, 
-    0x3, 0x2, 0x2, 0x2, 0x104, 0x102, 0x3, 0x2, 0x2, 0x2, 0x104, 0x103, 
-    0x3, 0x2, 0x2, 0x2, 0x105, 0x27, 0x3, 0x2, 0x2, 0x2, 0x106, 0x107, 0x5, 
-    0x3a, 0x1e, 0x2, 0x107, 0x108, 0x5, 0x2a, 0x16, 0x2, 0x108, 0x109, 0x5, 
-    0x36, 0x1c, 0x2, 0x109, 0x10a, 0x7, 0x23, 0x2, 0x2, 0x10a, 0x29, 0x3, 
-    0x2, 0x2, 0x2, 0x10b, 0x10c, 0x9, 0x4, 0x2, 0x2, 0x10c, 0x2b, 0x3, 0x2, 
-    0x2, 0x2, 0x10d, 0x10f, 0x5, 0x36, 0x1c, 0x2, 0x10e, 0x10d, 0x3, 0x2, 
-    0x2, 0x2, 0x10e, 0x10f, 0x3, 0x2, 0x2, 0x2, 0x10f, 0x110, 0x3, 0x2, 
-    0x2, 0x2, 0x110, 0x111, 0x7, 0x23, 0x2, 0x2, 0x111, 0x2d, 0x3, 0x2, 
-    0x2, 0x2, 0x112, 0x113, 0x5, 0x20, 0x11, 0x2, 0x113, 0x2f, 0x3, 0x2, 
-    0x2, 0x2, 0x114, 0x115, 0x7, 0x15, 0x2, 0x2, 0x115, 0x116, 0x7, 0x1c, 
-    0x2, 0x2, 0x116, 0x117, 0x5, 0x5c, 0x2f, 0x2, 0x117, 0x118, 0x7, 0x1d, 
-    0x2, 0x2, 0x118, 0x11b, 0x5, 0x26, 0x14, 0x2, 0x119, 0x11a, 0x7, 0x16, 
-    0x2, 0x2, 0x11a, 0x11c, 0x5, 0x26, 0x14, 0x2, 0x11b, 0x119, 0x3, 0x2, 
-    0x2, 0x2, 0x11b, 0x11c, 0x3, 0x2, 0x2, 0x2, 0x11c, 0x31, 0x3, 0x2, 0x2, 
-    0x2, 0x11d, 0x11e, 0x7, 0x17, 0x2, 0x2, 0x11e, 0x11f, 0x7, 0x1c, 0x2, 
-    0x2, 0x11f, 0x120, 0x5, 0x5c, 0x2f, 0x2, 0x120, 0x121, 0x7, 0x1d, 0x2, 
-    0x2, 0x121, 0x122, 0x5, 0x26, 0x14, 0x2, 0x122, 0x33, 0x3, 0x2, 0x2, 
-    0x2, 0x123, 0x124, 0x7, 0x1b, 0x2, 0x2, 0x124, 0x12d, 0x7, 0x23, 0x2, 
-    0x2, 0x125, 0x126, 0x7, 0x1a, 0x2, 0x2, 0x126, 0x12d, 0x7, 0x23, 0x2, 
-    0x2, 0x127, 0x129, 0x7, 0x14, 0x2, 0x2, 0x128, 0x12a, 0x5, 0x36, 0x1c, 
-    0x2, 0x129, 0x128, 0x3, 0x2, 0x2, 0x2, 0x129, 0x12a, 0x3, 0x2, 0x2, 
-    0x2, 0x12a, 0x12b, 0x3, 0x2, 0x2, 0x2, 0x12b, 0x12d, 0x7, 0x23, 0x2, 
-    0x2, 0x12c, 0x123, 0x3, 0x2, 0x2, 0x2, 0x12c, 0x125, 0x3, 0x2, 0x2, 
-    0x2, 0x12c, 0x127, 0x3, 0x2, 0x2, 0x2, 0x12d, 0x35, 0x3, 0x2, 0x2, 0x2, 
-    0x12e, 0x12f, 0x5, 0x4c, 0x27, 0x2, 0x12f, 0x37, 0x3, 0x2, 0x2, 0x2, 
-    0x130, 0x131, 0x5, 0x4c, 0x27, 0x2, 0x131, 0x39, 0x3, 0x2, 0x2, 0x2, 
-    0x132, 0x139, 0x7, 0x34, 0x2, 0x2, 0x133, 0x134, 0x7, 0x1e, 0x2, 0x2, 
-    0x134, 0x135, 0x5, 0x36, 0x1c, 0x2, 0x135, 0x136, 0x7, 0x1f, 0x2, 0x2, 
-    0x136, 0x138, 0x3, 0x2, 0x2, 0x2, 0x137, 0x133, 0x3, 0x2, 0x2, 0x2, 
-    0x138, 0x13b, 0x3, 0x2, 0x2, 0x2, 0x139, 0x137, 0x3, 0x2, 0x2, 0x2, 
-    0x139, 0x13a, 0x3, 0x2, 0x2, 0x2, 0x13a, 0x3b, 0x3, 0x2, 0x2, 0x2, 0x13b, 
-    0x139, 0x3, 0x2, 0x2, 0x2, 0x13c, 0x13d, 0x7, 0x1c, 0x2, 0x2, 0x13d, 
-    0x13e, 0x5, 0x36, 0x1c, 0x2, 0x13e, 0x13f, 0x7, 0x1d, 0x2, 0x2, 0x13f, 
-    0x143, 0x3, 0x2, 0x2, 0x2, 0x140, 0x143, 0x5, 0x3a, 0x1e, 0x2, 0x141, 
-    0x143, 0x5, 0x3e, 0x20, 0x2, 0x142, 0x13c, 0x3, 0x2, 0x2, 0x2, 0x142, 
-    0x140, 0x3, 0x2, 0x2, 0x2, 0x142, 0x141, 0x3, 0x2, 0x2, 0x2, 0x143, 
-    0x3d, 0x3, 0x2, 0x2, 0x2, 0x144, 0x147, 0x7, 0x32, 0x2, 0x2, 0x145, 
-    0x147, 0x7, 0x33, 0x2, 0x2, 0x146, 0x144, 0x3, 0x2, 0x2, 0x2, 0x146, 
-    0x145, 0x3, 0x2, 0x2, 0x2, 0x147, 0x3f, 0x3, 0x2, 0x2, 0x2, 0x148, 0x14d, 
-    0x5, 0x42, 0x22, 0x2, 0x149, 0x14a, 0x7, 0x22, 0x2, 0x2, 0x14a, 0x14c, 
-    0x5, 0x42, 0x22, 0x2, 0x14b, 0x149, 0x3, 0x2, 0x2, 0x2, 0x14c, 0x14f, 
-    0x3, 0x2, 0x2, 0x2, 0x14d, 0x14b, 0x3, 0x2, 0x2, 0x2, 0x14d, 0x14e, 
-    0x3, 0x2, 0x2, 0x2, 0x14e, 0x41, 0x3, 0x2, 0x2, 0x2, 0x14f, 0x14d, 0x3, 
-    0x2, 0x2, 0x2, 0x150, 0x151, 0x5, 0x36, 0x1c, 0x2, 0x151, 0x43, 0x3, 
-    0x2, 0x2, 0x2, 0x152, 0x15d, 0x5, 0x3c, 0x1f, 0x2, 0x153, 0x154, 0x7, 
-    0x34, 0x2, 0x2, 0x154, 0x156, 0x7, 0x1c, 0x2, 0x2, 0x155, 0x157, 0x5, 
-    0x40, 0x21, 0x2, 0x156, 0x155, 0x3, 0x2, 0x2, 0x2, 0x156, 0x157, 0x3, 
-    0x2, 0x2, 0x2, 0x157, 0x158, 0x3, 0x2, 0x2, 0x2, 0x158, 0x15d, 0x7, 
-    0x1d, 0x2, 0x2, 0x159, 0x15a, 0x5, 0x46, 0x24, 0x2, 0x15a, 0x15b, 0x5, 
-    0x44, 0x23, 0x2, 0x15b, 0x15d, 0x3, 0x2, 0x2, 0x2, 0x15c, 0x152, 0x3, 
-    0x2, 0x2, 0x2, 0x15c, 0x153, 0x3, 0x2, 0x2, 0x2, 0x15c, 0x159, 0x3, 
-    0x2, 0x2, 0x2, 0x15d, 0x45, 0x3, 0x2, 0x2, 0x2, 0x15e, 0x15f, 0x9, 0x5, 
-    0x2, 0x2, 0x15f, 0x47, 0x3, 0x2, 0x2, 0x2, 0x160, 0x166, 0x5, 0x44, 
-    0x23, 0x2, 0x161, 0x162, 0x5, 0x4a, 0x26, 0x2, 0x162, 0x163, 0x5, 0x44, 
-    0x23, 0x2, 0x163, 0x165, 0x3, 0x2, 0x2, 0x2, 0x164, 0x161, 0x3, 0x2, 
-    0x2, 0x2, 0x165, 0x168, 0x3, 0x2, 0x2, 0x2, 0x166, 0x164, 0x3, 0x2, 
-    0x2, 0x2, 0x166, 0x167, 0x3, 0x2, 0x2, 0x2, 0x167, 0x49, 0x3, 0x2, 0x2, 
-    0x2, 0x168, 0x166, 0x3, 0x2, 0x2, 0x2, 0x169, 0x16a, 0x9, 0x6, 0x2, 
-    0x2, 0x16a, 0x4b, 0x3, 0x2, 0x2, 0x2, 0x16b, 0x171, 0x5, 0x48, 0x25, 
-    0x2, 0x16c, 0x16d, 0x5, 0x4e, 0x28, 0x2, 0x16d, 0x16e, 0x5, 0x48, 0x25, 
-    0x2, 0x16e, 0x170, 0x3, 0x2, 0x2, 0x2, 0x16f, 0x16c, 0x3, 0x2, 0x2, 
-    0x2, 0x170, 0x173, 0x3, 0x2, 0x2, 0x2, 0x171, 0x16f, 0x3, 0x2, 0x2, 
-    0x2, 0x171, 0x172, 0x3, 0x2, 0x2, 0x2, 0x172, 0x4d, 0x3, 0x2, 0x2, 0x2, 
-    0x173, 0x171, 0x3, 0x2, 0x2, 0x2, 0x174, 0x175, 0x9, 0x7, 0x2, 0x2, 
-    0x175, 0x4f, 0x3, 0x2, 0x2, 0x2, 0x176, 0x17c, 0x5, 0x4c, 0x27, 0x2, 
-    0x177, 0x178, 0x5, 0x52, 0x2a, 0x2, 0x178, 0x179, 0x5, 0x4c, 0x27, 0x2, 
-    0x179, 0x17b, 0x3, 0x2, 0x2, 0x2, 0x17a, 0x177, 0x3, 0x2, 0x2, 0x2, 
-    0x17b, 0x17e, 0x3, 0x2, 0x2, 0x2, 0x17c, 0x17a, 0x3, 0x2, 0x2, 0x2, 
-    0x17c, 0x17d, 0x3, 0x2, 0x2, 0x2, 0x17d, 0x51, 0x3, 0x2, 0x2, 0x2, 0x17e, 
-    0x17c, 0x3, 0x2, 0x2, 0x2, 0x17f, 0x180, 0x9, 0x8, 0x2, 0x2, 0x180, 
-    0x53, 0x3, 0x2, 0x2, 0x2, 0x181, 0x187, 0x5, 0x50, 0x29, 0x2, 0x182, 
-    0x183, 0x5, 0x56, 0x2c, 0x2, 0x183, 0x184, 0x5, 0x50, 0x29, 0x2, 0x184, 
-    0x186, 0x3, 0x2, 0x2, 0x2, 0x185, 0x182, 0x3, 0x2, 0x2, 0x2, 0x186, 
-    0x189, 0x3, 0x2, 0x2, 0x2, 0x187, 0x185, 0x3, 0x2, 0x2, 0x2, 0x187, 
-    0x188, 0x3, 0x2, 0x2, 0x2, 0x188, 0x55, 0x3, 0x2, 0x2, 0x2, 0x189, 0x187, 
-    0x3, 0x2, 0x2, 0x2, 0x18a, 0x18b, 0x9, 0x9, 0x2, 0x2, 0x18b, 0x57, 0x3, 
-    0x2, 0x2, 0x2, 0x18c, 0x18d, 0x8, 0x2d, 0x1, 0x2, 0x18d, 0x18e, 0x5, 
-    0x54, 0x2b, 0x2, 0x18e, 0x194, 0x3, 0x2, 0x2, 0x2, 0x18f, 0x190, 0xc, 
-    0x3, 0x2, 0x2, 0x190, 0x191, 0x7, 0x2a, 0x2, 0x2, 0x191, 0x193, 0x5, 
-    0x54, 0x2b, 0x2, 0x192, 0x18f, 0x3, 0x2, 0x2, 0x2, 0x193, 0x196, 0x3, 
-    0x2, 0x2, 0x2, 0x194, 0x192, 0x3, 0x2, 0x2, 0x2, 0x194, 0x195, 0x3, 
-    0x2, 0x2, 0x2, 0x195, 0x59, 0x3, 0x2, 0x2, 0x2, 0x196, 0x194, 0x3, 0x2, 
-    0x2, 0x2, 0x197, 0x198, 0x8, 0x2e, 0x1, 0x2, 0x198, 0x199, 0x5, 0x58, 
-    0x2d, 0x2, 0x199, 0x19f, 0x3, 0x2, 0x2, 0x2, 0x19a, 0x19b, 0xc, 0x3, 
-    0x2, 0x2, 0x19b, 0x19c, 0x7, 0x2b, 0x2, 0x2, 0x19c, 0x19e, 0x5, 0x58, 
-    0x2d, 0x2, 0x19d, 0x19a, 0x3, 0x2, 0x2, 0x2, 0x19e, 0x1a1, 0x3, 0x2, 
-    0x2, 0x2, 0x19f, 0x19d, 0x3, 0x2, 0x2, 0x2, 0x19f, 0x1a0, 0x3, 0x2, 
-    0x2, 0x2, 0x1a0, 0x5b, 0x3, 0x2, 0x2, 0x2, 0x1a1, 0x19f, 0x3, 0x2, 0x2, 
-    0x2, 0x1a2, 0x1a3, 0x5, 0x5a, 0x2e, 0x2, 0x1a3, 0x5d, 0x3, 0x2, 0x2, 
-    0x2, 0x2a, 0x5f, 0x66, 0x6b, 0x6f, 0x78, 0x86, 0x93, 0x96, 0x99, 0xa1, 
-    0xad, 0xb7, 0xbc, 0xc5, 0xc8, 0xcb, 0xd1, 0xdd, 0xea, 0xed, 0xf1, 0xf8, 
-    0xfc, 0x104, 0x10e, 0x11b, 0x129, 0x12c, 0x139, 0x142, 0x146, 0x14d, 
-    0x156, 0x15c, 0x166, 0x171, 0x17c, 0x187, 0x194, 0x19f, 
-  };
-
-  atn::ATNDeserializer deserializer;
-  _atn = deserializer.deserialize(_serializedATN);
-
-  size_t count = _atn.getNumberOfDecisions();
-  _decisionToDFA.reserve(count);
-  for (size_t i = 0; i < count; i++) { 
-    _decisionToDFA.emplace_back(_atn.getDecisionState(i), i);
+  default:
+    break;
   }
+  return true;
 }
 
-SysYParser::Initializer SysYParser::_init;
+bool SysYParser::eqExpSempred(EqExpContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 3: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool SysYParser::lAndExpSempred(LAndExpContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 4: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool SysYParser::lOrExpSempred(LOrExpContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 5: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+void SysYParser::initialize() {
+  ::antlr4::internal::call_once(sysyParserOnceFlag, sysyParserInitialize);
+}
