@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 ReturnInst::ReturnInst(ScalarTypePtr _type, BaseValuePtr _value, CfgNodePtr block)
-    : ret_type(_type), ret_value(_value), Instruction(nullptr, Ret, block) {
+    : Instruction(nullptr, Ret, block), ret_type(_type), ret_value(_value) {
     if (ret_type->VoidType()) {
         assert(_value == nullptr);
     } else {
@@ -59,7 +59,7 @@ std::string ReturnInst::tollvmIR() {
 //                     JumpInst Implementation
 //===-----------------------------------------------------------===//
 
-JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : dest(_dest), Instruction(nullptr, Jump, block) {
+JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : Instruction(nullptr, Jump, block), dest(_dest) {
     assert(block != nullptr);
     if (dest != nullptr) {
         parent->AddSuccessor(dest);
@@ -111,7 +111,7 @@ std::string JumpInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, CfgNodePtr block)
-    : cond(_cond), iftrue(_br1), iffalse(_br2), Instruction(nullptr, Branch, block) {
+    : Instruction(nullptr, Branch, block), cond(_cond), iftrue(_br1), iffalse(_br2)  {
     assert(cond->GetBaseType()->BoolType() && cond->IsOprand());
     assert(parent != nullptr);
     if (iftrue != nullptr) {

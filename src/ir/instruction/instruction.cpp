@@ -9,9 +9,9 @@ size_t Instruction::inst_idx = 1;
 Instruction::Instruction(VariablePtr _res, OpCode _code, CfgNodePtr _parent)
     : idx(inst_idx++), result(_res), opcode(_code), parent(_parent) {}
 
-const OpCode Instruction::GetOpCode() const { return opcode; }
-const size_t Instruction::GetInstIdx() const { return idx; }
-const CfgNodePtr Instruction::GetParent() const { return parent; }
+const OpCode &Instruction::GetOpCode() const { return opcode; }
+const size_t &Instruction::GetInstIdx() const { return idx; }
+const CfgNodePtr &Instruction::GetParent() const { return parent; }
 void Instruction::SetParent(CfgNodePtr node) { parent = node; }
 void Instruction::ClearParent() { SetParent(nullptr); }
 
@@ -47,7 +47,7 @@ void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
 //===-----------------------------------------------------------===//
 
 UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _opr, CfgNodePtr node)
-    : oprand(_opr), Instruction(_res, _op, node) {}
+    : Instruction(_res, _op, node), oprand(_opr) {}
 
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
@@ -101,7 +101,7 @@ const BaseValueList UnaryInstruction::GetOprands() const { return BaseValueList(
 
 BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
                                      CfgNodePtr node)
-    : lhs(_lhs), rhs(_rhs), Instruction(_res, _op, node) {}
+    : Instruction(_res, _op, node), lhs(_lhs), rhs(_rhs) {}
 
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }

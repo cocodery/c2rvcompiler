@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block)
-    : ret_type(_type), callee_func(_func), rparam_list(_list), Instruction(_ret, Call, block) {
+    : Instruction(_ret, Call, block), ret_type(_type), callee_func(_func), rparam_list(_list) {
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {

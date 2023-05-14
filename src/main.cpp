@@ -18,8 +18,8 @@ using std::cout;
 using std::endl;
 
 int main(int argc, char *argv[]) {
-    int opt = 0;
-    bool print_usage = false;
+    [[maybe_unused]] int opt = 0;
+    [[maybe_unused]] bool print_usage = false;
     std::string input, output, irfile;
 
     for (int ch; (ch = getopt(argc, argv, "Sl:o:O:h")) != -1;) {

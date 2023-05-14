@@ -27,9 +27,9 @@ OUTPUT_IR  	:= $(addsuffix .ll,$(basename $(TEST_CASES)))
 
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
 
-ifeq ($(MODE), RESTRICT)
+ifeq ($(MOD), RESTRICT)
 CMAKE_BUILD_VAR	+= RESTRICT=1
-else ifeq ($(MODE), RELEASE)
+else ifeq ($(MOD), RELEASE)
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
 endif
 
