@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 AllocaInst::AllocaInst(BaseTypePtr _ty_stored, VariablePtr _addr, CfgNodePtr block)
-    : type_stored(_ty_stored), Instruction(_addr, Alloca, block) {
+    : Instruction(_addr, Alloca, block), type_stored(_ty_stored) {
     BaseTypePtr type_alloca = result->GetBaseType();
     assert(type_stored->IntType() || type_stored->FloatType());
     assert(type_stored->GetAttrType() == type_alloca->GetAttrType());
@@ -50,7 +50,7 @@ std::string AllocaInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 StoreInst::StoreInst(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block)
-    : store_addr(addr), store_value(value), Instruction(nullptr, Store, block) {
+    : Instruction(nullptr, Store, block), store_addr(addr), store_value(value) {
     BaseTypePtr type_addr = store_addr->GetBaseType();
     BaseTypePtr type_value = store_value->GetBaseType();
     assert(type_addr->GetAttrType() == type_value->GetAttrType());
@@ -169,7 +169,7 @@ std::string LoadInst::tollvmIR() {
 
 GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
                                      CfgNodePtr block)
-    : store_type(_type), base_addr(_addr), offset_list(_off), Instruction(_ptr, Gep, block) {
+    : Instruction(_ptr, Gep, block), store_type(_type), base_addr(_addr), offset_list(_off) {
     assert(result->GetBaseType()->GetAttrType() == store_type->GetAttrType());
     assert(result->GetBaseType()->GetAttrType() == base_addr->GetBaseType()->GetAttrType());
     assert(store_type->IsNotPtr() && base_addr->GetBaseType()->IsPointer());

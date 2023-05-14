@@ -1,50 +1,67 @@
-TOPNAME 	:= compiler 
-BUILD_DIR 	:= ./build
-BINARY 		:= $(BUILD_DIR)/$(TOPNAME)
-CMAKE 		:= cmake
-MAKE 		:= make
-GDB 		:= gdb
-LLDB 		:= lldb
-OS 			:= $(shell uname)
-LLVM_LINK 	:= llvm-link
-LLI 		:= lli
-DIFF 		:= diff
-ECHO 		:= echo
+TOPNAME 			:= compiler 
+BUILD_DIR 		:= ./build
+BINARY 				:= $(BUILD_DIR)/$(TOPNAME)
+CMAKE 				:= cmake
+MAKE 					:= make
+GDB 					:= gdb
+LLDB 					:= lldb
+LLVM_LINK 		:= llvm-link
+LLI 					:= lli
+DIFF 					:= diff
+ECHO 					:= echo -e
 
-MODE 		:= functional # test case directory
+OS 						:= $(shell uname)
+NPROC					:= $(shell nproc)
 
-TEST_DIR 	:= ./compiler2022/公开样例与运行时库/$(MODE)
+MODE 					:= functional # test case directory
+
+TEST_DIR 		:= ./compiler2022/公开样例与运行时库/$(MODE)
 TEST_CASES	:= $(shell find $(TEST_DIR) -name "*.sy")
 
-OUTPUT_ASM 	= $(addsuffix .s, $(basename $(TEST_CASES)))
-OUTPUT_RES 	= $(addsuffix .res, $(basename $(TEST_CASES)))
-OUTPUT_LOG 	= $(addsuffix .log, $(basename $(TEST_CASES)))
-OUTPUT_IR  	= $(addsuffix .ll, $(basename $(TEST_CASES)))
+SINGLE_TEST_NAME:= main
+
+OUTPUT_ASM 	:= $(addsuffix .s,$(basename $(TEST_CASES)))
+OUTPUT_RES 	:= $(addsuffix .res,$(basename $(TEST_CASES)))
+OUTPUT_LOG 	:= $(addsuffix .log,$(basename $(TEST_CASES)))
+OUTPUT_IR  	:= $(addsuffix .ll,$(basename $(TEST_CASES)))
+
+CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
+
+ifeq ($(MOD), ASAN)
+CMAKE_BUILD_VAR	+= ASAN=1
+else ifeq ($(MOD), RLS)
+CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
+endif
+
+CMAKE_BUILD_ENV 	:= $(addprefix -D,$(CMAKE_BUILD_VAR))
 
 $(shell mkdir -p $(BUILD_DIR))
 
-.PHONY: build
-build:
-	@$(CMAKE) -S . -B $(BUILD_DIR)
-	@$(MAKE) -C $(BUILD_DIR) --file=Makefile -j8 -s
+.PHONY: build run all asm gdb lldb clean clean-test
 
-.PHONY: run
-run:
-	@cd $(BUILD_DIR); ./$(TOPNAME) -S -o ../main.s -l ../main.ll ../main.sy ; cd ..
-	@$(LLVM_LINK) sylib.ll main.ll -S -o run.ll
+$(BUILD_DIR)/$(TOPNAME):
+	$(CMAKE) $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
+
+build: $(BUILD_DIR)/$(TOPNAME)
+
+$(SINGLE_TEST_NAME).ll:
+	$(BUILD_DIR)/$(TOPNAME) -S -o $(SINGLE_TEST_NAME).S -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+
+run: $(BUILD_DIR)/$(TOPNAME) $(SINGLE_TEST_NAME).ll
+	$(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME)
 
 .ONESHELL:
-.PHONY: all
 all:
 	@success=0
 	@for file in $(sort $(TEST_CASES))
 	do
-		ASM=$${file%.*}.s
-		LOG=$${file%.*}.log
-		RES=$${file%.*}.res
-		LL=$${file%.*}.ll
-		IN=$${file%.*}.in
-		OUT=$${file%.*}.out
+		ASM	=$${file%.*}.s
+		LOG	=$${file%.*}.log
+		RES	=$${file%.*}.res
+		LL	=$${file%.*}.ll
+		IN	=$${file%.*}.in
+		OUT	=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
 		timeout 180s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
@@ -81,16 +98,15 @@ all:
 	done
 
 .ONESHELL:
-.PHONY: asm
 asm:
 	@success=0
 	@for file in $(sort $(TEST_CASES))
 	do
-		ASM=$${file%.*}.s
-		LOG=$${file%.*}.log
-		RES=$${file%.*}.res
-		IN=$${file%.*}.in
-		OUT=$${file%.*}.out
+		ASM	=$${file%.*}.s
+		LOG	=$${file%.*}.log
+		RES	=$${file%.*}.res
+		IN	=$${file%.*}.in
+		OUT	=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
 		timeout 500s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} $${file} >> $${LOG}
@@ -126,18 +142,14 @@ asm:
 		fi
 	done
 
-.PHONY: gdb
-gdb:
-	@cd $(BUILD_DIR); $(GDB) compiler; cd ..
+gdb: $(BUILD_DIR)/$(TOPNAME)
+	$(GDB) -q --args $(BUILD_DIR)/$(TOPNAME) 
 
-.PHONY: lldb
-lldb:
-	@cd $(BUILD_DIR); $(LLDB) compiler; cd ..
+lldb: $(BUILD_DIR)/$(TOPNAME)
+	$(LLDB) $(BUILD_DIR)/$(TOPNAME)
 
-.PHONY: clean
 clean:
-	-@rm -rf $(BUILD_DIR) $(TOPNAME)
+	-@rm -rf $(BUILD_DIR)
 
-.PHONY: clean-test
 clean-test:
-	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  
+	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME)

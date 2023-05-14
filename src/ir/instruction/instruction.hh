@@ -33,9 +33,9 @@ class Instruction {
     Instruction(VariablePtr, OpCode, CfgNodePtr);
     ~Instruction() = default;
 
-    const OpCode GetOpCode() const;
-    const size_t GetInstIdx() const;
-    const CfgNodePtr GetParent() const;
+    const OpCode &GetOpCode() const;
+    const size_t &GetInstIdx() const;
+    const CfgNodePtr &GetParent() const;
     void SetParent(CfgNodePtr);
     void ClearParent();
 

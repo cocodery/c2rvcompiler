@@ -986,7 +986,7 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             for (size_t idx = level; idx < arr_dims.size(); ++idx) {
                 total_size *= arr_dims[idx];
             }
-            if (total_size == 0) total_size;
+            // if (total_size == 0) total_size;
             size_t cnt = 0;
             for (auto &&child : node->initVal()) {
                 if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
@@ -1015,6 +1015,6 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             }
             return total_size;
         };
-    size_t init_size = function(ctx, list_type->GetArrDims(), 0, 0);
+    /* size_t init_size =  */function(ctx, list_type->GetArrDims(), 0, 0);
     return;
 }

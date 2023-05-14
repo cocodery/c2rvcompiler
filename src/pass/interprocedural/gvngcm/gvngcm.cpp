@@ -9,9 +9,11 @@ bool GVN::VNExpr::operator==(const VNExpr &e) const {
 }
 
 size_t GVN::VNExprHasher::operator()(const VNExpr &e) const {
-    return reinterpret_cast<size_t>(e.lhs.get()) ^
-           (reinterpret_cast<size_t>(e.rhs.get()) >> static_cast<size_t>(e.opcode) |
-            reinterpret_cast<size_t>(e.rhs.get()) << static_cast<size_t>(64 - (e.opcode)));
+    auto l = reinterpret_cast<uint64_t>(e.lhs.get());
+    auto r = reinterpret_cast<uint64_t>(e.rhs.get());
+    auto p = (l >> __builtin_ctzll(l)) * (r >> __builtin_ctzll(r));
+    auto o = e.opcode;
+    return p >> o | p << (64 - o);
 }
 
 GVN::VNScope::VNScope(VNScope *outer) : outer(outer) {}
@@ -103,12 +105,12 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         auto inst = (*iter);
 
         auto oprands = inst->GetOprands();
+        std::unordered_map<BaseValuePtr, BaseValuePtr> map;
         for (auto &&it = oprands.begin(); it != oprands.end(); ++it) {
             auto &&oprand = (*it);
-            if (auto vn = GetVN(oprand); vn != nullptr && vn != oprand) {
-                // TODO: restore assert
-                // assert(inst->ReplaceSRC(oprand, vn));
-                inst->ReplaceSRC(oprand, vn);
+            if (auto vn = GetVN(oprand); vn != nullptr && map[oprand] == nullptr && vn != oprand) {
+                map[oprand] = vn;
+                assert(inst->ReplaceSRC(oprand, vn));
             }
         }
         if (auto [replacee, replacer] = inst->DoFlod(); replacee != nullptr && replacer != nullptr) {

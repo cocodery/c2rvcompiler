@@ -10,7 +10,7 @@ BaseFuncPtr CompilationUnit::GetFunction(std::string &name) { return this->func_
 
 void CompilationUnit::InsertFunction(NormalFuncPtr func_ptr) { func_talbe.InsertFunction(func_ptr); }
 
-void CompilationUnit::generatellvmIR(std::string &irfile) {
+void CompilationUnit::generatellvmIR(std::string irfile) {
     std::ofstream llir;
     llir.open(irfile, std::ios_base::out);
     if (llir.is_open() == false) {

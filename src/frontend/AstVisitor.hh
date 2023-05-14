@@ -6,11 +6,12 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <functional>
 
-#include "IR.hh"
-#include "SysYBaseVisitor.h"
-#include "dce.hh"
-#include "inline.hh"
+#include <IR.hh>
+#include <SysYBaseVisitor.h>
+#include <dce.hh>
+#include <inline.hh>
 
 using std::cout;
 using std::endl;

@@ -31,7 +31,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
     std::map<CfgNodePtr, bool> visit;
     CfgNodeList preorder_node = CfgNodeList();
 
-    auto PredAllVisited = [&visit](CfgNodePtr succ) {
+    [[maybe_unused]] auto PredAllVisited = [&visit](CfgNodePtr succ) {
         if (succ->FindBlkAttr(LOOPBEGIN)) return true;
         for (auto &&pred : succ->GetPredcessors()) {
             if (pred->GetDominatorSet().size() == 0) continue;
@@ -57,7 +57,7 @@ CfgNodeList NormalFunction::TopoSortFromExit() {
     std::map<CfgNodePtr, bool> visit;
     CfgNodeList postorder_node = CfgNodeList();
 
-    auto SuccAllVisited = [&visit](CfgNodePtr pred) {
+    [[maybe_unused]] auto SuccAllVisited = [&visit](CfgNodePtr pred) {
         if (pred->GetBlockAttr() == LOOPBEGIN) return true;
         for (auto &&succ : pred->GetSuccessors()) {
             if (visit[succ] == false) return false;

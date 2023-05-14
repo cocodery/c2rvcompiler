@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 
+#include <Logs.hh>
+
 #include "AstVisitor.hh"
 #include "Pass.hh"
 #include "SysYLexer.h"
@@ -18,20 +20,26 @@ using std::cout;
 using std::endl;
 
 int main(int argc, char *argv[]) {
-    int opt = 0;
-    bool print_usage = false;
-    std::string input, output, irfile;
+    [[maybe_unused]] char opt = 0;
+    [[maybe_unused]] bool print_usage = false;
+    
+    const char *input = nullptr;
+    [[maybe_unused]] const char *output = nullptr;
+    [[maybe_unused]] const char *irfile = nullptr;
 
     for (int ch; (ch = getopt(argc, argv, "Sl:o:O:h")) != -1;) {
         switch (ch) {
             case 'l':
-                irfile = strdup(optarg);
+                Log("output llvm-ir");
+                irfile = optarg;
                 break;
             case 'o':
-                output = strdup(optarg);
+                Log("output filename: %s", optarg);
+                output = optarg;
                 break;
             case 'O':
-                opt = atoi(optarg);
+                Log("optimize level: %c", *optarg);
+                opt = *optarg;
                 break;
             case 'h':
                 print_usage = true;
@@ -41,8 +49,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (optind <= argc) {
+    if (print_usage) {
+        /* TODO: fill it */
+        return 0;
+    }
+
+    if (optind < argc) {
         input = argv[optind];
+    } else {
+        panic("no input files");
     }
 
     std::ifstream src(input);
