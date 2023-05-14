@@ -27,9 +27,9 @@ OUTPUT_IR  	:= $(addsuffix .ll,$(basename $(TEST_CASES)))
 
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
 
-ifeq ($(MOD), RESTRICT)
-CMAKE_BUILD_VAR	+= RESTRICT=1
-else ifeq ($(MOD), RELEASE)
+ifeq ($(MOD), ASAN)
+CMAKE_BUILD_VAR	+= ASAN=1
+else ifeq ($(MOD), RLS)
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
 endif
 
@@ -143,7 +143,7 @@ asm:
 	done
 
 gdb: $(BUILD_DIR)/$(TOPNAME)
-	$(GDB) --batch --args $(BUILD_DIR)/$(TOPNAME) -S -o $(SINGLE_TEST_NAME).S -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+	$(GDB) -q --args $(BUILD_DIR)/$(TOPNAME) 
 
 lldb: $(BUILD_DIR)/$(TOPNAME)
 	$(LLDB) $(BUILD_DIR)/$(TOPNAME)
@@ -152,4 +152,4 @@ clean:
 	-@rm -rf $(BUILD_DIR)
 
 clean-test:
-	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  
+	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME)

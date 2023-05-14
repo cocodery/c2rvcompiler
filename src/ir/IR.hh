@@ -28,5 +28,5 @@ class CompilationUnit {
     BaseFuncPtr GetFunction(std::string &);
     void InsertFunction(NormalFuncPtr);
 
-    void generatellvmIR(std::string &irile);
+    void generatellvmIR(std::string irile);
 };
