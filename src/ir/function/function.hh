@@ -5,6 +5,7 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <functional>
 
 #include "basefunc.hh"
 #include "cfgNode.hh"
