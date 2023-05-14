@@ -1,6 +1,6 @@
 #pragma once
 
-#include "asm.hh"
+#include <asm.hh>
 
 #define RVINST(name, ...)                                                      \
   class RV_##name : public RVInst {                                            \
@@ -8,7 +8,7 @@
     RV_##name(__VA_ARGS__);                                                    \
   };
 
-using rid_t = uint32_t;
+using rid_t = uint64_t;
 using i32 = int32_t;
 using cstr = const char *;
 

@@ -4,9 +4,9 @@
 #include <list>
 #include <memory>
 #include <type_traits>
-#include <cassert>
 
-#include "asm.hh"
+#include <asm.hh>
+#include <Logs.hh>
 
 class CodeGen;
 

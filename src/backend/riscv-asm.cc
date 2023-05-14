@@ -1,6 +1,4 @@
-#include <cassert>
-
-#include "riscv-asm.hh"
+#include <riscv-asm.hh>
 
 #define COMMENT_BEGIN "\t# "
 #define TAB "\t"
@@ -102,10 +100,10 @@ static const char *rgnm[] = {
 RVInst::RVInst(rid_t rd, rid_t rs1, rid_t rs2, rid_t rs3)
     : dst(rd), src1(rs1), src2(rs2), src3(rs3), stat(nonstr), statlen(0),
       comt_(COMMENT_BEGIN "error inst") {
-  assert(rd < 64);
-  assert(src1 < 64);
-  assert(src2 < 64);
-  assert(src3 < 64);
+  Assert(rd < 64, "rd(%lu) exceed range i(0, 31), f(32, 63)", rd);
+  Assert(src1 < 64, "src1(%lu) exceed range i(0, 31), f(32, 63)", src1);
+  Assert(src2 < 64, "src2(%lu) exceed range i(0, 31), f(32, 63)", src2);
+  Assert(src3 < 64, "src3(%lu) exceed range i(0, 31), f(32, 63)", src3);
 }
 
 RVInst::~RVInst() {

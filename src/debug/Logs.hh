@@ -23,11 +23,11 @@
         abort();                  \
     } while (0)
 
-#define Assert(expr, fmt, ...)         \
-    do {                               \
-        if (!(expr)) {                 \
-            panic(fmt, ##__VA_ARGS__); \
-        }                              \
+#define Assert(expr, fmt, ...)                                \
+    do {                                                      \
+        if (!(expr)) {                                        \
+            panic(#expr " Assert Fail: " fmt, ##__VA_ARGS__); \
+        }                                                     \
     } while (0)
 
 #else

@@ -5,9 +5,10 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <array>
 
-#include "codegen.hh"
-#include "riscv-asm.hh"
+#include <codegen.hh>
+#include <riscv-asm.hh>
 
 struct Point {
   size_t idx;
@@ -154,7 +155,7 @@ static void Reorder(std::vector<Point> &aov,
 
   while (idx != len) {
     if (ovs.empty())
-      assert(0 && "schedule failed");
+      panic("schedule failed");
     
     idx += 1;
     auto tp = ovs.top();
@@ -176,7 +177,8 @@ static void Reorder(std::vector<Point> &aov,
 }
 
 static void SiFiveU740(std::shared_ptr<ASMBasicBlock> &abb) {
-  assert(std::dynamic_pointer_cast<RVBasicBlock>(abb));
+  Assert(std::dynamic_pointer_cast<RVBasicBlock>(abb), "input type error");
+
   if (abb->asms.empty())
     return;
   std::vector<Point> aov;

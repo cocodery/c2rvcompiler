@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "codegen.hh"
-#include "riscv-asm.hh"
+#include <codegen.hh>
+#include <riscv-asm.hh>
 
-int main() {
+int unittest() {
 
   auto x = std::make_shared<Progress>();
   std::shared_ptr<ASMBasic> bb = x;

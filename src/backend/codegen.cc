@@ -1,9 +1,9 @@
-#include "codegen.hh"
-#include "utils.hh"
+#include <codegen.hh>
+#include <utils.hh>
 
 CodeGen::CodeGen(const char *path) : bbs() {
   fs.open(path, std::ios::out);
-  assert(fs && "I/O Error");
+  Assert(fs, "I/O Error");
 }
 
 void CodeGen::Generate() {
@@ -25,7 +25,7 @@ CodeGen::~CodeGen() {
 BBVisitor::BBVisitor(CodeGen *_cg): cg(_cg) {}
 
 void BBVisitor::toASM(GlobalValue *gv) {
-  auto aligned_length = ROUNDUP(gv->len);
+  [[maybe_unused]] auto aligned_length = ROUNDUP(gv->len);
   cg->fs << gv->name << ":" << std::endl;
   // TODO: For array and g values
 

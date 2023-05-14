@@ -7,6 +7,8 @@
 #include <list>
 #include <memory>
 
+#include <Logs.hh>
+
 // MDR -> mul/div/rem
 // BJ -> branch/jump
 
