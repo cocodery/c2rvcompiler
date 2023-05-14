@@ -707,7 +707,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     if (!callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
         auto &&[ret_value, ret_block] =
             Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
-                           comp_unit.getGlbTable().GetNameValueMap(), cur_block);
+                           comp_unit.getGlbTable().GetNameValueMap(), cur_block, in_loop, out_loop_block);
         call_ret_value = ret_value;
         cur_block = ret_block;
     } else {
@@ -1015,6 +1015,6 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             }
             return total_size;
         };
-    /* size_t init_size =  */function(ctx, list_type->GetArrDims(), 0, 0);
+    /* size_t init_size =  */ function(ctx, list_type->GetArrDims(), 0, 0);
     return;
 }

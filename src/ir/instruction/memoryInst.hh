@@ -11,11 +11,11 @@ class AllocaInst : public Instruction {
    private:
     BaseTypePtr type_stored;
 
-    static AllocaInstPtr CreatePtr(BaseTypePtr, VariablePtr, CfgNodePtr);
-
    public:
     AllocaInst(BaseTypePtr, VariablePtr, CfgNodePtr);
     ~AllocaInst() = default;
+
+    static AllocaInstPtr CreatePtr(BaseTypePtr, VariablePtr, CfgNodePtr);
 
     static VariablePtr DoAllocaAddr(BaseTypePtr, BaseTypePtr, CfgNodePtr);
 

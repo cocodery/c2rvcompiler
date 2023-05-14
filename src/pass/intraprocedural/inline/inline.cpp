@@ -36,10 +36,11 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         } else {
             assert(false);
         }
-    } else if (inst_->IsAllocaInst()) {
-        auto alloca_inst_ = std::static_pointer_cast<AllocaInst>(inst_);
-        result = AllocaInst::DoAllocaAddr(alloca_inst_->GetAllocaType(), alloca_inst_->GetAllocaAddr()->GetBaseType(),
-                                          parent);
+        // } else if (inst_->IsAllocaInst()) {
+        //     auto alloca_inst_ = std::static_pointer_cast<AllocaInst>(inst_);
+        //     result = AllocaInst::DoAllocaAddr(alloca_inst_->GetAllocaType(),
+        //     alloca_inst_->GetAllocaAddr()->GetBaseType(),
+        //                                       parent);
     } else if (inst_->IsGepInst()) {
         auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
         BaseValueList off_list;
@@ -67,7 +68,8 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
 }
 
 std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalFuncPtr callee, ParamList &param_list,
-                                                   NameValueMap &glb_table, CfgNodePtr cur_block) {
+                                                   NameValueMap &glb_table, CfgNodePtr cur_block, bool in_loop,
+                                                   CfgNodePtr out_loop_block) {
     assert(value_map.empty() && block_map.empty());
 
     BaseValuePtr ret_value = nullptr;
@@ -106,6 +108,19 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
                 auto &&store_value = store_inst->GetStoreValue()->IsConstant() ? store_inst->GetStoreValue()
                                                                                : value_map[store_inst->GetStoreValue()];
                 StoreInst::DoStoreValue(value_map[store_inst->GetStoreAddr()], store_value, cur_block);
+            } else if (inst_->IsAllocaInst()) {
+                auto alloca_inst_ = std::static_pointer_cast<AllocaInst>(inst_);
+                VariablePtr result = Variable::CreatePtr(alloca_inst_->GetAllocaAddr()->GetBaseType(), nullptr);
+                auto &&inst = AllocaInst::CreatePtr(alloca_inst_->GetAllocaType(), result, nullptr);
+                result->SetParent(inst);
+                if (in_loop) {
+                    out_loop_block->GetInstList().insert(--(out_loop_block->GetInstList().end()), inst);
+                    inst->SetParent(out_loop_block);
+                } else {
+                    cur_block->InsertInstBack(inst);
+                    inst->SetParent(cur_block);
+                }
+                value_map[inst_->GetResult()] = result;
             } else {  // insert inst->copy to cur_block
                 value_map[inst_->GetResult()] = InstCopy(inst_, cur_block);
             }
