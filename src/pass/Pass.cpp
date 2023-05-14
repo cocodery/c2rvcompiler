@@ -11,9 +11,9 @@ void Optimization::DoOptimization() {
 
         SSA::SSAConstruction(func);
 
-        GVN::DVNT(func);
-
         DCE::EliminateUselessCode(func);
+
+        GVN::DVNT(func);
 
         // DCE::EliminateUselessControlFlow(func);
     }
