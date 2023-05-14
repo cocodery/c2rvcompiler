@@ -46,22 +46,22 @@ $(BUILD_DIR)/$(TOPNAME):
 build: $(BUILD_DIR)/$(TOPNAME)
 
 $(SINGLE_TEST_NAME).ll:
-	$(BUILD_DIR)/$(TOPNAME) -S -o $(SINGLE_TEST_NAME).S -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+	$(BUILD_DIR)/$(TOPNAME) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 
 run: $(BUILD_DIR)/$(TOPNAME) $(SINGLE_TEST_NAME).ll
 	$(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME)
 
 .ONESHELL:
-all:
+all: build
 	@success=0
 	@for file in $(sort $(TEST_CASES))
 	do
-		ASM	=$${file%.*}.s
-		LOG	=$${file%.*}.log
-		RES	=$${file%.*}.res
-		LL	=$${file%.*}.ll
-		IN	=$${file%.*}.in
-		OUT	=$${file%.*}.out
+		ASM=$${file%.*}.s
+		LOG=$${file%.*}.log
+		RES=$${file%.*}.res
+		LL=$${file%.*}.ll
+		IN=$${file%.*}.in
+		OUT=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
 		timeout 180s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
@@ -98,15 +98,15 @@ all:
 	done
 
 .ONESHELL:
-asm:
+asm: build
 	@success=0
 	@for file in $(sort $(TEST_CASES))
 	do
-		ASM	=$${file%.*}.s
-		LOG	=$${file%.*}.log
-		RES	=$${file%.*}.res
-		IN	=$${file%.*}.in
-		OUT	=$${file%.*}.out
+		ASM=$${file%.*}.s
+		LOG=$${file%.*}.log
+		RES=$${file%.*}.res
+		IN=$${file%.*}.in
+		OUT=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
 		timeout 500s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} $${file} >> $${LOG}
