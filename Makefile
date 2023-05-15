@@ -1,55 +1,95 @@
-TOPNAME 			:= compiler 
-BUILD_DIR 		:= ./build
-BINARY 				:= $(BUILD_DIR)/$(TOPNAME)
-CMAKE 				:= cmake
-MAKE 					:= make
-GDB 					:= gdb
-LLDB 					:= lldb
+TOPNAME 		:= compiler 
+BUILD_DIR 		:= build
+BINARY 			:= $(BUILD_DIR)/$(TOPNAME)
+CMAKE 			:= cmake
+MAKE 			:= make
+GDB 			:= gdb
+LLDB 			:= lldb
 LLVM_LINK 		:= llvm-link
-LLI 					:= lli
-DIFF 					:= diff
-ECHO 					:= echo -e
+LLI 			:= lli
+DIFF 			:= diff
+ECHO			:= echo
 
-OS 						:= $(shell uname)
-NPROC					:= $(shell nproc)
-
-MODE 					:= functional # test case directory
-
-TEST_DIR 		:= ./compiler2022/公开样例与运行时库/$(MODE)
-TEST_CASES	:= $(shell find $(TEST_DIR) -name "*.sy")
-
-SINGLE_TEST_NAME:= main
-
-OUTPUT_ASM 	:= $(addsuffix .s,$(basename $(TEST_CASES)))
-OUTPUT_RES 	:= $(addsuffix .res,$(basename $(TEST_CASES)))
-OUTPUT_LOG 	:= $(addsuffix .log,$(basename $(TEST_CASES)))
-OUTPUT_IR  	:= $(addsuffix .ll,$(basename $(TEST_CASES)))
-
-CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
-
-ifeq ($(MOD), ASAN)
-CMAKE_BUILD_VAR	+= ASAN=1
-else ifeq ($(MOD), RLS)
-CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
-endif
-
-CMAKE_BUILD_ENV 	:= $(addprefix -D,$(CMAKE_BUILD_VAR))
+PY				:= python
+PYTEST			:= runtest.py
 
 $(shell mkdir -p $(BUILD_DIR))
 
-.PHONY: build run all asm gdb lldb clean clean-test
+OS 				:= $(shell uname)
+NPROC			:= $(shell nproc)
 
-$(BUILD_DIR)/$(TOPNAME):
+# 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
+CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
+
+ifeq ($(MOD), ASAN)
+# 打开 address sanitizer
+CMAKE_BUILD_VAR	+= ASAN=1
+else ifeq ($(MOD), RLS)
+# 打开 O2 NDEBUG (关掉 assert)
+CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
+endif
+
+CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
+
+MODE 			:= functional # hidden_functional final_performance performance
+
+# make python test all targets
+PYALL			:= pyall
+PYALL_TARGETS	:= $(addprefix $(PYALL)/,$(MODE))
+
+# make python test llvmir targets
+PYLL			:= pyll
+PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
+
+# make python test asm targets
+PYASM			:= pyasm
+PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
+
+CPLER_TEST_DIR	:= compiler2022
+TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
+TEST_DIRS		:= $(addprefix $(TEST_DIR)/,$(MODE))
+TEST_CASES		:= $(shell find $(TEST_DIRS) -name "*.sy")
+
+OUTPUT_ASM 		:= $(addsuffix .s,$(basename $(TEST_CASES)))
+OUTPUT_RES 		:= $(addsuffix .res,$(basename $(TEST_CASES)))
+OUTPUT_LOG 		:= $(addsuffix .log,$(basename $(TEST_CASES)))
+OUTPUT_IR  		:= $(addsuffix .ll,$(basename $(TEST_CASES)))
+
+SINGLE_TEST_NAME:= main
+
+$(PYALL_TARGETS): $(PYALL)/%:$(TEST_DIR)/%
+	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -A $(PARGS) $(shell find $< -name "*.sy")
+
+$(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/%
+	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -l $(PARGS) $(shell find $< -name "*.sy")
+
+$(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
+	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -a $(PARGS) $(shell find $< -name "*.sy")
+
+.PHONY: pyall
+pyall: $(BINARY) $(PYALL_TARGETS)
+
+.PHONY: pyll
+pyll:  $(BINARY) $(PYLL_TARGETS)
+
+.PHONY: pyasm
+pyasm: $(BINARY) $(PYASM_TARGETS)
+
+$(BINARY):
 	$(CMAKE) $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
 
-build: $(BUILD_DIR)/$(TOPNAME)
+.PHONY: build
+build: $(BINARY)
 
-$(SINGLE_TEST_NAME).ll:
-	$(BUILD_DIR)/$(TOPNAME) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+$(SINGLE_TEST_NAME).ll: build
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 
-run: $(BUILD_DIR)/$(TOPNAME) $(SINGLE_TEST_NAME).ll
+.PHONY: run
+run: $(SINGLE_TEST_NAME).ll
 	$(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME)
+
+.PHONY: all asm
 
 .ONESHELL:
 all: build
@@ -64,7 +104,7 @@ all: build
 		OUT=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
-		timeout 180s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
+		timeout 180s ./$(BINARY) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
 		RETURN_VALUE=$$? 
 		if [ $$RETURN_VALUE = 124 ]; then
 			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Timeout\033[0m"
@@ -109,7 +149,7 @@ asm: build
 		OUT=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
-		timeout 500s ./$(BUILD_DIR)/$(TOPNAME) -S -o $${ASM} $${file} >> $${LOG}
+		timeout 500s ./$(BINARY) -S -o $${ASM} $${file} >> $${LOG}
 		RETURN_VALUE=$$? 
 		if [ $$RETURN_VALUE = 124 ]; then
 			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Timeout\033[0m"
@@ -142,14 +182,21 @@ asm: build
 		fi
 	done
 
-gdb: $(BUILD_DIR)/$(TOPNAME)
-	$(GDB) -q --args $(BUILD_DIR)/$(TOPNAME) 
+.PHONY: gdb
+gdb: build
+	$(GDB) -q --args $(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 
-lldb: $(BUILD_DIR)/$(TOPNAME)
-	$(LLDB) $(BUILD_DIR)/$(TOPNAME)
+.PHONY: lldb
+lldb: build
+	$(LLDB) $(BINARY)
 
+.PHONY: clean
 clean:
 	-@rm -rf $(BUILD_DIR)
 
+.PHONY: clean-test
 clean-test:
 	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME)
+
+.PHONY: clean-all
+clean-all: clean clean-test
