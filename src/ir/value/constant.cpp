@@ -36,6 +36,23 @@ void Constant::FixValue(ATTR_TYPE _type) {
     base_type = (_type == INT32) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
 }
 
+ConstantPtr Constant::CreatePtr(const ConstType &value) {
+    ConstantPtr constant = nullptr;
+    std::visit(
+        [&constant, &value](auto &&arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, bool>) {
+                constant = std::make_shared<Constant>(type_const_bool, value);
+            } else if constexpr (std::is_same_v<T, int32_t>) {
+                constant = std::make_shared<Constant>(type_const_int, value);
+            } else {
+                constant = std::make_shared<Constant>(type_const_float, value);
+            }
+        },
+        value);
+    return constant;
+}
+
 ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {
     return std::make_shared<Constant>(_type, _value);
 }
@@ -61,4 +78,25 @@ std::string Constant::tollvmIR() {
         value);
 
     return ss.str();
+}
+
+void ConstantAllocator::InitConstantAllocator() {
+    constant_allocator[static_cast<bool>(0)] = Constant::CreatePtr(static_cast<bool>(0));
+    constant_allocator[static_cast<bool>(1)] = Constant::CreatePtr(static_cast<bool>(1));
+    constant_allocator[static_cast<char>(0)] = Constant::CreatePtr(static_cast<char>(0));
+    constant_allocator[static_cast<int32_t>(0)] = Constant::CreatePtr(static_cast<int32_t>(0));
+    constant_allocator[static_cast<float>(0)] = Constant::CreatePtr(static_cast<float>(0));
+}
+
+void ConstantAllocator::InsertConstantPtr(const ConstType &constant) {
+    assert(constant_allocator.count(constant) == 0);
+    ConstantPtr constant_ptr = Constant::CreatePtr(constant);
+    constant_allocator[constant] = constant_ptr;
+}
+
+ConstantPtr ConstantAllocator::FindConstantPtr(const ConstType &constant) {
+    if (constant_allocator.count(constant) == 0) {
+        InsertConstantPtr(constant);
+    }
+    return constant_allocator[constant];
 }

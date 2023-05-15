@@ -96,6 +96,8 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     lAnd_list.clear();
 
     addrTypeTable.clear();
+
+    ConstantAllocator::InitConstantAllocator();
 }
 
 std::any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
