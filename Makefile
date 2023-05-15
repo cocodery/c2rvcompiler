@@ -9,6 +9,7 @@ LLVM_LINK 		:= llvm-link
 LLI 			:= lli
 DIFF 			:= diff
 ECHO			:= echo
+FORMATTER		:= clang-format
 
 PY				:= python
 PYTEST			:= runtest.py
@@ -17,6 +18,7 @@ $(shell mkdir -p $(BUILD_DIR))
 
 OS 				:= $(shell uname)
 NPROC			:= $(shell nproc)
+ALL_SRC			:= $(shell find src -name '*.cpp' -or -name '*.hh')
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
@@ -33,18 +35,6 @@ CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
 MODE 			:= functional # hidden_functional final_performance performance
 
-# make python test all targets
-PYALL			:= pyall
-PYALL_TARGETS	:= $(addprefix $(PYALL)/,$(MODE))
-
-# make python test llvmir targets
-PYLL			:= pyll
-PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
-
-# make python test asm targets
-PYASM			:= pyasm
-PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
-
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
 TEST_DIRS		:= $(addprefix $(TEST_DIR)/,$(MODE))
@@ -56,6 +46,22 @@ OUTPUT_LOG 		:= $(addsuffix .log,$(basename $(TEST_CASES)))
 OUTPUT_IR  		:= $(addsuffix .ll,$(basename $(TEST_CASES)))
 
 SINGLE_TEST_NAME:= main
+
+# make python test all fake targets
+PYALL			:= pyall
+PYALL_TARGETS	:= $(addprefix $(PYALL)/,$(MODE))
+
+# make python test llvmir fake targets
+PYLL			:= pyll
+PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
+
+# make python test asm fake targets
+PYASM			:= pyasm
+PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
+
+# make formatter fake targets
+FORMAT			:= format
+FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
 
 $(PYALL_TARGETS): $(PYALL)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -A $(PARGS) $(shell find $< -name "*.sy")
@@ -75,7 +81,7 @@ pyll:  $(BINARY) $(PYLL_TARGETS)
 .PHONY: pyasm
 pyasm: $(BINARY) $(PYASM_TARGETS)
 
-$(BINARY):
+$(BINARY): $(ALL_SRC)
 	$(CMAKE) $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
 
@@ -200,3 +206,9 @@ clean-test:
 
 .PHONY: clean-all
 clean-all: clean clean-test
+
+$(FORMAT_TARGETS): $(FORMAT)/%:%
+	$(FORMATTER) $^ -i
+ 
+.PHONY: format-all
+format-all: $(FORMAT_TARGETS)

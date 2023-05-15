@@ -1,12 +1,11 @@
 #pragma once
 
+#include <Logs.hh>
+#include <asm.hh>
 #include <fstream>
 #include <list>
 #include <memory>
 #include <type_traits>
-
-#include <asm.hh>
-#include <Logs.hh>
 
 class CodeGen;
 
@@ -18,63 +17,61 @@ class GAttributes;
 class Progress;
 
 class ASMBasic {
-public:
-  virtual void GenASM(BBVisitor *visitor) = 0;
-  virtual void Issue(BBVisitor *visitor) = 0;
-  virtual ~ASMBasic() = default;
+   public:
+    virtual void GenASM(BBVisitor *visitor) = 0;
+    virtual void Issue(BBVisitor *visitor) = 0;
+    virtual ~ASMBasic() = default;
 };
 
 class BBVisitor {
-  CodeGen *cg;
+    CodeGen *cg;
 
-public:
-  BBVisitor(CodeGen *_cg);
-  void toASM(GlobalValue *gv);
-  void toASM(GAttributes *ga);
-  void toASM(Progress  *prog);
+   public:
+    BBVisitor(CodeGen *_cg);
+    void toASM(GlobalValue *gv);
+    void toASM(GAttributes *ga);
+    void toASM(Progress *prog);
 
-  void Issue(GlobalValue *gv);
-  void Issue(GAttributes *ga);
-  void Issue(Progress  *prog);
-  ~BBVisitor() = default;
+    void Issue(GlobalValue *gv);
+    void Issue(GAttributes *ga);
+    void Issue(Progress *prog);
+    ~BBVisitor() = default;
 };
 
-template <typename BType> class VisitableBasicBlock : public ASMBasic {
-  void GenASM(BBVisitor *visitor) {
-    visitor->toASM(static_cast<BType *>(this));
-  }
-  void Issue(BBVisitor *visitor) {
-    visitor->Issue(static_cast<BType *>(this));
-  }
+template <typename BType>
+class VisitableBasicBlock : public ASMBasic {
+    void GenASM(BBVisitor *visitor) { visitor->toASM(static_cast<BType *>(this)); }
+    void Issue(BBVisitor *visitor) { visitor->Issue(static_cast<BType *>(this)); }
 };
 
 class GlobalValue : public VisitableBasicBlock<GlobalValue> {
-public:
-  std::string name;
-  size_t len;
+   public:
+    std::string name;
+    size_t len;
 };
 
 class GAttributes : public VisitableBasicBlock<GAttributes> {
-public:
-  std::string attr;
+   public:
+    std::string attr;
 };
 
 class Progress : public VisitableBasicBlock<Progress> {
-public:
-  std::string name;
-  std::list<std::shared_ptr<ASMBasicBlock>> abbs;
+   public:
+    std::string name;
+    std::list<std::shared_ptr<ASMBasicBlock>> abbs;
 };
 
 class CodeGen {
-  std::list<std::shared_ptr<ASMBasic>> bbs;
-  std::fstream fs;
-public:
-  CodeGen(const char *path);
-  ~CodeGen();
+    std::list<std::shared_ptr<ASMBasic>> bbs;
+    std::fstream fs;
 
-  void Generate();
-  void Issuer();
-  void PushBB(std::shared_ptr<ASMBasic> &bb);
+   public:
+    CodeGen(const char *path);
+    ~CodeGen();
 
-  friend BBVisitor;
+    void Generate();
+    void Issuer();
+    void PushBB(std::shared_ptr<ASMBasic> &bb);
+
+    friend BBVisitor;
 };

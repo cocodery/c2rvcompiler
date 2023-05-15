@@ -1,17 +1,17 @@
 #pragma once
 
+#include <SysYBaseVisitor.h>
+
+#include <IR.hh>
 #include <any>
 #include <cstdio>
+#include <dce.hh>
+#include <functional>
+#include <inline.hh>
 #include <iostream>
 #include <list>
 #include <string>
 #include <vector>
-#include <functional>
-
-#include <IR.hh>
-#include <SysYBaseVisitor.h>
-#include <dce.hh>
-#include <inline.hh>
 
 using std::cout;
 using std::endl;

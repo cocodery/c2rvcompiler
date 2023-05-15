@@ -5,7 +5,7 @@ project(compiler)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
-file(GLOB_RECURSE CXXSRC "src/*.cpp" "src/*.cc" "src/*.cxx")
+file(GLOB_RECURSE CXXSRC "src/*.cpp")
 
 # 链接 antlr4 cpp runtime
 # 设置寻找路径 official path

@@ -2,11 +2,11 @@
 
 #include <asm.hh>
 
-#define RVINST(name, ...)                                                      \
-  class RV_##name : public RVInst {                                            \
-  public:                                                                      \
-    RV_##name(__VA_ARGS__);                                                    \
-  };
+#define RVINST(name, ...)             \
+    class RV_##name : public RVInst { \
+       public:                        \
+        RV_##name(__VA_ARGS__);       \
+    };
 
 using rid_t = uint64_t;
 using i32 = int32_t;
@@ -15,28 +15,28 @@ using cstr = const char *;
 enum class opKind { MEMR, MEMW, BJ, FLT, MDR, ALU, FENCE };
 
 class RVInst : public ASMInst {
-public:
-  RVInst(rid_t rd = 0, rid_t rs1 = 0, rid_t rs2 = 0, rid_t rs3 = 0);
-  ~RVInst();
-  virtual std::string_view toString();
-  virtual std::string_view Comment();
-  virtual void setComment(cstr comt);
-  virtual void setMAttr(uint64_t lty, opKind opk);
+   public:
+    RVInst(rid_t rd = 0, rid_t rs1 = 0, rid_t rs2 = 0, rid_t rs3 = 0);
+    ~RVInst();
+    virtual std::string_view toString();
+    virtual std::string_view Comment();
+    virtual void setComment(cstr comt);
+    virtual void setMAttr(uint64_t lty, opKind opk);
 
-public:
-  rid_t dst{};
-  rid_t src1{};
-  rid_t src2{};
-  rid_t src3{};
+   public:
+    rid_t dst{};
+    rid_t src1{};
+    rid_t src2{};
+    rid_t src3{};
 
-public:
-  uint64_t latency{};
-  opKind opkind{opKind::FENCE};
+   public:
+    uint64_t latency{};
+    opKind opkind{opKind::FENCE};
 
-protected:
-  char *stat;
-  size_t statlen;
-  cstr comt_;
+   protected:
+    char *stat;
+    size_t statlen;
+    cstr comt_;
 };
 
 class RVBasicBlock : public ASMBasicBlock {};
@@ -45,26 +45,26 @@ class RVBasicBlock : public ASMBasicBlock {};
 // memory operations
 //
 
-RVINST(LI, rid_t rd, i32 imm);    // imm => R[rd] 加载常数
-RVINST(LA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载绝对地址
-RVINST(LLA$, rid_t rd, cstr sym); // addr(sym) => R[rd] 加载本地地址
-RVINST(LEA$, rid_t rd, cstr sym); // addr(sym) => R[rd] 加载符号地址
+RVINST(LI, rid_t rd, i32 imm);     // imm => R[rd] 加载常数
+RVINST(LA$, rid_t rd, cstr sym);   // addr(sym) => R[rd] 加载绝对地址
+RVINST(LLA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载本地地址
+RVINST(LEA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载符号地址
 
 RVINST(LW, rid_t rd, rid_t rb,
-       i32 off); // @word(off + R[rb]) => R[rd] 加载字数据
+       i32 off);  // @word(off + R[rb]) => R[rd] 加载字数据
 RVINST(LD, rid_t rd, rid_t rb,
-       i32 off); // @dword(off + R[rb]) => R[rd] 加载双字数据
+       i32 off);  // @dword(off + R[rb]) => R[rd] 加载双字数据
 
 // @uword(off + R[rb]) => R[rd] 加载无符号字数据
 RVINST(LWU, rid_t rd, rid_t rb, i32 off);
 
 RVINST(SW, rid_t rs, rid_t rb,
-       i32 off); // R[rs] => @word(off + R[rb]) 存储字数据
+       i32 off);  // R[rs] => @word(off + R[rb]) 存储字数据
 RVINST(SD, rid_t rs, rid_t rb,
-       i32 off); // R[rs] => @dword(off + R[rb]) 存储双字数据
+       i32 off);  // R[rs] => @dword(off + R[rb]) 存储双字数据
 
-RVINST(LW$, rid_t rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
-RVINST(LD$, rid_t rd, cstr sym); // R[rs] => @(sym) 存储字数据到符号
+RVINST(LW$, rid_t rd, cstr sym);  // R[rs] => @(sym) 存储字数据到符号
+RVINST(LD$, rid_t rd, cstr sym);  // R[rs] => @(sym) 存储字数据到符号
 
 RVINST(LWU$, rid_t rd, cstr sym);
 

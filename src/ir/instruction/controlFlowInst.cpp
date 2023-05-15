@@ -111,7 +111,7 @@ std::string JumpInst::tollvmIR() {
 //===-----------------------------------------------------------===//
 
 BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, CfgNodePtr block)
-    : Instruction(nullptr, Branch, block), cond(_cond), iftrue(_br1), iffalse(_br2)  {
+    : Instruction(nullptr, Branch, block), cond(_cond), iftrue(_br1), iffalse(_br2) {
     assert(cond->GetBaseType()->BoolType() && cond->IsOprand());
     assert(parent != nullptr);
     if (iftrue != nullptr) {

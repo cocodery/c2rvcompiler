@@ -1,14 +1,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <Logs.hh>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
-
-#include <Logs.hh>
 
 #include "AstVisitor.hh"
 #include "Pass.hh"
@@ -22,7 +21,7 @@ using std::endl;
 int main(int argc, char *argv[]) {
     [[maybe_unused]] char opt = 0;
     [[maybe_unused]] bool print_usage = false;
-    
+
     const char *input = nullptr;
     [[maybe_unused]] const char *output = nullptr;
     [[maybe_unused]] const char *irfile = nullptr;
