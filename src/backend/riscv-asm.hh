@@ -2,6 +2,8 @@
 
 #include <asm.hh>
 
+namespace backend {
+
 #define RVINST(name, ...)             \
     class RV_##name : public RVInst { \
        public:                        \
@@ -203,3 +205,5 @@ RVINST(FCLASS_S, rid_t rd, rid_t frs);
 //
 // RV32A
 // TODO: implement it
+
+}

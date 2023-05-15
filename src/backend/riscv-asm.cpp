@@ -1,5 +1,7 @@
 #include <riscv-asm.hh>
 
+namespace backend {
+
 #define COMMENT_BEGIN "\t# "
 #define TAB "\t"
 #define COMMA ","
@@ -650,4 +652,6 @@ RVCNAM(FCLASS_S)
     GENSTAT("fmin.s" TAB "%s" COMMA "%s", rgnm[rd], rgnm[frs]);
     comt_ = COMMENT_BEGIN "fclass signle";
     setMAttr(LTY_ONE, opKind::FLT);
+}
+
 }

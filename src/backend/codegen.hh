@@ -2,10 +2,15 @@
 
 #include <Logs.hh>
 #include <asm.hh>
+#include <IR.hh>
+
 #include <fstream>
 #include <list>
 #include <memory>
 #include <type_traits>
+
+namespace backend {
+
 
 class CodeGen;
 
@@ -64,14 +69,21 @@ class Progress : public VisitableBasicBlock<Progress> {
 class CodeGen {
     std::list<std::shared_ptr<ASMBasic>> bbs;
     std::fstream fs;
+    CompilationUnit &comp_unit;
+
+    std::shared_ptr<ASMBasic> FuncToBBs(NormalFuncPtr &func, SymbolTable &gvals);
+    std::shared_ptr<ASMBasic> GValToBBs(SymbolTable &gvals);
 
    public:
-    CodeGen(const char *path);
+    CodeGen(const char *path, CompilationUnit &_comp_unit);
     ~CodeGen();
 
     void Generate();
     void Issuer();
     void PushBB(std::shared_ptr<ASMBasic> &bb);
+    void GenBB();
 
     friend BBVisitor;
 };
+
+}

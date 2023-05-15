@@ -1,7 +1,11 @@
 #include <codegen.hh>
 #include <utils.hh>
 
-CodeGen::CodeGen(const char *path) : bbs() {
+namespace backend {
+
+
+CodeGen::CodeGen(const char *path, CompilationUnit &_comp_unit) : bbs(), comp_unit(_comp_unit) {
+    Log("open file: %s", path);
     fs.open(path, std::ios::out);
     Assert(fs, "I/O Error");
 }
@@ -40,4 +44,6 @@ void BBVisitor::toASM(Progress *prog) {
         }
     }
     cg->fs << std::endl;
+}
+
 }

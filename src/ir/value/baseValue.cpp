@@ -1,6 +1,8 @@
 #include "baseValue.hh"
 
-BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type) {
+static size_t uniquidx = 0;
+
+BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type), glb_uniq_idx_(uniquidx++) {
     // attr_type != VOID
     assert(!base_type->VoidType());
 }
@@ -28,3 +30,6 @@ void BaseValue::InsertUser(InstPtr inst) {
 }
 
 void BaseValue::RemoveUser(InstPtr inst) { use_list.remove(inst); }
+
+size_t BaseValue::guidx() const { return glb_uniq_idx_; }
+

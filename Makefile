@@ -10,6 +10,7 @@ LLI 			:= lli
 DIFF 			:= diff
 ECHO			:= echo
 FORMATTER		:= clang-format
+CLANG			:= clang
 
 PY				:= python
 PYTEST			:= runtest.py
@@ -40,6 +41,10 @@ TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
 TEST_DIRS		:= $(addprefix $(TEST_DIR)/,$(MODE))
 TEST_CASES		:= $(shell find $(TEST_DIRS) -name "*.sy")
 
+SYLIB_C			:= $(TEST_DIR)/sylib.c
+SYLIB_H			:= $(TEST_DIR)/sylib.h
+SYLIB_LL		:= sylib.ll
+
 OUTPUT_ASM 		:= $(addsuffix .s,$(basename $(TEST_CASES)))
 OUTPUT_RES 		:= $(addsuffix .res,$(basename $(TEST_CASES)))
 OUTPUT_LOG 		:= $(addsuffix .log,$(basename $(TEST_CASES)))
@@ -63,6 +68,9 @@ PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
 FORMAT			:= format
 FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
 
+$(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
+	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
+
 $(PYALL_TARGETS): $(PYALL)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -A $(PARGS) $(shell find $< -name "*.sy")
 
@@ -73,13 +81,13 @@ $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -a $(PARGS) $(shell find $< -name "*.sy")
 
 .PHONY: pyall
-pyall: $(BINARY) $(PYALL_TARGETS)
+pyall: $(SYLIB_LL) $(BINARY) $(PYALL_TARGETS)
 
 .PHONY: pyll
-pyll:  $(BINARY) $(PYLL_TARGETS)
+pyll:  $(SYLIB_LL) $(BINARY) $(PYLL_TARGETS)
 
 .PHONY: pyasm
-pyasm: $(BINARY) $(PYASM_TARGETS)
+pyasm: $(SYLIB_LL) $(BINARY) $(PYASM_TARGETS)
 
 $(BINARY): $(ALL_SRC)
 	$(CMAKE) $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
@@ -93,7 +101,8 @@ $(SINGLE_TEST_NAME).ll: build
 
 .PHONY: run
 run: $(SINGLE_TEST_NAME).ll
-	$(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME)
+# $(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).ll
+# $(LLI) $(SINGLE_TEST_NAME).ll
 
 .PHONY: all asm
 
@@ -212,3 +221,5 @@ $(FORMAT_TARGETS): $(FORMAT)/%:%
  
 .PHONY: format-all
 format-all: $(FORMAT_TARGETS)
+
+

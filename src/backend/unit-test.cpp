@@ -2,6 +2,8 @@
 #include <iostream>
 #include <riscv-asm.hh>
 
+namespace backend {
+
 int unittest() {
     auto x = std::make_shared<Progress>();
     std::shared_ptr<ASMBasic> bb = x;
@@ -25,9 +27,11 @@ int unittest() {
     abb->asms.push_back(std::make_shared<RV_BEQZ$>(5, "begin"));
     x->abbs.push_back(abb);
 
-    CodeGen cg("./sysy.S");
-    cg.PushBB(bb);
-    cg.Issuer();
-    cg.Generate();
+    // CodeGen cg("./sysy.S");
+    // cg.PushBB(bb);
+    // cg.Issuer();
+    // cg.Generate();
     return 0;
+}
+
 }

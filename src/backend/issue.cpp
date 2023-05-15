@@ -9,6 +9,8 @@
 #include <set>
 #include <vector>
 
+namespace backend {
+
 struct Point {
     size_t idx;
     size_t nxt;
@@ -186,4 +188,6 @@ static void SiFiveU740(std::shared_ptr<ASMBasicBlock> &abb) {
     }
     GenAOVInfo(aov);
     Reorder(aov, abb->asms);
+}
+
 }

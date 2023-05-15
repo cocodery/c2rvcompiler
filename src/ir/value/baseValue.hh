@@ -21,6 +21,7 @@ using InstPtr = std::shared_ptr<Instruction>;
 class BaseValue : public Use {
    protected:
     BaseTypePtr base_type;
+    size_t glb_uniq_idx_;
 
    public:
     BaseValue(BaseTypePtr);
@@ -40,6 +41,8 @@ class BaseValue : public Use {
     InstList GetUserList() const;
     void InsertUser(InstPtr);
     void RemoveUser(InstPtr);
+
+    size_t guidx() const;
 
     virtual std::string tollvmIR() = 0;
 };

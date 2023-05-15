@@ -18,7 +18,7 @@ if (EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
   link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
 else()
   message("Can't find " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-  # set ur path to runtime
+  # 下面参数用于设置 antlr4 cpp runtime 的位置
   set(ANTLR4_LIB_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/build/runtime)
   if (EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
     link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
@@ -28,12 +28,11 @@ else()
   endif()
 endif()
 
-include_directories(/usr/local/include/antlr4.12-runtime)
 if (EXISTS ${ANTLR4_INC_DIR})
   include_directories(${ANTLR4_INC_DIR})
 else()
   message("Can't find " ${ANTLR4_INC_DIR})
-  # set ur path to includes
+  # 下面参数用于设置 antlr4 cpp 头文件的位置
   set(ANTLR4_INC_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/runtime/src)
   if (EXISTS ${ANTLR4_INC_DIR})
     include_directories(${ANTLR4_INC_DIR})

@@ -7,9 +7,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-
-// MDR -> mul/div/rem
-// BJ -> branch/jump
+namespace backend {
 
 class ASMInst {
    public:
@@ -29,3 +27,5 @@ class ASMBasicBlock {
     std::string tagname;
     std::list<std::shared_ptr<ASMInst>> asms;
 };
+
+}
