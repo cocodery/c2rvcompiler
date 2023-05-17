@@ -13,7 +13,7 @@ GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value)
     assert(base_type->GetAttrScalar() == init_value->GetBaseType()->GetAttrScalar());
 }
 
-BaseValuePtr GlobalValue::getInitValue() { return this->init_value; }
+BaseValuePtr GlobalValue::GetInitValue() { return this->init_value; }
 
 bool GlobalValue::IsGlobalValue() const { return true; }
 

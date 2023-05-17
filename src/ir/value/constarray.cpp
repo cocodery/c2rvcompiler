@@ -11,6 +11,8 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr) : BaseValue(list_t
 
 bool ConstArray::IsConstArray() const { return true; }
 
+ConstArr &ConstArray::GetConstArr() { return const_arr; }
+
 void ConstArray::FixValue(ATTR_TYPE _type) {
     for (auto &&value : const_arr) {
         value->FixValue(_type);

@@ -29,7 +29,7 @@ void CompilationUnit::generatellvmIR(std::string irfile) {
             } else if (type->IsGlobal()) {
                 llir << "global ";
             }
-            BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->getInitValue();
+            BaseValuePtr init_value = std::static_pointer_cast<GlobalValue>(glb_value)->GetInitValue();
             llir << init_value->GetBaseType()->tollvmIR() << " " << init_value->tollvmIR() << ", align 4";
         }
         llir << "; " << name << ' ' << glb_value->GetBaseType()->tollvmIR() << endl;
