@@ -17,9 +17,11 @@ class GlobalValue : public BaseValue {
 
     BaseValuePtr getInitValue();
 
-    static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
+    bool IsGlobalValue() const;
 
     void FixValue(ATTR_TYPE);
+
+    static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
 
     std::string tollvmIR();
 };

@@ -15,6 +15,8 @@ GlobalValue::GlobalValue(BaseTypePtr _type, BaseValuePtr _value)
 
 BaseValuePtr GlobalValue::getInitValue() { return this->init_value; }
 
+bool GlobalValue::IsGlobalValue() const { return true; }
+
 GlobalValuePtr GlobalValue::CreatePtr(BaseTypePtr _type, BaseValuePtr _value) {
     return std::make_shared<GlobalValue>(_type, _value);
 }

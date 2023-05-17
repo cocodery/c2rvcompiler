@@ -34,6 +34,9 @@ class BaseValue : public Use {
     virtual const InstPtr GetParent() const;
 
     virtual bool IsConstant() const;
+    virtual bool IsConstArray() const;
+    virtual bool IsGlobalValue() const;
+    virtual bool IsUnInitVar() const;
     virtual bool IsVariable() const;
 
     virtual void FixValue(ATTR_TYPE);

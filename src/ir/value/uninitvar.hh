@@ -11,6 +11,8 @@ class UnInitVar : public BaseValue {
    public:
     UnInitVar(BaseTypePtr);
 
+    bool IsUnInitVar() const;
+
     static UnInitVarPtr CreatePtr(BaseTypePtr);
 
     std::string tollvmIR();

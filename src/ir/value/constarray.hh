@@ -19,6 +19,8 @@ class ConstArray : public BaseValue {
     ConstArray(ListTypePtr, ConstArr &);
     ~ConstArray() = default;
 
+    bool IsConstArray() const;
+
     void FixValue(ATTR_TYPE);
 
     static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);

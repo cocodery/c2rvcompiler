@@ -16,6 +16,9 @@ bool BaseValue::IsOprand() {
 const InstPtr BaseValue::GetParent() const { return InstPtr(nullptr); }
 
 bool BaseValue::IsConstant() const { return false; }
+bool BaseValue::IsConstArray() const { return false; }
+bool BaseValue::IsGlobalValue() const { return false; }
+bool BaseValue::IsUnInitVar() const { return false; }
 bool BaseValue::IsVariable() const { return false; }
 
 void BaseValue::FixValue(ATTR_TYPE) { return; }
@@ -32,4 +35,3 @@ void BaseValue::InsertUser(InstPtr inst) {
 void BaseValue::RemoveUser(InstPtr inst) { use_list.remove(inst); }
 
 size_t BaseValue::guidx() const { return glb_uniq_idx_; }
-

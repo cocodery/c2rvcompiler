@@ -9,6 +9,8 @@ ConstArray::ConstArray(ListTypePtr list_type, ConstArr &_arr) : BaseValue(list_t
     assert(const_arr.size() == list_type->GetCapacity());
 }
 
+bool ConstArray::IsConstArray() const { return true; }
+
 void ConstArray::FixValue(ATTR_TYPE _type) {
     for (auto &&value : const_arr) {
         value->FixValue(_type);

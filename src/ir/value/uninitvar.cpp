@@ -7,6 +7,8 @@ UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
     assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());
 }
 
+bool UnInitVar::IsUnInitVar() const { return true; }
+
 UnInitVarPtr UnInitVar::CreatePtr(BaseTypePtr _type) { return std::make_shared<UnInitVar>(_type); }
 
 std::string UnInitVar::tollvmIR() {
