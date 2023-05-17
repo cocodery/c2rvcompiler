@@ -23,8 +23,6 @@ class ConstArray : public BaseValue {
 
     ConstArr &GetConstArr();
 
-    void FixValue(ATTR_TYPE);
-
     static ConstArrayPtr CreatePtr(ListTypePtr, ConstArr &);
 
     std::string tollvmIR();

@@ -11,31 +11,6 @@ const ConstType &Constant::GetValue() const { return this->value; }
 
 bool Constant::IsConstant() const { return true; }
 
-void Constant::FixValue(ATTR_TYPE _type) {
-    std::visit(
-        [&_value = this->value, _type](auto &&arg) {
-            switch (_type) {
-                case BOOL:
-                    _value = static_cast<bool>(arg);
-                    return;
-                case INT32:
-                    _value = static_cast<int32_t>(arg);
-                    return;
-                case FLOAT:
-                    _value = static_cast<float>(arg);
-                    return;
-                default:
-                    assert(false);
-            }
-        },
-        value);
-    // for Constant,
-    // its base_type come from ScalarType::{ type_const_bool, type_const_int, type_const_float }
-    // if directly modify their ATTR_TYPE, will distory later use
-    // so replace original type with an allocated one
-    base_type = (_type == INT32) ? type_const_int : (_type == FLOAT) ? type_const_float : type_const_bool;
-}
-
 ConstantPtr Constant::CreatePtr(const ConstType &value) {
     ConstantPtr constant = nullptr;
     std::visit(

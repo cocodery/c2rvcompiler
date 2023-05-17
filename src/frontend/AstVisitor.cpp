@@ -138,7 +138,8 @@ std::any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
 
     for (auto &&def_node : ctx->constDef()) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
-        value->FixValue(cur_type);
+        assert(value->IsConstant() || value->IsConstArray() || value->IsGlobalValue());
+        value = Value::FixValue(cur_type, value);
 
         cur_table->InsertSymbol(name, value);
         // for Local Constant-Array
@@ -191,7 +192,8 @@ std::any AstVisitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
 
     for (auto &&def_node : var_def) {
         auto [name, value] = std::any_cast<NameValue>(def_node->accept(this));
-        value->FixValue(cur_type);
+        assert(value->IsVariable() || value->IsGlobalValue());
+        value = Value::FixValue(cur_type, value);
 
         cur_table->InsertSymbol(name, value);
     }
@@ -900,8 +902,9 @@ ArrDims AstVisitor::GetArrayDims(std::vector<SysYParser::ConstExpContext *> &con
     ArrDims arr_dims;
     for (auto &&const_exp : constExpVec) {
         BaseValuePtr value = std::any_cast<BaseValuePtr>(const_exp->accept(this));
+        assert(value->IsConstant());
+        value = Value::FixValue(INT32, value);
         ConstantPtr constant = std::dynamic_pointer_cast<Constant>(value);
-        constant->FixValue(INT32);
         arr_dims.push_back(std::get<int32_t>(constant->GetValue()));
     }
     return arr_dims;

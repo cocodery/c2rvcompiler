@@ -22,4 +22,6 @@ BaseValuePtr ScalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
 bool ValueCompare(const BaseValuePtr, const BaseValuePtr);
 
+BaseValuePtr FixValue(const ATTR_TYPE, BaseValuePtr);
+
 }  // namespace Value

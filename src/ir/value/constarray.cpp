@@ -13,12 +13,6 @@ bool ConstArray::IsConstArray() const { return true; }
 
 ConstArr &ConstArray::GetConstArr() { return const_arr; }
 
-void ConstArray::FixValue(ATTR_TYPE _type) {
-    for (auto &&value : const_arr) {
-        value->FixValue(_type);
-    }
-}
-
 ConstArrayPtr ConstArray::CreatePtr(ListTypePtr list_type, ConstArr &_arr) {
     return std::make_shared<ConstArray>(list_type, _arr);
 }

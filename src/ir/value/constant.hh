@@ -23,8 +23,6 @@ class Constant : public BaseValue {
 
     bool IsConstant() const;
 
-    void FixValue(ATTR_TYPE);
-
     static ConstantPtr CreatePtr(const ConstType &value);
     static ConstantPtr CreatePtr(ScalarTypePtr, ConstType);
 

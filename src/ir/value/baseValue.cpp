@@ -21,8 +21,6 @@ bool BaseValue::IsGlobalValue() const { return false; }
 bool BaseValue::IsUnInitVar() const { return false; }
 bool BaseValue::IsVariable() const { return false; }
 
-void BaseValue::FixValue(ATTR_TYPE) { return; }
-
 InstList BaseValue::GetUserList() const { return use_list; }
 
 void BaseValue::InsertUser(InstPtr inst) {

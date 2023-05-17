@@ -89,7 +89,7 @@ BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
                                : (type_convertee == FLOAT) ? type_const_float
                                                            : type_const_bool;
         ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->GetValue());
-        constant->FixValue(type_convert);
+        constant = std::static_pointer_cast<Constant>(Value::FixValue(type_convert, constant));
         return constant;
     }
     // use instruction to convert
@@ -128,4 +128,46 @@ bool Value::ValueCompare(const BaseValuePtr lhs, const BaseValuePtr rhs) {
     } else {
         return false;
     }
+}
+
+BaseValuePtr Value::FixValue(const ATTR_TYPE type, BaseValuePtr value) {
+    if (value->IsConstant()) {
+        // For Constant FixType and Return a New One
+        ConstantPtr constant = nullptr;
+        std::visit(
+            [&type, &constant](auto &&arg) {
+                if (type == BOOL) {
+                    constant = Constant::CreatePtr(static_cast<bool>(arg));
+                } else if (type == INT32) {
+                    constant = Constant::CreatePtr(static_cast<int32_t>(arg));
+                } else if (type == FLOAT) {
+                    constant = Constant::CreatePtr(static_cast<float>(arg));
+                } else
+                    assert(false);
+            },
+            std::static_pointer_cast<Constant>(value)->GetValue());
+        assert(constant != nullptr);
+        return constant;
+    } else if (value->IsConstArray()) {
+        // For ConstArray Fix its Contents and return itself
+        auto &&const_arr = std::static_pointer_cast<ConstArray>(value)->GetConstArr();
+        for (size_t idx = 0, size = const_arr.size(); idx < size; ++idx) {
+            auto fixed_value = FixValue(type, const_arr[idx]);
+            assert(fixed_value->IsConstant());
+            const_arr[idx] = std::static_pointer_cast<Constant>(fixed_value);
+        }
+        return value;
+    } else if (value->IsGlobalValue()) {  // For GlobalValue, Fix its Init-Value and return itself
+        auto &&init_value = std::static_pointer_cast<GlobalValue>(value)->GetInitValue();
+        assert(init_value->IsConstant() || init_value->IsConstArray() || init_value->IsUnInitVar());
+        init_value = FixValue(type, init_value);
+        return value;
+    } else {
+        // for Variable or UnInitVar
+        // no need to fix value
+        // return itself
+        return value;
+    }
+    // unreachable!
+    assert(false);
 }
