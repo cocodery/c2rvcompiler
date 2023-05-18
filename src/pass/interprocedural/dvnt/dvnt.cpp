@@ -1,4 +1,4 @@
-#include "gvngcm.hh"
+#include "dvnt.hh"
 
 bool GVN::VNExpr::operator==(const VNExpr &e) const {
     if (opcode != e.opcode) {

@@ -14,13 +14,15 @@ set(ANTLR4_INC_DIR /usr/local/include/antlr4.12-runtime)
 
 set(ANTLR4_CXX_RUNTIME libantlr4-runtime.a)
 
-if (EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
+if(EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
   link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
 else()
   message("Can't find " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
+
   # 下面参数用于设置 antlr4 cpp runtime 的位置
   set(ANTLR4_LIB_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/build/runtime)
-  if (EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
+
+  if(EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
     link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
     message("Using " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
   else()
@@ -28,13 +30,15 @@ else()
   endif()
 endif()
 
-if (EXISTS ${ANTLR4_INC_DIR})
+if(EXISTS ${ANTLR4_INC_DIR})
   include_directories(${ANTLR4_INC_DIR})
 else()
   message("Can't find " ${ANTLR4_INC_DIR})
+
   # 下面参数用于设置 antlr4 cpp 头文件的位置
   set(ANTLR4_INC_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/runtime/src)
-  if (EXISTS ${ANTLR4_INC_DIR})
+
+  if(EXISTS ${ANTLR4_INC_DIR})
     include_directories(${ANTLR4_INC_DIR})
     message("Using " ${ANTLR4_INC_DIR})
   else()
@@ -42,15 +46,15 @@ else()
   endif()
 endif()
 
-
 # 设置编译参数
 add_compile_options(-std=c++17 -fdiagnostics-color=always)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_options(-g -Og)
   add_compile_options(-Wall -Werror -Wextra -Wno-unused-parameter)
   add_compile_definitions(DEBUG_MODE)
-  if (DEFINED ASAN)
+
+  if(DEFINED ASAN)
     message("Using address sanitize")
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
@@ -78,7 +82,7 @@ include_directories(src/pass/analysis)
 include_directories(src/pass/analysis/dominance)
 include_directories(src/pass/interprocedural)
 include_directories(src/pass/interprocedural/dce)
-include_directories(src/pass/interprocedural/gvngcm)
+include_directories(src/pass/interprocedural/dvnt)
 include_directories(src/pass/interprocedural/dominance)
 include_directories(src/pass/interprocedural/ssa)
 include_directories(src/pass/intraprocedural)
