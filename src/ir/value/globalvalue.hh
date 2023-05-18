@@ -15,7 +15,8 @@ class GlobalValue : public BaseValue {
    public:
     GlobalValue(BaseTypePtr, BaseValuePtr);
 
-    BaseValuePtr GetInitValue();
+    void SetInitValue(BaseValuePtr);
+    BaseValuePtr GetInitValue() const;
 
     bool IsGlobalValue() const;
 

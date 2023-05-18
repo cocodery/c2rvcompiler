@@ -158,9 +158,10 @@ BaseValuePtr Value::FixValue(const ATTR_TYPE type, BaseValuePtr value) {
         }
         return value;
     } else if (value->IsGlobalValue()) {  // For GlobalValue, Fix its Init-Value and return itself
-        auto &&init_value = std::static_pointer_cast<GlobalValue>(value)->GetInitValue();
+        GlobalValuePtr global_value = std::static_pointer_cast<GlobalValue>(value);
+        BaseValuePtr init_value = global_value->GetInitValue();
         assert(init_value->IsConstant() || init_value->IsConstArray() || init_value->IsUnInitVar());
-        init_value = FixValue(type, init_value);
+        global_value->SetInitValue(FixValue(type, init_value));
         return value;
     } else {
         // for Variable or UnInitVar
