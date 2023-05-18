@@ -34,6 +34,8 @@ using ConstantAllocator = std::unordered_map<ConstType, ConstantPtr>;
 
 static ConstantAllocator constant_allocator;
 
+const ConstantAllocator &GetConstantAllocator();
+
 void InitConstantAllocator();
 
 void InsertConstantPtr(const ConstType &);

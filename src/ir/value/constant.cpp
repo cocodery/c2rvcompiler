@@ -57,6 +57,8 @@ std::string Constant::tollvmIR() {
     return ss.str();
 }
 
+const ConstantAllocator::ConstantAllocator &ConstantAllocator::GetConstantAllocator() { return constant_allocator; }
+
 void ConstantAllocator::InitConstantAllocator() {
     constant_allocator[static_cast<bool>(0)] = Constant::CreatePtr(static_cast<bool>(0));
     constant_allocator[static_cast<bool>(1)] = Constant::CreatePtr(static_cast<bool>(1));

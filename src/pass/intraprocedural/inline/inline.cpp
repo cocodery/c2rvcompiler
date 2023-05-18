@@ -23,8 +23,8 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         }
     } else if (inst_->IsTwoOprandInst()) {
         auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst_);
-        auto &&lhs = binary_inst_->GetLHS()->IsConstant() ? binary_inst_->GetLHS() : value_map[binary_inst_->GetLHS()];
-        auto &&rhs = binary_inst_->GetRHS()->IsConstant() ? binary_inst_->GetRHS() : value_map[binary_inst_->GetRHS()];
+        auto &&lhs = value_map[binary_inst_->GetLHS()];
+        auto &&rhs = value_map[binary_inst_->GetRHS()];
         if (binary_inst_->IsIBinaryInst()) {
             result = IBinaryInst::DoIBinOperate(opcode, lhs, rhs, parent);
         } else if (binary_inst_->IsFBinaryInst()) {
@@ -45,10 +45,7 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
         BaseValueList off_list;
         for (auto &&off : gep_inst_->GetOffList()) {
-            if (off->IsConstant())
-                off_list.push_back(off);
-            else
-                off_list.push_back(value_map[off]);
+            off_list.push_back(value_map[off]);
         }
         result = GetElementPtrInst::DoGetPointer(gep_inst_->GetStoreType(), value_map[gep_inst_->GetBaseAddr()],
                                                  off_list, parent);
@@ -56,10 +53,7 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         auto &&call_inst_ = std::static_pointer_cast<CallInst>(inst_);
         ParamList param_list;
         for (auto &&param : call_inst_->GetParamList()) {
-            if (param->IsConstant())
-                param_list.push_back(param);
-            else
-                param_list.push_back(value_map[param]);
+            param_list.push_back(value_map[param]);
         }
         result = CallInst::DoCallFunction(call_inst_->GetRetType(), call_inst_->GetCalleeFunc(), param_list, parent);
     }
@@ -79,6 +73,9 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
     for (auto &&[_, value] : glb_table) value_map[value] = value;
     for (size_t size = param_list.size(), idx = 0; idx < size; ++idx)
         value_map[callee->GetParamList()[idx]] = param_list[idx];
+    for (auto [_, constant] : ConstantAllocator::GetConstantAllocator()) {
+        value_map[constant] = constant;
+    }
 
     // terminate-inst store here wait for jump-target
     std::list<std::pair<JumpInstPtr, JumpInstPtr>> jump_list;
@@ -98,15 +95,13 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
                 jump_list.push_back({jump_inst, std::static_pointer_cast<JumpInst>(inst_)});
             } else if (inst_->IsBranchInst()) {
                 auto &&branch_inst_ = std::static_pointer_cast<BranchInst>(inst_);
-                auto &&cond = branch_inst_->GetCondition()->IsConstant() ? branch_inst_->GetCondition()
-                                                                         : value_map[branch_inst_->GetCondition()];
+                auto &&cond = value_map[branch_inst_->GetCondition()];
                 auto &&branch_inst = BranchInst::CreatePtr(cond, nullptr, nullptr, cur_block);
                 cur_block->InsertInstBack(branch_inst);
                 branch_list.push_back({branch_inst, branch_inst_});
             } else if (inst_->IsStoreInst()) {
                 auto &&store_inst = std::static_pointer_cast<StoreInst>(inst_);
-                auto &&store_value = store_inst->GetStoreValue()->IsConstant() ? store_inst->GetStoreValue()
-                                                                               : value_map[store_inst->GetStoreValue()];
+                auto &&store_value = value_map[store_inst->GetStoreValue()];
                 StoreInst::DoStoreValue(value_map[store_inst->GetStoreAddr()], store_value, cur_block);
             } else if (inst_->IsAllocaInst()) {
                 auto alloca_inst_ = std::static_pointer_cast<AllocaInst>(inst_);
