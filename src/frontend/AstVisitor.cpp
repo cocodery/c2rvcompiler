@@ -109,6 +109,15 @@ std::any AstVisitor::visitChildren(antlr4::tree::ParseTree *ctx) {
 
 std::any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContext *ctx) {
     visitChildren(ctx);
+    auto &&normal_func_table = comp_unit.GetNormalFuncTable();
+    for (auto &&iter = normal_func_table.begin(); iter != normal_func_table.end();) {
+        auto &&normal_function = (*iter);
+        if (!normal_function->IsBeUsed()) {
+            iter = normal_func_table.erase(iter);
+            continue;
+        }
+        ++iter;
+    }
     return have_main_func;
 }
 
