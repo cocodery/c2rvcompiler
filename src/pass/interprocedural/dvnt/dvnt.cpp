@@ -136,7 +136,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
     for (auto succ : node->GetSuccessors()) {
         for (auto inst : succ->GetInstList()) {
             if (inst->IsPhiInst()) {
-                AdjustPhiInst(succ, std::static_pointer_cast<PhiInst>(inst));
+                AdjustPhiInst(node, std::static_pointer_cast<PhiInst>(inst));
             }
         }
     }
