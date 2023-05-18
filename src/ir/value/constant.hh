@@ -9,7 +9,7 @@
 
 class Constant;
 using ConstantPtr = std::shared_ptr<Constant>;
-using ConstType = std::variant<bool, int32_t, float>;
+using ConstType = std::variant<bool, char, int32_t, float, int64_t>;
 
 class Constant : public BaseValue {
    private:

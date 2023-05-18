@@ -82,15 +82,9 @@ BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
     if (type_convert == type_convertee) {
         return convertee;
     }
-    // if convertee is `CONSTANT`, use `fixType` to convert
+    // if convertee is `CONSTANT`, use `FixType` to convert
     if (convertee->IsConstant()) {
-        ConstantPtr constant_convertee = std::static_pointer_cast<Constant>(convertee);
-        ScalarTypePtr _stype = (type_convertee == INT32)   ? type_const_int
-                               : (type_convertee == FLOAT) ? type_const_float
-                                                           : type_const_bool;
-        ConstantPtr constant = Constant::CreatePtr(_stype, constant_convertee->GetValue());
-        constant = std::static_pointer_cast<Constant>(Value::FixValue(type_convert, constant));
-        return constant;
+        return Value::FixValue(type_convert, convertee);
     }
     // use instruction to convert
     if (type_convert == FLOAT) {
@@ -136,6 +130,8 @@ BaseValuePtr Value::FixValue(const ATTR_TYPE type, BaseValuePtr value) {
         ConstantPtr constant = nullptr;
         std::visit(
             [&type, &constant](auto &&arg) {
+                using T = std::decay_t<decltype(arg)>;
+                assert((std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                 if (type == BOOL) {
                     constant = Constant::CreatePtr(static_cast<bool>(arg));
                 } else if (type == INT32) {

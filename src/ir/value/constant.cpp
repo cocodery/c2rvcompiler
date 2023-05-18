@@ -18,10 +18,16 @@ ConstantPtr Constant::CreatePtr(const ConstType &value) {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, bool>) {
                 constant = std::make_shared<Constant>(type_const_bool, value);
+            } else if constexpr (std::is_same_v<T, char>) {
+                constant = std::make_shared<Constant>(type_const_char, value);
             } else if constexpr (std::is_same_v<T, int32_t>) {
                 constant = std::make_shared<Constant>(type_const_int, value);
-            } else {
+            } else if constexpr (std::is_same_v<T, float>) {
                 constant = std::make_shared<Constant>(type_const_float, value);
+            } else if constexpr (std::is_same_v<T, int64_t>) {
+                constant = std::make_shared<Constant>(type_const_longlong, value);
+            } else {
+                assert(false);
             }
         },
         value);
@@ -47,7 +53,7 @@ std::string Constant::tollvmIR() {
                 sprintf(buf, "0x%016lx", uint64_value);
                 ss << buf;
             } else {
-                ss << arg;
+                ss << static_cast<int64_t>(arg);
             }
         },
         value);

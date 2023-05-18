@@ -53,28 +53,25 @@ BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
 std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
     if (oprand->IsConstant()) {
-        ATTR_TYPE _type;
-        ConstType _value;
+        ConstType value;
 
         auto constant = std::static_pointer_cast<Constant>(oprand);
         std::visit(
-            [&_type, &_value, op = opcode](auto &&arg) {
+            [&value, op = opcode](auto &&arg) {
                 using T = std::decay_t<decltype(arg)>;
+                assert((std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                 switch (op) {
                     case SiToFp:
                         assert((std::is_same_v<T, bool>) || (std::is_same_v<T, int32_t>));
-                        _type = FLOAT;
-                        _value = static_cast<float>(arg);
+                        value = static_cast<float>(arg);
                         break;
                     case FpToSi:
                         assert((std::is_same_v<T, float>));
-                        _type = INT32;
-                        _value = static_cast<int32_t>(arg);
+                        value = static_cast<int32_t>(arg);
                         break;
                     case Zext:
                         assert((std::is_same_v<T, bool>));
-                        _type = INT32;
-                        _value = static_cast<int32_t>(arg);
+                        value = static_cast<int32_t>(arg);
                         break;
                     default:
                         assert(false);
@@ -83,10 +80,7 @@ std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
             },
             constant->GetValue());
 
-        ScalarTypePtr _stype = (_type == INT32)   ? type_const_int
-                               : (_type == FLOAT) ? type_const_float
-                                                  : type_const_bool;
-        return {result, Constant::CreatePtr(_stype, _value)};
+        return {result, Constant::CreatePtr(value)};
     }
     return {nullptr, nullptr};
 }
@@ -125,7 +119,7 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
             std::visit(
                 [&](auto &&arg) {
                     using T = std::decay_t<decltype(arg)>;
-                    assert(!(std::is_same_v<T, bool>));
+                    assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
                         replacee = result;
                         replacer = rhs;
@@ -152,7 +146,7 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
             std::visit(
                 [&](auto &&arg) {
                     using T = std::decay_t<decltype(arg)>;
-                    assert(!(std::is_same_v<T, bool>));
+                    assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
                         replacee = result;
                         replacer = lhs;
