@@ -78,7 +78,9 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
     auto VariableRename = [&entry, &allNodes, &allocaInsts, &allocaLookUp, &phi2AllocaMap]() {
         ValueVector valuelist;
         std::for_each(allocaInsts.begin(), allocaInsts.end(), [&valuelist](const auto &inst) {
-            valuelist.push_back(inst->GetAllocaType()->IntType() ? zero_int32 : zero_float);
+            valuelist.push_back(inst->GetAllocaType()->IntType()
+                                    ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                    : ConstantAllocator::FindConstantPtr(static_cast<float>(0)));
         });
         std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) { node->SetDirty(false); });
 

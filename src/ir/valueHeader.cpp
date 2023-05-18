@@ -7,7 +7,9 @@ BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePt
         return ExprFlod::UnaryOperate(op, std::static_pointer_cast<Constant>(oprand));
     } else {
         ATTR_TYPE _type = oprand->GetBaseType()->GetAttrType();
-        ConstantPtr zero = (_type == BOOL) ? zero_bool : ((_type == INT32) ? zero_int32 : zero_float);
+        ConstantPtr zero = (_type == BOOL)    ? ConstantAllocator::FindConstantPtr(static_cast<bool>(0))
+                           : (_type == INT32) ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                              : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
         if (op == OP_MINUS) {
             return BinaryOperate(OP_SUB, zero, oprand, block);
         } else if (op == OP_NOT) {
@@ -101,10 +103,12 @@ BaseValuePtr Value::ScalarTypeConvert(ATTR_TYPE type_convert, BaseValuePtr conve
     } else {
         if (type_convertee == INT32) {
             // convert i32 to i1
-            return ICmpInst::DoICompare(OP_NEQ, convertee, zero_int32, block);
+            return ICmpInst::DoICompare(OP_NEQ, convertee, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)),
+                                        block);
         } else if (type_convertee == FLOAT) {
             // convert float to i1
-            return FCmpInst::DoFCompare(OP_NEQ, convertee, zero_float, block);
+            return FCmpInst::DoFCompare(OP_NEQ, convertee, ConstantAllocator::FindConstantPtr(static_cast<float>(0)),
+                                        block);
         }
     }
     assert(0);
@@ -133,11 +137,11 @@ BaseValuePtr Value::FixValue(const ATTR_TYPE type, BaseValuePtr value) {
                 using T = std::decay_t<decltype(arg)>;
                 assert((std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                 if (type == BOOL) {
-                    constant = Constant::CreatePtr(static_cast<bool>(arg));
+                    constant = ConstantAllocator::FindConstantPtr(static_cast<bool>(arg));
                 } else if (type == INT32) {
-                    constant = Constant::CreatePtr(static_cast<int32_t>(arg));
+                    constant = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(arg));
                 } else if (type == FLOAT) {
-                    constant = Constant::CreatePtr(static_cast<float>(arg));
+                    constant = ConstantAllocator::FindConstantPtr(static_cast<float>(arg));
                 } else
                     assert(false);
             },

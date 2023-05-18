@@ -22,7 +22,7 @@ BaseValuePtr ExprFlod::UnaryOperate(const OpCode op, const ConstantPtr oprand) {
         },
         oprand->GetValue());
 
-    return Constant::CreatePtr(value);
+    return ConstantAllocator::FindConstantPtr(value);
 }
 
 // Constant do BinaryOperate
@@ -83,5 +83,5 @@ BaseValuePtr ExprFlod::BinaryOperate(const OpCode op, const ConstantPtr lhs, con
         },
         lhs->GetValue(), rhs->GetValue());
 
-    return Constant::CreatePtr(value);
+    return ConstantAllocator::FindConstantPtr(value);
 }

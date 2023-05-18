@@ -19,7 +19,8 @@ BaseValuePtr ParseGlobalListInit(_ListType *node, ListTypePtr list_type, AstVisi
 
     const ArrDims arr_dims = list_type->GetArrDims();
     const ArrDims dim_size = list_type->GetDimSize();
-    ConstantPtr zero = (list_type->IntType()) ? zero_int32 : zero_float;
+    ConstantPtr zero = (list_type->IntType()) ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                              : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
 
     std::function<size_t(_ListType *, ConstArr &, size_t)> function = [&](_ListType *node, ConstArr &const_arr,
                                                                           size_t level) {
@@ -615,11 +616,12 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
         ListTypePtr list_type = addrTypeTable[address];
         ArrDims arr_dims = list_type->GetDimSize();
 
+        ConstantPtr zero_int32 = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
         BaseValuePtr offset = zero_int32;
         ATTR_POINTER last_ptr_or_not = ptr_or_not;
         ptr_or_not = NOTPTR;
         for (size_t idx = 0; idx < exp_list.size(); ++idx) {
-            ConstantPtr dim_size = Constant::CreatePtr(static_cast<int32_t>(arr_dims[idx]));
+            ConstantPtr dim_size = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(arr_dims[idx]));
             BaseValuePtr tmp_off = std::any_cast<BaseValuePtr>(exp_list[idx]->accept(this));
             BaseValuePtr cur_off = Value::BinaryOperate(OP_MUL, tmp_off, dim_size, cur_block);
             offset = Value::BinaryOperate(OP_ADD, offset, cur_off, cur_block);
@@ -651,11 +653,11 @@ std::any AstVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context *ctx) {
 }
 
 std::any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
-    return Constant::CreatePtr(static_cast<int32_t>(std::stoi(ctx->getText(), nullptr, 0)));
+    return ConstantAllocator::FindConstantPtr(static_cast<int32_t>(std::stoi(ctx->getText(), nullptr, 0)));
 }
 
 std::any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    return Constant::CreatePtr(static_cast<float>(std::stof(ctx->getText())));
+    return ConstantAllocator::FindConstantPtr(static_cast<float>(std::stof(ctx->getText())));
 }
 
 std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
@@ -709,7 +711,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     ScalarTypePtr ret_type = callee_func->GetReturnType();
 
     ParamList rparam_list =
-        time_function ? ParamList(1, Constant::CreatePtr(static_cast<int32_t>(ctx->start->getLine())))
+        time_function ? ParamList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(ctx->start->getLine())))
                       : (ctx->funcRParams() != nullptr ? std::any_cast<ParamList>(ctx->funcRParams()->accept(this))
                                                        : ParamList());
     BaseValuePtr call_ret_value = nullptr;
@@ -971,11 +973,11 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
                                     BaseValuePtr base_addr) {
     ATTR_TYPE _type = list_type->GetAttrType();
 
-    ConstantPtr zero = (_type == INT32) ? zero_int32 : zero_float;
+    ConstantPtr zero_int32 = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
+    ConstantPtr zero = (_type == INT32) ? zero_int32 : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
     ArrDims dim_size = list_type->GetDimSize();
 
-    BaseValueList off_list = BaseValueList(1, zero_int32);
-    off_list.push_back(zero_int32);
+    BaseValueList off_list = BaseValueList(2, zero_int32);
     BaseValuePtr start_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
     BaseValuePtr i8_addr = BitCastInst::DoBitCast(start_addr, cur_block);
 
@@ -986,10 +988,10 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
 
     ParamList param_list = ParamList();
     param_list.push_back(i8_addr);
-    param_list.push_back(zero_char);
+    param_list.push_back(ConstantAllocator::FindConstantPtr(static_cast<char>(0)));
 
-    param_list.push_back(Constant::CreatePtr(static_cast<int64_t>(list_type->GetCapacity() * 4)));
-    param_list.push_back(zero_bool);
+    param_list.push_back(ConstantAllocator::FindConstantPtr(static_cast<int64_t>(list_type->GetCapacity() * 4)));
+    param_list.push_back(ConstantAllocator::FindConstantPtr(static_cast<bool>(0)));
 
     auto &&call_ret_value = CallInst::DoCallFunction(callee->GetReturnType(), callee, param_list, cur_block);
 
@@ -1003,8 +1005,9 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             size_t cnt = 0;
             for (auto &&child : node->initVal()) {
                 if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
-                    BaseValueList off_list = BaseValueList(1, zero_int32);
-                    ConstantPtr offset = Constant::CreatePtr(static_cast<int32_t>(idx_offset));
+                    BaseValueList off_list =
+                        BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
+                    ConstantPtr offset = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(idx_offset));
                     off_list.push_back(offset);
                     BaseValuePtr value = std::any_cast<BaseValuePtr>(scalar_node->exp()->accept(this));
                     BaseValuePtr addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);

@@ -80,7 +80,7 @@ std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
             },
             constant->GetValue());
 
-        return {result, Constant::CreatePtr(value)};
+        return {result, ConstantAllocator::FindConstantPtr(value)};
     }
     return {nullptr, nullptr};
 }

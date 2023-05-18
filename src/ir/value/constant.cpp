@@ -34,10 +34,6 @@ ConstantPtr Constant::CreatePtr(const ConstType &value) {
     return constant;
 }
 
-ConstantPtr Constant::CreatePtr(ScalarTypePtr _type, ConstType _value) {
-    return std::make_shared<Constant>(_type, _value);
-}
-
 std::string Constant::tollvmIR() {
     std::stringstream ss;
 
