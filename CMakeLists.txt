@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(compiler)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
@@ -20,7 +22,7 @@ else()
   message("Can't find " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
 
   # 下面参数用于设置 antlr4 cpp runtime 的位置
-  set(ANTLR4_LIB_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/build/runtime)
+  set(ANTLR4_LIB_DIR ${CMAKE_SOURCE_DIR}/ext/antlr4-cpp-runtime-4.12.0/build/runtime)
 
   if(EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
     link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
@@ -36,7 +38,7 @@ else()
   message("Can't find " ${ANTLR4_INC_DIR})
 
   # 下面参数用于设置 antlr4 cpp 头文件的位置
-  set(ANTLR4_INC_DIR /home/blur/code/antlr4-cpp-runtime-4.12.0/runtime/src)
+  set(ANTLR4_INC_DIR ${CMAKE_SOURCE_DIR}/ext/antlr4-cpp-runtime-4.12.0/runtime/src)
 
   if(EXISTS ${ANTLR4_INC_DIR})
     include_directories(${ANTLR4_INC_DIR})
@@ -50,7 +52,7 @@ endif()
 add_compile_options(-std=c++17 -fdiagnostics-color=always)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_compile_options(-g -Og)
+  add_compile_options(-g)
   add_compile_options(-Wall -Werror -Wextra -Wno-unused-parameter)
   add_compile_definitions(DEBUG_MODE)
 

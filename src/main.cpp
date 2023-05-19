@@ -13,6 +13,7 @@
 #include "Pass.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
+#include "codegen.hh"
 
 using namespace antlr4;
 using std::cout;
@@ -83,6 +84,11 @@ int main(int argc, char *argv[]) {
     optimizer.DoOptimization();
 
     comp_unit.generatellvmIR(irfile);
+
+    if (output) {
+        backend::CodeGen cg(output, comp_unit);
+        cg.GenBB();
+    }
 
     return 0;
 }
