@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(
 )
 
 def build_llvmir(args):
-    files: list[str] = args.filename
+    files: list[str] = sorted(args.filename)
     for f in files:
         # check if file exists
         if not os.path.exists(f):
@@ -87,7 +87,7 @@ def build_llvmir(args):
 
 
 def build_asm(args):
-    files: list[str] = args.filename
+    files: list[str] = sorted(args.filename)
     for f in files:
         # check if file exists
         if not os.path.exists(f):
@@ -175,8 +175,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--compiler', action='store' , required=True)
 
     args = parser.parse_args()
-    args.filename = sorted(args.filename)
-    # print(args.filename, args.dir, args.compiler)
+
+    print("Testing: {}".format(args.dir))
 
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
@@ -186,12 +186,12 @@ if __name__ == '__main__':
     
     if args.asm:
         build_asm(args)
+        test_perf(args)
 
     # using perf ?
     # if args.all:
     #     test_perf(args)
 
-    # test_perf(args)
 
     
 

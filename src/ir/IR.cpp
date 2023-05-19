@@ -35,4 +35,6 @@ void CompilationUnit::generatellvmIR(std::string irfile) {
         llir << "; " << name << ' ' << glb_value->GetBaseType()->tollvmIR() << endl;
     }
     llir << endl << this->func_talbe << endl;
+
+    llir.flush();
 }

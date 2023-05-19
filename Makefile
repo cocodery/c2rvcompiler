@@ -34,7 +34,7 @@ endif
 
 CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
-MODE 			:= functional # hidden_functional final_performance performance
+MODE 			:= functional  hidden_functional final_performance performance
 
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
@@ -100,9 +100,9 @@ $(SINGLE_TEST_NAME).ll: build
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 
 .PHONY: run
-run: $(SINGLE_TEST_NAME).ll
-# $(LLVM_LINK) sylib.ll $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).ll
-# $(LLI) $(SINGLE_TEST_NAME).ll
+run: $(SINGLE_TEST_NAME).ll $(SYLIB_LL)
+	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).ll
+	$(LLI) $(SINGLE_TEST_NAME).ll
 
 .PHONY: all asm
 
