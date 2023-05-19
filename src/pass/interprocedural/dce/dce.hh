@@ -1,8 +1,8 @@
 #pragma once
 
 #include <list>
-#include <map>
 #include <queue>
+#include <set>
 
 #include "IR.hh"
 

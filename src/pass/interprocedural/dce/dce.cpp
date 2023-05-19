@@ -3,14 +3,14 @@
 void DCE::EliminateUselessCode(NormalFuncPtr func) {
     auto allNodes = func->TopoSortFromEntry();
 
-    std::map<InstPtr, bool> visitMap;
+    std::set<InstPtr> visitSet;
     std::queue<InstPtr> WorkList;
 
-    auto Mark = [&visitMap, &allNodes, &WorkList]() {
+    auto Mark = [&visitSet, &allNodes, &WorkList]() {
         for (auto &&node : allNodes) {
             for (auto &&inst : node->GetInstList()) {
                 if (inst->IsCriticalOperation()) {
-                    visitMap[inst] = true;
+                    visitSet.insert(inst);
                     WorkList.push(inst);
                 }
             }
@@ -21,8 +21,8 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
             for (auto &&value : front->GetOprands()) {
                 auto &&inst_def_value = value->GetParent();
                 if (inst_def_value == nullptr) continue;
-                if (visitMap[inst_def_value] == false) {
-                    visitMap[inst_def_value] = true;
+                if (visitSet.find(inst_def_value) == visitSet.end()) {
+                    visitSet.insert(inst_def_value);
                     WorkList.push(inst_def_value);
                 }
             }
@@ -30,12 +30,12 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
         assert(WorkList.empty());
     };
 
-    auto Sweep = [&visitMap, &allNodes]() {
+    auto Sweep = [&visitSet, &allNodes]() {
         for (auto &&node : allNodes) {
             auto &&inst_list = node->GetInstList();
             for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
                 auto &&inst = (*iter);
-                if (visitMap[inst] == false) {
+                if (visitSet.find(inst) == visitSet.end()) {
                     if (inst->IsJumpInst() == false) {
                         RemoveInst(inst);
                         iter = inst_list.erase(iter);
