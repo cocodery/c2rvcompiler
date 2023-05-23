@@ -34,7 +34,7 @@ endif
 
 CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
-MODE 			:= functional  hidden_functional final_performance performance
+MODE 			:= functional hidden_functional final_performance performance
 
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
@@ -96,13 +96,12 @@ $(BINARY): $(ALL_SRC)
 .PHONY: build
 build: $(BINARY)
 
-$(SINGLE_TEST_NAME).ll: build
-	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
-
 .PHONY: run
-run: $(SINGLE_TEST_NAME).ll $(SYLIB_LL)
-	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).ll
-	$(LLI) $(SINGLE_TEST_NAME).ll
+run: build $(SYLIB_LL)
+	@$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+	@$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
+	@$(LLI) $(SINGLE_TEST_NAME).run.ll
+	@$(ECHO) $$?
 
 .PHONY: all asm
 
@@ -211,7 +210,8 @@ clean:
 
 .PHONY: clean-test
 clean-test:
-	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)  $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME)
+	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR) 
+	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).s
 
 .PHONY: clean-all
 clean-all: clean clean-test
