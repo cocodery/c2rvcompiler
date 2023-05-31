@@ -2,11 +2,14 @@ import os
 import sys
 import argparse
 import subprocess
+import time
+
 
 parser = argparse.ArgumentParser(
     prog=sys.argv[0],
     description="Test if compiler behaves well"
 )
+
 
 def build_llvmir(args):
     files: list[str] = sorted(args.filename)
@@ -37,7 +40,11 @@ def build_llvmir(args):
         cmd = [args.compiler, '-S', '-l', llname, f]
         resp = None
         with open(logname, 'w') as logfile:
+            start = time.time()
             resp = subprocess.run(cmd, timeout=180, stdout=logfile)
+            total_time = time.time() - start
+            logfile.write("Compile use time: {}\n".format(str(total_time)))
+            
 
         if resp.returncode == 124:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mCompile Timeout\033[0m".format(basename))
