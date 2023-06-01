@@ -1,6 +1,6 @@
 #include "baseValue.hh"
 
-static size_t uniquidx = 0;
+static size_t uniquidx = 1;
 
 BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type), glb_uniq_idx_(uniquidx++) {
     // attr_type != VOID
