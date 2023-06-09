@@ -9,6 +9,7 @@ src/antlr/*
 !src/antlr/*.h
 !src/antlr/*.cpp
 
+*.out
 *.sy
 *.ll
 *.s

@@ -1,8 +1,4 @@
-#include <codegen.hh>
-#include <utils.hh>
-
-namespace backend {
-
+#include "codegen.hh"
 
 CodeGen::CodeGen(const char *path, CompilationUnit &_comp_unit) : bbs(), comp_unit(_comp_unit) {
     Log("open file: %s", path);
@@ -10,40 +6,17 @@ CodeGen::CodeGen(const char *path, CompilationUnit &_comp_unit) : bbs(), comp_un
     Assert(fs, "I/O Error");
 }
 
-void CodeGen::Generate() {
-    BBVisitor visitor(this);
+void CodeGen::GenASM() {
     for (auto &&bb : bbs) {
-        bb->GenASM(&visitor);
+        bb->GenASM(fs);
     }
     fs.flush();
 }
 
-void CodeGen::PushBB(std::shared_ptr<ASMBasic> &bb) { bbs.push_back(std::move(bb)); }
+void CodeGen::Reorder() {
+    for (auto &&bb : bbs) {
+        bb->Reorder();
+    }
+}
 
 CodeGen::~CodeGen() { fs.close(); }
-
-BBVisitor::BBVisitor(CodeGen *_cg) : cg(_cg) {}
-
-void BBVisitor::toASM(GlobalValue *gv) {
-    [[maybe_unused]] auto aligned_length = ROUNDUP(gv->len);
-    cg->fs << gv->name << ":" << std::endl;
-    // TODO: For array and g values
-
-    cg->fs << std::endl;
-}
-
-void BBVisitor::toASM(GAttributes *ga) { cg->fs << ga->attr << std::endl; }
-
-void BBVisitor::toASM(Progress *prog) {
-    // TODO: translate to asm codes
-    cg->fs << prog->name << ":" << std::endl;
-    for (auto &&abb : prog->abbs) {
-        cg->fs << abb->tagname << ":" << std::endl;
-        for (auto &&inst : abb->asms) {
-            cg->fs << inst->toString() << inst->Comment() << std::endl;
-        }
-    }
-    cg->fs << std::endl;
-}
-
-}

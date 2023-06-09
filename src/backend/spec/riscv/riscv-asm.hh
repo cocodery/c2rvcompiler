@@ -1,8 +1,6 @@
 #pragma once
 
-#include <asm.hh>
-
-namespace backend {
+#include "../asm.hh"
 
 #define RVINST(name, ...)             \
     class RV_##name : public RVInst { \
@@ -41,8 +39,6 @@ class RVInst : public ASMInst {
     cstr comt_;
 };
 
-class RVBasicBlock : public ASMBasicBlock {};
-
 //
 // memory operations
 //
@@ -52,18 +48,13 @@ RVINST(LA$, rid_t rd, cstr sym);   // addr(sym) => R[rd] 加载绝对地址
 RVINST(LLA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载本地地址
 RVINST(LEA$, rid_t rd, cstr sym);  // addr(sym) => R[rd] 加载符号地址
 
-RVINST(LW, rid_t rd, rid_t rb,
-       i32 off);  // @word(off + R[rb]) => R[rd] 加载字数据
-RVINST(LD, rid_t rd, rid_t rb,
-       i32 off);  // @dword(off + R[rb]) => R[rd] 加载双字数据
+RVINST(LW, rid_t rd, rid_t rb, i32 off);  // @word(off + R[rb]) => R[rd] 加载字数据
+RVINST(LD, rid_t rd, rid_t rb, i32 off);  // @dword(off + R[rb]) => R[rd] 加载双字数据
 
-// @uword(off + R[rb]) => R[rd] 加载无符号字数据
-RVINST(LWU, rid_t rd, rid_t rb, i32 off);
+RVINST(LWU, rid_t rd, rid_t rb, i32 off);  // @uword(off + R[rb]) => R[rd] 加载无符号字数据
 
-RVINST(SW, rid_t rs, rid_t rb,
-       i32 off);  // R[rs] => @word(off + R[rb]) 存储字数据
-RVINST(SD, rid_t rs, rid_t rb,
-       i32 off);  // R[rs] => @dword(off + R[rb]) 存储双字数据
+RVINST(SW, rid_t rs, rid_t rb, i32 off);  // R[rs] => @word(off + R[rb]) 存储字数据
+RVINST(SD, rid_t rs, rid_t rb, i32 off);  // R[rs] => @dword(off + R[rb]) 存储双字数据
 
 RVINST(LW$, rid_t rd, cstr sym);  // R[rs] => @(sym) 存储字数据到符号
 RVINST(LD$, rid_t rd, cstr sym);  // R[rs] => @(sym) 存储字数据到符号
@@ -205,5 +196,3 @@ RVINST(FCLASS_S, rid_t rd, rid_t frs);
 //
 // RV32A
 // TODO: implement it
-
-}

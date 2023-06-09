@@ -86,8 +86,9 @@ int main(int argc, char *argv[]) {
     comp_unit.generatellvmIR(irfile);
 
     if (output) {
-        backend::CodeGen cg(output, comp_unit);
-        cg.GenBB();
+        CodeGen cg(output, comp_unit);
+        cg.GenABB();
+        cg.GenASM();
     }
 
     return 0;

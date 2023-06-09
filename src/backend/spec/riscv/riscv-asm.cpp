@@ -1,6 +1,4 @@
-#include <riscv-asm.hh>
-
-namespace backend {
+#include "riscv-asm.hh"
 
 #define COMMENT_BEGIN "\t# "
 #define TAB "\t"
@@ -19,7 +17,7 @@ constexpr uint64_t LTY_RST = -1;
 #define GENSTAT(fmt, ...)                            \
     do {                                             \
         FILE *out = open_memstream(&stat, &statlen); \
-        fprintf(out, TAB fmt, ##__VA_ARGS__);        \
+        fprintf(out, fmt, ##__VA_ARGS__);            \
         fflush(out);                                 \
         fclose(out);                                 \
     } while (0)
@@ -621,7 +619,7 @@ RVCNAM(FCVT_W_S)
 
 RVCNAM(FCVT_S_W)
 (rid_t frd, rid_t rs) : RVInst(frd, rs) {
-    GENSTAT("fcvt.w.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[rs]);
+    GENSTAT("fcvt.s.w" TAB "%s" COMMA "%s", rgnm[frd], rgnm[rs]);
     comt_ = COMMENT_BEGIN "fcvt w -> s";
     setMAttr(LTY_ONE, opKind::FLT);
 }
@@ -652,6 +650,4 @@ RVCNAM(FCLASS_S)
     GENSTAT("fmin.s" TAB "%s" COMMA "%s", rgnm[rd], rgnm[frs]);
     comt_ = COMMENT_BEGIN "fclass signle";
     setMAttr(LTY_ONE, opKind::FLT);
-}
-
 }
