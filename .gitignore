@@ -9,6 +9,7 @@ src/antlr/*
 !src/antlr/*.h
 !src/antlr/*.cpp
 
+reidx-inst.txt
 *.out
 *.sy
 *.ll

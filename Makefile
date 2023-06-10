@@ -12,6 +12,13 @@ ECHO			:= echo
 FORMATTER		:= clang-format
 CLANG			:= clang
 
+# 检查 rv 工具链情况
+ifeq ($(RISCV),)
+RVAS			:= $(ECHO)
+else
+RVAS			:= $(RISCV)/bin/riscv64-unknown-elf-as
+endif
+
 PY				:= python
 PYTEST			:= runtest.py
 
@@ -24,10 +31,10 @@ ALL_SRC			:= $(shell find src -name '*.cpp' -or -name '*.hh')
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
 
-ifeq ($(MOD), ASAN)
+ifeq ($(MOD),ASAN)
 # 打开 address sanitizer
 CMAKE_BUILD_VAR	+= ASAN=1
-else ifeq ($(MOD), RLS)
+else ifeq ($(MOD),RLS)
 # 打开 O2 NDEBUG (关掉 assert)
 CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
 endif
@@ -102,6 +109,7 @@ run: build $(SYLIB_LL)
 	@$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	@$(LLI) $(SINGLE_TEST_NAME).run.ll
 	@$(ECHO) $$?
+	@$(RVAS) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s
 
 .PHONY: all asm
 
@@ -221,5 +229,4 @@ $(FORMAT_TARGETS): $(FORMAT)/%:%
  
 .PHONY: format-all
 format-all: $(FORMAT_TARGETS)
-
 

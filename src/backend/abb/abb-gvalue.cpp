@@ -2,7 +2,7 @@
 
 void ABBGValue::GenASM(std::fstream &fs) {
     fs << "\t" ".global" "\t" << name << std::endl;
-    fs << "\t" ".align" " " "4" << std::endl;
+    fs << "\t" ".align" "\t" "4" << std::endl;
     fs << "\t" ".type" "\t" << name << ", " "@object" << std::endl;
     fs << "\t" ".size" "\t" << name << ", " << totalsiz * 4 << std::endl;
     fs << name << ":" << std::endl;
@@ -20,7 +20,7 @@ void ABBGValue::GenASM(std::fstream &fs) {
             fs << "\t" ".zero" "\t" << cntz * 4 << std::endl;
             cntz = 0;
         }
-        fs << "\t" ".long" "\t" << v << std::endl;
+        fs << "\t" ".word" "\t" << v << std::endl;
     }
     if (cntz) {
         fs << "\t" ".zero" "\t" << cntz * 4 << std::endl;

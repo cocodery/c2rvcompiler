@@ -1,16 +1,7 @@
 #pragma once
 
+#include "riscv-type.hh"
 #include "../asm.hh"
-
-#define RVINST(name, ...)             \
-    class RV_##name : public RVInst { \
-       public:                        \
-        RV_##name(__VA_ARGS__);       \
-    };
-
-using rid_t = uint64_t;
-using i32 = int32_t;
-using cstr = const char *;
 
 enum class opKind { MEMR, MEMW, BJ, FLT, MDR, ALU, FENCE };
 
@@ -38,6 +29,12 @@ class RVInst : public ASMInst {
     size_t statlen;
     cstr comt_;
 };
+
+#define RVINST(name, ...)             \
+    class RV_##name : public RVInst { \
+       public:                        \
+        RV_##name(__VA_ARGS__);       \
+    };
 
 //
 // memory operations

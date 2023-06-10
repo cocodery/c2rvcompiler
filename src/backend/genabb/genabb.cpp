@@ -9,8 +9,9 @@ static std::vector<uint32_t> declarr(ConstArrayPtr &bvaptr) {
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, float>) {
                     double double_value = arg;
-                    uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
-                    result.push_back(uint64_value);
+                    float float_value = double_value;
+                    uint32_t uint32_value = reinterpret_cast<uint32_t &>(float_value);
+                    result.push_back(uint32_value);
                 } else {
                     result.push_back(static_cast<int64_t>(arg));
                 }
@@ -55,8 +56,9 @@ static std::unique_ptr<ABBGValue> make_abbgval(std::pair<const std::string, Base
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, float>) {
                     double double_value = arg;
-                    uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
-                    gval->values.push_back(uint64_value);
+                    float float_value = double_value;
+                    uint32_t uint32_value = reinterpret_cast<uint32_t &>(float_value);
+                    gval->values.push_back(uint32_value);
                 } else {
                     gval->values.push_back(static_cast<int64_t>(arg));
                 }
@@ -68,23 +70,34 @@ static std::unique_ptr<ABBGValue> make_abbgval(std::pair<const std::string, Base
 
 static std::unique_ptr<ABBProg> make_abbprog(NormalFuncPtr &func, NameValueMap &gvalues) {
     auto abbprog = std::make_unique<ABBProg>();
-    abbprog->name = func->GetFuncName();
-    auto &&plan = linear_plan(func);
-    auto &&topo = func->TopoSortFromEntry();
-
-    return abbprog;
-
-    for (auto &&cfgnptr : topo) {
-        abbprog->abbs.push_back(make_asm(cfgnptr, plan, func));
-    }
-
+    auto linear_scan = new LinearScan(func, gvalues);
+    linear_scan->plan(abbprog.get());
+    delete linear_scan;
     return abbprog;
 }
 
-void CodeGen::GenABB() {
-    auto &&gvalues = comp_unit.getGlbTable().GetNameValueMap();
-    reg_nvmap(gvalues);
+static std::unique_ptr<ABBGAttr> make_abbgattr(std::string &str) {
+    auto attr = std::make_unique<ABBGAttr>();
+    attr->attr = std::move(str);
+    return attr;
+}
 
+static std::unique_ptr<ABBGAttr> make_abbgattr(std::string &&str) { return make_abbgattr(str); }
+
+void CodeGen::GenABB() {
+    // arch info
+    bbs.push_back(make_abbgattr("\t.attribute arch, \"rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0\""));
+
+    // aligned access
+    bbs.push_back(make_abbgattr("\t.attribute unaligned_access, 0"));
+
+    // stack aligned
+    bbs.push_back(make_abbgattr("\t.attribute stack_align, 16"));
+
+    auto &&gvalues = comp_unit.getGlbTable().GetNameValueMap();
+
+    // start gvalue decl
+    bbs.push_back(make_abbgattr("\t.text"));
     for (auto &&value : gvalues) {
         bbs.push_back(make_abbgval(value));
     }
@@ -94,12 +107,6 @@ void CodeGen::GenABB() {
         bbs.push_back(make_abbprog(func, gvalues));
     }
 
-    auto info = std::make_unique<ABBGAttr>();
-    info->attr +=
-        "\t"
-        ".ident"
-        "\t"
-        "\"c2rv: 1.0\""
-        "\n";
-    bbs.push_back(std::move(info));
+    // compiler tag
+    bbs.push_back(make_abbgattr("\t.ident\t\"c2rv: 1.0\""));
 }
