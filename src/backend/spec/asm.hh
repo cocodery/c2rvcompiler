@@ -9,6 +9,10 @@
 
 #include "../../debug/Logs.hh"
 
+using rid_t = uint64_t;
+using i32 = int32_t;
+using cstr = const char *;
+
 class ASMInst {
    public:
     virtual std::string_view toString() = 0;

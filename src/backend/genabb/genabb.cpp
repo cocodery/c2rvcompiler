@@ -23,9 +23,9 @@ static std::vector<uint32_t> declarr(ConstArrayPtr &bvaptr) {
 
 static std::unique_ptr<ABBGValue> make_abbgval(std::pair<const std::string, BaseValuePtr> &value) {
     auto gval = std::make_unique<ABBGValue>();
-    gval->name = value.first;
     auto &&gvp = std::dynamic_pointer_cast<GlobalValue>(value.second);
     Assert(gvp, "bad dynamic cast");
+    gval->name = "LG." + std::to_string(gvp->GetGlobalValueIdx());
 
     auto &&initval = gvp->GetInitValue();
     if (initval->IsUnInitVar()) {
@@ -69,10 +69,9 @@ static std::unique_ptr<ABBGValue> make_abbgval(std::pair<const std::string, Base
 }
 
 static std::unique_ptr<ABBProg> make_abbprog(NormalFuncPtr &func, NameValueMap &gvalues) {
+    (void)gvalues;
     auto abbprog = std::make_unique<ABBProg>();
-    auto linear_scan = new LinearScan(func, gvalues);
-    linear_scan->plan(abbprog.get());
-    delete linear_scan;
+    FunctoProg(func.get(), abbprog.get());
     return abbprog;
 }
 
@@ -85,6 +84,9 @@ static std::unique_ptr<ABBGAttr> make_abbgattr(std::string &str) {
 static std::unique_ptr<ABBGAttr> make_abbgattr(std::string &&str) { return make_abbgattr(str); }
 
 void CodeGen::GenABB() {
+    // no pic
+    bbs.push_back(make_abbgattr("\t.option nopic"));
+
     // arch info
     bbs.push_back(make_abbgattr("\t.attribute arch, \"rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0\""));
 
@@ -97,9 +99,12 @@ void CodeGen::GenABB() {
     auto &&gvalues = comp_unit.getGlbTable().GetNameValueMap();
 
     // start gvalue decl
-    bbs.push_back(make_abbgattr("\t.text"));
+    if (!gvalues.empty()) {
+        bbs.push_back(make_abbgattr("\t.data"));
+    }
+
     for (auto &&value : gvalues) {
-        bbs.push_back(make_abbgval(value));
+        if (value.second->IsGlobalValue()) bbs.push_back(make_abbgval(value));
     }
 
     auto &&funcs = comp_unit.GetNormalFuncTable();

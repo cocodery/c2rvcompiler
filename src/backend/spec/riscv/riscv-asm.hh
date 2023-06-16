@@ -1,6 +1,5 @@
 #pragma once
 
-#include "riscv-type.hh"
 #include "../asm.hh"
 
 enum class opKind { MEMR, MEMW, BJ, FLT, MDR, ALU, FENCE };
@@ -30,6 +29,40 @@ class RVInst : public ASMInst {
     cstr comt_;
 };
 
+constexpr size_t $zero = 0;
+constexpr size_t $ra = 1;
+constexpr size_t $sp = 2;
+constexpr size_t $gp = 3;
+constexpr size_t $tp = 4;
+constexpr size_t $t0 = 5;
+constexpr size_t $t1 = 5 + 1;
+constexpr size_t $t2 = 5 + 2;
+constexpr size_t $fp = 8;
+
+constexpr size_t $a0 = 10;
+constexpr size_t $a1 = 10 + 1;
+constexpr size_t $a2 = 10 + 2;
+constexpr size_t $a3 = 10 + 3;
+constexpr size_t $a4 = 10 + 4;
+constexpr size_t $a5 = 10 + 5;
+constexpr size_t $a6 = 10 + 6;
+constexpr size_t $a7 = 10 + 7;
+
+constexpr size_t $t6 = 31;
+
+constexpr size_t $fa0 = 10 + 32;
+constexpr size_t $fa1 = 10 + 1 + 32;
+constexpr size_t $fa2 = 10 + 2 + 32;
+constexpr size_t $fa3 = 10 + 3 + 32;
+constexpr size_t $fa4 = 10 + 4 + 32;
+constexpr size_t $fa5 = 10 + 5 + 32;
+
+constexpr size_t $ft0 = 0 + 32;
+constexpr size_t $ft1 = 1 + 32;
+constexpr size_t $ft2 = 2 + 32;
+constexpr size_t $ft3 = 3 + 32;
+constexpr size_t $ft4 = 4 + 32;
+
 #define RVINST(name, ...)             \
     class RV_##name : public RVInst { \
        public:                        \
@@ -58,8 +91,8 @@ RVINST(LD$, rid_t rd, cstr sym);  // R[rs] => @(sym) 存储字数据到符号
 
 RVINST(LWU$, rid_t rd, cstr sym);
 
-RVINST(SW$, rid_t rs, cstr sym);
-RVINST(SD$, rid_t rs, cstr sym);
+RVINST(SW$, rid_t rs, cstr sym, rid_t rt);
+RVINST(SD$, rid_t rs, cstr sym, rid_t rt);
 
 //
 // jmp operations
@@ -116,6 +149,8 @@ RVINST(SGTZ, rid_t rd, rid_t rs);
 //
 
 RVINST(FMV_S, rid_t frd, rid_t frs);
+RVINST(FMV_S_W, rid_t frd, rid_t rs);
+RVINST(FMV_W_S, rid_t rd, rid_t frs);
 RVINST(FABS_S, rid_t frd, rid_t frs);
 RVINST(FNEG_S, rid_t frd, rid_t frs);
 
@@ -130,6 +165,12 @@ RVINST(ANDI, rid_t rd, rid_t rs, i32 imm);
 RVINST(SLLI, rid_t rd, rid_t rs, i32 imm);
 RVINST(SRLI, rid_t rd, rid_t rs, i32 imm);
 RVINST(SRAI, rid_t rd, rid_t rs, i32 imm);
+RVINST(ADDI, rid_t rd, rid_t rs, i32 imm);
+
+RVINST(ADD, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SUB, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(XOR, rid_t rd, rid_t rs1, rid_t rs2);
+RVINST(SLT, rid_t rd, rid_t rs1, rid_t rs2);
 
 //
 // RV64I
@@ -159,7 +200,10 @@ RVINST(REMW, rid_t rd, rid_t rs1, rid_t rs2);
 //
 
 RVINST(FLW, rid_t frd, rid_t rb, i32 off);
-RVINST(FSW, rid_t frd, rid_t rb, i32 off);
+RVINST(FSW, rid_t frs, rid_t rb, i32 off);
+
+RVINST(FLW$, rid_t frd, cstr sym);
+RVINST(FSW$, rid_t frs, cstr sym, rid_t rt);
 
 RVINST(FMADD_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);
 RVINST(FMSUB_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);

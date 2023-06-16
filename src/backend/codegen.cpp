@@ -9,8 +9,8 @@ CodeGen::CodeGen(const char *path, CompilationUnit &_comp_unit) : bbs(), comp_un
 void CodeGen::GenASM() {
     for (auto &&bb : bbs) {
         bb->GenASM(fs);
+        fs.flush();
     }
-    fs.flush();
 }
 
 void CodeGen::Reorder() {

@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
     visitor->visitCompilationUnit(root);
     visitor = nullptr;
 
-    Optimization optimizer(comp_unit);
-    optimizer.DoOptimization();
+    // Optimization optimizer(comp_unit);
+    // optimizer.DoOptimization();
 
     comp_unit.generatellvmIR(irfile);
 

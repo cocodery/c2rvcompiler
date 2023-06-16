@@ -201,14 +201,14 @@ RVCNAM(LWU$)(rid_t rs, cstr sym) : RVInst(0, rs) {
     setMAttr(LTY_LOAD, opKind::MEMR);
 }
 
-RVCNAM(SW$)(rid_t rs, cstr sym) : RVInst(0, rs) {
-    GENSTAT("sw      " TAB "%s" COMMA "%s" COMMA "zero", rgnm[rs], sym);
+RVCNAM(SW$)(rid_t rs, cstr sym, rid_t rt) : RVInst(0, rs, rt) {
+    GENSTAT("sw      " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rs], sym, rgnm[rt]);
     comt_ = COMMENT_BEGIN "store word by symbol";
     setMAttr(LTY_ONE, opKind::MEMW);
 }
 
-RVCNAM(SD$)(rid_t rs, cstr sym) : RVInst(0, rs) {
-    GENSTAT("sd      " TAB "%s" COMMA "%s", rgnm[rs], sym);
+RVCNAM(SD$)(rid_t rs, cstr sym, rid_t rt) : RVInst(0, rs, rt) {
+    GENSTAT("sd      " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rs], sym, rgnm[rt]);
     comt_ = COMMENT_BEGIN "store double word by symbol";
     setMAttr(LTY_ONE, opKind::MEMW);
 }
@@ -304,7 +304,7 @@ RVCNAM(BLE$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
 }
 
 RVCNAM(FENCE)() : RVInst() {
-    GENSTAT("fence");
+    GENSTAT("fence   ");
     comt_ = COMMENT_BEGIN "synchronize";
     setMAttr(LTY_RST, opKind::FENCE);
 }
@@ -334,7 +334,7 @@ RVCNAM(NEGW)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
 }
 
 RVCNAM(SEXT_W)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
-    GENSTAT("sext.w" TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
+    GENSTAT("sext.w  " TAB "%s" COMMA "%s", rgnm[rd], rgnm[rs]);
     comt_ = COMMENT_BEGIN "signed extend";
     setMAttr(LTY_ZERO, opKind::ALU);
 }
@@ -365,21 +365,35 @@ RVCNAM(SGTZ)(rid_t rd, rid_t rs) : RVInst(rd, rs) {
 
 RVCNAM(FMV_S)
 (rid_t frd, rid_t frs) : RVInst(frd, frs) {
-    GENSTAT("fmv.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
+    GENSTAT("fmv.s   " TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
+    comt_ = COMMENT_BEGIN "move float data";
+    setMAttr(LTY_ONE, opKind::FLT);
+}
+
+RVCNAM(FMV_S_W)
+(rid_t frd, rid_t rs) : RVInst(frd, rs) {
+    GENSTAT("fmv.s.w " TAB "%s" COMMA "%s", rgnm[frd], rgnm[rs]);
+    comt_ = COMMENT_BEGIN "move float data";
+    setMAttr(LTY_ONE, opKind::FLT);
+}
+
+RVCNAM(FMV_W_S)
+(rid_t rd, rid_t frs) : RVInst(rd, frs) {
+    GENSTAT("fmv.w.s " TAB "%s" COMMA "%s", rgnm[rd], rgnm[frs]);
     comt_ = COMMENT_BEGIN "move float data";
     setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FABS_S)
 (rid_t frd, rid_t frs) : RVInst(frd, frs) {
-    GENSTAT("fabs.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
+    GENSTAT("fabs.s  " TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
     comt_ = COMMENT_BEGIN "get absolute float data";
     setMAttr(LTY_ONE, opKind::FLT);
 }
 
 RVCNAM(FNEG_S)
 (rid_t frd, rid_t frs) : RVInst(frd, frs) {
-    GENSTAT("fneg.s" TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
+    GENSTAT("fneg.s  " TAB "%s" COMMA "%s", rgnm[frd], rgnm[frs]);
     comt_ = COMMENT_BEGIN "get negative float data";
     setMAttr(LTY_ONE, opKind::FLT);
 }
@@ -426,26 +440,56 @@ RVCNAM(SRAI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
     setMAttr(LTY_ZERO, opKind::ALU);
 }
 
+RVCNAM(ADDI)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
+    GENSTAT("addi    " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
+    comt_ = COMMENT_BEGIN "add imm 64bit";
+    setMAttr(LTY_ZERO, opKind::ALU);
+}
+
+RVCNAM(ADD)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+    GENSTAT("add     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1], rgnm[rs2]);
+    comt_ = COMMENT_BEGIN "add 64bit";
+    setMAttr(LTY_ZERO, opKind::ALU);
+}
+
+RVCNAM(SUB)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+    GENSTAT("sub     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1], rgnm[rs2]);
+    comt_ = COMMENT_BEGIN "sub 64bit";
+    setMAttr(LTY_ZERO, opKind::ALU);
+}
+
+RVCNAM(XOR)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+    GENSTAT("xor     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1], rgnm[rs2]);
+    comt_ = COMMENT_BEGIN "xor 64bit";
+    setMAttr(LTY_ZERO, opKind::ALU);
+}
+
+RVCNAM(SLT)(rid_t rd, rid_t rs1, rid_t rs2) : RVInst(rd, rs1, rs2) {
+    GENSTAT("slt     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[rd], rgnm[rs1], rgnm[rs2]);
+    comt_ = COMMENT_BEGIN "set less than 64bit";
+    setMAttr(LTY_ZERO, opKind::ALU);
+}
+
 RVCNAM(ADDIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
-    GENSTAT("addiw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
+    GENSTAT("addiw   " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
     comt_ = COMMENT_BEGIN "add imm 32bit";
     setMAttr(LTY_ZERO, opKind::ALU);
 }
 
 RVCNAM(SLLIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
-    GENSTAT("slliw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
+    GENSTAT("slliw   " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
     comt_ = COMMENT_BEGIN "shift left logical imm 32bit";
     setMAttr(LTY_ZERO, opKind::ALU);
 }
 
 RVCNAM(SRLIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
-    GENSTAT("srliw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
+    GENSTAT("srliw   " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
     comt_ = COMMENT_BEGIN "shift right logical imm 32bit";
     setMAttr(LTY_ZERO, opKind::ALU);
 }
 
 RVCNAM(SRAIW)(rid_t rd, rid_t rs, i32 imm) : RVInst(rd, rs) {
-    GENSTAT("sraiw" TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
+    GENSTAT("sraiw   " TAB "%s" COMMA "%s" COMMA "%d", rgnm[rd], rgnm[rs], imm);
     comt_ = COMMENT_BEGIN "shift right algorithm imm 32bit";
     setMAttr(LTY_ZERO, opKind::ALU);
 }
@@ -506,8 +550,22 @@ RVCNAM(FLW)
 }
 
 RVCNAM(FSW)
-(rid_t frd, rid_t rb, i32 off) : RVInst(rb, frd) {
-    GENSTAT("fsw     " TAB "%s" COMMA "%d(%s)", rgnm[frd], off, rgnm[rb]);
+(rid_t frs, rid_t rb, i32 off) : RVInst(0, frs, rb) {
+    GENSTAT("fsw     " TAB "%s" COMMA "%d(%s)", rgnm[frs], off, rgnm[rb]);
+    comt_ = COMMENT_BEGIN "store word size float data";
+    setMAttr(LTY_LOAD, opKind::MEMW);
+}
+
+RVCNAM(FLW$)
+(rid_t frd, cstr sym) : RVInst(frd) {
+    GENSTAT("flw     " TAB "%s" COMMA "%s", rgnm[frd], sym);
+    comt_ = COMMENT_BEGIN "load word size float data";
+    setMAttr(LTY_LOAD, opKind::MEMR);
+}
+
+RVCNAM(FSW$)
+(rid_t frs, cstr sym, rid_t rt) : RVInst(0, frs, rt) {
+    GENSTAT("fsw     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[frs], sym, rgnm[rt]);
     comt_ = COMMENT_BEGIN "store word size float data";
     setMAttr(LTY_LOAD, opKind::MEMW);
 }

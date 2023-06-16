@@ -12,11 +12,15 @@ ECHO			:= echo
 FORMATTER		:= clang-format
 CLANG			:= clang
 
+TMP				:= /tmp
+
 # 检查 rv 工具链情况
-ifeq ($(RISCV),)
-RVAS			:= $(ECHO)
-else
+ifneq ($(RISCV),)
 RVAS			:= $(RISCV)/bin/riscv64-unknown-elf-as
+RVCC			:= $(RISCV)/bin/riscv64-unknown-elf-gcc
+RVOD			:= $(RISCV)/bin/riscv64-unknown-elf-objdump
+SPIKE			:= $(RISCV)/bin/spike
+PK				:= $(RISCV)/riscv64-unknown-elf/bin/pk
 endif
 
 PY				:= python
@@ -43,13 +47,14 @@ CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
 MODE 			:= functional hidden_functional final_performance performance
 
-CPLER_TEST_DIR	:= compiler2022
+CPLER_TEST_DIR	:= $(CURDIR)/compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
 TEST_DIRS		:= $(addprefix $(TEST_DIR)/,$(MODE))
 TEST_CASES		:= $(shell find $(TEST_DIRS) -name "*.sy")
 
 SYLIB_C			:= $(TEST_DIR)/sylib.c
 SYLIB_H			:= $(TEST_DIR)/sylib.h
+SYLIB_A			:= $(TEST_DIR)/libsysy.a
 SYLIB_LL		:= sylib.ll
 
 OUTPUT_ASM 		:= $(addsuffix .s,$(basename $(TEST_CASES)))
@@ -58,6 +63,8 @@ OUTPUT_LOG 		:= $(addsuffix .log,$(basename $(TEST_CASES)))
 OUTPUT_IR  		:= $(addsuffix .ll,$(basename $(TEST_CASES)))
 
 SINGLE_TEST_NAME:= main
+
+PARGS			:= -s $(SYLIB_C)
 
 # make python test all fake targets
 PYALL			:= pyall
@@ -105,11 +112,16 @@ build: $(BINARY)
 
 .PHONY: run
 run: build $(SYLIB_LL)
-	@$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
-	@$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
-	@$(LLI) $(SINGLE_TEST_NAME).run.ll
-	@$(ECHO) $$?
-	@$(RVAS) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
+	$(LLI) $(SINGLE_TEST_NAME).run.ll
+	$(ECHO) $$?
+# cat $(SINGLE_TEST_NAME).sy > $(TMP)/$(SINGLE_TEST_NAME).sy.c && $(RVCC) -S -o $(SINGLE_TEST_NAME).S $(TMP)/$(SINGLE_TEST_NAME).sy.c
+# rm $(TMP)/$(SINGLE_TEST_NAME).sy.c
+# $(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+# $(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+# $(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
+# $(ECHO) $$?
 
 .PHONY: all asm
 
@@ -219,7 +231,7 @@ clean:
 .PHONY: clean-test
 clean-test:
 	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR) 
-	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).s
+	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).{s,S} $(SINGLE_TEST_NAME).{out,out.log,dump}
 
 .PHONY: clean-all
 clean-all: clean clean-test

@@ -112,6 +112,7 @@ def build_asm(args):
 
         # generate file names
         asmname  = '/'.join([args.dir, '.'.join([basename,   's'])])
+        llname   = '/'.join([args.dir, '.'.join([basename,  'll'])])
         elfname  = '/'.join([args.dir, '.'.join([basename, 'elf'])])
         logname  = '/'.join([args.dir, '.'.join([basename, 'log'])])
         resname  = '/'.join([args.dir, '.'.join([basename, 'res'])])
@@ -120,7 +121,7 @@ def build_asm(args):
         # print(llname, logname, resname, outname, inname)
 
         # compile
-        cmd = [args.compiler, '-S', '-o', asmname, f]
+        cmd = [args.compiler, '-S', '-o', asmname, '-l', llname, f]
         resp = None
         with open(logname, 'w') as logfile:
             resp = subprocess.run(cmd, timeout=180, stdout=logfile)
@@ -133,7 +134,7 @@ def build_asm(args):
             continue
 
         # TODO: set march
-        cmd = ['gcc', '-l', args.sylib, asmname, '-S', '-o', elfname]
+        cmd = ['gcc', args.sylib, asmname, '-o', elfname, '-static']
         with open(logname, 'a') as logfile:
             resp = subprocess.run(cmd, stdout=logfile)
 
@@ -142,7 +143,7 @@ def build_asm(args):
             continue
 
         infile = subprocess.DEVNULL
-        cmd = [elfname]
+        cmd = ['./' + elfname]
         if os.path.exists(inname):
             infile = open(inname, 'r')
 

@@ -7,4 +7,5 @@
 #include "../abb/abb-gvalue.hh"
 #include "../abb/abb-prog.hh"
 #include "../codegen.hh"
-#include "linearscan/linearscan.hh"
+
+void FunctoProg(NormalFunction *func, ABBProg *prog);

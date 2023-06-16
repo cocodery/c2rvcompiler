@@ -53,7 +53,7 @@ add_compile_options(-std=c++17 -fdiagnostics-color=always)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_options(-g)
-  add_compile_options(-Wall -Werror -Wextra -Wno-unused-parameter)
+  add_compile_options(-Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function)
   add_compile_definitions(DEBUG_MODE)
 
   if(DEFINED ASAN)
