@@ -112,7 +112,7 @@ def build_asm(args):
 
         # generate file names
         asmname  = '/'.join([args.dir, '.'.join([basename,   's'])])
-        llname   = '/'.join([args.dir, '.'.join([basename,  'll'])])
+        spkname  = '/'.join([args.dir, '.'.join([basename,  'spk'])])
         elfname  = '/'.join([args.dir, '.'.join([basename, 'elf'])])
         logname  = '/'.join([args.dir, '.'.join([basename, 'log'])])
         resname  = '/'.join([args.dir, '.'.join([basename, 'res'])])
@@ -121,7 +121,7 @@ def build_asm(args):
         # print(llname, logname, resname, outname, inname)
 
         # compile
-        cmd = [args.compiler, '-S', '-o', asmname, '-l', llname, f]
+        cmd = [args.compiler, '-S', '-o', asmname, f]
         resp = None
         with open(logname, 'w') as logfile:
             resp = subprocess.run(cmd, timeout=180, stdout=logfile)
@@ -134,7 +134,8 @@ def build_asm(args):
             continue
 
         # TODO: set march
-        cmd = ['gcc', args.sylib, asmname, '-o', elfname, '-static']
+        cmd = ['/home/blur/gits/riscv-gnu-toolchain/build/bin/riscv64-unknown-elf-gcc', args.sylib, asmname, '-o', elfname]
+
         with open(logname, 'a') as logfile:
             resp = subprocess.run(cmd, stdout=logfile)
 
@@ -143,12 +144,17 @@ def build_asm(args):
             continue
 
         infile = subprocess.DEVNULL
-        cmd = ['./' + elfname]
+        cmd = ['/home/blur/gits/riscv-gnu-toolchain/build/bin/spike', '/home/blur/gits/riscv-gnu-toolchain/build/riscv64-unknown-elf/bin/pk', elfname]
         if os.path.exists(inname):
             infile = open(inname, 'r')
 
-        with open(logname, 'a') as logfile, open(resname, 'w') as resfile:
+        with open(logname, 'a') as logfile, open(spkname, 'w') as resfile:
             resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
+        
+        with open(spkname, 'r') as spkfile, open(resname, 'w') as resfile:
+            a = spkfile.readlines()
+            b = ''.join(a[2:])
+            resfile.write(b)
         
         recv = resp
         cmd = ['tail', '-c', '1', resname]

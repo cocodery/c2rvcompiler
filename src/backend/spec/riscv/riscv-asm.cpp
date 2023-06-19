@@ -24,7 +24,7 @@ constexpr uint64_t LTY_RST = -1;
 
 char nonstr[] = "";
 
-static const char *rgnm[] = {
+const char *rgnm[] = {
     // integer registers
     "zero",  // x0
     "ra",    // x1
@@ -291,13 +291,25 @@ RVCNAM(BGTZ$)(rid_t rs, cstr sym) : RVInst(0, rs) {
     setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BGT$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+RVCNAM(BEQ$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+    GENSTAT("beq     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
+    comt_ = COMMENT_BEGIN "jmp to symbol if lhs > rhs";
+    setMAttr(LTY_ONE, opKind::BJ);
+}
+
+RVCNAM(BNE$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+    GENSTAT("bne     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
+    comt_ = COMMENT_BEGIN "jmp to symbol if lhs <= rhs";
+    setMAttr(LTY_ONE, opKind::BJ);
+}
+
+RVCNAM(BGE$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
     GENSTAT("bgt     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
     comt_ = COMMENT_BEGIN "jmp to symbol if lhs > rhs";
     setMAttr(LTY_ONE, opKind::BJ);
 }
 
-RVCNAM(BLE$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
+RVCNAM(BLT$)(rid_t lhs, rid_t rhs, cstr sym) : RVInst(0, lhs, rhs) {
     GENSTAT("ble     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[lhs], rgnm[rhs], sym);
     comt_ = COMMENT_BEGIN "jmp to symbol if lhs <= rhs";
     setMAttr(LTY_ONE, opKind::BJ);
@@ -557,8 +569,8 @@ RVCNAM(FSW)
 }
 
 RVCNAM(FLW$)
-(rid_t frd, cstr sym) : RVInst(frd) {
-    GENSTAT("flw     " TAB "%s" COMMA "%s", rgnm[frd], sym);
+(rid_t frd, cstr sym, rid_t rt) : RVInst(frd, rt) {
+    GENSTAT("flw     " TAB "%s" COMMA "%s" COMMA "%s", rgnm[frd], sym, rgnm[rt]);
     comt_ = COMMENT_BEGIN "load word size float data";
     setMAttr(LTY_LOAD, opKind::MEMR);
 }

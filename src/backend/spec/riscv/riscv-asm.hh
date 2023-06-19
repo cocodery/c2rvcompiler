@@ -2,6 +2,8 @@
 
 #include "../asm.hh"
 
+extern const char *rgnm[];
+
 enum class opKind { MEMR, MEMW, BJ, FLT, MDR, ALU, FENCE };
 
 class RVInst : public ASMInst {
@@ -28,40 +30,6 @@ class RVInst : public ASMInst {
     size_t statlen;
     cstr comt_;
 };
-
-constexpr size_t $zero = 0;
-constexpr size_t $ra = 1;
-constexpr size_t $sp = 2;
-constexpr size_t $gp = 3;
-constexpr size_t $tp = 4;
-constexpr size_t $t0 = 5;
-constexpr size_t $t1 = 5 + 1;
-constexpr size_t $t2 = 5 + 2;
-constexpr size_t $fp = 8;
-
-constexpr size_t $a0 = 10;
-constexpr size_t $a1 = 10 + 1;
-constexpr size_t $a2 = 10 + 2;
-constexpr size_t $a3 = 10 + 3;
-constexpr size_t $a4 = 10 + 4;
-constexpr size_t $a5 = 10 + 5;
-constexpr size_t $a6 = 10 + 6;
-constexpr size_t $a7 = 10 + 7;
-
-constexpr size_t $t6 = 31;
-
-constexpr size_t $fa0 = 10 + 32;
-constexpr size_t $fa1 = 10 + 1 + 32;
-constexpr size_t $fa2 = 10 + 2 + 32;
-constexpr size_t $fa3 = 10 + 3 + 32;
-constexpr size_t $fa4 = 10 + 4 + 32;
-constexpr size_t $fa5 = 10 + 5 + 32;
-
-constexpr size_t $ft0 = 0 + 32;
-constexpr size_t $ft1 = 1 + 32;
-constexpr size_t $ft2 = 2 + 32;
-constexpr size_t $ft3 = 3 + 32;
-constexpr size_t $ft4 = 4 + 32;
 
 #define RVINST(name, ...)             \
     class RV_##name : public RVInst { \
@@ -120,8 +88,10 @@ RVINST(BGEZ$, rid_t rs, cstr sym);
 RVINST(BLTZ$, rid_t rs, cstr sym);
 RVINST(BGTZ$, rid_t rs, cstr sym);
 
-RVINST(BGT$, rid_t lhs, rid_t rhs, cstr sym);
-RVINST(BLE$, rid_t lhs, rid_t rhs, cstr sym);
+RVINST(BEQ$, rid_t lhs, rid_t rhs, cstr sym);
+RVINST(BNE$, rid_t lhs, rid_t rhs, cstr sym);
+RVINST(BGE$, rid_t lhs, rid_t rhs, cstr sym);
+RVINST(BLT$, rid_t lhs, rid_t rhs, cstr sym);
 
 //
 // mem-misc operation
@@ -202,7 +172,7 @@ RVINST(REMW, rid_t rd, rid_t rs1, rid_t rs2);
 RVINST(FLW, rid_t frd, rid_t rb, i32 off);
 RVINST(FSW, rid_t frs, rid_t rb, i32 off);
 
-RVINST(FLW$, rid_t frd, cstr sym);
+RVINST(FLW$, rid_t frd, cstr sym, rid_t rt);
 RVINST(FSW$, rid_t frs, cstr sym, rid_t rt);
 
 RVINST(FMADD_S, rid_t frd, rid_t frs1, rid_t frs2, rid_t frs3);

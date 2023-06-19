@@ -15,6 +15,10 @@ void ABBProg::GenASM(std::fstream &fs) {
         }
     }
     fs << "\t" ".size" "\t" + name + ", .-" + name << std::endl;
+
+    for (auto &&loc: locs) {
+        loc->GenASM(fs);
+    }
 }
 
 void ABBProg::Reorder() {

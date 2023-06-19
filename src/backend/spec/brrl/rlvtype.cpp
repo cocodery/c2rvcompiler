@@ -1,30 +1,10 @@
 #include "rlvtype.hh"
 
-#include "../../../debug/Logs.hh"
+#include <vector>
 
-std::string virt_reg::to_string() {
-    std::stringstream ss;
-    if (kind == VREG_KIND::LOC) {
-        ss << "f:" << value;
-    } else if (kind == VREG_KIND::IMM) {
-        ss << value;
-    } else if (kind == VREG_KIND::REG || kind == VREG_KIND::PRM) {
-        ss << "r" << value;
-    } else if (kind == VREG_KIND::PRM) {
-        ss << "p" << value;
-    } else if (kind == VREG_KIND::STK) {
-        ss << "sp:" << std::hex << value;
-    } else if (kind == VREG_KIND::ZERO) {
-        ss << "zero";
-    } else if (kind == VREG_KIND::FP) {
-        ss << "fp";
-    } else if (kind == VREG_KIND::SP) {
-        ss << "sp";
-    } else if (kind == VREG_KIND::RA) {
-        ss << "ra";
-    }
-    return ss.str();
-}
+#include "../../../debug/Logs.hh"
+#include "../riscv/riscv-cst.hh"
+#include "../../utils.hh"
 
 virt_reg *virt_reg_allocor::alloc(VREG_KIND kind, width_t len, uxlen_t value) {
     if (kind == VREG_KIND::LOC) {
@@ -61,14 +41,26 @@ virt_reg *virt_reg_allocor::alloc(VREG_KIND kind, width_t len, uxlen_t value) {
         }
         return fnd->second;
     } else if (kind == VREG_KIND::FP) {
-        static std::unique_ptr<virt_reg> fp(new virt_reg{VREG_KIND::FP});
+        static std::unique_ptr<virt_reg> fp(new virt_reg{VREG_KIND::FP, .inrreg = riscv::fp});
         return fp.get();
     } else if (kind == VREG_KIND::SP) {
-        static std::unique_ptr<virt_reg> sp(new virt_reg{VREG_KIND::SP});
+        static std::unique_ptr<virt_reg> sp(new virt_reg{VREG_KIND::SP, .inrreg = riscv::sp});
         return sp.get();
     } else if (kind == VREG_KIND::RA) {
-        static std::unique_ptr<virt_reg> ra(new virt_reg{VREG_KIND::RA});
+        static std::unique_ptr<virt_reg> ra(new virt_reg{VREG_KIND::RA, .inrreg = riscv::ra});
         return ra.get();
+    } else if (kind == VREG_KIND::IMM) {
+        static std::unique_ptr<virt_reg> zero(new virt_reg{VREG_KIND::ZERO, .inrreg = riscv::zero});
+        if (value == 0) {
+            return zero.get();
+        } else {
+            auto ptr = std::make_unique<virt_reg>();
+            ptr->kind = kind;
+            ptr->len = len;
+            ptr->value = value;
+            storage.push_back(std::move(ptr));
+            return storage.back().get();
+        }
     } else {
         auto ptr = std::make_unique<virt_reg>();
         ptr->kind = kind;
@@ -89,6 +81,11 @@ virt_reg *virt_reg_allocor::getREG(uuid_t uid) {
     return fnd->second;
 }
 
+virt_reg *virt_reg_allocor::allocREG(width_t len) {
+    auto nwidx = nwidx_alloc++;
+    return alloc(VREG_KIND::REG, len, nwidx);
+}
+
 void virt_reg_allocor::link(uuid_t lhs, uuid_t rhs) { map[lhs] = map.at(rhs); }
 
 uuid_t virt_stkinf_allocor::alloc(VSTK_KIND kind, width_t len) {
@@ -107,4 +104,50 @@ virt_stkinf *virt_stkinf_allocor::getSTK(uuid_t uid) {
         panic("miss");
     }
     return fnd->second;
+}
+
+void virt_stkinf_allocor::plan(size_t ex_argl) {
+    std::vector<virt_stkinf *> sclrstk;
+    size_t sclr_total = 0;
+    std::vector<virt_stkinf *> arrystk;
+    size_t arry_total = 0;
+
+    for (auto &&ptr : storage) {
+        if (ptr->kind == VSTK_KIND::ARR) {
+            arrystk.push_back(ptr.get());
+            arry_total += ptr->len;
+        } else {
+            sclrstk.push_back(ptr.get());
+            sclr_total += ptr->len;
+        }
+    }
+
+    total_stk_len = ROUNDUP(16, sclr_total) + ROUNDUP(16, arry_total) + ex_argl + 16;
+
+    //
+    // hi                                                                                 lo
+    // +----+----+----+----+---------------------------+-------------------------+----+----+
+    // | ax | a8 | ra | fp |  for scalar aligned by 16 | for array aligned by 16 | ax | a8 |
+    // +----+----+----+----+---------------------------+-------------------------+----+----+
+    //           ^ fp                                                                      ^ sp
+    //
+    // stack plan like this
+    // assuming scalar var use offset index more
+    // and array use reg index more
+    //
+    off64_t off = 16;
+
+    for (auto &&stkinfo : sclrstk) {
+        auto &&len = stkinfo->len;
+        off += len;
+        stkinfo->off = -off;
+    }
+
+    off = 16 + ROUNDUP(16, sclr_total);
+
+    for (auto &&stkinfo : arrystk) {
+        auto &&len = stkinfo->len;
+        off += len;
+        stkinfo->off = -off;
+    }
 }

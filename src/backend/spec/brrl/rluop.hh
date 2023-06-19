@@ -3,18 +3,23 @@
 #include <string>
 
 #include "rlvtype.hh"
+#include "../../genabb/genabb.hh"
 
 struct uop_general {
     size_t uop_idx;
 
     virtual std::string to_string() = 0;
     virtual void set_interval(size_t idx) = 0;
+    virtual std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor) = 0;
+    virtual void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst) = 0;
 };
 
 struct uop_ret : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_set_param : public uop_general {
@@ -23,8 +28,12 @@ struct uop_set_param : public uop_general {
 
     size_t idx;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_call : public uop_general {
@@ -36,6 +45,8 @@ struct uop_call : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_li : public uop_general {
@@ -46,6 +57,8 @@ struct uop_li : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_mv : public uop_general {
@@ -54,8 +67,12 @@ struct uop_mv : public uop_general {
 
     virt_reg *dst;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_cvts2w : public uop_general {
@@ -66,6 +83,8 @@ struct uop_cvts2w : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_cvtw2s : public uop_general {
@@ -76,6 +95,8 @@ struct uop_cvtw2s : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_b : public uop_general {
@@ -86,6 +107,23 @@ struct uop_b : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
+};
+
+struct uop_cmp_b : public uop_general {
+    COMP_KIND kind;
+
+    virt_reg *lhs;
+    virt_reg *rhs;
+
+    std::string pfx;
+    size_t lbid;
+
+    std::string to_string();
+    void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_j : public uop_general {
@@ -94,6 +132,8 @@ struct uop_j : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_la : public uop_general {
@@ -104,6 +144,8 @@ struct uop_la : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_load : public uop_general {
@@ -111,8 +153,12 @@ struct uop_load : public uop_general {
     virt_reg *base;
     xlen_t off;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_load_tag : public uop_general {
@@ -120,8 +166,12 @@ struct uop_load_tag : public uop_general {
 
     std::string src;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_store : public uop_general {
@@ -129,8 +179,12 @@ struct uop_store : public uop_general {
     virt_reg *base;
     xlen_t off;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_store_tag : public uop_general {
@@ -139,20 +193,27 @@ struct uop_store_tag : public uop_general {
 
     std::string dst;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_cmp : public uop_general {
-    bool onflt;
     COMP_KIND kind;
 
     virt_reg *lhs;
     virt_reg *rhs;
     virt_reg *dst;
 
+    bool onflt = false;
+
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_bin : public uop_general {
@@ -164,6 +225,8 @@ struct uop_bin : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };
 
 struct uop_fbin : public uop_general {
@@ -175,4 +238,20 @@ struct uop_fbin : public uop_general {
 
     std::string to_string();
     void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
+};
+
+struct uop_ftri : public uop_general {
+    FTRI_KIND kind;
+    
+    virt_reg *dst;
+    virt_reg *op1;
+    virt_reg *op2;
+    virt_reg *op3;
+
+    std::string to_string();
+    void set_interval(size_t idx);
+    std::unique_ptr<uop_general> load_immediate(virt_reg_allocor &vraor);
+    void gen_asm(std::unique_ptr<ABBProg::ABBlock> &lst);
 };

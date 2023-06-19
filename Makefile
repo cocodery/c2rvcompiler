@@ -45,9 +45,9 @@ endif
 
 CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
-MODE 			:= functional hidden_functional final_performance performance
+MODE 			:= functional # hidden_functional final_performance performance
 
-CPLER_TEST_DIR	:= $(CURDIR)/compiler2022
+CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
 TEST_DIRS		:= $(addprefix $(TEST_DIR)/,$(MODE))
 TEST_CASES		:= $(shell find $(TEST_DIRS) -name "*.sy")
@@ -116,12 +116,17 @@ run: build $(SYLIB_LL)
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	$(LLI) $(SINGLE_TEST_NAME).run.ll
 	$(ECHO) $$?
-# cat $(SINGLE_TEST_NAME).sy > $(TMP)/$(SINGLE_TEST_NAME).sy.c && $(RVCC) -S -o $(SINGLE_TEST_NAME).S $(TMP)/$(SINGLE_TEST_NAME).sy.c
-# rm $(TMP)/$(SINGLE_TEST_NAME).sy.c
-# $(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
-# $(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-# $(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
-# $(ECHO) $$?
+	cat $(SINGLE_TEST_NAME).sy > $(TMP)/$(SINGLE_TEST_NAME).sy.c && $(RVCC) -S -o $(SINGLE_TEST_NAME).S $(TMP)/$(SINGLE_TEST_NAME).sy.c
+	rm $(TMP)/$(SINGLE_TEST_NAME).sy.c
+	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
+	$(ECHO) $$?
+
+rvrun:
+	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
 
 .PHONY: all asm
 

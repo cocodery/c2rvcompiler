@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "../spec/asm.hh"
+#include "abb-gvalue.hh"
 #include "asmbasicblock.hh"
 
 class ABBProg : public ASMBasicBlock {
@@ -19,6 +20,7 @@ class ABBProg : public ASMBasicBlock {
    public:
     std::string name;
     std::list<std::shared_ptr<ABBlock>> abbs;
+    std::list<std::shared_ptr<ABBGValue>> locs;
 
     void GenASM(std::fstream &fs);
     void Reorder();

@@ -16,13 +16,21 @@ class rl_lltorl_instance {
 
     void torl();
 
+    void loadparam();
+    void combine();
+    void loadimm();
+    
+    void mvret();
     void ireidx();
     void rmx();
 
-    void loadparam();
+    void genstk();
+    bool assign();
 
     void pinfo();
     void pir();
+
+    void gencode();
 
    public:
     rl_lltorl_instance(NormalFunction *func, ABBProg *prog);

@@ -8,16 +8,21 @@ void FunctoProg(NormalFunction *func, ABBProg *prog) {
 rl_lltorl_instance::rl_lltorl_instance(NormalFunction *func, ABBProg *prog)
     : func_(func), prog_(prog), rlp(std::make_unique<rl_progress>()) {
     rlp->pnm = func->GetFuncName();
+    prog_->name = rlp->pnm;
+
     tpfx = "L." + func->GetFuncName() + ".";
 
     for (auto &&param : func_->GetParamList()) {
         auto var = std::dynamic_pointer_cast<Variable>(param);
         Assert(var, "input param is not variable");
-        if (auto &&vartype = var->GetBaseType(); vartype->IsPointer()) {
+
+        auto &&vartype = var->GetBaseType();
+        if (vartype->IsPointer()) {
             auto nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::PRM, 8, var->GetVariableIdx());
             rlp->params.push_back(nwvreg);
         } else if (vartype->IntType() or vartype->FloatType()) {
             auto nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::PRM, 4, var->GetVariableIdx());
+            nwvreg->isflt = vartype->FloatType();
             rlp->params.push_back(nwvreg);
         } else {
             panic("Unexpected parameter type");
@@ -49,6 +54,7 @@ void rl_lltorl_instance::torl() {
                         // 构造指令
                         auto op0 = std::make_unique<uop_set_param>();
                         op0->idx = 0;
+                        op0->onflt = retval->GetBaseType()->FloatType();
 
                         if (retval->IsVariable()) {
                             // 如果返回值是 变量
@@ -60,6 +66,7 @@ void rl_lltorl_instance::torl() {
 
                             // 保证该变量是存在的
                             auto evreg = rlp->vreg_alloc.getREG(var->GetVariableIdx());
+                            evreg->isflt = retval->GetBaseType()->FloatType();
 
                             // 注册到返回值
                             op0->src = evreg;
@@ -76,6 +83,7 @@ void rl_lltorl_instance::torl() {
                             // 注册到返回值
                             if (pk.isfloat) {
                                 auto nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
+                                nwvreg->isflt = true;
                                 op0->src = nwvreg;
                             } else {
                                 auto nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
@@ -208,24 +216,22 @@ void rl_lltorl_instance::torl() {
 
                     // 先分析出需要保存的数值
                     virt_reg *nwvreg = nullptr;
+                    bool onflt = false;
                     auto &&sval = llinst->GetStoreValue();
                     if (sval->IsVariable()) {
                         auto var = std::dynamic_pointer_cast<Variable>(sval);
                         Assert(var, "bad dynamic cast");
-
-                        if (var->GetBaseType()->IsPointer()) {
-                            nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::REG, 8, var->GetVariableIdx());
-                        } else {
-                            nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, var->GetVariableIdx());
-                        }
-
+                        onflt = var->GetBaseType()->FloatType();
+                        nwvreg = rlp->vreg_alloc.getREG(var->GetVariableIdx());
                     } else if (sval->IsConstant()) {
                         auto cst = std::dynamic_pointer_cast<Constant>(sval);
                         Assert(cst, "bad dynamic cast");
 
                         auto &&pk = extractcst(cst);
                         if (pk.isfloat) {
+                            onflt = true;
                             nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
+                            nwvreg->isflt = true;
                         } else {
                             nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
                         }
@@ -236,7 +242,7 @@ void rl_lltorl_instance::torl() {
                     auto &&aval = llinst->GetStoreAddr();
                     if (aval->IsGlobalValue()) {
                         auto gval = std::dynamic_pointer_cast<GlobalValue>(aval);
-                        auto &&label = "LG" + std::to_string(gval->GetGlobalValueIdx());
+                        auto &&label = "LG." + std::to_string(gval->GetGlobalValueIdx());
                         auto op = std::make_unique<uop_store_tag>();
                         op->dst = label;
                         op->src = nwvreg;
@@ -244,6 +250,9 @@ void rl_lltorl_instance::torl() {
                         // 这里需要随便指派一个非 zero 的寄存器
                         auto rt = rlp->vreg_alloc.alloc(VREG_KIND::ZERO, 0, 0);
                         op->tgt = rt;
+
+                        op->onflt = onflt;
+
                         lst.push_back(std::move(op));
                     } else if (aval->IsVariable()) {
                         auto avar = std::dynamic_pointer_cast<Variable>(aval);
@@ -255,6 +264,8 @@ void rl_lltorl_instance::torl() {
 
                         // 目前认为 offset 都被计算包含在了 base 里
                         op->off = 0;
+
+                        op->onflt = onflt;
 
                         lst.push_back(std::move(op));
                     } else {
@@ -272,14 +283,17 @@ void rl_lltorl_instance::torl() {
                     auto &&res = llinst->GetResult();
                     Assert(!res->GetBaseType()->IsPointer(), "assuming it will not be a pointer");
                     virt_reg *nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, res->GetVariableIdx());
+                    nwvreg->isflt = res->GetBaseType()->FloatType();
 
                     auto &&aval = llinst->GetOprand();
                     if (aval->IsGlobalValue()) {
                         auto gval = std::dynamic_pointer_cast<GlobalValue>(aval);
-                        auto &&label = "LG" + std::to_string(gval->GetGlobalValueIdx());
+                        auto &&label = "LG." + std::to_string(gval->GetGlobalValueIdx());
                         auto op = std::make_unique<uop_load_tag>();
                         op->src = label;
                         op->dst = nwvreg;
+                        op->onflt = res->GetBaseType()->FloatType();
+
                         lst.push_back(std::move(op));
                     } else if (aval->IsVariable()) {
                         auto avar = std::dynamic_pointer_cast<Variable>(aval);
@@ -291,6 +305,8 @@ void rl_lltorl_instance::torl() {
 
                         // 目前认为 offset 都被计算包含在了 base 里
                         op->off = 0;
+
+                        op->onflt = res->GetBaseType()->FloatType();
 
                         lst.push_back(std::move(op));
                     } else {
@@ -309,21 +325,27 @@ void rl_lltorl_instance::torl() {
                     auto &&base = llinst->GetBaseAddr();
                     if (base->IsGlobalValue()) {
                         auto gval = std::dynamic_pointer_cast<GlobalValue>(base);
-                        auto &&gname = "LG" + std::to_string(gval->GetGlobalValueIdx());
-                        auto op = std::make_unique<uop_load_tag>();
+                        auto &&gname = "LG." + std::to_string(gval->GetGlobalValueIdx());
+                        auto op = std::make_unique<uop_la>();
                         op->dst = dst;
                         op->src = gname;
                         lst.push_back(std::move(op));
                     } else if (base->IsVariable()) {
                         auto avar = std::dynamic_pointer_cast<Variable>(base);
                         Assert(avar, "store addr should be var");
-                        auto op = std::make_unique<uop_load>();
+                        auto op = std::make_unique<uop_bin>();
+                        op->kind = IBIN_KIND::ADD;
 
-                        auto base = rlp->vreg_alloc.getREG(avar->GetVariableIdx());
+                        auto lhs = rlp->vreg_alloc.getREG(avar->GetVariableIdx());
 
+                        auto tail = llinst->GetOffList().back();
+                        auto cst = std::dynamic_pointer_cast<Constant>(tail);
+                        Assert(cst, "i dont know");
+                        auto pk = extractcst(cst);
+                        Assert(!pk.isfloat, "pk should be int");
                         op->dst = dst;
-                        op->base = base;
-                        op->off = 0;
+                        op->lhs = lhs;
+                        op->rhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value * 4);
 
                         lst.push_back(std::move(op));
                     } else {
@@ -336,24 +358,99 @@ void rl_lltorl_instance::torl() {
                     auto llinst = std::dynamic_pointer_cast<CallInst>(inst);
                     Assert(llinst, "bad dynamic cast");
                     auto &&params = llinst->GetParamList();
+                    auto funname = llinst->GetCalleeFunc()->GetFuncName();
 
-                    if (!params.empty()) {
+                    if (funname.substr(0, 4) == "llvm") {
+                        // 对 llvm 特定函数处理
+
+                        if (funname == "llvm.memset.p0i8.i64") {
+                            funname = "memset";
+                            size_t idx = 0;
+                            size_t fidx = 0;
+                            size_t len = 0;
+                            for (auto &&param : params) {
+                                auto op0 = std::make_unique<uop_set_param>();
+
+                                size_t usemask = 0x1;
+                                op0->onflt = param->GetBaseType()->FloatType();
+                                if (op0->onflt) {
+                                    op0->idx = fidx;
+                                    usemask <<= fidx;
+                                    fidx += 1;
+                                } else {
+                                    op0->idx = idx;
+                                    usemask <<= idx;
+                                    idx += 1;
+                                }
+                                virt_reg *nwvreg = nullptr;
+
+                                if (param->IsVariable()) {
+                                    auto var = std::dynamic_pointer_cast<Variable>(param);
+                                    nwvreg = rlp->vreg_alloc.getREG(var->GetVariableIdx());
+
+                                    if ((op0->onflt && fidx > 8) || (!op0->onflt && idx > 8)) {
+                                        len += nwvreg->len;
+                                    }
+                                } else if (param->IsConstant()) {
+                                    if ((op0->onflt && fidx > 8) || (!op0->onflt && idx > 8)) {
+                                        len += 4;
+                                    }
+
+                                    auto &&cst = std::dynamic_pointer_cast<Constant>(param);
+
+                                    auto &&pk = extractcst(cst);
+
+                                    if (pk.isfloat) {
+                                        nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
+                                    } else {
+                                        nwvreg = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
+                                    }
+                                } else {
+                                    panic("寄了");
+                                }
+
+                                op0->src = nwvreg;
+                                op0->src->beset |= usemask;
+                                lst.push_back(std::move(op0));
+
+                                // 这里早停一下，参数没那么多
+                                if (idx == 3) {
+                                    break;
+                                }
+                            }
+                            mxpsiz = std::max(mxpsiz, len);
+                        }
+                    } else if (!params.empty()) {
                         size_t idx = 0;
+                        size_t fidx = 0;
                         size_t len = 0;
                         for (auto &&param : params) {
                             auto op0 = std::make_unique<uop_set_param>();
 
-                            op0->idx = idx;
-                            auto usemask = 0x1 << idx;
+                            size_t usemask = 0x1;
+                            op0->onflt = param->GetBaseType()->FloatType();
+                            if (op0->onflt) {
+                                op0->idx = fidx;
+                                usemask <<= fidx;
+                                fidx += 1;
+                            } else {
+                                op0->idx = idx;
+                                usemask <<= idx;
+                                idx += 1;
+                            }
                             virt_reg *nwvreg = nullptr;
 
                             if (param->IsVariable()) {
                                 auto var = std::dynamic_pointer_cast<Variable>(param);
                                 nwvreg = rlp->vreg_alloc.getREG(var->GetVariableIdx());
 
-                                len += nwvreg->len;
+                                if ((op0->onflt && fidx > 8) || (!op0->onflt && idx > 8)) {
+                                    len += nwvreg->len;
+                                }
                             } else if (param->IsConstant()) {
-                                len += 4;
+                                if ((op0->onflt && fidx > 8) || (!op0->onflt && idx > 8)) {
+                                    len += 4;
+                                }
 
                                 auto &&cst = std::dynamic_pointer_cast<Constant>(param);
 
@@ -371,18 +468,17 @@ void rl_lltorl_instance::torl() {
                             op0->src = nwvreg;
                             op0->src->beset |= usemask;
                             lst.push_back(std::move(op0));
-
-                            idx += 1;
                         }
                         mxpsiz = std::max(mxpsiz, len);
                     }
 
                     auto op1 = std::make_unique<uop_call>();
-                    op1->callee = llinst->GetCalleeFunc()->GetFuncName();
+                    op1->callee = funname;
                     op1->retval = nullptr;
 
                     if (auto &&res = llinst->GetResult(); res != nullptr) {
                         op1->retval = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, res->GetVariableIdx());
+                        op1->retval->isflt = res->GetBaseType()->FloatType();
                     }
 
                     lst.push_back(std::move(op1));
@@ -408,6 +504,7 @@ void rl_lltorl_instance::torl() {
                     auto op = std::make_unique<uop_cvtw2s>();
                     op->src = rlp->vreg_alloc.getREG(var->GetVariableIdx());
                     op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, rhs->GetVariableIdx());
+                    op->dst->isflt = true;
 
                     lst.push_back(std::move(op));
                 } break;
@@ -499,7 +596,7 @@ void rl_lltorl_instance::torl() {
                                 auto &&pk = extractcst(rcst);
                                 Assert(!pk.isfloat, "bad constant");
 
-                                op->rhs = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
+                                op->rhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
                                 op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
                                                                 res->GetVariableIdx());
                                 lst.push_back(std::move(op));
@@ -542,8 +639,8 @@ void rl_lltorl_instance::torl() {
                                 Assert(rvar, "bad dynamic cast");
 
                                 fop->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
-                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                                 res->GetVariableIdx());
+                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, res->GetVariableIdx());
+                                fop->dst->isflt = true;
 
                                 lst.push_back(std::move(fop));
                             } else if (rhs->IsConstant()) {
@@ -553,9 +650,10 @@ void rl_lltorl_instance::torl() {
                                 auto &&pk = extractcst(rcst);
                                 Assert(pk.isfloat, "bad constant");
 
-                                fop->rhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
-                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                                 res->GetVariableIdx());
+                                fop->rhs = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
+                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, res->GetVariableIdx());
+                                fop->dst->isflt = true;
+
                                 lst.push_back(std::move(fop));
                             } else {
                                 panic("寄了");
@@ -573,8 +671,9 @@ void rl_lltorl_instance::torl() {
                             Assert(rvar, "assuming this time rhs must be variable");
 
                             fop->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
-                            fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                             res->GetVariableIdx());
+                            fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, 4, res->GetVariableIdx());
+                            fop->dst->isflt = true;
+
                             lst.push_back(std::move(fop));
                         } else {
                             panic("寄了");
@@ -593,115 +692,62 @@ void rl_lltorl_instance::torl() {
 
                     auto &&res = llinst->GetResult();
 
-                    if (res->GetBaseType()->IsPointer() || res->GetBaseType()->IntType() ||
-                        res->GetBaseType()->BoolType()) {
-                        auto op = std::make_unique<uop_cmp>();
+                    auto op = std::make_unique<uop_cmp>();
 
-                        op->kind = (COMP_KIND)opcode;
-                        op->onflt = false;
+                    op->kind = (COMP_KIND)opcode;
+                    op->onflt = false;
 
-                        auto lhs = llinst->GetLHS();
-                        if (lhs->IsVariable()) {
-                            auto lvar = std::dynamic_pointer_cast<Variable>(lhs);
-                            Assert(lvar, "bad dynamic cast");
+                    auto lhs = llinst->GetLHS();
+                    if (lhs->GetBaseType()->FloatType()) {
+                        op->onflt = true;
+                    }
+                    if (lhs->IsVariable()) {
+                        auto lvar = std::dynamic_pointer_cast<Variable>(lhs);
+                        Assert(lvar, "bad dynamic cast");
 
-                            auto rhs = llinst->GetRHS();
-                            op->lhs = rlp->vreg_alloc.getREG(lvar->GetVariableIdx());
+                        auto rhs = llinst->GetRHS();
+                        op->lhs = rlp->vreg_alloc.getREG(lvar->GetVariableIdx());
 
-                            if (rhs->IsVariable()) {
-                                auto rvar = std::dynamic_pointer_cast<Variable>(rhs);
-                                Assert(rvar, "bad dynamic cast");
-
-                                op->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
-                                op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
-                                                                res->GetVariableIdx());
-
-                                lst.push_back(std::move(op));
-                            } else if (rhs->IsConstant()) {
-                                auto rcst = std::dynamic_pointer_cast<Constant>(rhs);
-                                Assert(rcst, "bad dynamic cast");
-
-                                auto &&pk = extractcst(rcst);
-                                Assert(!pk.isfloat, "bad constant");
-
-                                op->rhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
-                                op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
-                                                                res->GetVariableIdx());
-                                lst.push_back(std::move(op));
-                            } else {
-                                panic("寄了");
-                            }
-                        } else if (lhs->IsConstant()) {
-                            auto lcst = std::dynamic_pointer_cast<Constant>(lhs);
-                            Assert(lcst, "bad dynamic cast");
-
-                            auto &&pk = extractcst(lcst);
-                            Assert(!pk.isfloat, "bad constant");
-                            op->lhs = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
-
-                            auto rvar = std::dynamic_pointer_cast<Variable>(lhs);
-                            Assert(rvar, "assuming this time rhs must be variable");
+                        if (rhs->IsVariable()) {
+                            auto rvar = std::dynamic_pointer_cast<Variable>(rhs);
+                            Assert(rvar, "bad dynamic cast");
 
                             op->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
+                            op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
+                                                            res->GetVariableIdx());
+
+                            lst.push_back(std::move(op));
+                        } else if (rhs->IsConstant()) {
+                            auto rcst = std::dynamic_pointer_cast<Constant>(rhs);
+                            Assert(rcst, "bad dynamic cast");
+
+                            auto &&pk = extractcst(rcst);
+                            Assert(!pk.isfloat, "bad constant");
+
+                            op->rhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
                             op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
                                                             res->GetVariableIdx());
                             lst.push_back(std::move(op));
                         } else {
                             panic("寄了");
                         }
-                    } else if (res->GetBaseType()->FloatType()) {
-                        auto fop = std::make_unique<uop_cmp>();
-                        fop->kind = (COMP_KIND)opcode;
+                    } else if (lhs->IsConstant()) {
+                        auto lcst = std::dynamic_pointer_cast<Constant>(lhs);
+                        Assert(lcst, "bad dynamic cast");
 
-                        auto lhs = llinst->GetLHS();
-                        if (lhs->IsVariable()) {
-                            auto lvar = std::dynamic_pointer_cast<Variable>(lhs);
-                            Assert(lvar, "bad dynamic cast");
+                        auto &&pk = extractcst(lcst);
+                        Assert(!pk.isfloat, "bad constant");
+                        op->lhs = rlp->vreg_alloc.alloc(VREG_KIND::IMM, 4, pk.value);
 
-                            auto rhs = llinst->GetRHS();
-                            fop->lhs = rlp->vreg_alloc.getREG(lvar->GetVariableIdx());
+                        auto rvar = std::dynamic_pointer_cast<Variable>(lhs);
+                        Assert(rvar, "assuming this time rhs must be variable");
 
-                            if (rhs->IsVariable()) {
-                                auto rvar = std::dynamic_pointer_cast<Variable>(rhs);
-                                Assert(rvar, "bad dynamic cast");
-
-                                fop->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
-                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                                 res->GetVariableIdx());
-
-                                lst.push_back(std::move(fop));
-                            } else if (rhs->IsConstant()) {
-                                auto rcst = std::dynamic_pointer_cast<Constant>(rhs);
-                                Assert(rcst, "bad dynamic cast");
-
-                                auto &&pk = extractcst(rcst);
-                                Assert(pk.isfloat, "bad constant");
-
-                                fop->rhs = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
-                                fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                                 res->GetVariableIdx());
-                                lst.push_back(std::move(fop));
-                            } else {
-                                panic("寄了");
-                            }
-                        } else if (lhs->IsConstant()) {
-                            auto lcst = std::dynamic_pointer_cast<Constant>(lhs);
-                            Assert(lcst, "bad dynamic cast");
-
-                            auto &&pk = extractcst(lcst);
-                            Assert(pk.isfloat, "bad constant");
-                            fop->lhs = rlp->vreg_alloc.alloc(VREG_KIND::LOC, 4, pk.value);
-
-                            auto rvar = std::dynamic_pointer_cast<Variable>(lhs);
-                            Assert(rvar, "assuming this time rhs must be variable");
-
-                            fop->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
-                            fop->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(fop->lhs->len, fop->rhs->len),
-                                                             res->GetVariableIdx());
-                            lst.push_back(std::move(fop));
-                        } else {
-                            panic("寄了");
-                        }
+                        op->rhs = rlp->vreg_alloc.getREG(rvar->GetVariableIdx());
+                        op->dst = rlp->vreg_alloc.alloc(VREG_KIND::REG, std::max(op->lhs->len, op->rhs->len),
+                                                        res->GetVariableIdx());
+                        lst.push_back(std::move(op));
+                    } else {
+                        panic("寄了");
                     }
                 } break;
 
@@ -719,19 +765,50 @@ void rl_lltorl_instance::operator()() {
     // 将 LLVM IR 转换为 RISC LANG IR
     torl();
 
+    // 将 ret 移动到最后
+    mvret();
+
     // 删除冗余的跳转语句
     rmx();
 
     // 加载参数
     loadparam();
 
-    // 重排序指令
+    // 规划栈信息
+    rlp->vski_alloc.plan(mxpsiz);
+
+    // 加载立即数
+    // 考虑预分配专门用于加载立即数的寄存器，以减少 spill 问题
+    // 
+    loadimm();
+
+    // 重标号指令
     // 同时计算生存区间和引用次数
     ireidx();
 
-    // 打印分析后的信息
-    pinfo();
+    // 寄存器指名
+    rlp->vreg_alloc.regassign(rlp->vski_alloc, false);
 
-    // 打印 RISC LANG IR
-    pir();
+    // 合成指令
+    combine();
+
+    // 上一个操作会删除指令
+    // 所以接下来需要再重标号指令
+    // 同时计算生存区间和引用次数
+    // 还存在的变量的引用次数实际上是双倍了
+    ireidx();
+
+    // 开始分配
+    rlp->vreg_alloc.regassign(rlp->vski_alloc, true);
+
+    genstk();
+
+
+    // // 打印分析后的信息
+    // pinfo();
+
+    // // 打印 RISC LANG IR
+    // pir();
+
+    gencode();
 }

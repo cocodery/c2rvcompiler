@@ -2,20 +2,21 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include <string>
-#include <sstream>
 #include <list>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
 #include "rlenum.hh"
+
+class uop_general;
 
 using width_t = size_t;
 using uuid_t = size_t;
 
 using xlen_t = int64_t;
 using uxlen_t = uint64_t;
-
 
 // 虚拟寄存器
 struct virt_reg {
@@ -39,6 +40,8 @@ struct virt_reg {
     // FP, SP, RA 对应不同架构使用的寄存器
     uxlen_t value = 0;
 
+    bool isflt = false;
+
     // 被使用次数
     size_t ref = 0;
 
@@ -49,13 +52,16 @@ struct virt_reg {
     size_t begin = 0;
     size_t end = 0;
 
+    uop_general *from = nullptr;
+
+    size_t inrreg = 0;
+
     std::string to_string();
 };
 
 using virt_reg_ptr = std::unique_ptr<virt_reg>;
 
 struct virt_stkinf {
-    
     // 栈上数据的种类
     VSTK_KIND kind;
 
@@ -63,13 +69,29 @@ struct virt_stkinf {
     width_t len;
 
     // 栈上偏移量
-
+    off64_t off;
 };
 
 using virt_stkinf_ptr = std::unique_ptr<virt_stkinf>;
 
-struct virt_reg_allocor {
+struct virt_stkinf_allocor {
+    // 用于通过 uid 查阅栈信息的引用
+    std::unordered_map<uuid_t, virt_stkinf *> map;
 
+    // 用于内存管理，保存栈信息资源
+    std::list<virt_stkinf_ptr> storage;
+
+    size_t total_stk_len;
+
+    uuid_t alloc(VSTK_KIND kind, width_t len);
+
+    virt_stkinf *getSTK(uuid_t uid);
+
+    // 规划栈数据
+    void plan(size_t ex_argl);
+};
+
+struct virt_reg_allocor {
     // 用于通过 uid 查阅虚拟寄存器的引用
     std::unordered_map<uuid_t, virt_reg *> map;
 
@@ -82,6 +104,8 @@ struct virt_reg_allocor {
     // 用于额外分配寄存器
     size_t nwidx_alloc = 0;
 
+
+
     virt_reg *alloc(VREG_KIND kind, width_t len, uxlen_t value);
     virt_reg *getREG(uuid_t uid);
 
@@ -89,18 +113,8 @@ struct virt_reg_allocor {
     void link(uuid_t lhs, uuid_t rhs);
 
     // 分配新的额外寄存器
-    virt_reg *allocREG(width_t len, uxlen_t value);
-};
+    virt_reg *allocREG(width_t len);
 
-struct virt_stkinf_allocor {
-
-    // 用于通过 uid 查阅栈信息的引用
-    std::unordered_map<uuid_t, virt_stkinf *> map;
-
-    // 用于内存管理，保存栈信息资源
-    std::list<virt_stkinf_ptr> storage;
-
-    uuid_t alloc(VSTK_KIND kind, width_t len);
-    virt_stkinf *getSTK(uuid_t uid);
-
+    // 寄存器指名
+    void regassign(virt_stkinf_allocor &vsaor, bool nm);
 };

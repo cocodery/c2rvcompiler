@@ -3,7 +3,7 @@
 void rl_lltorl_instance::pinfo() {
     fprintf(stdout, "local constants:\n");
     for (auto &pair : rlp->vreg_alloc.fcstmap) {
-        fprintf(stdout, "LC%ld: %f\n", pair.first, *(float *)(uxlen_t *)&pair.second->value);
+        fprintf(stdout, "LC.%lx: %f\n", pair.first, *(float *)(uxlen_t *)&pair.second->value);
     }
     fputc('\n', stdout);
 
@@ -19,7 +19,7 @@ void rl_lltorl_instance::pinfo() {
 
     fprintf(stdout, "stack info:\n");
     for (auto &reg : rlp->vski_alloc.storage) {
-        fprintf(stdout, "0x%lx: (%d, %ld)\n", (intptr_t)reg.get(), (unsigned)reg->kind, reg->len);
+        fprintf(stdout, "0x%lx: %ld\n", -reg->off, reg->len);
     }
     fputc('\n', stdout);
 }
