@@ -116,17 +116,15 @@ run: build $(SYLIB_LL)
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	$(LLI) $(SINGLE_TEST_NAME).run.ll
 	$(ECHO) $$?
-	cat $(SINGLE_TEST_NAME).sy > $(TMP)/$(SINGLE_TEST_NAME).sy.c && $(RVCC) -S -o $(SINGLE_TEST_NAME).S $(TMP)/$(SINGLE_TEST_NAME).sy.c
-	rm $(TMP)/$(SINGLE_TEST_NAME).sy.c
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
+	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out
 	$(ECHO) $$?
 
 rvrun:
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
+	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out
 
 .PHONY: all asm
 
@@ -236,7 +234,7 @@ clean:
 .PHONY: clean-test
 clean-test:
 	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR) 
-	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).{s,S} $(SINGLE_TEST_NAME).{out,out.log,dump}
+	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).{s,S} $(SINGLE_TEST_NAME).{out,out.log,dump} *.ir.s
 
 .PHONY: clean-all
 clean-all: clean clean-test

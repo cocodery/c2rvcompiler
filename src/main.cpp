@@ -13,7 +13,7 @@
 #include "Pass.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
-#include "codegen.hh"
+#include "code_gen.hh"
 
 using namespace antlr4;
 using std::cout;
@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (output) {
-        CodeGen cg(output, comp_unit);
-        cg.GenABB();
-        cg.GenASM();
+        code_gen cg(output, comp_unit);
+        cg.gen_env();
+        cg.gen_asm();
     }
 
     return 0;
