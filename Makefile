@@ -110,21 +110,32 @@ $(BINARY): $(ALL_SRC)
 .PHONY: build
 build: $(BINARY)
 
+ifneq ($(DEMO),)
+PRE		= cat $(TEST_DIR)/functional/$(DEMO)*.sy > $(SINGLE_TEST_NAME).sy
+INP		= $(shell ls $(TEST_DIR)/functional/$(DEMO)*.in)
+REDINP	= $(addprefix < ,$(INP)) 
+CATINP  = $(addprefix cat ,$(INP)) 
+endif
+
 .PHONY: run
 run: build $(SYLIB_LL)
+	$(PRE)
+	$(CATINP)
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
-	$(LLI) $(SINGLE_TEST_NAME).run.ll
+	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
-	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
-	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out
-	$(ECHO) $$?
+# $(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+# $(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+# $(SPIKE) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
+# $(ECHO) $$?
+	
 
 rvrun:
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s $(SINGLE_TEST_NAME).sy
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out
+	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
 
 .PHONY: all asm
 

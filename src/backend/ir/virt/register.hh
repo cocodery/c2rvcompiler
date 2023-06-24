@@ -14,6 +14,7 @@
 
 class uop_general;
 class pblock;
+class rl_progress;
 
 struct spack {
     bool t1{false};
@@ -77,6 +78,12 @@ class live_info {
 
     void set_end(size_t t);
     size_t end() const;
+};
+
+struct detailed_live_info {
+    std::unordered_set<size_t> live_out;
+    std::unordered_set<size_t> ue_var;
+    std::unordered_set<size_t> var_kill;
 };
 
 class stk_info {
@@ -226,7 +233,7 @@ class vr_allocor {
      * for better assignment, some regs that won't be use or free in some interval
      * could be assign to some virtual regs
      */
-    void plan_reg();
+    void plan_reg(rl_progress &rlp);
 
    public:
     size_t total_stk_len{0};

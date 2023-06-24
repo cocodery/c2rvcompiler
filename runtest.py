@@ -112,7 +112,7 @@ def build_asm(args):
 
         # generate file names
         asmname  = '/'.join([args.dir, '.'.join([basename,   's'])])
-        spkname  = '/'.join([args.dir, '.'.join([basename,  'spk'])])
+        spkname  = '/'.join([args.dir, '.'.join([basename, 'spk'])])
         elfname  = '/'.join([args.dir, '.'.join([basename, 'elf'])])
         logname  = '/'.join([args.dir, '.'.join([basename, 'log'])])
         resname  = '/'.join([args.dir, '.'.join([basename, 'res'])])
@@ -149,12 +149,20 @@ def build_asm(args):
             infile = open(inname, 'r')
 
         with open(logname, 'a') as logfile, open(spkname, 'w') as resfile:
-            resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
+            try:
+                resp = subprocess.run(cmd, timeout=3, stdin=infile, stdout=resfile, stderr=logfile)
+            except subprocess.TimeoutExpired as e:
+                print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mTime Limit Exceed\033[0m".format(basename))
+                continue
         
         with open(spkname, 'r') as spkfile, open(resname, 'w') as resfile:
             a = spkfile.readlines()
-            b = ''.join(a[2:])
-            resfile.write(b)
+            b = []
+            for s in a:
+                if not s.startswith('bbl') and not s.startswith('TOTAL'):
+                    b.append(s)
+            c = ''.join(b)
+            resfile.write(c)
         
         recv = resp
         cmd = ['tail', '-c', '1', resname]
@@ -209,3 +217,15 @@ if __name__ == '__main__':
 
     
 
+"""
+2 2
+3 1
+4 2
+4 4
+1 2
+2 3
+2 1
+3 2
+3 4
+3 1
+"""

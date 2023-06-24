@@ -5,7 +5,11 @@
 #include "uop.hh"
 
 static inline void lea(pblock *pb, virt_reg *onstk, rid_t dst) {
-    Assert(onstk->onstk(), "must on stack");
+    if (not onstk->onstk()) {
+        auto rv = new rv_mv(dst, onstk->rregid());
+        pb->push(rv);
+        return;
+    }
     auto &&sinfo = onstk->sinfo();
     auto off = sinfo->off();
     if (imm_within(12, off)) {
@@ -59,6 +63,18 @@ void uop_set_fparam::toasm(pblock *pb) {
 void uop_call::toasm(pblock *pb) {
     auto rv = new rv_call(callee_);
     pb->push(rv);
+    if (retval_) {
+        spack spk;
+        auto act = retval_->load(pb, spk);
+        if (retval_->type() == VREG_TYPE::FLT) {
+            auto rv0 = new rv_fmv_s(act, riscv::fa0);
+            pb->push(rv0);
+        } else {
+            auto rv0 = new rv_mv(act, riscv::a0);
+            pb->push(rv0);
+        }
+        retval_->store(pb);
+    }
 }
 
 void uop_li::toasm(pblock *pb) { panic("unexpected now"); }
@@ -68,12 +84,11 @@ void uop_mv::toasm(pblock *pb) {
     auto to = rd_->store_where();
     if (rs_->kind() == VREG_KIND::STK) {
         lea(pb, rs_, to);
+        rd_->store(pb, to);
     } else {
         auto act = rs_->load(pb, spk, to);
-        if (act != to) {
-            auto rv = new rv_mv(to, act);
-            pb->push(rv);
-        }
+        auto rv = new rv_mv(to, act);
+        pb->push(rv);
         rd_->store(pb, to);
     }
 }
@@ -120,6 +135,11 @@ void uop_cvtw2s::toasm(pblock *pb) {
 void uop_b::toasm(pblock *pb) {
     spack spk;
     auto act = cond_->load(pb, spk);
+    if (ontrue_) {
+        auto rv = new rv_bnez(act, gen_pblk_label(lbid_).c_str());
+        pb->push(rv);
+        return;
+    }
     auto rv = new rv_beqz(act, gen_pblk_label(lbid_).c_str());
     pb->push(rv);
 }
@@ -140,21 +160,19 @@ void uop_lla::toasm(pblock *pb) {
     rd_->store(pb);
 }
 
-// @attention offs not check
-
 void uop_ld::toasm(pblock *pb) {
     spack spk;
     auto to = rd_->store_where();
-    auto base = rb_->load(pb, spk);
+    lea(pb, rb_, riscv::t2);
     switch (rd_->type()) {
         case VREG_TYPE::INT: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_lw(to, base, off_);
+                auto rv = new rv_lw(to, riscv::t2, off_);
                 pb->push(rv);
                 rd_->store(pb, to);
             } else {
                 auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
+                auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
                 auto rv2 = new rv_lw(to, riscv::t0, 0);
                 pb->push(rv0);
                 pb->push(rv1);
@@ -164,12 +182,12 @@ void uop_ld::toasm(pblock *pb) {
         } break;
         case VREG_TYPE::PTR: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_ld(to, base, off_);
+                auto rv = new rv_ld(to, riscv::t2, off_);
                 pb->push(rv);
                 rd_->store(pb, to);
             } else {
                 auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
+                auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
                 auto rv2 = new rv_ld(to, riscv::t0, 0);
                 pb->push(rv0);
                 pb->push(rv1);
@@ -185,36 +203,98 @@ void uop_ld::toasm(pblock *pb) {
 void uop_st::toasm(pblock *pb) {
     spack spk;
     auto src = rd_->load(pb, spk);
-    auto base = rb_->load(pb, spk);
+    lea(pb, rb_, riscv::t2);
     switch (rd_->type()) {
         case VREG_TYPE::INT: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_sw(src, base, off_);
+                auto rv = new rv_sw(src, riscv::t2, off_);
                 pb->push(rv);
             } else {
-                auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
-                auto rv2 = new rv_sw(src, riscv::t0, 0);
-                pb->push(rv0);
-                pb->push(rv1);
-                pb->push(rv2);
+                if (src == riscv::t0) {
+                    auto rv0 = new rv_li(riscv::t1, off_);
+                    auto rv1 = new rv_add(riscv::t1, riscv::t2, riscv::t1);
+                    auto rv2 = new rv_sw(src, riscv::t1, 0);
+                    pb->push(rv0);
+                    pb->push(rv1);
+                    pb->push(rv2);
+                } else {
+                    auto rv0 = new rv_li(riscv::t0, off_);
+                    auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
+                    auto rv2 = new rv_sw(src, riscv::t0, 0);
+                    pb->push(rv0);
+                    pb->push(rv1);
+                    pb->push(rv2);
+                }
             }
         } break;
         case VREG_TYPE::PTR: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_sd(src, base, off_);
+                auto rv = new rv_sd(src, riscv::t2, off_);
                 pb->push(rv);
             } else {
-                auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
-                auto rv2 = new rv_sd(src, riscv::t0, 0);
-                pb->push(rv0);
-                pb->push(rv1);
-                pb->push(rv2);
+                if (src == riscv::t0) {
+                    auto rv0 = new rv_li(riscv::t1, off_);
+                    auto rv1 = new rv_add(riscv::t1, riscv::t2, riscv::t1);
+                    auto rv2 = new rv_sd(src, riscv::t1, 0);
+                    pb->push(rv0);
+                    pb->push(rv1);
+                    pb->push(rv2);
+                } else {
+                    auto rv0 = new rv_li(riscv::t0, off_);
+                    auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
+                    auto rv2 = new rv_sd(src, riscv::t0, 0);
+                    pb->push(rv0);
+                    pb->push(rv1);
+                    pb->push(rv2);
+                }
             }
         } break;
         default:
             panic("unexpected");
+    }
+}
+
+void uop_ld_stk::toasm(pblock *pb) {
+    Assert(rb_->onstk(), "logic error");
+    if (rd_ == riscv::zero) {
+        return;
+    }
+
+    auto off = rb_->sinfo()->off();
+    if (imm_within(12, off)) {
+        auto rv = new rv_ld(rd_, riscv::fp, off);
+        pb->push(rv);
+    } else {
+        auto rv0 = new rv_li(riscv::t0, off);
+        pb->push(rv0);
+
+        auto rv1 = new rv_add(riscv::t0, riscv::fp, riscv::t0);
+        pb->push(rv1);
+
+        auto rv2 = new rv_ld(rd_, riscv::t0, 0);
+        pb->push(rv2);
+    }
+}
+
+void uop_st_stk::toasm(pblock *pb) {
+    Assert(rb_->onstk(), "logic error");
+    if (rd_ == riscv::zero) {
+        return;
+    }
+
+    auto off = rb_->sinfo()->off();
+    if (imm_within(12, off)) {
+        auto rv = new rv_sd(rd_, riscv::fp, off);
+        pb->push(rv);
+    } else {
+        auto rv0 = new rv_li(riscv::t0, off);
+        pb->push(rv0);
+
+        auto rv1 = new rv_add(riscv::t0, riscv::fp, riscv::t0);
+        pb->push(rv1);
+
+        auto rv2 = new rv_sd(rd_, riscv::t0, 0);
+        pb->push(rv2);
     }
 }
 
@@ -239,16 +319,16 @@ void uop_st_l::toasm(pblock *pb) {
 void uop_fld::toasm(pblock *pb) {
     spack spk;
     auto to = rd_->store_where();
-    auto base = rb_->load(pb, spk);
+    lea(pb, rb_, riscv::t2);
     switch (rd_->type()) {
         case VREG_TYPE::FLT: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_flw(to, base, off_);
+                auto rv = new rv_flw(to, riscv::t2, off_);
                 pb->push(rv);
                 rd_->store(pb, to);
             } else {
                 auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
+                auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
                 auto rv2 = new rv_flw(to, riscv::t0, 0);
                 pb->push(rv0);
                 pb->push(rv1);
@@ -264,15 +344,15 @@ void uop_fld::toasm(pblock *pb) {
 void uop_fst::toasm(pblock *pb) {
     spack spk;
     auto src = rd_->load(pb, spk);
-    auto base = rb_->load(pb, spk);
+    lea(pb, rb_, riscv::t2);
     switch (rd_->type()) {
         case VREG_TYPE::FLT: {
             if (imm_within(12, off_)) {
-                auto rv = new rv_fsw(src, base, off_);
+                auto rv = new rv_fsw(src, riscv::t2, off_);
                 pb->push(rv);
             } else {
                 auto rv0 = new rv_li(riscv::t0, off_);
-                auto rv1 = new rv_add(riscv::t0, base, riscv::t0);
+                auto rv1 = new rv_add(riscv::t0, riscv::t2, riscv::t0);
                 auto rv2 = new rv_fsw(src, riscv::t0, 0);
                 pb->push(rv0);
                 pb->push(rv1);
@@ -357,6 +437,8 @@ void uop_icmp::toasm(pblock *pb) {
             pb->push(rv1);
         } break;
     }
+
+    rd_->store(pb);
 }
 
 void uop_fcmp::toasm(pblock *pb) {
@@ -399,11 +481,161 @@ void uop_fcmp::toasm(pblock *pb) {
             pb->push(rv);
         } break;
     }
+
+    rd_->store(pb);
 }
 
 void uop_bin::toasm(pblock *pb) {
     spack spk;
+
     auto dst = rd_->store_where();
+
+    if (rd_->type() == VREG_TYPE::PTR) {
+        switch (kind_) {
+            case IBIN_KIND::ADD: {
+                if (rd_ == lhs_ or rd_ == rhs_) {
+                    if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 0) return;
+                    if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+                }
+
+                if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                    auto lhs = lhs_->load(pb, spk);
+                    auto rv = new rv_addi(dst, lhs, rhs_->value());
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
+
+                if (lhs_->kind() == VREG_KIND::IMM and imm_within(12, lhs_->value())) {
+                    auto rhs = rhs_->load(pb, spk);
+                    auto rv = new rv_addi(dst, rhs, lhs_->value());
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
+            } break;
+
+            case IBIN_KIND::SUB: {
+                if (rd_ == lhs_ or rd_ == rhs_) {
+                    if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+                }
+
+                if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                    auto lhs = lhs_->load(pb, spk);
+                    auto rv = new rv_addi(dst, lhs, -(int32_t)rhs_->value());
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
+            } break;
+
+            case IBIN_KIND::MUL: {
+                if (rd_ == lhs_ or rd_ == rhs_) {
+                    if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 1) return;
+                    if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
+                }
+            } break;
+
+            case IBIN_KIND::SLL: {
+                if (rd_ == lhs_ or rd_ == rhs_) {
+                    if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+                }
+
+                if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                    auto lhs = lhs_->load(pb, spk);
+                    auto rv = new rv_slli(dst, lhs, rhs_->value());
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
+            } break;
+
+            default:
+                break;
+        }
+    }
+
+    switch (kind_) {
+        case IBIN_KIND::ADD: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 0) return;
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+
+            if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_addiw(dst, lhs, rhs_->value());
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+        } break;
+
+        case IBIN_KIND::SUB: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+
+            if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_addiw(dst, lhs, -(int32_t)rhs_->value());
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+        } break;
+
+        case IBIN_KIND::MUL: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 1) return;
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
+            }
+        } break;
+
+        case IBIN_KIND::DIV: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
+            }
+        } break;
+
+        case IBIN_KIND::REM: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
+            }
+        } break;
+
+        case IBIN_KIND::SLL: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+
+            if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_slliw(dst, lhs, rhs_->value());
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+        } break;
+
+        case IBIN_KIND::SRA: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+
+            if (rhs_->kind() == VREG_KIND::IMM and imm_within(12, rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_sraiw(dst, lhs, rhs_->value());
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+        } break;
+
+        default:
+            break;
+    }
+
     auto lhs = lhs_->load(pb, spk);
     auto rhs = rhs_->load(pb, spk);
 
@@ -420,7 +652,12 @@ void uop_bin::toasm(pblock *pb) {
             } break;
 
             case IBIN_KIND::SLL: {
-                auto rv = new rv_sllw(dst, lhs, rhs);
+                auto rv = new rv_sll(dst, lhs, rhs);
+                pb->push(rv);
+            } break;
+
+            case IBIN_KIND::MUL: {
+                auto rv = new rv_mul(dst, lhs, rhs);
                 pb->push(rv);
             } break;
 
@@ -466,6 +703,8 @@ void uop_bin::toasm(pblock *pb) {
             pb->push(rv);
         } break;
     }
+
+    rd_->store(pb);
 }
 
 void uop_fbin::toasm(pblock *pb) {
@@ -495,6 +734,8 @@ void uop_fbin::toasm(pblock *pb) {
             pb->push(rv);
         } break;
     }
+
+    rd_->store(pb);
 }
 
 void uop_ftri::toasm(pblock *pb) { panic("unexpected now"); }

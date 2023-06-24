@@ -37,6 +37,7 @@ void cross_internal_manager::irtorv() {
     front_ilst.push_front(std::unique_ptr<asm_inst>(rv1));
     front_ilst.push_front(std::unique_ptr<asm_inst>(rv0));
 
+
     auto &&back_ilst = apg_->back()->ilst();
     auto last = std::move(back_ilst.back());
     auto retinst = dynamic_cast<rv_ret *>(last.get());

@@ -65,6 +65,10 @@ void asm_env::make_prog(NormalFuncList &flst) {
     std::vector<std::thread> trds;
 #endif
 
+
+    std::fstream fs("dbg.ir.s", std::ios::out);
+    fs << "# for ir debug";
+
     for (auto &&fptr : flst) {
 #ifndef EN_CONCURRENCY
         cross_internal_manager xinmgr(fptr, lc_pool_);
