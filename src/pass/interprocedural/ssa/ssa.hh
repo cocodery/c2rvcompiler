@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "IR.hh"
+#include "function.hh"
 
 namespace SSA {
 
@@ -27,4 +28,6 @@ struct RenameData {
 };
 
 void SSAConstruction(NormalFuncPtr);
+
+void SSADestruction(NormalFuncPtr);
 }  // namespace SSA

@@ -1,5 +1,12 @@
 #include "ssa.hh"
 
+#include <memory>
+#include <unordered_map>
+
+#include "instruction.hh"
+#include "memoryInst.hh"
+#include "otherInst.hh"
+
 SSA::RenameData::RenameData(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _v)
     : node(_node), pred(_pred), valuelist(_v) {}
 
@@ -65,6 +72,7 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
                     if (!df->GetDirty()) {
                         df->SetDirty(true);
                         auto &&phi_inst = PhiInst::CreatePtr(type, df);
+                        phi_inst->SetOriginAlloca(alloca_inst);
                         phi2AllocaMap[phi_inst] = index;
                         if (!InDefBlocks(index, df)) {
                             WorkList.push(df);
@@ -151,4 +159,50 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
 
     InsertPhiFunction();
     VariableRename();
+}
+
+void SSA::SSADestruction(NormalFuncPtr func) {
+    auto &&allNodes = func->TopoSortFromEntry();
+    std::map<AllocaInstPtr, bool> allocaMap;
+
+    for (auto node : allNodes) {
+        auto &&inst_list = node->GetInstList();
+        for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
+            auto inst = (*iter);
+            if (inst->IsPhiInst()) {
+                auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
+
+                auto alloca_inst = phi_inst->GetOriginAlloca();
+                if (allocaMap[alloca_inst] == false) {
+                    auto node = alloca_inst->GetParent();
+                    node->InsertInstFront(alloca_inst);
+                    allocaMap[alloca_inst] = true;
+                }
+
+                auto addr = alloca_inst->GetAllocaAddr();
+                auto datalist = phi_inst->GetDataList();
+                for (auto [value, block] : datalist) {
+                    auto &&store_inst = StoreInst::CreatePtr(addr, value, block);
+                    addr->InsertUser(store_inst);
+                    value->InsertUser(store_inst);
+                    store_inst->SetParent(block);
+
+                    auto &&block_inst_list = block->GetInstList();
+                    block_inst_list.insert(--inst_list.end(), store_inst);
+                }
+
+                auto result = phi_inst->GetResult();
+                auto load_inst = LoadInst::CreatePtr(result, addr, node);
+                result->InsertUser(load_inst);
+                addr->InsertUser(load_inst);
+                load_inst->SetParent(node);
+                inst_list.insert(iter, load_inst);
+
+                RemoveInst(phi_inst);
+                iter = inst_list.erase(iter);
+                continue;
+            }
+            ++iter;
+        }
+    }
 }

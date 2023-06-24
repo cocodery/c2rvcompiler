@@ -16,5 +16,7 @@ void Optimization::DoOptimization() {
         GVN::DVNT(func);
 
         // DCE::EliminateUselessControlFlow(func);
+
+        // SSA::SSADestruction(func);
     }
 }
