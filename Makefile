@@ -125,17 +125,17 @@ run: build $(SYLIB_LL)
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
-# $(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
-# $(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-# $(SPIKE) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
-# $(ECHO) $$?
+	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
+	$(ECHO) $$?
 	
 
 rvrun:
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s $(SINGLE_TEST_NAME).sy
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log $(PK) $(SINGLE_TEST_NAME).out
+	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log -d $(PK) $(SINGLE_TEST_NAME).out
 
 .PHONY: all asm
 

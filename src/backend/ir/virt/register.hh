@@ -73,6 +73,8 @@ class live_info {
    public:
     live_info() = default;
 
+    bool stkpp_{false};
+
     void set_begin(size_t t);
     size_t begin() const;
 

@@ -71,6 +71,12 @@ static inline cval_info xcval(const cstpack_t &cpk) {
                 cval.v32 = reinterpret_cast<uint32_t &>(float_value);
                 cval.is_flt = true;
                 cval.is_w64 = false;
+            } else if constexpr (std::is_same_v<T, double>) {
+                double double_value = arg;
+                float float_value = double_value;
+                cval.v32 = reinterpret_cast<const uint32_t &>(float_value);
+                cval.is_flt = true;
+                cval.is_w64 = false;
             } else if constexpr (std::is_same_v<T, int32_t>) {
                 cval.v32 = reinterpret_cast<const uint32_t &>(arg);
                 cval.is_flt = false;

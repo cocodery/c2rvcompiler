@@ -143,7 +143,9 @@ void uop_ld_l::format_str(FILE *fp) {
 void uop_st_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::INT:
-    fprintf(fp, "sw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    auto x = rd_->c_str();
+    auto y =gen_glb_val_label(glb_idx_).c_str();
+    fprintf(fp, "sw %s, %s, t2", x, y);
     //         break;
     // }
 }
@@ -167,7 +169,7 @@ void uop_fst::format_str(FILE *fp) {
 void uop_fld_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "flw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    fprintf(fp, "flw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }
@@ -175,7 +177,7 @@ void uop_fld_l::format_str(FILE *fp) {
 void uop_fst_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "fsw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    fprintf(fp, "fsw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }

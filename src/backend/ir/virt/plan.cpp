@@ -330,6 +330,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
                             sptr->set_slen(8);
                             break;
                         case VREG_TYPE::PTR:
+                            vr->stkpp_ = true;
                             sptr->set_slen(8);
                             break;
                         default:
