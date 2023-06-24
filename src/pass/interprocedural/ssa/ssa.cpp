@@ -188,7 +188,7 @@ void SSA::SSADestruction(NormalFuncPtr func) {
                     store_inst->SetParent(block);
 
                     auto &&block_inst_list = block->GetInstList();
-                    block_inst_list.insert(--inst_list.end(), store_inst);
+                    block_inst_list.insert(--block_inst_list.end(), store_inst);
                 }
 
                 auto result = phi_inst->GetResult();
