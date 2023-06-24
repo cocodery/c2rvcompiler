@@ -152,11 +152,17 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     return inst;
 }
 
+void PhiInst::SetOriginAlloca(AllocaInstPtr alloca_inst) { origin_alloca = alloca_inst; }
+
+const AllocaInstPtr PhiInst::GetOriginAlloca() const { return origin_alloca; }
+
 void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr block) {
     assert(inst->result->GetBaseType()->GetAttrType() == _value->GetBaseType()->GetAttrType() && _value->IsOprand());
     inst->datalist.push_back({_value, block});
     _value->InsertUser(inst);
 }
+
+const std::list<std::pair<BaseValuePtr, CfgNodePtr>> &PhiInst::GetDataList() const { return datalist; }
 
 void PhiInst::RemoveResParent() { result->SetParent(nullptr); }
 

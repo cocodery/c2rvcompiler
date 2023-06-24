@@ -57,10 +57,15 @@ class BitCastInst : public UnaryInstruction {
 
 class PhiInst;
 using PhiInstPtr = std::shared_ptr<PhiInst>;
+
+class AllocaInst;
+using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using PhiInstList = std::list<PhiInstPtr>;
 
 class PhiInst : public Instruction {
    private:
+    AllocaInstPtr origin_alloca;
+
     std::list<std::pair<BaseValuePtr, CfgNodePtr>> datalist;
 
    public:
@@ -69,7 +74,13 @@ class PhiInst : public Instruction {
 
     static PhiInstPtr CreatePtr(BaseTypePtr, CfgNodePtr);
 
+    void SetOriginAlloca(AllocaInstPtr);
+
+    const AllocaInstPtr GetOriginAlloca() const;
+
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
+
+    const std::list<std::pair<BaseValuePtr, CfgNodePtr>> &GetDataList() const;
 
     void RemoveResParent();
 

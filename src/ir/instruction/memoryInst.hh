@@ -39,11 +39,11 @@ class StoreInst : public Instruction {
     BaseValuePtr store_addr;
     BaseValuePtr store_value;
 
-    static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
-
    public:
     StoreInst(BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~StoreInst() = default;
+
+    static StoreInstPtr CreatePtr(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     static void DoStoreValue(BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
@@ -63,12 +63,11 @@ class LoadInst;
 using LoadInstPtr = std::shared_ptr<LoadInst>;
 
 class LoadInst : public UnaryInstruction {
-   private:
-    static LoadInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
-
    public:
     LoadInst(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~LoadInst() = default;
+
+    static LoadInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
 
