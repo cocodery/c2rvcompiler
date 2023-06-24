@@ -208,24 +208,3 @@ if __name__ == '__main__':
     
     if args.asm:
         build_asm(args)
-        test_perf(args)
-
-    # using perf ?
-    # if args.all:
-    #     test_perf(args)
-
-
-    
-
-"""
-2 2
-3 1
-4 2
-4 4
-1 2
-2 3
-2 1
-3 2
-3 4
-3 1
-"""

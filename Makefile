@@ -125,26 +125,15 @@ run: build $(SYLIB_LL)
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
-	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
-	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
-	$(ECHO) $$?
 
 SPKARG	:= # -l --log=$(SINGLE_TEST_NAME).out.log -d
 
-rvrun:
-	$(BINARY) -S -o $(SINGLE_TEST_NAME).s $(SINGLE_TEST_NAME).sy
+rv:
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
 	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
-
-.PHONY: gdb
-gdb: build
-	$(GDB) -q --args $(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
-
-.PHONY: lldb
-lldb: build
-	$(LLDB) $(BINARY)
+	$(ECHO) $$?
 
 .PHONY: clean
 clean:

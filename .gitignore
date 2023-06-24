@@ -2,6 +2,8 @@
 .idea/
 
 build/
+
+# 用于引用第三方库
 ext/
 
 src/antlr/*
@@ -9,6 +11,7 @@ src/antlr/*
 !src/antlr/*.h
 !src/antlr/*.cpp
 
+# 调试文件
 *.dump
 *.ll
 *.s
