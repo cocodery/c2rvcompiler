@@ -1,8 +1,11 @@
 .vscode/
 .idea/
+.cache/
 
 build/
 ext/
+
+*.json
 
 src/antlr/*
 !src/antlr/*.g4
