@@ -177,7 +177,6 @@ void uop_lla::toasm(pblock *pb) {
 }
 
 void uop_ld::toasm(pblock *pb) {
-    spack spk;
     auto to = rd_->store_where();
     auto rb = lea(pb, rb_, riscv::t2);
 
@@ -320,7 +319,6 @@ void uop_st_stk::toasm(pblock *pb) {
 }
 
 void uop_ld_l::toasm(pblock *pb) {
-    spack spk;
     auto to = rd_->store_where();
 
     auto rv = new rv_lw_l(to, gen_glb_val_label(glb_idx_).c_str());
@@ -338,7 +336,6 @@ void uop_st_l::toasm(pblock *pb) {
 }
 
 void uop_fld::toasm(pblock *pb) {
-    spack spk;
     auto to = rd_->store_where();
     auto rb = lea(pb, rb_, riscv::t2);
 
@@ -389,7 +386,6 @@ void uop_fst::toasm(pblock *pb) {
 }
 
 void uop_fld_l::toasm(pblock *pb) {
-    spack spk;
     auto to = rd_->store_where();
 
     auto rv = new rv_fsw_l(to, gen_glb_val_label(glb_idx_).c_str(), riscv::t2);
@@ -407,7 +403,6 @@ void uop_fst_l::toasm(pblock *pb) {
 }
 
 void uop_fld_ll::toasm(pblock *pb) {
-    spack spk;
     auto to = rd_->store_where();
 
     auto rv = new rv_fld_l(to, gen_loc_cst_label(loc_idx_).c_str(), riscv::t2);

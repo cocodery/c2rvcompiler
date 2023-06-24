@@ -31,11 +31,13 @@ class itrace {
    public:
     itrace() = default;
 
-    void set_from(uop_general *from);
-    uop_general *from() const;
+    virtual void set_from(uop_general *from) final;
+    virtual uop_general *from() const final;
 
-    void add_ref(uop_general *ref);
-    const std::unordered_set<uop_general *> &refs() const;
+    virtual void add_ref(uop_general *ref) final;
+    virtual const std::unordered_set<uop_general *> &refs() const final;
+
+    virtual ~itrace() = default;
 };
 
 // call trace 调用追踪
@@ -62,6 +64,8 @@ class ctrace {
 
     void set_pstk(size_t flg);
     size_t pstk() const;
+
+    virtual ~ctrace() = default;
 };
 
 // 活跃区间
@@ -80,6 +84,8 @@ class live_info {
 
     void set_end(size_t t);
     size_t end() const;
+
+    virtual ~live_info() = default;
 };
 
 struct detailed_live_info {
@@ -104,6 +110,8 @@ class stk_info {
 
     void set_off(off64_t off);
     off64_t off() const;
+
+    virtual ~stk_info() = default;
 };
 
 class alc_info {
@@ -122,6 +130,8 @@ class alc_info {
 
     void set_rregid(size_t inp);
     size_t rregid() const;
+
+    virtual ~alc_info() = default;
 };
 
 // 虚拟寄存器

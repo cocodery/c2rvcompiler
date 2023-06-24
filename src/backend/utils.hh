@@ -115,7 +115,10 @@ static inline std::string gen_loc_cst_label(size_t value) {
     // for float
 
     char buf[16] = {0};
-    sprintf(buf, ".LC" "%08lx", value);
+    sprintf(buf,
+            ".LC"
+            "%08lx",
+            value);
     return buf;
 }
 

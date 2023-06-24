@@ -4,7 +4,7 @@
 
 enum class VREG_KIND { ZERO, IMM, REG, STK, LOC, PRM, SPEC };
 
-enum class VREG_TYPE { FLT, PTR, INT, ARR};
+enum class VREG_TYPE { FLT, PTR, INT, ARR };
 
 enum class COMP_KIND {
     // 比较枚举对应 opCode

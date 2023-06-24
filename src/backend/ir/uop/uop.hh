@@ -28,6 +28,8 @@ class uop_general : public serializable {
     virtual void toasm(pblock *pb) = 0;
     virtual void calcu_lvif(detailed_live_info &dli) {}
     virtual void givr(std::unordered_set<virt_reg *> &vec) {}
+
+    virtual ~uop_general() = default;
 };
 
 class uop_ret : public uop_general {

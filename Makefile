@@ -33,7 +33,7 @@ NPROC			:= $(shell nproc)
 ALL_SRC			:= $(shell find src -name '*.cpp' -or -name '*.hh')
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
-CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug"
+CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug" # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
 
 ifeq ($(MOD),ASAN)
 # 打开 address sanitizer
@@ -129,20 +129,47 @@ run: build $(SYLIB_LL)
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
 	$(SPIKE) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
 	$(ECHO) $$?
-	
+
+SPKARG	:= # -l --log=$(SINGLE_TEST_NAME).out.log -d
 
 rvrun:
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s $(SINGLE_TEST_NAME).sy
 	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
-	$(SPIKE) -l --log=$(SINGLE_TEST_NAME).out.log -d $(PK) $(SINGLE_TEST_NAME).out
+	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
+
+.PHONY: gdb
+gdb: build
+	$(GDB) -q --args $(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+
+.PHONY: lldb
+lldb: build
+	$(LLDB) $(BINARY)
+
+.PHONY: clean
+clean:
+	-@rm -rf $(BUILD_DIR)
+
+.PHONY: clean-test
+clean-test:
+	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR) 
+	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).{s,S} $(SINGLE_TEST_NAME).{out,out.log,dump} *.ir.s
+
+.PHONY: clean-all
+clean-all: clean clean-test
+
+$(FORMAT_TARGETS): $(FORMAT)/%:%
+	$(FORMATTER) $^ -i
+ 
+.PHONY: format-all
+format-all: $(FORMAT_TARGETS)
 
 .PHONY: all asm
 
 .ONESHELL:
 all: build
 	@success=0
-	@for file in $(sort $(TEST_CASES))
+	for file in $(sort $(TEST_CASES))
 	do
 		ASM=$${file%.*}.s
 		LOG=$${file%.*}.log
@@ -188,7 +215,7 @@ all: build
 .ONESHELL:
 asm: build
 	@success=0
-	@for file in $(sort $(TEST_CASES))
+	for file in $(sort $(TEST_CASES))
 	do
 		ASM=$${file%.*}.s
 		LOG=$${file%.*}.log
@@ -229,30 +256,3 @@ asm: build
 			fi
 		fi
 	done
-
-.PHONY: gdb
-gdb: build
-	$(GDB) -q --args $(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
-
-.PHONY: lldb
-lldb: build
-	$(LLDB) $(BINARY)
-
-.PHONY: clean
-clean:
-	-@rm -rf $(BUILD_DIR)
-
-.PHONY: clean-test
-clean-test:
-	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR) 
-	-@rm -rf $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).run.ll $(SINGLE_TEST_NAME).{s,S} $(SINGLE_TEST_NAME).{out,out.log,dump} *.ir.s
-
-.PHONY: clean-all
-clean-all: clean clean-test
-
-$(FORMAT_TARGETS): $(FORMAT)/%:%
-	$(FORMATTER) $^ -i
- 
-.PHONY: format-all
-format-all: $(FORMAT_TARGETS)
-

@@ -521,7 +521,8 @@ void cross_internal_manager::nftoir() {
                     auto nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, res->GetVariableIdx());
 
                     virt_reg *off;
-                    auto &&offset = llinst->GetOffList().back();
+                    auto &&offlist = llinst->GetOffList();
+                    auto &&offset = offlist.back();
                     if (offset->IsVariable()) {
                         auto var = std::dynamic_pointer_cast<Variable>(offset);
                         Assert(var, "bad dynamic cast");

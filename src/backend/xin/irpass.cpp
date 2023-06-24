@@ -17,8 +17,8 @@ void cross_internal_manager::irpass() {
     // }
     // rl_pgrs_.bbs_.push_back(std::move(retblk));
 
-    for (auto &&lrbb: rl_pgrs_.bbs_) {
-        for (auto &&uop: lrbb->ops_) {
+    for (auto &&lrbb : rl_pgrs_.bbs_) {
+        for (auto &&uop : lrbb->ops_) {
             // uop->set_uop_idx(uop_idx);
             uop->trace_call();
             uop->trace_inst();
@@ -27,6 +27,4 @@ void cross_internal_manager::irpass() {
             // uop_idx += 1;
         }
     }
-
-    
 }

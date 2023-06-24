@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IR.hh"
-#include "../ir/bbtype.hh"
 #include "../asm/progress.hh"
+#include "../ir/bbtype.hh"
+#include "IR.hh"
 
 // cross internal manager
 class cross_internal_manager {

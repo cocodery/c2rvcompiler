@@ -9,11 +9,10 @@ class rl_basicblock {
     GETTER_SETTER(lbid, size_t);
 
    public:
-    
     detailed_live_info dli;
-    
+
     std::unordered_set<size_t> successer;
-    
+
     std::unordered_set<size_t> dominator;
 
     std::list<std::unique_ptr<uop_general>> ops_;

@@ -143,9 +143,7 @@ void uop_ld_l::format_str(FILE *fp) {
 void uop_st_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::INT:
-    auto x = rd_->c_str();
-    auto y =gen_glb_val_label(glb_idx_).c_str();
-    fprintf(fp, "sw %s, %s, t2", x, y);
+    fprintf(fp, "sw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }
