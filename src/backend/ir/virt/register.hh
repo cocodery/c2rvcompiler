@@ -14,6 +14,7 @@
 
 class uop_general;
 class pblock;
+class rl_progress;
 
 struct spack {
     bool t1{false};
@@ -30,11 +31,13 @@ class itrace {
    public:
     itrace() = default;
 
-    void set_from(uop_general *from);
-    uop_general *from() const;
+    virtual void set_from(uop_general *from) final;
+    virtual uop_general *from() const final;
 
-    void add_ref(uop_general *ref);
-    const std::unordered_set<uop_general *> &refs() const;
+    virtual void add_ref(uop_general *ref) final;
+    virtual const std::unordered_set<uop_general *> &refs() const final;
+
+    virtual ~itrace() = default;
 };
 
 // call trace 调用追踪
@@ -61,6 +64,8 @@ class ctrace {
 
     void set_pstk(size_t flg);
     size_t pstk() const;
+
+    virtual ~ctrace() = default;
 };
 
 // 活跃区间
@@ -72,11 +77,21 @@ class live_info {
    public:
     live_info() = default;
 
+    bool stkpp_{false};
+
     void set_begin(size_t t);
     size_t begin() const;
 
     void set_end(size_t t);
     size_t end() const;
+
+    virtual ~live_info() = default;
+};
+
+struct detailed_live_info {
+    std::unordered_set<size_t> live_out;
+    std::unordered_set<size_t> ue_var;
+    std::unordered_set<size_t> var_kill;
 };
 
 class stk_info {
@@ -95,6 +110,8 @@ class stk_info {
 
     void set_off(off64_t off);
     off64_t off() const;
+
+    virtual ~stk_info() = default;
 };
 
 class alc_info {
@@ -113,6 +130,8 @@ class alc_info {
 
     void set_rregid(size_t inp);
     size_t rregid() const;
+
+    virtual ~alc_info() = default;
 };
 
 // 虚拟寄存器
@@ -226,7 +245,7 @@ class vr_allocor {
      * for better assignment, some regs that won't be use or free in some interval
      * could be assign to some virtual regs
      */
-    void plan_reg();
+    void plan_reg(rl_progress &rlp);
 
    public:
     size_t total_stk_len{0};

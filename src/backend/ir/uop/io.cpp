@@ -1,3 +1,4 @@
+#include "../../asm/riscv/def.hh"
 #include "../../utils.hh"
 #include "Logs.hh"
 #include "uop.hh"
@@ -29,7 +30,7 @@ void uop_call::format_str(FILE *fp) {
 
 void uop_li::format_str(FILE *fp) {
     //
-    fprintf(fp, "li %s, %ld", rd_->c_str(), imm_);
+    fprintf(fp, "li %s, %d", rd_->c_str(), imm_);
 }
 
 void uop_mv::format_str(FILE *fp) {
@@ -56,7 +57,10 @@ void uop_cvtw2s::format_str(FILE *fp) {
 }
 
 void uop_b::format_str(FILE *fp) {
-    //
+    if (ontrue_) {
+        fprintf(fp, "bnez %s, %s", cond_->c_str(), gen_pblk_label(lbid_).c_str());
+        return;
+    }
     fprintf(fp, "beqz %s, %s", cond_->c_str(), gen_pblk_label(lbid_).c_str());
 }
 
@@ -124,6 +128,10 @@ void uop_st::format_str(FILE *fp) {
     }
 }
 
+void uop_ld_stk::format_str(FILE *fp) { fprintf(fp, "ld %s, %s", gpr[rd_], rb_->c_str()); }
+
+void uop_st_stk::format_str(FILE *fp) { fprintf(fp, "sd %s, %s", gpr[rd_], rb_->c_str()); }
+
 void uop_ld_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::INT:
@@ -135,7 +143,7 @@ void uop_ld_l::format_str(FILE *fp) {
 void uop_st_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::INT:
-    fprintf(fp, "sw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    fprintf(fp, "sw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }
@@ -159,7 +167,7 @@ void uop_fst::format_str(FILE *fp) {
 void uop_fld_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "flw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    fprintf(fp, "flw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }
@@ -167,7 +175,7 @@ void uop_fld_l::format_str(FILE *fp) {
 void uop_fst_l::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "fsw %s, %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str(), rt_->c_str());
+    fprintf(fp, "fsw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
     //         break;
     // }
 }

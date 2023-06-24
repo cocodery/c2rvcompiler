@@ -5,6 +5,9 @@
 code_gen::code_gen(const char *path, CompilationUnit &comp_unit)
     : env_(), fs_(path, std::ios::out), comp_unit_(comp_unit) {
     Assert(fs_, "can not open file %s", path);
+
+    std::fstream fs("dbg.ir.s", std::ios::out);
+    fs << "# for ir debug" << std::endl;
 }
 
 code_gen::~code_gen() {
@@ -14,7 +17,7 @@ code_gen::~code_gen() {
 
 void code_gen::gen_env() {
     auto &&nvmap = comp_unit_.getGlbTable().GetNameValueMap();
-    for (auto &&pair: nvmap) {
+    for (auto &&pair : nvmap) {
         if (pair.second->IsGlobalValue()) {
             auto gvp = std::dynamic_pointer_cast<GlobalValue>(pair.second);
             Assert(gvp, "bad dynamic cast");

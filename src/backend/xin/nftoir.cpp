@@ -34,42 +34,43 @@ void cross_internal_manager::nftoir() {
         if (vartype->IsPointer()) {
             auto nwvr = rl_pgrs_.valc_.alloc_prm(VREG_TYPE::PTR, var->GetVariableIdx(), pa.i);
             if (pa.i < 8) {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.i);
+                nwvr->set_rregid(pa.i + riscv::a0);
             } else {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.i);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
 
+            nwvr->set_confirm(true);
             rl_pgrs_.params_.push_back(nwvr);
             pa.i += 1;
         } else if (vartype->IntType()) {
             auto nwvr = rl_pgrs_.valc_.alloc_prm(VREG_TYPE::INT, var->GetVariableIdx(), pa.i);
             if (pa.i < 8) {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.i);
+                nwvr->set_rregid(pa.i + riscv::a0);
             } else {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.i);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
+
+            nwvr->set_confirm(true);
             rl_pgrs_.params_.push_back(nwvr);
             pa.i += 1;
         } else if (vartype->FloatType()) {
             auto nwvr = rl_pgrs_.valc_.alloc_prm(VREG_TYPE::FLT, var->GetVariableIdx(), pa.f);
             if (pa.f < 8) {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.f);
+                nwvr->set_rregid(pa.f + riscv::fa0);
             } else {
-                nwvr->set_confirm(true);
                 nwvr->set_param_pos(pa.f);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
 
+            nwvr->set_confirm(true);
             rl_pgrs_.params_.push_back(nwvr);
             pa.f += 1;
         } else {
@@ -80,6 +81,22 @@ void cross_internal_manager::nftoir() {
     std::unordered_map<size_t, size_t> reidx_lbmap;
 
     for (auto &&bb : fptr_->TopoSortFromEntry()) {
+        auto curbb_lbid = bb->GetBlockIdx();
+        reidx_lbmap[curbb_lbid] = file_scope_label_alloc();
+    }
+    auto &&topo = fptr_->TopoSortFromEntry();
+    auto bbit = topo.begin();
+
+    while (bbit != topo.end()) {
+        auto &&bb = (*bbit);
+        ++bbit;
+        size_t nxtlbid;
+        if (bbit == topo.end()) {
+            nxtlbid = reidx_lbmap[bb->GetBlockIdx()];
+        } else {
+            nxtlbid = reidx_lbmap[(*bbit)->GetBlockIdx()];
+        }
+
         auto &&rlbb = std::make_unique<rl_basicblock>();
         auto &&lst = rlbb->ops_;
 
@@ -88,10 +105,19 @@ void cross_internal_manager::nftoir() {
         if (auto fnd = reidx_lbmap.find(curbb_lbid); fnd != reidx_lbmap.end()) {
             rlbb->set_lbid(fnd->second);
         } else {
-            rlbb->set_lbid(file_scope_label_alloc());
-            reidx_lbmap[curbb_lbid] = rlbb->get_lbid();
+            panic("unexpected");
         }
         rl_pgrs_.lbmap_[rlbb->get_lbid()].bbp_ = rlbb.get();
+
+        for (auto &&succ : bb->GetSuccessors()) {
+            auto idx = succ->GetBlockIdx();
+            rlbb->successer.insert(reidx_lbmap[idx]);
+        }
+
+        for (auto &&succ : bb->GetDominatorSet()) {
+            auto idx = succ->GetBlockIdx();
+            rlbb->dominator.insert(reidx_lbmap[idx]);
+        }
 
         for (auto &&inst : bb->GetInstList()) {
             const auto opcode = inst->GetOpCode();
@@ -196,8 +222,7 @@ void cross_internal_manager::nftoir() {
                     if (auto fnd = reidx_lbmap.find(curtgt_lbid); fnd != reidx_lbmap.end()) {
                         op->set_lbid(fnd->second);
                     } else {
-                        op->set_lbid(file_scope_label_alloc());
-                        reidx_lbmap[curtgt_lbid] = op->get_lbid();
+                        panic("unexpected");
                     }
 
                     // 记录一次对标签的引用
@@ -212,9 +237,21 @@ void cross_internal_manager::nftoir() {
                     auto llinst = std::dynamic_pointer_cast<BranchInst>(inst);
                     Assert(llinst, "bad dynamic cast");
 
+                    bool ontrue = false;
+
                     // 获取条件，构造标签
                     auto &&cond = llinst->GetCondition();
-                    auto tgid = llinst->GetFalseTarget()->GetBlockIdx();
+                    size_t tgid = 0;
+                    auto ftgid = llinst->GetFalseTarget()->GetBlockIdx();
+                    auto ttgid = llinst->GetTrueTarget()->GetBlockIdx();
+
+                    if (nxtlbid == reidx_lbmap[ftgid]) {
+                        ontrue = true;
+                        tgid = ttgid;
+                    } else if (nxtlbid == reidx_lbmap[ttgid]) {
+                        ontrue = false;
+                        tgid = ftgid;
+                    }
 
                     if (cond->IsVariable()) {
                         // 如果条件是一个变量
@@ -224,6 +261,7 @@ void cross_internal_manager::nftoir() {
 
                         // 构造指令
                         auto op = std::make_unique<uop_b>();
+                        op->set_ontrue(ontrue);
 
                         // 条件应当已经存在
                         auto evr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
@@ -232,8 +270,7 @@ void cross_internal_manager::nftoir() {
                         if (auto fnd = reidx_lbmap.find(tgid); fnd != reidx_lbmap.end()) {
                             op->set_lbid(fnd->second);
                         } else {
-                            op->set_lbid(file_scope_label_alloc());
-                            reidx_lbmap[tgid] = op->get_lbid();
+                            panic("unexpected");
                         }
 
                         // 记录一次对标签的引用
@@ -252,11 +289,26 @@ void cross_internal_manager::nftoir() {
                             auto op = std::make_unique<uop_j>();
 
                             // 设置目的地标签
-                            if (auto fnd = reidx_lbmap.find(tgid); fnd != reidx_lbmap.end()) {
+                            if (auto fnd = reidx_lbmap.find(ttgid); fnd != reidx_lbmap.end()) {
                                 op->set_lbid(fnd->second);
                             } else {
-                                op->set_lbid(file_scope_label_alloc());
-                                reidx_lbmap[tgid] = op->get_lbid();
+                                panic("unexpected");
+                            }
+
+                            // 记录一次对标签的引用
+                            rl_pgrs_.lbmap_[op->get_lbid()].refs_.push_back(op.get());
+
+                            // 将操作置入当前块中
+                            lst.push_back(std::move(op));
+                        } else {
+                            // 构造 J 指令
+                            auto op = std::make_unique<uop_j>();
+
+                            // 设置目的地标签
+                            if (auto fnd = reidx_lbmap.find(ftgid); fnd != reidx_lbmap.end()) {
+                                op->set_lbid(fnd->second);
+                            } else {
+                                panic("unexpected");
                             }
 
                             // 记录一次对标签的引用
@@ -283,9 +335,9 @@ void cross_internal_manager::nftoir() {
 
                     if (auto &&type = llinst->GetAllocaType(); type->IsScalar()) {
                         if (type->IntType()) {
-                            nwvr = rl_pgrs_.valc_.alloc_stk(VREG_TYPE::INT, 4);
+                            nwvr = rl_pgrs_.valc_.alloc_stk(VREG_TYPE::INT, 8);
                         } else if (type->FloatType()) {
-                            nwvr = rl_pgrs_.valc_.alloc_stk(VREG_TYPE::FLT, 4);
+                            nwvr = rl_pgrs_.valc_.alloc_stk(VREG_TYPE::FLT, 8);
                         } else {
                             panic("unexpected");
                         }
@@ -301,6 +353,7 @@ void cross_internal_manager::nftoir() {
                     // 该 mv 操作应该翻译成一个 add 或者 addi 操作
                     // 注意，是 64 位操作
                     auto recv = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, llinst->GetResult()->GetVariableIdx());
+                    recv->stkpp_ = true;
                     auto op = std::make_unique<uop_mv>();
                     op->set_rd(recv);
                     op->set_rs(nwvr);
@@ -468,7 +521,8 @@ void cross_internal_manager::nftoir() {
                     auto nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, res->GetVariableIdx());
 
                     virt_reg *off;
-                    auto &&offset = llinst->GetOffList().back();
+                    auto &&offlist = llinst->GetOffList();
+                    auto &&offset = offlist.back();
                     if (offset->IsVariable()) {
                         auto var = std::dynamic_pointer_cast<Variable>(offset);
                         Assert(var, "bad dynamic cast");
@@ -717,19 +771,20 @@ void cross_internal_manager::nftoir() {
                         }
                     }
 
-                    rl_pgrs_.valc_.ex_argl =
-                        std::max(rl_pgrs_.valc_.ex_argl, (pa.f > 8 ? pa.f - 8 : 0) + (pa.i > 8 ? pa.i - 8 : 0));
+                    auto &&extra = rl_pgrs_.valc_.ex_argl;
+
+                    extra = std::max(extra, pa.pstk);
 
                     if (auto &&res = llinst->GetResult(); res != nullptr) {
                         virt_reg *retvr;
                         if (res->GetBaseType()->FloatType()) {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
-                            retvr->set_rregid(riscv::fa0);
+                            // retvr->set_rregid(riscv::fa0);
                         } else {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
-                            retvr->set_rregid(riscv::a0);
+                            // retvr->set_rregid(riscv::a0);
                         }
-                        retvr->set_confirm(true);
+                        // retvr->set_confirm(true);
                         op0->set_retval(retvr);
                     }
 

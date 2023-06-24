@@ -23,7 +23,6 @@ class pblock {
     void push(asm_inst *inst);
 
     std::list<std::unique_ptr<asm_inst>> &ilst();
-
 };
 
 // asm basic block progress

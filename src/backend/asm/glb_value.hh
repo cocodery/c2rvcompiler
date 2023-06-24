@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstddef>
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
 class glb_value {
     const size_t glb_idx_;

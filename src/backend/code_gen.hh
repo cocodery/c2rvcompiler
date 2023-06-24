@@ -8,7 +8,6 @@
 #include "asm/env.hh"
 
 class code_gen {
-
     asm_env env_;
 
     std::fstream fs_;
@@ -21,13 +20,13 @@ class code_gen {
 
     /**
      * @brief 生成 env
-     * 
+     *
      */
     void gen_env();
 
     /**
      * @brief 生成 asm 文件
-     * 
+     *
      */
     void gen_asm();
 };

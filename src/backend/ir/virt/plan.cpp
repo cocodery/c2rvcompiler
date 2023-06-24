@@ -3,17 +3,30 @@
 
 #include "../../asm/riscv/def.hh"
 #include "../../utils.hh"
+#include "../bbtype.hh"
 #include "Logs.hh"
 #include "register.hh"
+
+struct rpack {
+    size_t *cur_rinfo;
+    bool *cur_inuse;
+};
 
 class ralcor {
     size_t cur_rinfo[64] = {0};
     bool cur_inuse[64] = {0};
 
    public:
+    rpack curinfo() { return {cur_rinfo, cur_inuse}; }
+
+    void set(virt_reg *vr, rid_t rid) {
+        cur_inuse[rid] = true;
+        cur_rinfo[rid] = vr->value();
+    }
+
     bool try_alc(virt_reg *vr) {
         static constexpr size_t i_gpr[] = {
-            riscv::s1, riscv::s2, riscv::s3,  riscv::s4,  riscv::s5, riscv::s6, riscv::s7, riscv::s8,
+            riscv::s1, riscv::s2,  riscv::s3,  riscv::s4, riscv::s5, riscv::s6, riscv::s7, riscv::s8,
             riscv::s9, riscv::s10, riscv::s11, riscv::t3, riscv::t4, riscv::t5, riscv::t6,
         };
 
@@ -67,64 +80,273 @@ class ralcor {
     }
 };
 
-void vr_allocor::plan_reg() {
-    ralcor alcer;
+void vr_allocor::plan_reg(rl_progress &rlp) {
+    // ralcor alcer;
 
-    size_t curpos = 0;
+    // size_t curpos = 0;
 
-    using pqelem_t = std::pair<size_t, virt_reg *>;
+    std::unordered_map<size_t, virt_reg *> ctx;
 
-    std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_begin;
-    std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
+    // using pqelem_t = std::pair<size_t, virt_reg *>;
 
-    for (auto &&pair : vr_map_) {
-        auto &&reg = pair.second;
-        if (not reg->confirm()) {
-            sort_begin.emplace(reg->begin(), reg);
-            sort_end.emplace(reg->end(), reg);
+    // std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_begin;
+    // std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
+
+    // for (auto &&pair : vr_map_) {
+    //     auto &&reg = pair.second;
+    //     if (not reg->confirm()) {
+    //         sort_begin.emplace(reg->begin(), reg);
+    //         sort_end.emplace(reg->end(), reg);
+    //     }
+    // }
+
+    // while (not sort_begin.empty() or not sort_end.empty()) {
+    //     for (auto &&bb : rlp.bbs_) {
+    //         auto nxtit = bb->ops_.begin();
+    //         while (nxtit != bb->ops_.end()) {
+    //             auto curit = nxtit++;
+    //             auto &&op = (*curit);
+
+    //             auto curpos = op->get_uop_idx();
+
+    //             while (not sort_end.empty() and sort_end.top().first <= curpos) {
+    //                 auto info = sort_end.top().second;
+    //                 alcer.rls(info->value());
+    //                 sort_end.pop();
+    //             }
+
+    //             if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
+    //                 auto &&cipk = alcer.curinfo();
+    //                 const size_t len = 64;
+
+    //                 for (size_t i = 0; i < len; ++i) {
+    //                     if (cipk.cur_inuse[i]) {
+    //                         virt_reg *stk = nullptr;
+    //                         if (auto fnd = ctx.find(i); fnd == ctx.end()) {
+    //                             stk = alloc_stk(VREG_TYPE::PTR, 8);
+    //                             ctx[i] = stk;
+    //                         } else {
+    //                             stk = fnd->second;
+    //                         }
+
+    //                         auto nwst = std::make_unique<uop_st_stk>();
+    //                         nwst->set_rb(stk);
+    //                         nwst->set_rd(i);
+
+    //                         bb->ops_.insert(curit, std::move(nwst));
+
+    //                         auto nwld = std::make_unique<uop_ld_stk>();
+    //                         nwld->set_rb(stk);
+    //                         nwld->set_rd(i);
+
+    //                         bb->ops_.insert(nxtit, std::move(nwld));
+    //                     }
+    //                 }
+    //             }
+
+    //             while (not sort_begin.empty() and sort_begin.top().first <= curpos) {
+    //                 auto vr = sort_begin.top().second;
+    //                 auto res = alcer.try_alc(vr);
+
+    //                 if (not res) {
+    //                     vr->set_onstk(true);
+
+    //                     auto sptr = std::make_unique<stk_info>();
+    //                     auto sraw = sptr.get();
+
+    //                     switch (vr->type()) {
+    //                         case VREG_TYPE::FLT:
+    //                         case VREG_TYPE::INT:
+    //                             sptr->set_slen(4);
+    //                             break;
+    //                         case VREG_TYPE::PTR:
+    //                             sptr->set_slen(8);
+    //                             break;
+    //                         default:
+    //                             panic("unexpected");
+    //                     }
+
+    //                     vr->set_sinfo(sptr);
+    //                     vr->set_confirm(true);
+    //                     vr->set_rregid(riscv::zero);
+
+    //                     stk_map_[(uxlen_t)sraw] = vr;
+    //                 }
+
+    //                 sort_begin.pop();
+    //             }
+
+    //             // curpos += 1;
+    //         }
+    //     }
+    // }
+
+    for (auto &&bb : rlp.bbs_) {
+        for (auto &&uop : bb->ops_) {
+            uop->calcu_lvif(bb->dli);
         }
     }
 
-    while (not sort_begin.empty() or not sort_end.empty()) {
-        while (not sort_end.empty() and sort_end.top().first <= curpos) {
-            auto info = sort_end.top().second;
-            alcer.rls(info->value());
-            sort_end.pop();
-        }
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (auto &&bb : rlp.bbs_) {
+            auto &&old = bb->dli.live_out;
+            std::unordered_set<size_t> nwset;
+            for (auto &&m : bb->successer) {
+                auto &&succ = rlp.lbmap_[m].bbp_;
+                Assert(succ, "not generate well");
 
-        while (not sort_begin.empty() and sort_begin.top().first <= curpos) {
-            auto vr = sort_begin.top().second;
-            auto res = alcer.try_alc(vr);
+                auto &&cur = succ->dli;
 
-            if (not res) {
-                vr->set_onstk(true);
-
-                auto sptr = std::make_unique<stk_info>();
-                auto sraw = sptr.get();
-
-                switch (vr->type()) {
-                    case VREG_TYPE::FLT:
-                    case VREG_TYPE::INT:
-                        sptr->set_slen(4);
-                        break;
-                    case VREG_TYPE::PTR:
-                        sptr->set_slen(8);
-                        break;
-                    default:
-                        panic("unexpected");
+                for (auto &&v : cur.live_out) {
+                    if (cur.var_kill.find(v) == cur.var_kill.end()) {
+                        nwset.insert(v);
+                    }
                 }
 
-                vr->set_sinfo(sptr);
-                vr->set_confirm(true);
-                vr->set_rregid(riscv::zero);
-
-                stk_map_[(uxlen_t)sraw] = vr;
+                nwset.insert(cur.ue_var.begin(), cur.ue_var.end());
             }
 
-            sort_begin.pop();
+            for (auto &&v : nwset) {
+                if (old.find(v) == old.end()) {
+                    changed = true;
+                    old.insert(v);
+                }
+            }
+        }
+    }
+
+    std::unordered_map<size_t, size_t> occupy_map;
+
+    for (auto &&bb : rlp.bbs_) {
+        ralcor nst_alcr;
+
+        size_t uop_idx = 1;
+        std::unordered_set<virt_reg *> scope_vrg;
+        for (auto &&reg : bb->dli.live_out) {
+            auto vr = get_reg(reg);
+            scope_vrg.insert(vr);
+            if (vr->confirm()) nst_alcr.set(vr, vr->rregid());
         }
 
-        curpos += 1;
+        for (auto &&uop : bb->ops_) {
+            uop->set_uop_idx(uop_idx);
+            uop->givr(scope_vrg);
+            uop_idx += 1;
+        }
+
+        for (auto &&reg : scope_vrg) {
+            if (reg->confirm()) nst_alcr.set(reg, reg->rregid());
+            reg->set_begin(1);
+        }
+
+        for (auto &&reg : vr_map_) {
+            if (reg.second->kind() == VREG_KIND::PRM) {
+                if (reg.second->value() < 8) {
+                    if (reg.second->type() == VREG_TYPE::FLT) {
+                        nst_alcr.set(reg.second, reg.second->rregid());
+                    } else if (reg.second->type() == VREG_TYPE::INT or reg.second->type() == VREG_TYPE::PTR) {
+                        nst_alcr.set(reg.second, reg.second->rregid());
+                    } else {
+                        panic("unexpected");
+                    }
+                }
+            }
+        }
+
+        for (auto &&uop : bb->ops_) {
+            uop->live_info();
+        }
+
+        using pqelem_t = std::pair<size_t, virt_reg *>;
+
+        std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_begin;
+        std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
+
+        for (auto &&reg : scope_vrg) {
+            if (not reg->confirm()) {
+                sort_begin.emplace(reg->begin(), reg);
+                sort_end.emplace(reg->end(), reg);
+            }
+        }
+
+        auto nxtit = bb->ops_.begin();
+
+        while (nxtit != bb->ops_.end()) {
+            auto curit = nxtit++;
+            auto &&op = (*curit);
+
+            auto curpos = op->get_uop_idx();
+
+            while (not sort_end.empty() and sort_end.top().first <= curpos) {
+                auto info = sort_end.top().second;
+                if (bb->dli.live_out.find(info->value()) == bb->dli.live_out.end()) nst_alcr.rls(info->value());
+                sort_end.pop();
+            }
+
+            if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
+                auto &&cipk = nst_alcr.curinfo();
+                const size_t len = 64;
+
+                for (size_t i = 0; i < len; ++i) {
+                    if (cipk.cur_inuse[i]) {
+                        virt_reg *stk = nullptr;
+                        if (auto fnd = ctx.find(i); fnd == ctx.end()) {
+                            stk = alloc_stk(VREG_TYPE::PTR, 8);
+                            ctx[i] = stk;
+                        } else {
+                            stk = fnd->second;
+                        }
+
+                        auto nwst = std::make_unique<uop_st_stk>();
+                        nwst->set_rb(stk);
+                        nwst->set_rd(i);
+
+                        bb->ops_.insert(curit, std::move(nwst));
+
+                        auto nwld = std::make_unique<uop_ld_stk>();
+                        nwld->set_rb(stk);
+                        nwld->set_rd(i);
+
+                        bb->ops_.insert(nxtit, std::move(nwld));
+                    }
+                }
+            }
+
+            while (not sort_begin.empty() and sort_begin.top().first <= curpos) {
+                auto vr = sort_begin.top().second;
+                auto res = nst_alcr.try_alc(vr);
+
+                if (not res) {
+                    vr->set_onstk(true);
+
+                    auto sptr = std::make_unique<stk_info>();
+                    auto sraw = sptr.get();
+
+                    switch (vr->type()) {
+                        case VREG_TYPE::FLT:
+                        case VREG_TYPE::INT:
+                            sptr->set_slen(8);
+                            break;
+                        case VREG_TYPE::PTR:
+                            vr->stkpp_ = true;
+                            sptr->set_slen(8);
+                            break;
+                        default:
+                            panic("unexpected");
+                    }
+
+                    vr->set_sinfo(sptr);
+                    vr->set_confirm(true);
+                    vr->set_rregid(riscv::zero);
+
+                    stk_map_[(uxlen_t)sraw] = vr;
+                }
+
+                sort_begin.pop();
+            }
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 #include "progress.hh"
 
 #include "../utils.hh"
+#include "riscv/asm.hh"
 
 pblock::pblock(size_t lbidx, size_t reserve) : lbidx_(lbidx), insts_(reserve) { insts_.clear(); }
 
@@ -37,4 +38,12 @@ void progress::push(std::unique_ptr<pblock> &pblk) { pblks_.push_back(std::move(
 
 std::unique_ptr<pblock> &progress::front() { return pblks_.front(); }
 
-std::unique_ptr<pblock> &progress::back() { return pblks_.back(); }
+std::unique_ptr<pblock> &progress::back() {
+    for (auto &&pblk : pblks_) {
+        auto &&last = pblk->ilst().back();
+        if (auto p = dynamic_cast<rv_ret *>(last.get()); p != nullptr) {
+            return pblk;
+        }
+    }
+    return pblks_.back();
+}

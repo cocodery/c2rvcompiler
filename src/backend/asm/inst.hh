@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
@@ -20,4 +20,5 @@ class asm_inst {
     virtual std::string_view to_string() = 0;
     virtual std::string_view comment() = 0;
     virtual void set_comment(const char *comt) = 0;
+    virtual ~asm_inst() = default;
 };

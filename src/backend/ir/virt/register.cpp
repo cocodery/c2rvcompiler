@@ -90,6 +90,7 @@ VREG_KIND virt_reg::kind() const { return kind_; }
 uxlen_t virt_reg::value() const { return value_; }
 
 const std::unique_ptr<stk_info> &virt_reg::sinfo() const { return sinfo_; }
+
 void virt_reg::set_sinfo(std::unique_ptr<stk_info> &info) { sinfo_ = std::move(info); }
 
 size_t virt_reg::length() const {
@@ -118,7 +119,7 @@ virt_reg *vr_allocor::alloc_imm(uxlen_t value) {
         return fnd->second;
     }
 
-    auto ptr = std::make_unique<virt_reg>(VREG_KIND::IMM, VREG_TYPE::INT, value);
+    auto ptr = std::make_unique<virt_reg>(VREG_KIND::IMM, VREG_TYPE::INT, (int32_t)value);
     auto raw = ptr.get();
     imm_map_[value] = raw;
 
