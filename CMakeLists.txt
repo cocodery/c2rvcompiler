@@ -51,7 +51,7 @@ endif()
 
 # 设置编译参数
 add_compile_options(-std=c++17)
-add_compile_options(-O2 -g)
+add_compile_options(-O2)
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 # 包含头文件
@@ -60,3 +60,5 @@ include_directories(src/antlr)
 
 # 编译程序
 add_executable(${PROJECT_NAME} ${CXXSRC})
+
+target_link_libraries(${PROJECT_NAME} m)

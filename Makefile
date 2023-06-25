@@ -16,9 +16,9 @@ TMP				:= /tmp
 
 # 检查 rv 工具链情况
 ifneq ($(RISCV),)
-RVAS			:= riscv64-linux-gnu-as
-RVCC			:= riscv64-linux-gnu-gcc
-RVOD			:= riscv64-linux-gnu-objdump
+RVAS			:= $(RISCV)/bin/riscv64-unknown-elf-as
+RVCC			:= $(RISCV)/bin/riscv64-unknown-elf-gcc
+RVOD			:= $(RISCV)/bin/riscv64-unknown-elf-objdump
 SPIKE			:= $(RISCV)/bin/spike
 PK				:= $(RISCV)/riscv64-unknown-elf/bin/pk
 endif
@@ -30,7 +30,7 @@ $(shell mkdir -p $(BUILD_DIR))
 
 OS 				:= $(shell uname)
 NPROC			:= $(shell nproc)
-ALL_SRC			:= $(shell find src -name '*.cpp') $(shell find include -name '*.hh' -or -name '*.h')
+ALL_SRC			:= $(shell find src -name '*.cpp') $(shell find src -name '*.hh' -or -name '*.h')
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
 CMAKE_BUILD_VAR	:= # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
@@ -113,7 +113,7 @@ run: build $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
 
-SPKARG	:= -l --log=$(SINGLE_TEST_NAME).out.log # -d
+SPKARG	:= -l --log=$(SINGLE_TEST_NAME).out.log -d
 
 ll:
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
