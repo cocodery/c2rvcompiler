@@ -55,7 +55,7 @@ add_compile_options(-O2 -g)
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 # 包含头文件
-include_directories(include)
+include_directories(src/include)
 include_directories(src/antlr)
 
 # 编译程序
