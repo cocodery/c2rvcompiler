@@ -16,22 +16,26 @@ static inline size_t lea(pblock *pb, virt_reg *onstk, rid_t dst) {
             auto rv0 = new rv_ld(dst, riscv::fp, off);
             pb->push(rv0);
         } else {
-            auto rv0 = new rv_li(riscv::t0, off);
+            auto rv0 = new rv_li(dst, off);
             pb->push(rv0);
 
-            auto rv1 = new rv_ld(dst, riscv::fp, riscv::t0);
+            auto rv1 = new rv_add(dst, riscv::fp, dst);
             pb->push(rv1);
+
+            auto rv2 = new rv_ld(dst, dst, 0);
+            pb->push(rv2);
         }
         return dst;
     }
+
     if (imm_within(12, off)) {
         auto rv = new rv_addi(dst, riscv::fp, off);
         pb->push(rv);
     } else {
-        auto rv0 = new rv_li(riscv::t0, off);
+        auto rv0 = new rv_li(dst, off);
         pb->push(rv0);
 
-        auto rv1 = new rv_add(dst, riscv::fp, riscv::t0);
+        auto rv1 = new rv_add(dst, riscv::fp, dst);
         pb->push(rv1);
     }
     return dst;
@@ -46,11 +50,24 @@ void uop_set_iparam::toasm(pblock *pb) {
     spack spk;
     if (idx_ < 8) {
         auto arg = riscv::a0 + idx_;
+        if (rs_->kind() == VREG_KIND::STK) {
+            auto rv = new rv_ld(arg, riscv::fp, rs_->sinfo()->off());
+            pb->push(rv);
+            return;
+        }
         auto act = rs_->load(pb, spk, arg);
         if (act != arg) {
             auto rv = new rv_mv(arg, act);
             pb->push(rv);
         }
+        return;
+    }
+    if (rs_->kind() == VREG_KIND::STK) {
+        auto rv0 = new rv_ld(riscv::t0, riscv::fp, rs_->sinfo()->off());
+        pb->push(rv0);
+
+        auto rv1 = new rv_sd(riscv::t0, riscv::sp, pstk_ * 8);
+        pb->push(rv1);
         return;
     }
     auto act = rs_->load(pb, spk);
@@ -62,11 +79,24 @@ void uop_set_fparam::toasm(pblock *pb) {
     spack spk;
     if (idx_ < 8) {
         auto arg = riscv::fa0 + idx_;
+        if (rs_->kind() == VREG_KIND::STK) {
+            auto rv = new rv_flw(arg, riscv::fp, rs_->sinfo()->off());
+            pb->push(rv);
+            return;
+        }
         auto act = rs_->load(pb, spk, arg);
         if (act != arg) {
             auto rv = new rv_fmv_s(arg, act);
             pb->push(rv);
         }
+        return;
+    }
+    if (rs_->kind() == VREG_KIND::STK) {
+        auto rv0 = new rv_flw(riscv::ft0, riscv::fp, rs_->sinfo()->off());
+        pb->push(rv0);
+
+        auto rv1 = new rv_fsw(riscv::ft0, riscv::sp, pstk_ * 8);
+        pb->push(rv1);
         return;
     }
     auto act = rs_->load(pb, spk);
@@ -279,8 +309,26 @@ void uop_ld_stk::toasm(pblock *pb) {
     if (rd_ == riscv::zero) {
         return;
     }
-
+    
     auto off = rb_->sinfo()->off();
+
+    if (rd_ > 31) {
+        if (imm_within(12, off)) {
+            auto rv = new rv_flw(rd_, riscv::fp, off);
+            pb->push(rv);
+        } else {
+            auto rv0 = new rv_li(riscv::t0, off);
+            pb->push(rv0);
+
+            auto rv1 = new rv_add(riscv::t0, riscv::fp, riscv::t0);
+            pb->push(rv1);
+
+            auto rv2 = new rv_flw(rd_, riscv::t0, 0);
+            pb->push(rv2);
+        }
+        return;
+    }
+
     if (imm_within(12, off)) {
         auto rv = new rv_ld(rd_, riscv::fp, off);
         pb->push(rv);
@@ -303,6 +351,24 @@ void uop_st_stk::toasm(pblock *pb) {
     }
 
     auto off = rb_->sinfo()->off();
+
+    if (rd_ > 31) {
+        if (imm_within(12, off)) {
+            auto rv = new rv_fsw(rd_, riscv::fp, off);
+            pb->push(rv);
+        } else {
+            auto rv0 = new rv_li(riscv::t0, off);
+            pb->push(rv0);
+
+            auto rv1 = new rv_add(riscv::t0, riscv::fp, riscv::t0);
+            pb->push(rv1);
+
+            auto rv2 = new rv_fsw(rd_, riscv::t0, 0);
+            pb->push(rv2);
+        }
+        return;
+    }
+
     if (imm_within(12, off)) {
         auto rv = new rv_sd(rd_, riscv::fp, off);
         pb->push(rv);
@@ -666,7 +732,7 @@ void uop_bin::toasm(pblock *pb) {
         default:
             break;
     }
-
+    
     auto lhs = lhs_->load(pb, spk);
     auto rhs = rhs_->load(pb, spk);
 

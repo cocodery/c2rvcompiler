@@ -64,11 +64,7 @@ OUTPUT_IR  		:= $(addsuffix .ll,$(basename $(TEST_CASES)))
 
 SINGLE_TEST_NAME:= main
 
-PARGS			:= -s $(SYLIB_C)
-
-# make python test all fake targets
-PYALL			:= pyall
-PYALL_TARGETS	:= $(addprefix $(PYALL)/,$(MODE))
+PARGS			:= 
 
 # make python test llvmir fake targets
 PYLL			:= pyll
@@ -85,17 +81,11 @@ FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
 $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
-$(PYALL_TARGETS): $(PYALL)/%:$(TEST_DIR)/%
-	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -A $(PARGS) $(shell find $< -name "*.sy")
-
 $(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/%
-	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -l $(PARGS) $(shell find $< -name "*.sy")
+	@$(PY) $(PYTEST) -l -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(shell find $< -name "*.sy")
 
 $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
-	@$(PY) $(PYTEST) -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -a $(PARGS) $(shell find $< -name "*.sy")
-
-.PHONY: pyall
-pyall: $(SYLIB_LL) $(BINARY) $(PYALL_TARGETS)
+	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -s $(SYLIB_C) -x $(RVCC) -m "$(SPIKE) $(PK)" $(shell find $< -name "*.sy")
 
 .PHONY: pyll
 pyll:  $(SYLIB_LL) $(BINARY) $(PYLL_TARGETS)
@@ -126,7 +116,13 @@ run: build $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
 
-SPKARG	:= # -l --log=$(SINGLE_TEST_NAME).out.log -d
+SPKARG	:= -l --log=$(SINGLE_TEST_NAME).out.log # -d
+
+ll:
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
+	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
+	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
+	$(ECHO) $$?
 
 rv:
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
@@ -160,7 +156,6 @@ all: build
 	@success=0
 	for file in $(sort $(TEST_CASES))
 	do
-		ASM=$${file%.*}.s
 		LOG=$${file%.*}.log
 		RES=$${file%.*}.res
 		LL=$${file%.*}.ll
@@ -168,7 +163,7 @@ all: build
 		OUT=$${file%.*}.out
 		FILE=$${file##*/}
 		FILE=$${FILE%.*}
-		timeout 180s ./$(BINARY) -S -o $${ASM} -l $${LL} $${file}  >> $${LOG}
+		timeout 180s ./$(BINARY) -S -l $${LL} $${file}  >> $${LOG}
 		RETURN_VALUE=$$? 
 		if [ $$RETURN_VALUE = 124 ]; then
 			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Timeout\033[0m"
@@ -192,51 +187,6 @@ all: build
 			[ $${FINAL} ] && $(ECHO) "\n$${RETURN_VALUE}" >> $${RES} || $(ECHO) "$${RETURN_VALUE}" >> $${RES}
 
 			$(DIFF) -Z $${RES} $${OUT} >/dev/null 2>&1
-			if [ $$? != 0 ]; then
-				$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mWrong Answer\033[0m"
-			else
-				success=$$((success + 1))
-				$(ECHO) "\033[1;32mPASS:\033[0m $${FILE}"
-			fi
-		fi
-	done
-
-.ONESHELL:
-asm: build
-	@success=0
-	for file in $(sort $(TEST_CASES))
-	do
-		ASM=$${file%.*}.s
-		LOG=$${file%.*}.log
-		RES=$${file%.*}.res
-		IN=$${file%.*}.in
-		OUT=$${file%.*}.out
-		FILE=$${file##*/}
-		FILE=$${FILE%.*}
-		timeout 500s ./$(BINARY) -S -o $${ASM} $${file} >> $${LOG}
-		RETURN_VALUE=$$? 
-		if [ $$RETURN_VALUE = 124 ]; then
-			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Timeout\033[0m"
-			continue
-		else if [ $$RETURN_VALUE != 0 ]; then
-			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mCompile Error\033[0m"
-			continue
-			fi
-		fi
-		gcc -march=armv7-a $${ASM} sylib.o -o exec -static >> $${LOG} 2>&1
-		if [ $$? != 0 ]; then
-			$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mLink Error\033[0m"
-		else
-			if [ -f "$${IN}" ]; then
-				timeout 180s ./exec <$${IN} 2>>$${LOG} >$${RES}
-			else
-				timeout 180s ./exec 2>>$${LOG} >$${RES}
-			fi
-			RETURN_VALUE=$$?
-			FINAL=`tail -c 1 $${RES}`
-			[ $${FINAL} ] && $(ECHO) "\n$${RETURN_VALUE}" >> $${RES} || $(ECHO) "$${RETURN_VALUE}" >> $${RES}
-
-			diff -Z $${RES} $${OUT} >/dev/null 2>&1
 			if [ $$? != 0 ]; then
 				$(ECHO) "\033[1;31mFAIL:\033[0m $${FILE}\t\033[1;31mWrong Answer\033[0m"
 			else

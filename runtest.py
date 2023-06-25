@@ -134,7 +134,7 @@ def build_asm(args):
             continue
 
         # TODO: set march
-        cmd = ['/home/blur/gits/riscv-gnu-toolchain/build/bin/riscv64-unknown-elf-gcc', args.sylib, asmname, '-o', elfname]
+        cmd = [args.gcc, args.sylib, asmname, '-o', elfname]
 
         with open(logname, 'a') as logfile:
             resp = subprocess.run(cmd, stdout=logfile)
@@ -144,7 +144,11 @@ def build_asm(args):
             continue
 
         infile = subprocess.DEVNULL
-        cmd = ['/home/blur/gits/riscv-gnu-toolchain/build/bin/spike', '/home/blur/gits/riscv-gnu-toolchain/build/riscv64-unknown-elf/bin/pk', elfname]
+        cmd = []
+        for ss in args.sim.split(' '):
+            cmd.append(ss)
+        cmd.append(elfname)
+        
         if os.path.exists(inname):
             infile = open(inname, 'r')
 
@@ -183,18 +187,15 @@ def build_asm(args):
             print("\033[1;32mPASS:\033[0m {}".format(basename))
 
 
-def test_perf(args):
-    pass
-
-
 if __name__ == '__main__':
     parser.add_argument('filename', nargs='+')
     parser.add_argument('-l', '--llvmir',   action='store_true')
     parser.add_argument('-a', '--asm',      action='store_true')
-    parser.add_argument('-A', '--all',      action='store_true')
     parser.add_argument('-s', '--sylib',    action='store')
     parser.add_argument('-d', '--dir',      action='store' , required=True)
     parser.add_argument('-c', '--compiler', action='store' , required=True)
+    parser.add_argument('-x', '--gcc',      action='store')
+    parser.add_argument('-m', '--sim',      action='store')
 
     args = parser.parse_args()
 

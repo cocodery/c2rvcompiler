@@ -1,3 +1,4 @@
+#include <cstring>
 #include <queue>
 #include <vector>
 
@@ -81,105 +82,7 @@ class ralcor {
 };
 
 void vr_allocor::plan_reg(rl_progress &rlp) {
-    // ralcor alcer;
-
-    // size_t curpos = 0;
-
     std::unordered_map<size_t, virt_reg *> ctx;
-
-    // using pqelem_t = std::pair<size_t, virt_reg *>;
-
-    // std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_begin;
-    // std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
-
-    // for (auto &&pair : vr_map_) {
-    //     auto &&reg = pair.second;
-    //     if (not reg->confirm()) {
-    //         sort_begin.emplace(reg->begin(), reg);
-    //         sort_end.emplace(reg->end(), reg);
-    //     }
-    // }
-
-    // while (not sort_begin.empty() or not sort_end.empty()) {
-    //     for (auto &&bb : rlp.bbs_) {
-    //         auto nxtit = bb->ops_.begin();
-    //         while (nxtit != bb->ops_.end()) {
-    //             auto curit = nxtit++;
-    //             auto &&op = (*curit);
-
-    //             auto curpos = op->get_uop_idx();
-
-    //             while (not sort_end.empty() and sort_end.top().first <= curpos) {
-    //                 auto info = sort_end.top().second;
-    //                 alcer.rls(info->value());
-    //                 sort_end.pop();
-    //             }
-
-    //             if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
-    //                 auto &&cipk = alcer.curinfo();
-    //                 const size_t len = 64;
-
-    //                 for (size_t i = 0; i < len; ++i) {
-    //                     if (cipk.cur_inuse[i]) {
-    //                         virt_reg *stk = nullptr;
-    //                         if (auto fnd = ctx.find(i); fnd == ctx.end()) {
-    //                             stk = alloc_stk(VREG_TYPE::PTR, 8);
-    //                             ctx[i] = stk;
-    //                         } else {
-    //                             stk = fnd->second;
-    //                         }
-
-    //                         auto nwst = std::make_unique<uop_st_stk>();
-    //                         nwst->set_rb(stk);
-    //                         nwst->set_rd(i);
-
-    //                         bb->ops_.insert(curit, std::move(nwst));
-
-    //                         auto nwld = std::make_unique<uop_ld_stk>();
-    //                         nwld->set_rb(stk);
-    //                         nwld->set_rd(i);
-
-    //                         bb->ops_.insert(nxtit, std::move(nwld));
-    //                     }
-    //                 }
-    //             }
-
-    //             while (not sort_begin.empty() and sort_begin.top().first <= curpos) {
-    //                 auto vr = sort_begin.top().second;
-    //                 auto res = alcer.try_alc(vr);
-
-    //                 if (not res) {
-    //                     vr->set_onstk(true);
-
-    //                     auto sptr = std::make_unique<stk_info>();
-    //                     auto sraw = sptr.get();
-
-    //                     switch (vr->type()) {
-    //                         case VREG_TYPE::FLT:
-    //                         case VREG_TYPE::INT:
-    //                             sptr->set_slen(4);
-    //                             break;
-    //                         case VREG_TYPE::PTR:
-    //                             sptr->set_slen(8);
-    //                             break;
-    //                         default:
-    //                             panic("unexpected");
-    //                     }
-
-    //                     vr->set_sinfo(sptr);
-    //                     vr->set_confirm(true);
-    //                     vr->set_rregid(riscv::zero);
-
-    //                     stk_map_[(uxlen_t)sraw] = vr;
-    //                 }
-
-    //                 sort_begin.pop();
-    //             }
-
-    //             // curpos += 1;
-    //         }
-    //     }
-    // }
 
     for (auto &&bb : rlp.bbs_) {
         for (auto &&uop : bb->ops_) {
@@ -218,6 +121,8 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
     }
 
     std::unordered_map<size_t, size_t> occupy_map;
+    std::list<std::unique_ptr<uop_general>>::iterator anchor;
+    bool set_anchor = false;
 
     for (auto &&bb : rlp.bbs_) {
         ralcor nst_alcr;
@@ -272,6 +177,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
         }
 
         auto nxtit = bb->ops_.begin();
+        bool r_edit[64] = {0};
 
         while (nxtit != bb->ops_.end()) {
             auto curit = nxtit++;
@@ -285,9 +191,68 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
                 sort_end.pop();
             }
 
-            if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
-                auto &&cipk = nst_alcr.curinfo();
-                const size_t len = 64;
+            if (auto fprm = dynamic_cast<uop_set_fparam *>(op.get()); fprm != nullptr) {
+                auto rs = fprm->get_rs();
+                if (rs->confirm() and (rs->rregid() - riscv::fa0) < 8) {
+                    if (true == r_edit[rs->rregid()]) {
+                        size_t i = rs->rregid();
+
+                        virt_reg *stk = nullptr;
+                        if (auto fnd = ctx.find(i); fnd == ctx.end()) {
+                            stk = alloc_stk(VREG_TYPE::PTR, 8);
+                            ctx[i] = stk;
+                        } else {
+                            stk = fnd->second;
+                        }
+
+                        fprm->set_rs(stk);
+                    }
+
+                    r_edit[fprm->get_idx() + riscv::fa0] = true;
+                }
+                if (not set_anchor) anchor = curit;
+
+                set_anchor = true;
+            }
+
+            if (auto iprm = dynamic_cast<uop_set_iparam *>(op.get()); iprm != nullptr) {
+                auto rs = iprm->get_rs();
+                if (rs->confirm() and (rs->rregid() - riscv::a0) < 8) {
+                    if (true == r_edit[rs->rregid()]) {
+                        size_t i = rs->rregid();
+
+                        virt_reg *stk = nullptr;
+                        if (auto fnd = ctx.find(i); fnd == ctx.end()) {
+                            stk = alloc_stk(VREG_TYPE::PTR, 8);
+                            ctx[i] = stk;
+                        } else {
+                            stk = fnd->second;
+                        }
+
+                        iprm->set_rs(stk);
+                    }
+
+                    r_edit[iprm->get_idx() + riscv::a0] = true;
+                }
+                if (not set_anchor) anchor = curit;
+
+                set_anchor = true;
+            }
+
+            if (set_anchor && dynamic_cast<uop_ret *>(op.get())) {
+                set_anchor = false;
+            }
+
+            auto &&cipk = nst_alcr.curinfo();
+            const size_t len = 64;
+
+            if (dynamic_cast<uop_call *>(op.get())) {
+                if (set_anchor) {
+                    set_anchor = false;
+                } else {
+                    anchor = curit;
+                }
+                memset(r_edit, 0, 64 * sizeof(bool));
 
                 for (size_t i = 0; i < len; ++i) {
                     if (cipk.cur_inuse[i]) {
@@ -303,7 +268,17 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
                         nwst->set_rb(stk);
                         nwst->set_rd(i);
 
-                        bb->ops_.insert(curit, std::move(nwst));
+                        bb->ops_.insert(anchor, std::move(nwst));
+                    }
+                }
+                for (size_t i = 0; i < len; ++i) {
+                    if (cipk.cur_inuse[i]) {
+                        virt_reg *stk = nullptr;
+                        if (auto fnd = ctx.find(i); fnd == ctx.end()) {
+                            panic("unexpected");
+                        } else {
+                            stk = fnd->second;
+                        }
 
                         auto nwld = std::make_unique<uop_ld_stk>();
                         nwld->set_rb(stk);

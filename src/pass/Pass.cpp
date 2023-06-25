@@ -17,6 +17,6 @@ void Optimization::DoOptimization() {
 
         // DCE::EliminateUselessControlFlow(func);
 
-        // SSA::SSADestruction(func);
+        SSA::SSADestruction(func);
     }
 }

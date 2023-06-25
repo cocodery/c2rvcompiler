@@ -247,14 +247,14 @@ size_t virt_reg::load(pblock *pb, spack &spk, size_t to) {
                 if (value_ < 8) {
                     return riscv::fa0 + value_;
                 }
-                auto rv = new rv_flw(saver, riscv::sp, pstk_ * 8);
+                auto rv = new rv_flw(saver, riscv::fp, pstk_ * 8);
                 pb->push(rv);
                 return saver;
             } else {
                 if (value_ < 8) {
                     return riscv::a0 + value_;
                 }
-                auto rv = new rv_ld(saver, riscv::sp, pstk_ * 8);
+                auto rv = new rv_ld(saver, riscv::fp, pstk_ * 8);
                 pb->push(rv);
                 return saver;
             }
@@ -346,9 +346,9 @@ void virt_reg::store(pblock *pb, size_t to) {
                 }
                 rv_fsw *rv;
                 if (to) {
-                    rv = new rv_fsw(to, riscv::sp, pstk_ * 8);
+                    rv = new rv_fsw(to, riscv::fp, pstk_ * 8);
                 } else {
-                    rv = new rv_fsw(riscv::fs0, riscv::sp, pstk_ * 8);
+                    rv = new rv_fsw(riscv::fs0, riscv::fp, pstk_ * 8);
                 }
                 pb->push(rv);
             } else {
@@ -357,9 +357,9 @@ void virt_reg::store(pblock *pb, size_t to) {
                 }
                 rv_sd *rv;
                 if (to) {
-                    rv = new rv_sd(to, riscv::sp, pstk_ * 8);
+                    rv = new rv_sd(to, riscv::fp, pstk_ * 8);
                 } else {
-                    rv = new rv_sd(riscv::t1, riscv::sp, pstk_ * 8);
+                    rv = new rv_sd(riscv::t1, riscv::fp, pstk_ * 8);
                 }
                 pb->push(rv);
             }

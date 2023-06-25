@@ -24,7 +24,8 @@ void cross_internal_manager::nftoir() {
         size_t pstk{0};
     } pa;
 
-    auto alloc_reg = fptr_->GetVarIdx();
+    // 有脏东西 /(ㄒoㄒ)/~~
+    auto alloc_reg = fptr_->GetVarIdx() + 0xdeadbeef;
 
     for (auto &&param : fptr_->GetParamList()) {
         auto var = std::dynamic_pointer_cast<Variable>(param);
@@ -353,7 +354,6 @@ void cross_internal_manager::nftoir() {
                     // 该 mv 操作应该翻译成一个 add 或者 addi 操作
                     // 注意，是 64 位操作
                     auto recv = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, llinst->GetResult()->GetVariableIdx());
-                    recv->stkpp_ = true;
                     auto op = std::make_unique<uop_mv>();
                     op->set_rd(recv);
                     op->set_rs(nwvr);
