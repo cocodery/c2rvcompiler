@@ -499,9 +499,11 @@ RVCNAM(fdiv_s)(rid_t frd, rid_t frs, rid_t frt) : rv_inst(frd, frs, frt) {
     GENINST("fdiv.s" TAB "%s" COMMA "%s" COMMA "%s", gpr[frd], gpr[frs], gpr[frt]);
 }
 
-RVCNAM(fcvt_w_s)(rid_t rd, rid_t frs) : rv_inst(rd, frs) { GENINST("fcvt.w.s" TAB "%s" COMMA "%s", gpr[rd], gpr[frs]); }
+// 目前固定舍入方式为 rtz
 
-RVCNAM(fcvt_s_w)(rid_t frd, rid_t rs) : rv_inst(frd, rs) { GENINST("fcvt.s.w" TAB "%s" COMMA "%s", gpr[frd], gpr[rs]); }
+RVCNAM(fcvt_w_s)(rid_t rd, rid_t frs) : rv_inst(rd, frs) { GENINST("fcvt.w.s" TAB "%s" COMMA "%s" COMMA "rtz", gpr[rd], gpr[frs]); }
+
+RVCNAM(fcvt_s_w)(rid_t frd, rid_t rs) : rv_inst(frd, rs) { GENINST("fcvt.s.w" TAB "%s" COMMA "%s" COMMA "rtz", gpr[frd], gpr[rs]); }
 
 RVCNAM(feq)(rid_t rd, rid_t frs, rid_t frt) : rv_inst(rd, frs, frt) {
     GENINST("feq.s" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[frs], gpr[frt]);

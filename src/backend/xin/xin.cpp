@@ -12,4 +12,5 @@ void cross_internal_manager::operator()() {
     irpass();
     rassign();
     irtorv();
+    pir();
 }

@@ -89,10 +89,10 @@ void uop_set_fparam::toasm(pblock *pb) {
         return;
     }
     if (rs_->kind() == VREG_KIND::STK) {
-        auto rv0 = new rv_flw(riscv::ft0, riscv::fp, rs_->sinfo()->off());
+        auto rv0 = new rv_flw(riscv::fs0, riscv::fp, rs_->sinfo()->off());
         pb->push(rv0);
 
-        auto rv1 = new rv_fsw(riscv::ft0, riscv::sp, pstk_ * 8);
+        auto rv1 = new rv_fsw(riscv::fs0, riscv::sp, pstk_ * 8);
         pb->push(rv1);
         return;
     }

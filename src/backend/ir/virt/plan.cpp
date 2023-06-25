@@ -2,6 +2,8 @@
 #include "backend/ir/uop/uop.hh"
 #include "backend/ir/virt/register.hh"
 
+#include <algorithm>
+
 struct rpack {
     size_t *cur_rinfo;
     bool *cur_inuse;

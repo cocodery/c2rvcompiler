@@ -16,9 +16,9 @@ TMP				:= /tmp
 
 # 检查 rv 工具链情况
 ifneq ($(RISCV),)
-RVAS			:= $(RISCV)/bin/riscv64-unknown-elf-as
-RVCC			:= $(RISCV)/bin/riscv64-unknown-elf-gcc
-RVOD			:= $(RISCV)/bin/riscv64-unknown-elf-objdump
+RVAS			:= riscv64-linux-gnu-as
+RVCC			:= riscv64-linux-gnu-gcc
+RVOD			:= riscv64-linux-gnu-objdump
 SPIKE			:= $(RISCV)/bin/spike
 PK				:= $(RISCV)/riscv64-unknown-elf/bin/pk
 endif
@@ -98,8 +98,8 @@ $(BINARY): $(ALL_SRC)
 build: release
 
 ifneq ($(DEMO),)
-PRE		= cat $(TEST_DIR)/functional/$(DEMO)*.sy > $(SINGLE_TEST_NAME).sy
-INP		= $(shell ls $(TEST_DIR)/functional/$(DEMO)*.in)
+PRE		= cat $(TEST_DIR)/hidden_functional/$(DEMO)*.sy > $(SINGLE_TEST_NAME).sy
+INP		= $(shell ls $(TEST_DIR)/hidden_functional/$(DEMO)*.in)
 REDINP	= $(addprefix < ,$(INP)) 
 CATINP  = $(addprefix cat ,$(INP)) 
 endif
@@ -107,7 +107,7 @@ endif
 .PHONY: run
 run: build $(SYLIB_LL)
 	$(PRE)
-	$(CATINP)
+# $(CATINP)
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
 	$(LLVM_LINK) $(SYLIB_LL) $(SINGLE_TEST_NAME).ll -S -o $(SINGLE_TEST_NAME).run.ll
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
@@ -122,8 +122,15 @@ ll:
 	$(ECHO) $$?
 
 rv:
-	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
-	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -d $(SINGLE_TEST_NAME).ir.s $(SINGLE_TEST_NAME).sy
+	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static -fno-pic
+	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
+	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
+	$(ECHO) $$?
+
+llrv:
+	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll -d $(SINGLE_TEST_NAME).ir.s $(SINGLE_TEST_NAME).sy
+	$(RVCC) -o $(SINGLE_TEST_NAME).out $(SINGLE_TEST_NAME).s $(SYLIB_C) -static -fno-pic
 	$(RVOD) -D $(SINGLE_TEST_NAME).out > $(SINGLE_TEST_NAME).dump
 	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST_NAME).out $(REDINP)
 	$(ECHO) $$?

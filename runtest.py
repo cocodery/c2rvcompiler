@@ -134,7 +134,7 @@ def build_asm(args):
             continue
 
         # TODO: set march
-        cmd = [args.gcc, args.sylib, asmname, '-o', elfname]
+        cmd = [args.gcc, args.sylib, asmname, '-o', elfname, '-static']
 
         with open(logname, 'a') as logfile:
             resp = subprocess.run(cmd, stdout=logfile)

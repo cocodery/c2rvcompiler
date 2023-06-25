@@ -52,7 +52,12 @@ void virt_reg::format_str(FILE *fp) {
     }
 }
 
-void vr_allocor::prinfo(std::fstream &fs) { (void)fs; }
+void vr_allocor::prinfo(std::fstream &fs) {
+    fs << std::endl;
+    fs << "=============== stack info ===============" << std::endl;
+
+    fs << "Stack Size: " << total_stk_len << std::endl;
+}
 
 static inline void popout(pblock *pb, virt_reg *onstk, rid_t dst) {
     Assert(onstk->onstk(), "must on stack");
@@ -69,21 +74,27 @@ static inline void popout(pblock *pb, virt_reg *onstk, rid_t dst) {
             auto rv = new rv_ld(dst, riscv::fp, off);
             pb->push(rv);
         }
-    } else {
+    } else if (onstk->type() == VREG_TYPE::FLT) {
         auto rv0 = new rv_li(riscv::t0, off);
         pb->push(rv0);
 
         auto rv1 = new rv_add(riscv::t0, riscv::fp, riscv::t0);
         pb->push(rv1);
 
-        if (onstk->type() == VREG_TYPE::FLT) {
-            auto rv2 = new rv_flw(dst, riscv::t0, 0);
-            pb->push(rv2);
-        } else if (onstk->type() == VREG_TYPE::INT) {
-            auto rv2 = new rv_lw(dst, riscv::t0, 0);
+        auto rv2 = new rv_flw(dst, riscv::t0, 0);
+        pb->push(rv2);
+    } else {
+        auto rv0 = new rv_li(dst, off);
+        pb->push(rv0);
+
+        auto rv1 = new rv_add(dst, riscv::fp, dst);
+        pb->push(rv1);
+        
+        if (onstk->type() == VREG_TYPE::INT) {
+            auto rv2 = new rv_lw(dst, dst, 0);
             pb->push(rv2);
         } else if (onstk->type() == VREG_TYPE::PTR) {
-            auto rv2 = new rv_ld(dst, riscv::t0, 0);
+            auto rv2 = new rv_ld(dst, dst, 0);
             pb->push(rv2);
         }
     }

@@ -4,7 +4,13 @@
 extern char *dbgfile;
 
 void cross_internal_manager::pir() {
+    
+    if (dbgfile == nullptr) {
+        return;
+    }
+
     std::fstream fs(dbgfile, std::ios::app);
+
     fs << rl_pgrs_.label_ << ":" << std::endl;
     for (auto &&rlbb : rl_pgrs_.bbs_) {
         fs << gen_pblk_label(rlbb->get_lbid()) << ":" << std::endl;
