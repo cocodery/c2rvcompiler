@@ -344,7 +344,7 @@ void vr_allocor::plan_stack() {
 
     total_stk_len = round_up(16, sclr_total) + round_up(16, arry_total) + ex_argl * 8 + 16;
 
-    off64_t off = 16;
+    int64_t off = 16;
 
     for (auto &&stkinfo : sclrstk) {
         auto &&len = stkinfo->slen();

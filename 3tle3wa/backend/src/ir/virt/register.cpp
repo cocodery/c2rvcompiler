@@ -53,9 +53,9 @@ void stk_info::set_slen(size_t slen) { slen_ = slen; };
 
 size_t stk_info::slen() const { return slen_; }
 
-void stk_info::set_off(off64_t off) { off_ = off; };
+void stk_info::set_off(int64_t off) { off_ = off; };
 
-off64_t stk_info::off() const { return off_; }
+int64_t stk_info::off() const { return off_; }
 
 //
 // alloc info

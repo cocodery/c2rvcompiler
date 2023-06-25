@@ -103,7 +103,7 @@ class stk_info {
     // 标量为占据多少空间
     size_t slen_{0};
 
-    off64_t off_{0};
+    int64_t off_{0};
 
    public:
     stk_info() = default;
@@ -111,8 +111,8 @@ class stk_info {
     void set_slen(size_t slen);
     size_t slen() const;
 
-    void set_off(off64_t off);
-    off64_t off() const;
+    void set_off(int64_t off);
+    int64_t off() const;
 
     virtual ~stk_info() = default;
 };
