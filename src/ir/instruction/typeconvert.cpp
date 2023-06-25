@@ -1,4 +1,4 @@
-#include "typeconvert.hh"
+#include "ir/instruction/typeconvert.hh"
 
 //===-----------------------------------------------------------===//
 //                     SitoFpInst Implementation

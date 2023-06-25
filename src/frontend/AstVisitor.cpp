@@ -1,4 +1,4 @@
-#include "AstVisitor.hh"
+#include "frontend/AstVisitor.hh"
 
 namespace {
 

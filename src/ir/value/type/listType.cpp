@@ -1,4 +1,4 @@
-#include "listType.hh"
+#include "ir/value/type/listType.hh"
 
 ListType::ListType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar,
                    ATTR_POSITION _position, ArrDims &_dims)

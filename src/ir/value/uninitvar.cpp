@@ -1,4 +1,4 @@
-#include "uninitvar.hh"
+#include "ir/value/uninitvar.hh"
 
 UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
     // INT32 || FLOAT

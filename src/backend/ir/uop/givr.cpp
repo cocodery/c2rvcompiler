@@ -1,4 +1,5 @@
-#include "uop.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 void uop_set_iparam::givr(std::unordered_set<virt_reg *> &vec) {
     if (rs_->kind() == VREG_KIND::REG) vec.insert(rs_);

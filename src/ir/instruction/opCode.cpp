@@ -1,4 +1,4 @@
-#include "opCode.hh"
+#include "ir/instruction/opCode.hh"
 
 bool IsCommutative(OpCode opcode) {
     switch (opcode) {

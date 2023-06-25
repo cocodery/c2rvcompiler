@@ -1,11 +1,11 @@
-#include "ssa.hh"
+#include "pass/interprocedural/ssa/ssa.hh"
 
 #include <memory>
 #include <unordered_map>
 
-#include "instruction.hh"
-#include "memoryInst.hh"
-#include "otherInst.hh"
+#include "ir/instruction/instruction.hh"
+#include "ir/instruction/memoryInst.hh"
+#include "ir/instruction/otherInst.hh"
 
 SSA::RenameData::RenameData(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _v)
     : node(_node), pred(_pred), valuelist(_v) {}

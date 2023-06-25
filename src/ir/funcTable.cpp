@@ -1,4 +1,4 @@
-#include "funcTable.hh"
+#include "ir/funcTable.hh"
 
 FunctionTable::FunctionTable() {
     // void, i32, float

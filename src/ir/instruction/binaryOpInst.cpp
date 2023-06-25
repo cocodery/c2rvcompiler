@@ -1,4 +1,4 @@
-#include "binaryOpInst.hh"
+#include "ir/instruction/binaryOpInst.hh"
 
 //===-----------------------------------------------------------===//
 //                     IBinaryInst Implementation

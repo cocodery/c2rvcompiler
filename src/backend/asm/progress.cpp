@@ -1,7 +1,6 @@
-#include "progress.hh"
+#include "backend/asm/progress.hh"
 
-#include "../utils.hh"
-#include "riscv/asm.hh"
+#include "backend/ir/uop/uop.hh"
 
 pblock::pblock(size_t lbidx, size_t reserve) : lbidx_(lbidx), insts_(reserve) { insts_.clear(); }
 

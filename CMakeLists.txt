@@ -7,7 +7,8 @@ enable_testing()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
-file(GLOB_RECURSE CXXSRC "src/*.cpp")
+file(GLOB_RECURSE CXXSRC
+  ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 # 链接 antlr4 cpp runtime
 # 设置寻找路径 official path
@@ -49,46 +50,13 @@ else()
 endif()
 
 # 设置编译参数
-add_compile_options(-std=c++17 -fdiagnostics-color=always)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_compile_options(-g)
-  add_compile_options(-Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function)
-  add_compile_definitions(DEBUG_MODE)
-
-  if(DEFINED ASAN)
-    message("Using address sanitize")
-    add_compile_options(-fsanitize=address)
-    add_link_options(-fsanitize=address)
-  endif()
-else()
-  add_compile_options(-O2)
-  add_compile_definitions(NDEBUG)
-endif()
-
-message("Build Type: " ${CMAKE_BUILD_TYPE})
+add_compile_options(-std=c++17)
+add_compile_options(-O2 -g)
+add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 # 包含头文件
-include_directories(src)
+include_directories(include)
 include_directories(src/antlr)
-include_directories(src/frontend)
-include_directories(src/backend)
-include_directories(src/debug)
-include_directories(src/ir)
-include_directories(src/ir/function)
-include_directories(src/ir/instruction)
-include_directories(src/ir/value/type)
-include_directories(src/ir/value)
-include_directories(src/pass)
-include_directories(src/pass/analysis)
-include_directories(src/pass/analysis/dominance)
-include_directories(src/pass/interprocedural)
-include_directories(src/pass/interprocedural/dce)
-include_directories(src/pass/interprocedural/dvnt)
-include_directories(src/pass/interprocedural/dominance)
-include_directories(src/pass/interprocedural/ssa)
-include_directories(src/pass/intraprocedural)
-include_directories(src/pass/intraprocedural/inline)
 
 # 编译程序
 add_executable(${PROJECT_NAME} ${CXXSRC})

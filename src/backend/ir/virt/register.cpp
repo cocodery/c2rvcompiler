@@ -1,7 +1,4 @@
-#include "register.hh"
-
-#include "../../asm/riscv/def.hh"
-#include "Logs.hh"
+#include "backend/ir/virt/register.hh"
 
 //
 // instruction trace

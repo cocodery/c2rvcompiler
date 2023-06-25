@@ -1,4 +1,4 @@
-#include "dvnt.hh"
+#include "pass/interprocedural/dvnt/dvnt.hh"
 
 bool GVN::VNExpr::operator==(const VNExpr &e) const {
     if (opcode != e.opcode) {

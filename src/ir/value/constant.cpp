@@ -1,4 +1,4 @@
-#include "constant.hh"
+#include "ir/value/constant.hh"
 
 Constant::Constant(ScalarTypePtr _type, ConstType _value) : BaseValue(_type), value(_value) {
     // NONE-VOID
@@ -44,7 +44,11 @@ std::string Constant::tollvmIR() {
             if constexpr (std::is_same_v<T, float>) {
                 assert(base_type->FloatType());
                 double double_value = arg;
-                uint64_t uint64_value = reinterpret_cast<uint64_t &>(double_value);
+                union {
+                    double f64;
+                    uint64_t iu64;
+                } cvt = {.f64 = double_value};
+                uint64_t uint64_value = cvt.iu64;
                 char buf[20];
                 sprintf(buf, "0x%016lx", uint64_value);
                 ss << buf;

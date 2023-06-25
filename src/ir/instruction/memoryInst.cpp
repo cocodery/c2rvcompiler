@@ -1,4 +1,4 @@
-#include "memoryInst.hh"
+#include "ir/instruction/memoryInst.hh"
 
 //===-----------------------------------------------------------===//
 //                     AllocaInst Implementation

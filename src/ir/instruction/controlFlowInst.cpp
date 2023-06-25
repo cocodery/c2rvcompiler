@@ -1,4 +1,4 @@
-#include "controlFlowInst.hh"
+#include "ir/instruction/controlFlowInst.hh"
 
 //===-----------------------------------------------------------===//
 //                     ReturnInst Implementation

@@ -1,12 +1,6 @@
-#include <cstring>
-#include <queue>
-#include <vector>
-
-#include "../../asm/riscv/def.hh"
-#include "../../utils.hh"
-#include "../bbtype.hh"
-#include "Logs.hh"
-#include "register.hh"
+#include "backend/ir/bbtype.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 struct rpack {
     size_t *cur_rinfo;

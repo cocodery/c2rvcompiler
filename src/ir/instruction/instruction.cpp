@@ -1,4 +1,4 @@
-#include "instruction.hh"
+#include "ir/instruction/instruction.hh"
 
 //===-----------------------------------------------------------===//
 //                     Instruction Implementation

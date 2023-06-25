@@ -1,10 +1,4 @@
-#include <map>
-
-#include "../../asm/progress.hh"
-#include "../../asm/riscv/asm.hh"
-#include "../../asm/riscv/def.hh"
-#include "Logs.hh"
-#include "register.hh"
+#include "backend/ir/virt/register.hh"
 
 void virt_reg::format_str(FILE *fp) {
     static const char *tynm[4];
@@ -19,7 +13,13 @@ void virt_reg::format_str(FILE *fp) {
             break;
 
         case VREG_KIND::LOC:
-            fprintf(fp, "%.3f", *(float *)&value_);
+            union {
+                float f;
+                uint32_t iu32;
+            } reintp;
+
+            reintp.iu32 = value_;
+            fprintf(fp, "%.3f", reintp.f);
             break;
 
         case VREG_KIND::PRM: {
@@ -52,44 +52,7 @@ void virt_reg::format_str(FILE *fp) {
     }
 }
 
-void vr_allocor::prinfo() {
-    // for (auto &&pair : storage_) {
-    //     auto &&ptr = pair.second;
-    //     if (not ptr->onstk()) Log("%s: %ld", ptr->c_str(), ptr->rregid());
-    // }
-
-    // for (auto &&pair : stk_map_) {
-    //     auto &&ptr = pair.second;
-    //     if (ptr->onstk()) Log("%s: %ld", ptr->c_str(), ptr->sinfo()->off());
-    // }
-
-    // using pr = std::pair<int64_t, virt_reg *>;
-    std::map<int64_t, virt_reg *, std::greater<>> prmap;
-
-    for (auto &&pair : stk_map_) {
-        auto &&ptr = pair.second;
-        prmap.emplace(ptr->sinfo()->off(), ptr);
-    }
-    int64_t accu = 0;
-    fprintf(stdout, "+-------------------+ < %ld(fp)\n", accu);
-    fprintf(stdout, "|    ra:  8         |\n");
-    accu -= 8;
-    fprintf(stdout, "+-------------------+ < %ld(fp)\n", accu);
-    fprintf(stdout, "|    fp:  8         |\n");
-    accu -= 8;
-
-    for (auto &&pair : prmap) {
-        fprintf(stdout, "+-------------------+ < %ld(fp)\n", accu);
-        if (pair.second->type() == VREG_TYPE::ARR) {
-            fprintf(stdout, "| %05ld: [%4lu x 4] |\n", pair.first, pair.second->sinfo()->slen());
-            accu = pair.first;
-        } else {
-            fprintf(stdout, "| %05ld:  %4lu      |\n", pair.first, pair.second->sinfo()->slen());
-            accu = pair.first;
-        }
-    }
-    fprintf(stdout, "+-------------------+ < %ld(fp)\n", accu);
-}
+void vr_allocor::prinfo(std::fstream &fs) { (void)fs; }
 
 static inline void popout(pblock *pb, virt_reg *onstk, rid_t dst) {
     Assert(onstk->onstk(), "must on stack");

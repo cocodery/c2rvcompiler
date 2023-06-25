@@ -1,4 +1,4 @@
-#include "globalvalue.hh"
+#include "ir/value/globalvalue.hh"
 
 size_t GlobalValue::glb_idx = 1;
 

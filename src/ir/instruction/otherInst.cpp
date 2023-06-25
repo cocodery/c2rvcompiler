@@ -1,4 +1,4 @@
-#include "otherInst.hh"
+#include "ir/instruction/otherInst.hh"
 
 //===-----------------------------------------------------------===//
 //                     CallInst Implementation

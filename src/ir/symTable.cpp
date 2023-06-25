@@ -1,4 +1,4 @@
-#include "symTable.hh"
+#include "ir/symTable.hh"
 
 SymbolTable::SymbolTable(SymbolTable *_p) : parent(_p), sym_table(NameValueMap()) {}
 

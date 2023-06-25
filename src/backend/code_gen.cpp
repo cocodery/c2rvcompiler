@@ -1,13 +1,8 @@
-#include "code_gen.hh"
-
-#include "Logs.hh"
+#include "backend/code_gen.hh"
 
 code_gen::code_gen(const char *path, CompilationUnit &comp_unit)
     : env_(), fs_(path, std::ios::out), comp_unit_(comp_unit) {
     Assert(fs_, "can not open file %s", path);
-
-    std::fstream fs("dbg.ir.s", std::ios::out);
-    fs << "# for ir debug" << std::endl;
 }
 
 code_gen::~code_gen() {

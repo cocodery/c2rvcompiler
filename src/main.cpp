@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <Logs.hh>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -9,61 +8,83 @@
 #include <memory>
 #include <string>
 
-#include "AstVisitor.hh"
-#include "Pass.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
-#include "code_gen.hh"
+#include "backend/code_gen.hh"
+#include "debug/Logs.hh"
+#include "frontend/AstVisitor.hh"
+#include "pass/Pass.hh"
 
 using namespace antlr4;
 using std::cout;
 using std::endl;
 
+char *dbgfile = nullptr;
+char optlvl = 0;
+
 int main(int argc, char *argv[]) {
-    [[maybe_unused]] char opt = 0;
-    [[maybe_unused]] bool print_usage = false;
+    bool pusage = false;
 
     const char *input = nullptr;
-    [[maybe_unused]] const char *output = nullptr;
-    [[maybe_unused]] const char *irfile = nullptr;
+    const char *output = nullptr;
+    const char *irfile = nullptr;
 
-    for (int ch; (ch = getopt(argc, argv, "Sl:o:O:h")) != -1;) {
+    for (int ch; (ch = getopt(argc, argv, "SO:l:o:d:h")) != -1;) {
         switch (ch) {
             case 'l':
-                Log("output llvm-ir");
+                Log("llvm ir filename: %s", optarg);
                 irfile = optarg;
                 break;
             case 'o':
-                Log("output filename: %s", optarg);
+                Log("rv asm filename: %s", optarg);
                 output = optarg;
+                break;
+            case 'h':
+                pusage = true;
+                break;
+            case 'd':
+                Log("debug filename: %s", optarg);
+                dbgfile = optarg;
                 break;
             case 'O':
                 Log("optimize level: %c", *optarg);
-                opt = *optarg;
+                optlvl = *optarg;
                 break;
-            case 'h':
-                print_usage = true;
+            case 'S':
+                Log("output asm");
                 break;
             default:
                 break;
         }
     }
 
-    if (print_usage) {
-        /* TODO: fill it */
+    if (pusage) {
+        std::cout << "Usage: compiler [options] <file>" << std::endl;
+        std::cout << "only receive one file as input" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  -d <file>   output dbg file" << std::endl;
+        std::cout << "  -l <file>   output llvm ir" << std::endl;
+        std::cout << "  -o <file>   output rv asm" << std::endl;
+        std::cout << "  -h          this help" << std::endl;
         return 0;
     }
 
     if (optind < argc) {
         input = argv[optind];
     } else {
-        panic("no input files");
+        panic("no input file");
     }
 
     std::ifstream src(input);
-    if (!src.is_open()) {
-        std::cerr << "line " << __LINE__ << ": cannot open input file \"" << input << "\"" << endl;
-        return EXIT_FAILURE;
+
+    Assert(src.is_open(), "cannot open input file %s", input);
+
+    if (dbgfile) {
+        std::fstream dbgf(dbgfile, std::ios::out);
+        Assert(dbgf.is_open(), "cannot open input file %s", dbgfile);
+
+        dbgf << "Debug File" << std::endl;
+        dbgf.close();
     }
 
     ANTLRInputStream source(src);

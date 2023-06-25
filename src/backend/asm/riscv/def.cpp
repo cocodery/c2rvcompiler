@@ -1,4 +1,4 @@
-#include "def.hh"
+#include "backend/asm/riscv/def.hh"
 
 cstr gpr[] = {
     // integer registers

@@ -1,4 +1,4 @@
-#include "scalarType.hh"
+#include "ir/value/type/scalarType.hh"
 
 ScalarType::ScalarType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar,
                        ATTR_POSITION _position)

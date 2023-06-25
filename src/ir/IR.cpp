@@ -1,4 +1,4 @@
-#include "IR.hh"
+#include "ir/IR.hh"
 
 SymbolTable &CompilationUnit::getGlbTable() { return this->glb_table; }
 

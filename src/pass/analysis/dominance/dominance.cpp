@@ -1,4 +1,4 @@
-#include "dominance.hh"
+#include "pass/analysis/dominance/dominance.hh"
 
 void Dominance::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
     // dominator-set

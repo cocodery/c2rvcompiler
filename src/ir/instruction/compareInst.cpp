@@ -1,4 +1,4 @@
-#include "compareInst.hh"
+#include "ir/instruction/compareInst.hh"
 
 //===-----------------------------------------------------------===//
 //                     ICmpInst Implementation

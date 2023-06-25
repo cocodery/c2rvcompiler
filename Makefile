@@ -30,22 +30,19 @@ $(shell mkdir -p $(BUILD_DIR))
 
 OS 				:= $(shell uname)
 NPROC			:= $(shell nproc)
-ALL_SRC			:= $(shell find src -name '*.cpp' -or -name '*.hh')
+ALL_SRC			:= $(shell find src -name '*.cpp') $(shell find include -name '*.hh' -or -name '*.h')
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
-CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Debug" # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
+CMAKE_BUILD_VAR	:= # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
 
 ifeq ($(MOD),ASAN)
 # 打开 address sanitizer
 CMAKE_BUILD_VAR	+= ASAN=1
-else ifeq ($(MOD),RLS)
-# 打开 O2 NDEBUG (关掉 assert)
-CMAKE_BUILD_VAR	:= CMAKE_BUILD_TYPE="Release"
 endif
 
 CMAKE_BUILD_ENV := $(addprefix -D,$(CMAKE_BUILD_VAR))
 
-MODE 			:= functional # hidden_functional final_performance performance
+MODE 			:= functional hidden_functional # final_performance performance
 
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
@@ -74,10 +71,6 @@ PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
 PYASM			:= pyasm
 PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
 
-# make formatter fake targets
-FORMAT			:= format
-FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
-
 $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
@@ -88,17 +81,21 @@ $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) -s $(SYLIB_C) -x $(RVCC) -m "$(SPIKE) $(PK)" $(shell find $< -name "*.sy")
 
 .PHONY: pyll
-pyll:  $(SYLIB_LL) $(BINARY) $(PYLL_TARGETS)
+pyll:  release $(SYLIB_LL) $(PYLL_TARGETS)
 
 .PHONY: pyasm
-pyasm: $(SYLIB_LL) $(BINARY) $(PYASM_TARGETS)
+pyasm: release $(PYASM_TARGETS)
+
+release: $(ALL_SRC)
+	$(CMAKE) -S . -B $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
 
 $(BINARY): $(ALL_SRC)
-	$(CMAKE) $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
+	$(CMAKE) -DCMAKE_BUILD_TYPE="Debug" $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
 
 .PHONY: build
-build: $(BINARY)
+build: release
 
 ifneq ($(DEMO),)
 PRE		= cat $(TEST_DIR)/functional/$(DEMO)*.sy > $(SINGLE_TEST_NAME).sy
@@ -142,6 +139,10 @@ clean-test:
 
 .PHONY: clean-all
 clean-all: clean clean-test
+
+# make formatter fake targets
+FORMAT			:= format
+FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
 
 $(FORMAT_TARGETS): $(FORMAT)/%:%
 	$(FORMATTER) $^ -i

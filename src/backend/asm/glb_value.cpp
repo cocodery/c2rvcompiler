@@ -1,6 +1,4 @@
-#include "glb_value.hh"
-
-#include "../utils.hh"
+#include "backend/asm/glb_value.hh"
 
 glb_value::glb_value(size_t glb_idx, size_t len, bool uninit, size_t reserve)
     : glb_idx_(glb_idx), len_(len), uninit_(uninit), values_(reserve) {

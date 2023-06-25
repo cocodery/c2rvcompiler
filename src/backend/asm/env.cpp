@@ -1,8 +1,7 @@
-#include "env.hh"
+#include "backend/asm/env.hh"
 
-#include "../utils.hh"
-#include "../xin/xin.hh"
-#include "Logs.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/xin/xin.hh"
 
 static void declarr(ConstArrayPtr &bvaptr, std::unique_ptr<glb_value> &result) {
     auto &&cstarr = bvaptr->GetConstArr();
@@ -58,40 +57,13 @@ void asm_env::make_gvals(GlobalValuePtr &gvptr) {
 }
 
 void asm_env::make_prog(NormalFuncList &flst) {
-#ifdef EN_CONCURRENCY
-    std::vector<cross_internal_manager *> xinmgrs(flst.size());
-    xinmgrs.clear();
-
-    std::vector<std::thread> trds;
-#endif
-
     for (auto &&fptr : flst) {
-#ifndef EN_CONCURRENCY
         cross_internal_manager xinmgr(fptr, lc_pool_);
         xinmgr();
         if (xinmgr.apg_ != nullptr) {
             pgrs_.push_back(std::move(xinmgr.apg_));
         }
-#else
-        auto xinmgr = new cross_internal_manager(fptr, lc_pool_);
-        std::thread trd([xinmgr]() -> void { xinmgr->operator()(); });
-        xinmgrs.push_back(xinmgr);
-        trds.push_back(std::move(trd));
-#endif
     }
-
-#ifdef EN_CONCURRENCY
-    for (auto &&trd : trds) {
-        trd.join();
-    }
-
-    for (auto &&mgr : xinmgrs) {
-        if (mgr->apg_ != nullptr) {
-            pgrs_.push_back(std::move(mgr->apg_));
-            delete mgr;
-        }
-    }
-#endif
 }
 
 void asm_env::gen_asm(std::fstream &fs) {

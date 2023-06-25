@@ -1,4 +1,4 @@
-#include "inline.hh"
+#include "pass/intraprocedural/inline/inline.hh"
 
 BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
     assert(!(inst_->IsReturnInst() || inst_->IsPhiInst()));

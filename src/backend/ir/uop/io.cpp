@@ -1,7 +1,5 @@
-#include "../../asm/riscv/def.hh"
-#include "../../utils.hh"
-#include "Logs.hh"
-#include "uop.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 void uop_ret::format_str(FILE *fp) {
     // 返回值应当在返回前设置到 a0

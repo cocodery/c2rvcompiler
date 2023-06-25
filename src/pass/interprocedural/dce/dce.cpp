@@ -1,4 +1,4 @@
-#include "dce.hh"
+#include "pass/interprocedural/dce/dce.hh"
 
 void DCE::EliminateUselessCode(NormalFuncPtr func) {
     auto allNodes = func->TopoSortFromEntry();

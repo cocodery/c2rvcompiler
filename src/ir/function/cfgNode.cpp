@@ -1,4 +1,4 @@
-#include "cfgNode.hh"
+#include "ir/function/cfgNode.hh"
 
 CtrlFlowGraphNode::CtrlFlowGraphNode(BlockAttr _attr) : BasicBlock(_attr) {}
 

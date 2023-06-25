@@ -1,4 +1,4 @@
-#include "basicblock.hh"
+#include "ir/function/basicblock.hh"
 
 std::string AttrToStr(BlockAttr attr) {
     std::stringstream ss;

@@ -1,4 +1,5 @@
-#include "uop.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 void uop_set_iparam::trace_inst() { rs_->add_ref(this); }
 

@@ -1,7 +1,4 @@
-#include "asm.hh"
-
-#include "Logs.hh"
-#include "def.hh"
+#include "backend/asm/riscv/asm.hh"
 
 #define COMMENT_BEGIN "# "
 #define TAB "\t"

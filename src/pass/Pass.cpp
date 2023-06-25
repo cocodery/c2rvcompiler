@@ -1,4 +1,4 @@
-#include "Pass.hh"
+#include "pass/Pass.hh"
 
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 

@@ -1,4 +1,4 @@
-#include "function.hh"
+#include "ir/function/function.hh"
 
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation

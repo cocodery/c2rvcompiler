@@ -1,4 +1,6 @@
-#include "uop.hh"
+#include "backend/ir/bbtype.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 void uop_set_iparam::live_info() { rs_->set_end(uop_idx_); }
 

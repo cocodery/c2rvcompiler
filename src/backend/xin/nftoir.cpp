@@ -1,17 +1,9 @@
-#include "../asm/riscv/def.hh"
-#include "../utils.hh"
-#include "Logs.hh"
-#include "xin.hh"
-
-#ifdef EN_CONCURRENCY
-static std::mutex mtx;
-#endif
+#include "backend/ir/bbtype.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/xin/xin.hh"
 
 static size_t file_scope_label_alloc() {
     static size_t lbidx_ = 1;
-#ifdef EN_CONCURRENCY
-    std::scoped_lock<std::mutex> lck{mtx};
-#endif
     auto ret = lbidx_;
     lbidx_ += 1;
     return ret;
@@ -520,7 +512,7 @@ void cross_internal_manager::nftoir() {
                     // 这里加载的是指针值，所以宽度用 8
                     auto nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, res->GetVariableIdx());
 
-                    virt_reg *off;
+                    virt_reg *off = nullptr;
                     auto &&offlist = llinst->GetOffList();
                     auto &&offset = offlist.back();
                     if (offset->IsVariable()) {
@@ -981,21 +973,27 @@ void cross_internal_manager::nftoir() {
                             float cstval{};
                             switch (opcode) {
                                 case OP_ADD:
-                                    cstval = *(float *)&lpk.v32 + *(float *)&rpk.v32;
+                                    cstval = lpk.f32 + rpk.f32;
                                     break;
                                 case OP_SUB:
-                                    cstval = *(float *)&lpk.v32 - *(float *)&rpk.v32;
+                                    cstval = lpk.f32 - rpk.f32;
                                     break;
                                 case OP_MUL:
-                                    cstval = *(float *)&lpk.v32 * *(float *)&rpk.v32;
+                                    cstval = lpk.f32 * rpk.f32;
                                     break;
                                 case OP_DIV:
-                                    cstval = *(float *)&lpk.v32 / *(float *)&rpk.v32;
+                                    cstval = lpk.f32 / rpk.f32;
                                     break;
                                 default:
                                     panic("unexpected");
                             }
-                            auto nwvr = rl_pgrs_.valc_.alloc_loc(*(uint32_t *)&cstval);
+
+                            union {
+                                float f;
+                                uint32_t iu32;
+                            } reintp;
+                            reintp.f = cstval;
+                            auto nwvr = rl_pgrs_.valc_.alloc_loc(reintp.iu32);
 
                             auto op = std::make_unique<uop_fmv>();
                             op->set_rd(resvr);
@@ -1167,22 +1165,22 @@ void cross_internal_manager::nftoir() {
                             bool cmpres{};
                             switch (opcode) {
                                 case OP_LTH:
-                                    cmpres = *(float *)&lpk.v32 < *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 < rpk.f32;
                                     break;
                                 case OP_GTH:
-                                    cmpres = *(float *)&lpk.v32 > *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 > rpk.f32;
                                     break;
                                 case OP_LEQ:
-                                    cmpres = *(float *)&lpk.v32 <= *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 <= rpk.f32;
                                     break;
                                 case OP_GEQ:
-                                    cmpres = *(float *)&lpk.v32 >= *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 >= rpk.f32;
                                     break;
                                 case OP_EQU:
-                                    cmpres = *(float *)&lpk.v32 == *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 == rpk.f32;
                                     break;
                                 case OP_NEQ:
-                                    cmpres = *(float *)&lpk.v32 != *(float *)&rpk.v32;
+                                    cmpres = lpk.f32 != rpk.f32;
                                     break;
                                 default:
                                     panic("unexpected");

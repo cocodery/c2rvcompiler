@@ -1,8 +1,10 @@
-#include "../utils.hh"
-#include "xin.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/xin/xin.hh"
+
+extern char *dbgfile;
 
 void cross_internal_manager::pir() {
-    std::fstream fs("dbg.ir.s", std::ios::app);
+    std::fstream fs(dbgfile, std::ios::app);
     fs << rl_pgrs_.label_ << ":" << std::endl;
     for (auto &&rlbb : rl_pgrs_.bbs_) {
         fs << gen_pblk_label(rlbb->get_lbid()) << ":" << std::endl;
@@ -30,5 +32,5 @@ void cross_internal_manager::pir() {
         }
     }
 
-    // rl_pgrs_.valc_.prinfo();
+    rl_pgrs_.valc_.prinfo(fs);
 }

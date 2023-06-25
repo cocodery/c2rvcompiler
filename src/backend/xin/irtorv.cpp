@@ -1,11 +1,5 @@
-#include "../asm/riscv/asm.hh"
-#include "../asm/riscv/def.hh"
-#include "Logs.hh"
-#include "xin.hh"
-
-#ifdef EN_CONCURRENCY
-static std::mutex lc_mtx;
-#endif
+#include "backend/ir/uop/uop.hh"
+#include "backend/xin/xin.hh"
 
 void cross_internal_manager::irtorv() {
     apg_ = std::make_unique<progress>(rl_pgrs_.label_.data(), rl_pgrs_.bbs_.size());
@@ -41,6 +35,7 @@ void cross_internal_manager::irtorv() {
     auto last = std::move(back_ilst.back());
     auto retinst = dynamic_cast<rv_ret *>(last.get());
     Assert(retinst, "last inst not ret");
+    (void)retinst;
 
     back_ilst.pop_back();
 
@@ -62,10 +57,6 @@ void cross_internal_manager::irtorv() {
     back_ilst.push_back(std::unique_ptr<asm_inst>(rv8));
 
     back_ilst.push_back(std::move(last));
-
-#ifdef EN_CONCURRENCY
-    std::scoped_lock<std::mutex> lck{lc_mtx};
-#endif
 
     rl_pgrs_.valc_.give_loc(lc_pool_);
 }

@@ -1,8 +1,5 @@
-#include "../../asm/riscv/asm.hh"
-#include "../../asm/riscv/def.hh"
-#include "../../utils.hh"
-#include "Logs.hh"
-#include "uop.hh"
+#include "backend/ir/uop/uop.hh"
+#include "backend/ir/virt/register.hh"
 
 static inline size_t lea(pblock *pb, virt_reg *onstk, rid_t dst) {
     if (not onstk->onstk()) {
@@ -309,7 +306,7 @@ void uop_ld_stk::toasm(pblock *pb) {
     if (rd_ == riscv::zero) {
         return;
     }
-    
+
     auto off = rb_->sinfo()->off();
 
     if (rd_ > 31) {
@@ -732,7 +729,7 @@ void uop_bin::toasm(pblock *pb) {
         default:
             break;
     }
-    
+
     auto lhs = lhs_->load(pb, spk);
     auto rhs = rhs_->load(pb, spk);
 

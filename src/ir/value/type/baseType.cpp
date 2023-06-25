@@ -1,4 +1,4 @@
-#include "baseType.hh"
+#include "ir/value/type/baseType.hh"
 
 BaseType::BaseType(ATTR_TYPE _type, ATTR_MUTABLE _mutable, ATTR_POINTER _pointer, ATTR_SCALAR _scalar,
                    ATTR_POSITION _position)
