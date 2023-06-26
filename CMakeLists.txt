@@ -8,7 +8,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
 file(GLOB_RECURSE CXXSRC
-  ${CMAKE_SOURCE_DIR}/3tle3wa/*.cpp)
+  ${CMAKE_SOURCE_DIR}/3tle3wa/src/*.cpp
+  ${CMAKE_SOURCE_DIR}/antlr/*.cpp
+)
 
 # 链接 antlr4 cpp runtime
 # 设置寻找路径 official path
@@ -37,12 +39,8 @@ add_compile_options(-Wno-unused-parameter)
 
 # 包含头文件
 include_directories(
-  3tle3wa/antlr
-  3tle3wa/backend/include
-  3tle3wa/frontend/include
-  3tle3wa/ir/include
-  3tle3wa/pass/include
-  3tle3wa/utils/include
+  3tle3wa/include
+  antlr
 
   # 来自 antlr4-runtime-config.cmake
   # 低版本请手动设置

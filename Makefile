@@ -36,9 +36,11 @@ PYTEST			:= runtest.py
 # make build dir
 $(shell mkdir -p $(BUILD_DIR))
 
-OS 				:= $(shell uname)
+OS				:= $(shell uname)
 NPROC			:= $(shell nproc)
-ALL_SRC			:= $(shell find 3tle3wa -name '*.cpp') $(shell find 3tle3wa -name '*.hh' -or -name '*.h')
+ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
+PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
+ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
 MODE 			:= functional hidden_functional # final_performance performance
 
@@ -149,7 +151,7 @@ clean-all: clean clean-test clean-s
 
 # make formatter fake targets
 FORMAT			:= format
-FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
+FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(PROJECT_SRC))
 
 $(FORMAT_TARGETS): $(FORMAT)/%:%
 	$(FORMATTER) $^ -i
