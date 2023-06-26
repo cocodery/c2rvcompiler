@@ -42,7 +42,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			:= functional hidden_functional # final_performance performance
+MODE 			:= functional hidden_functional # performance # final_performance
 
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
@@ -100,7 +100,7 @@ REDINP	= $(addprefix < ,$(INPFILE))
 endif
 
 .PHONY: run
-run: build $(SYLIB_LL)
+run: debug $(SYLIB_LL)
 	$(LOAD)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
 	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
@@ -115,20 +115,22 @@ ll: $(SYLIB_LL)
 
 rv:
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
-	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
+	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static
 	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
 	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
 
-llrv: $(SYLIB_LL)
-	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
-	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
-	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
+native:
+	cat $(SINGLE_TEST).sy > $(TMP)/$(SINGLE_TEST).c
+	$(CC) -o $(TMP)/$(SINGLE_TEST).out $(TMP)/$(SINGLE_TEST).c $(SYLIB_C) -static
+	$(TMP)/$(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
-	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
-	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
-	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
-	$(ECHO) $$?
+
+pys:
+	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.sy) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
+
+diff:
+	code -d $(shell ls $(BUILD_DIR)/$(CPLER_TEST_DIR)/pys/$(DEMO)*.res) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.out)
 
 .PHONY: clean
 clean:

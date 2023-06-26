@@ -159,7 +159,7 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
     // Solve the control flow graph from exit
     // Identify the unreachable nodes in the control flow
     std::queue<CfgNodePtr> nodeQueue;
-    std::map<CfgNodePtr, bool> visitMap;
+    std::unordered_map<CfgNodePtr, bool> visitMap;
     std::set<CfgNodePtr> delNodeSet;
     nodeQueue.push(exit);
     while (!nodeQueue.empty()) {

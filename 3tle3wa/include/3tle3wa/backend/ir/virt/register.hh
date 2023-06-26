@@ -41,10 +41,10 @@ class itrace {
     itrace() = default;
 
     virtual void set_from(uop_general *from) final;
-    virtual uop_general *from() const final;
+    virtual uop_general *from() final;
 
     virtual void add_ref(uop_general *ref) final;
-    virtual const std::unordered_set<uop_general *> &refs() const final;
+    virtual std::unordered_set<uop_general *> &refs() final;
 
     virtual ~itrace() = default;
 };
@@ -209,6 +209,8 @@ class vr_allocor {
     void give_loc(std::unordered_set<uint32_t> &locs);
 
     void prinfo(std::fstream &fs);
+
+    void rmreg(uxlen_t idx);
 
     //
     // hi                                                                                          lo

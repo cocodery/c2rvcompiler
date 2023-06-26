@@ -9,11 +9,11 @@ void itrace::set_from(uop_general *from) {
     from_ = from;
 }
 
-uop_general *itrace::from() const { return from_; }
+uop_general *itrace::from() { return from_; }
 
 void itrace::add_ref(uop_general *ref) { refs_.insert(ref); }
 
-const std::unordered_set<uop_general *> &itrace::refs() const { return refs_; }
+std::unordered_set<uop_general *> &itrace::refs() { return refs_; }
 
 //
 // call trace
@@ -226,4 +226,8 @@ void vr_allocor::give_loc(std::unordered_set<uint32_t> &locs) {
     for (auto &&pair : fc_map_) {
         locs.insert(pair.first);
     }
+}
+
+void vr_allocor::rmreg(uxlen_t idx) {
+    Assert(vr_map_.erase(idx), "nothing ?");
 }

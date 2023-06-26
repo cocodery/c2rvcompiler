@@ -1,0 +1,628 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 262K of event 'cpu-clock:u'
+# Event count (approx.): 65724750000
+#
+# Overhead  Command   Shared Object                Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+# ........  ........  ...........................  ..........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    31.55%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_copy<false, std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_Alloc_node>
+    14.47%  compiler  compiler                     [.] vr_allocor::plan_reg
+    11.51%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_erase
+     6.36%  compiler  compiler                     [.] std::_Hashtable<unsigned long, unsigned long, std::allocator<unsigned long>, std::__detail::_Identity, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, true, true> >::find
+     5.83%  compiler  compiler                     [.] std::_Hashtable<unsigned long, unsigned long, std::allocator<unsigned long>, std::__detail::_Identity, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, true, true> >::_M_insert_unique<unsigned long const&, unsigned long const&, std::__detail::_AllocNode<std::allocator<std::__detail::_Hash_node<unsigned long, false> > > >
+     4.69%  compiler  libc.so.6                    [.] malloc
+     4.60%  compiler  libc.so.6                    [.] 0x0000000000096078
+     2.11%  compiler  compiler                     [.] std::_Hashtable<unsigned long, unsigned long, std::allocator<unsigned long>, std::__detail::_Identity, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, true, true> >::_M_rehash
+     2.02%  compiler  libc.so.6                    [.] cfree
+     1.26%  compiler  libstdc++.so.6.0.31          [.] std::_Rb_tree_increment
+     1.00%  compiler  libc.so.6                    [.] 0x0000000000096443
+     0.94%  compiler  compiler                     [.] Dominance::ComputeDominanceInfo
+     0.86%  compiler  libstdc++.so.6.0.31          [.] operator new
+     0.81%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_copy<false, std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_Reuse_or_alloc_node>
+     0.48%  compiler  libc.so.6                    [.] 0x0000000000094bf0
+     0.47%  compiler  libc.so.6                    [.] 0x0000000000094f8d
+     0.45%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_copy<false, std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_Reuse_or_alloc_node>
+     0.39%  compiler  libc.so.6                    [.] 0x0000000000096014
+     0.38%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_erase
+     0.35%  compiler  libc.so.6                    [.] 0x0000000000094c14
+     0.30%  compiler  libstdc++.so.6.0.31          [.] std::__detail::_Prime_rehash_policy::_M_need_rehash
+     0.25%  compiler  libstdc++.so.6.0.31          [.] operator delete
+     0.22%  compiler  libstdc++.so.6.0.31          [.] std::__detail::_Prime_rehash_policy::_M_next_bkt
+     0.22%  compiler  compiler                     [.] operator new@plt
+     0.21%  compiler  libc.so.6                    [.] 0x0000000000096099
+     0.20%  compiler  libstdc++.so.6.0.31          [.] operator delete
+     0.20%  compiler  libc.so.6                    [.] 0x0000000000094cb9
+     0.20%  compiler  libc.so.6                    [.] 0x0000000000094c9b
+     0.19%  compiler  libc.so.6                    [.] 0x0000000000094bb9
+     0.18%  compiler  libc.so.6                    [.] 0x00000000000960bc
+     0.18%  compiler  libc.so.6                    [.] 0x0000000000094b65
+     0.17%  compiler  libc.so.6                    [.] 0x0000000000093d8e
+     0.16%  compiler  libc.so.6                    [.] 0x0000000000094b85
+     0.16%  compiler  libc.so.6                    [.] 0x0000000000096103
+     0.16%  compiler  libc.so.6                    [.] 0x0000000000094be2
+     0.16%  compiler  libstdc++.so.6.0.31          [.] std::_Rb_tree_insert_and_rebalance
+     0.15%  compiler  libc.so.6                    [.] 0x0000000000094b54
+     0.15%  compiler  libc.so.6                    [.] 0x0000000000094c03
+     0.15%  compiler  libc.so.6                    [.] 0x0000000000094b5d
+     0.14%  compiler  libc.so.6                    [.] 0x0000000000094bd0
+     0.14%  compiler  libc.so.6                    [.] 0x0000000000094b7c
+     0.14%  compiler  libc.so.6                    [.] 0x0000000000094bab
+     0.13%  compiler  libc.so.6                    [.] 0x0000000000094c39
+     0.13%  compiler  libc.so.6                    [.] 0x0000000000094c4c
+     0.13%  compiler  libc.so.6                    [.] 0x0000000000094b50
+     0.13%  compiler  libc.so.6                    [.] 0x0000000000094caf
+     0.12%  compiler  compiler                     [.] SSA::SSAConstruction(std::shared_ptr<NormalFunction>)::{lambda()#2}::operator()
+     0.12%  compiler  libc.so.6                    [.] 0x0000000000094c67
+     0.12%  compiler  libc.so.6                    [.] 0x0000000000096086
+     0.12%  compiler  libc.so.6                    [.] 0x00000000000960a8
+     0.12%  compiler  libc.so.6                    [.] 0x0000000000094c77
+     0.11%  compiler  libc.so.6                    [.] 0x00000000000960c0
+     0.10%  compiler  libc.so.6                    [.] 0x0000000000094c22
+     0.09%  compiler  libc.so.6                    [.] 0x0000000000094c55
+     0.09%  compiler  libc.so.6                    [.] 0x0000000000094b5b
+     0.08%  compiler  libc.so.6                    [.] 0x0000000000094b9c
+     0.08%  compiler  compiler                     [.] virt_reg::kind
+     0.08%  compiler  libc.so.6                    [.] 0x0000000000094b75
+     0.08%  compiler  libc.so.6                    [.] 0x0000000000094bc7
+     0.07%  compiler  libc.so.6                    [.] 0x0000000000093d35
+     0.07%  compiler  libc.so.6                    [.] 0x00000000000960d9
+     0.07%  compiler  libc.so.6                    [.] 0x0000000000094bb5
+     0.07%  compiler  libc.so.6                    [.] 0x0000000000094f9c
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000093dc2
+     0.06%  compiler  libc.so.6                    [.] 0x00000000000960a1
+     0.06%  compiler  libc.so.6                    [.] 0x000000000009609d
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000094b52
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000094c29
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000094bde
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000094b82
+     0.06%  compiler  libc.so.6                    [.] 0x0000000000094c80
+     0.05%  compiler  libc.so.6                    [.] 0x0000000000093c2f
+     0.05%  compiler  libc.so.6                    [.] 0x0000000000094b61
+     0.05%  compiler  libc.so.6                    [.] 0x00000000000960a5
+     0.05%  compiler  libc.so.6                    [.] 0x0000000000094cb4
+     0.05%  compiler  libc.so.6                    [.] 0x00000000000960cc
+     0.05%  compiler  libc.so.6                    [.] 0x0000000000094c5c
+     0.05%  compiler  libc.so.6                    [.] 0x0000000000096091
+     0.04%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_get_insert_hint_unique_pos
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000094cb5
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000096527
+     0.04%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_get_insert_unique_pos
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000096120
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000095f8d
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000095fe3
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000094c61
+     0.04%  compiler  libc.so.6                    [.] 0x0000000000094cbd
+     0.03%  compiler  libc.so.6                    [.] 0x00000000000960b6
+     0.03%  compiler  compiler                     [.] DCE::EliminateUnreachableCode
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000094c10
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000095fa1
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096500
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096e86
+     0.03%  compiler  libc.so.6                    [.] 0x000000000009643e
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000095ff8
+     0.03%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_insert_unique<std::shared_ptr<CtrlFlowGraphNode> const&>
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000095fcf
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096055
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096460
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000094c48
+     0.03%  compiler  libc.so.6                    [.] 0x000000000009646a
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096e82
+     0.03%  compiler  libc.so.6                    [.] 0x000000000009601c
+     0.03%  compiler  libc.so.6                    [.] 0x000000000009651b
+     0.03%  compiler  libc.so.6                    [.] 0x0000000000096070
+     0.03%  compiler  compiler                     [.] std::_Rb_tree_increment@plt
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000093c35
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000096022
+     0.02%  compiler  libc.so.6                    [.] 0x000000000009646d
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094c74
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094cb7
+     0.02%  compiler  compiler                     [.] std::_Sp_counted_ptr_inplace<SSA::RenameData, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094c83
+     0.02%  compiler  libc.so.6                    [.] 0x00000000000960d2
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094ca9
+     0.02%  compiler  libc.so.6                    [.] 0x00000000000960ac
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094b73
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094c89
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000094be6
+     0.02%  compiler  libc.so.6                    [.] 0x000000000009500d
+     0.02%  compiler  compiler                     [.] CtrlFlowGraphNode::SetDirty
+     0.02%  compiler  compiler                     [.] SSA::RenameData::RenameData
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000095019
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000095fb2
+     0.02%  compiler  libc.so.6                    [.] 0x0000000000093d51
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095fdf
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000960af
+     0.01%  compiler  libc.so.6                    [.] 0x00000000001574aa
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000960c3
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093c1e
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096259
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094ca0
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095f80
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095f95
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009607b
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096424
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096512
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094b92
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094f88
+     0.01%  compiler  libc.so.6                    [.] 0x000000000015758e
+     0.01%  compiler  compiler                     [.] std::__cxx11::_List_base<std::unique_ptr<rl_basicblock, std::default_delete<rl_basicblock> >, std::allocator<std::unique_ptr<rl_basicblock, std::default_delete<rl_basicblock> > > >::_M_clear
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093c3b
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094ff7
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096515
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157589
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093d40
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094b6e
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000968e9
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157593
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094bf3
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009604b
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093c13
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094bce
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094cbb
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157584
+     0.01%  compiler  compiler                     [.] std::_Hashtable<GVN::VNExpr, std::pair<GVN::VNExpr const, std::shared_ptr<BaseValue> >, std::allocator<std::pair<GVN::VNExpr const, std::shared_ptr<BaseValue> > >, std::__detail::_Select1st, std::equal_to<GVN::VNExpr>, GVN::VNExprHasher, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<true, false, true> >::_M_find_before_node
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093dd1
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093e0e
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094f73
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009601f
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093d44
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093e38
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094b8e
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095873
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095f8f
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093ddb
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094c06
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094c51
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009643c
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000966af
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157568
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094bc3
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096523
+     0.01%  compiler  libc.so.6                    [.] 0x00000000001575ae
+     0.01%  compiler  compiler                     [.] GVN::VNScope::Get
+     0.01%  compiler  compiler                     [.] memset@plt
+     0.01%  compiler  compiler                     [.] std::_Function_handler<void (std::shared_ptr<CtrlFlowGraphNode>), NormalFunction::TopoSortFromEntry[abi:cxx11]()::{lambda(std::shared_ptr<CtrlFlowGraphNode>)#2}>::_M_invoke
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094bb2
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096051
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000960f0
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157490
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094cb3
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095f8b
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096463
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000968d9
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000968df
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094bd7
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094c7b
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096010
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096433
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009651d
+     0.01%  compiler  libc.so.6                    [.] 0x00000000001575b3
+     0.01%  compiler  compiler                     [.] SSA::SSAConstruction
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000094b56
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095fc2
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096018
+     0.01%  compiler  libc.so.6                    [.] 0x000000000009608d
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000096232
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000157498
+     0.01%  compiler  compiler                     [.] operator delete@plt
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000093d55
+     0.01%  compiler  libc.so.6                    [.] 0x0000000000095877
+     0.01%  compiler  libc.so.6                    [.] 0x00000000000969d8
+     0.01%  compiler  libc.so.6                    [.] 0x000000000015754d
+     0.01%  compiler  libc.so.6                    [.] 0x00000000001575a4
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096095
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096467
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096506
+     0.00%  compiler  compiler                     [.] DCE::EliminateUselessCode
+     0.00%  compiler  compiler                     [.] std::_Hashtable<unsigned long, std::pair<unsigned long const, virt_reg*>, std::allocator<std::pair<unsigned long const, virt_reg*> >, std::__detail::_Select1st, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::find
+     0.00%  compiler  compiler                     [.] std::__detail::_Prime_rehash_policy::_M_need_rehash@plt
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000933c8
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094bbe
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c35
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f9d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096e7a
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::LexerATNSimulator::execATN
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d9b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dfb
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093e33
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094bbc
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096ddd
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001575a9
+     0.00%  compiler  compiler                     [.] cross_internal_manager::nftoir
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000933c0
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c75
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c3b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f86
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095011
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f99
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096074
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000964a5
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000157535
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000157552
+     0.00%  compiler  compiler                     [.] std::__detail::_Map_base<std::shared_ptr<AllocaInst>, std::pair<std::shared_ptr<AllocaInst> const, int>, std::allocator<std::pair<std::shared_ptr<AllocaInst> const, int> >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<AllocaInst> >, std::hash<std::shared_ptr<AllocaInst> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true>, true>::operator[]
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c2b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f76
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009607f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096365
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096519
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096824
+     0.00%  compiler  libstdc++.so.6.0.31          [.] __dynamic_cast
+     0.00%  compiler  compiler                     [.] CtrlFlowGraphNode::SetDominatorSet
+     0.00%  compiler  compiler                     [.] SSA::SSADestruction
+     0.00%  compiler  compiler                     [.] std::_Hashtable<std::shared_ptr<AllocaInst>, std::pair<std::shared_ptr<AllocaInst> const, int>, std::allocator<std::pair<std::shared_ptr<AllocaInst> const, int> >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<AllocaInst> >, std::hash<std::shared_ptr<AllocaInst> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::find
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool>, std::_Select1st<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<std::shared_ptr<CtrlFlowGraphNode> const&>, std::tuple<> >
+     0.00%  compiler  compiler                     [.] std::__cxx11::_List_base<std::shared_ptr<CtrlFlowGraphNode>, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_clear
+     0.00%  compiler  compiler                     [.] std::__cxx11::_List_base<std::unique_ptr<progress, std::default_delete<progress> >, std::allocator<std::unique_ptr<progress, std::default_delete<progress> > > >::_M_clear
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093e40
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094b59
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c18
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c41
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961df
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009645c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096690
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096844
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968b7
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096dd8
+     0.00%  compiler  compiler                     [.] Dominance::ComputeDominanceFrontier
+     0.00%  compiler  compiler                     [.] cross_internal_manager::irtorv
+     0.00%  compiler  libc.so.6                    [.] write
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c08
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094b5c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094b8b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094bf6
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fdb
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fef
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096696
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009669c
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000966bb
+     0.00%  compiler  compiler                     [.] Instruction::IsPhiInst
+     0.00%  compiler  compiler                     [.] antlr4::BufferedTokenStream::~BufferedTokenStream
+     0.00%  compiler  compiler                     [.] pblock::gen_asm
+     0.00%  compiler  compiler                     [.] std::default_delete<cross_internal_manager>::operator()
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c4d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d3b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d9e
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095001
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009501d
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009571d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fbf
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fcb
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009603e
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000960e4
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961c9
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096516
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968ce
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096901
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096e65
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096e6c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000157563
+     0.00%  compiler  compiler                     [.] BaseValue::RemoveUser
+     0.00%  compiler  compiler                     [.] alc_info::confirm
+     0.00%  compiler  compiler                     [.] progress::gen_asm
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonTokenStream::LT
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::Parser::~Parser
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d6d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093daf
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094d04
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f7a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094ffe
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f83
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096005
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009600c
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009603b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096082
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961d2
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961f3
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009636c
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968ca
+     0.00%  compiler  compiler                     [.] GVN::DoDVNT
+     0.00%  compiler  compiler                     [.] Instruction::GetResult
+     0.00%  compiler  compiler                     [.] cross_internal_manager::irpass
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool>, std::_Select1st<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> > >::_M_erase
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ATNConfigSet::add
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ParserATNSimulator::closure_
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlrcpp::Utf8::strictEncode[abi:cxx11]
+     0.00%  compiler  libc.so.6                    [.] __mprotect
+     0.00%  compiler  libc.so.6                    [.] __sbrk
+     0.00%  compiler  libc.so.6                    [.] fclose
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c04
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c0b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d48
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094ba5
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c6a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096430
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096520
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096656
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968d0
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096e5e
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000157494
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001574ae
+     0.00%  compiler  libc.so.6                    [.] 0x000000000015755e
+     0.00%  compiler  libstdc++.so.6.0.31          [.] __cxxabiv1::__si_class_type_info::__do_dyncast
+     0.00%  compiler  compiler                     [.] AstVisitor::ClearTableList
+     0.00%  compiler  compiler                     [.] AstVisitor::visitChildren
+     0.00%  compiler  compiler                     [.] BaseValue::GetBaseType
+     0.00%  compiler  compiler                     [.] BaseValue::InsertUser
+     0.00%  compiler  compiler                     [.] BasicBlock::GetBlockIdx
+     0.00%  compiler  compiler                     [.] BranchInst::GetOprands[abi:cxx11]
+     0.00%  compiler  compiler                     [.] CtrlFlowGraphNode::GetDominatorSet
+     0.00%  compiler  compiler                     [.] GVN::GetVN
+     0.00%  compiler  compiler                     [.] Instruction::IsAllocaInst
+     0.00%  compiler  compiler                     [.] Instruction::IsCriticalOperation
+     0.00%  compiler  compiler                     [.] Value::ScalarTypeConvert
+     0.00%  compiler  compiler                     [.] itrace::add_ref
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<BaseValue>, std::pair<std::shared_ptr<BaseValue> const, std::shared_ptr<BaseValue> >, std::_Select1st<std::pair<std::shared_ptr<BaseValue> const, std::shared_ptr<BaseValue> > >, std::less<std::shared_ptr<BaseValue> >, std::allocator<std::pair<std::shared_ptr<BaseValue> const, std::shared_ptr<BaseValue> > > >::_M_erase
+     0.00%  compiler  compiler                     [.] std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release
+     0.00%  compiler  compiler                     [.] std::__detail::_Map_base<std::shared_ptr<PhiInst>, std::pair<std::shared_ptr<PhiInst> const, int>, std::allocator<std::pair<std::shared_ptr<PhiInst> const, int> >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<PhiInst> >, std::hash<std::shared_ptr<PhiInst> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true>, true>::operator[]
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonToken::getType
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonTokenStream::LB
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::Parser::createTerminalNode
+     0.00%  compiler  libc.so.6                    [.] __libc_calloc
+     0.00%  compiler  libc.so.6                    [.] pthread_rwlock_unlock
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000933c6
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d69
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d7c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d81
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093de2
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094b78
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f60
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f70
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095005
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f94
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fe6
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096044
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009637a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096446
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096517
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009682a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096a20
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096d17
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096dd3
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000159094
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001590c1
+     0.00%  compiler  compiler                     [.] AstVisitor::visitBlockStmt
+     0.00%  compiler  compiler                     [.] AstVisitor::visitTranslationUnit
+     0.00%  compiler  compiler                     [.] CtrlFlowGraphNode::CreatePtr
+     0.00%  compiler  compiler                     [.] Dominance::DominanceAnalysis
+     0.00%  compiler  compiler                     [.] Instruction::IsStoreInst
+     0.00%  compiler  compiler                     [.] PhiInst::GetOprands[abi:cxx11]
+     0.00%  compiler  compiler                     [.] PhiInst::InsertPhiData
+     0.00%  compiler  compiler                     [.] SysYParser::Add1Context::mulExp
+     0.00%  compiler  compiler                     [.] SysYParser::BlockContext::~BlockContext
+     0.00%  compiler  compiler                     [.] SysYParser::ExpContext::addExp
+     0.00%  compiler  compiler                     [.] SysYParser::Unary1Context::~Unary1Context
+     0.00%  compiler  compiler                     [.] SysYParser::mulExp
+     0.00%  compiler  compiler                     [.] itrace::from
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<Instruction>, std::shared_ptr<Instruction>, std::_Identity<std::shared_ptr<Instruction> >, std::less<std::shared_ptr<Instruction> >, std::allocator<std::shared_ptr<Instruction> > >::_M_erase
+     0.00%  compiler  compiler                     [.] std::__detail::_Map_base<unsigned long, std::pair<unsigned long const, rl_progress::rlbb_rcd>, std::allocator<std::pair<unsigned long const, rl_progress::rlbb_rcd> >, std::__detail::_Select1st, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true>, true>::operator[]
+     0.00%  compiler  compiler                     [.] std::__detail::_Map_base<virt_reg*, std::pair<virt_reg* const, std::unique_ptr<virt_reg, std::default_delete<virt_reg> > >, std::allocator<std::pair<virt_reg* const, std::unique_ptr<virt_reg, std::default_delete<virt_reg> > > >, std::__detail::_Select1st, std::equal_to<virt_reg*>, std::hash<virt_reg*>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true>, true>::operator[]
+     0.00%  compiler  compiler                     [.] stk_info::off
+     0.00%  compiler  ld-linux-x86-64.so.2         [.] 0x000000000000a1ae
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ANTLRInputStream::consume
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ANTLRInputStream::index
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::BufferedTokenStream::nextTokenOnChannel
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::BufferedTokenStream::previousTokenOnChannel
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonToken::getChannel
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::Lexer::emit
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::RuleContext::RuleContext
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ATNConfig::ATNConfig
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ParserATNSimulator::execATN
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::PredictionContext::fromRuleContext
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::dfa::DFA::isPrecedenceDfa
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlrcpp::Utf8::encode
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x0000000000092991
+     0.00%  compiler  libc.so.6                    [.] fprintf
+     0.00%  compiler  libc.so.6                    [.] pthread_rwlock_rdlock
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c00
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c0f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d62
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d90
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093db3
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dbe
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dc5
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dd7
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094c2f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094d4b
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f6c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095104
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095b5d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f91
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095faf
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fec
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009611c
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009649c
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009651f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096681
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009668d
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000966a1
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000966b4
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968d6
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968f4
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000156a74
+     0.00%  compiler  libc.so.6                    [.] 0x000000000015753a
+     0.00%  compiler  libc.so.6                    [.] 0x000000000015759a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000158eb4
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000159090
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::__ostream_insert<char, std::char_traits<char> >
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::basic_streambuf<char, std::char_traits<char> >::xsputn
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::codecvt<char, char, __mbstate_t>::do_always_noconv
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::ostream::flush
+     0.00%  compiler  compiler                     [.] AstVisitor::visitUnary1
+     0.00%  compiler  compiler                     [.] AstVisitor::visitUnary3
+     0.00%  compiler  compiler                     [.] BaseValue::GetUserList[abi:cxx11]
+     0.00%  compiler  compiler                     [.] BasicBlock::InsertInstBack
+     0.00%  compiler  compiler                     [.] BinaryInstruction::GetOprands[abi:cxx11]
+     0.00%  compiler  compiler                     [.] BranchInst::CreatePtr
+     0.00%  compiler  compiler                     [.] CtrlFlowGraphNode::InsertDominateChild
+     0.00%  compiler  compiler                     [.] ICmpInst::ReplaceSRC
+     0.00%  compiler  compiler                     [.] LoadInst::DoLoadValue
+     0.00%  compiler  compiler                     [.] PhiInst::GetOriginAlloca
+     0.00%  compiler  compiler                     [.] ReplaceSRC
+     0.00%  compiler  compiler                     [.] SysYParser::Add1Context::~Add1Context
+     0.00%  compiler  compiler                     [.] SysYParser::AssignStmtContext::~AssignStmtContext
+     0.00%  compiler  compiler                     [.] SysYParser::IfStmtContext::stmt
+     0.00%  compiler  compiler                     [.] SysYParser::LAnd2Context::eqExp
+     0.00%  compiler  compiler                     [.] SysYParser::LOr2Context::lOrExp
+     0.00%  compiler  compiler                     [.] SysYParser::Mul1Context::accept
+     0.00%  compiler  compiler                     [.] SysYParser::PrimaryExp3Context::number
+     0.00%  compiler  compiler                     [.] SysYParser::PrimaryExp3Context::~PrimaryExp3Context
+     0.00%  compiler  compiler                     [.] SysYParser::Unary1Context::primaryExp
+     0.00%  compiler  compiler                     [.] SysYParser::Unary3Context::accept
+     0.00%  compiler  compiler                     [.] SysYParser::lAndExp
+     0.00%  compiler  compiler                     [.] SysYParser::lVal
+     0.00%  compiler  compiler                     [.] SysYParser::primaryExp
+     0.00%  compiler  compiler                     [.] Variable::GetParent
+     0.00%  compiler  compiler                     [.] cross_internal_manager::irpass_delete_single_jump
+     0.00%  compiler  compiler                     [.] live_info::set_begin
+     0.00%  compiler  compiler                     [.] pblock::pblock
+     0.00%  compiler  compiler                     [.] pblock::push
+     0.00%  compiler  compiler                     [.] pushin
+     0.00%  compiler  compiler                     [.] rv_beqz::rv_beqz
+     0.00%  compiler  compiler                     [.] rv_inst::comment
+     0.00%  compiler  compiler                     [.] rv_inst::to_string
+     0.00%  compiler  compiler                     [.] rv_li::~rv_li
+     0.00%  compiler  compiler                     [.] std::_Hashtable<std::shared_ptr<AllocaInst>, std::pair<std::shared_ptr<AllocaInst> const, int>, std::allocator<std::pair<std::shared_ptr<AllocaInst> const, int> >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<AllocaInst> >, std::hash<std::shared_ptr<AllocaInst> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::clear
+     0.00%  compiler  compiler                     [.] std::_Hashtable<std::shared_ptr<BaseValue>, std::pair<std::shared_ptr<BaseValue> const, std::shared_ptr<BaseValue> >, std::allocator<std::pair<std::shared_ptr<BaseValue> const, std::shared_ptr<BaseValue> > >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<BaseValue> >, std::hash<std::shared_ptr<BaseValue> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::clear
+     0.00%  compiler  compiler                     [.] std::_Hashtable<std::shared_ptr<PhiInst>, std::pair<std::shared_ptr<PhiInst> const, int>, std::allocator<std::pair<std::shared_ptr<PhiInst> const, int> >, std::__detail::_Select1st, std::equal_to<std::shared_ptr<PhiInst> >, std::hash<std::shared_ptr<PhiInst> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::clear
+     0.00%  compiler  compiler                     [.] std::_Hashtable<std::variant<bool, char, int, float, long>, std::pair<std::variant<bool, char, int, float, long> const, std::shared_ptr<Constant> >, std::allocator<std::pair<std::variant<bool, char, int, float, long> const, std::shared_ptr<Constant> > >, std::__detail::_Select1st, std::equal_to<std::variant<bool, char, int, float, long> >, std::hash<std::variant<bool, char, int, float, long> >, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_find_before_node
+     0.00%  compiler  compiler                     [.] std::_Hashtable<unsigned long, std::pair<unsigned long const, rl_progress::rlbb_rcd>, std::allocator<std::pair<unsigned long const, rl_progress::rlbb_rcd> >, std::__detail::_Select1st, std::equal_to<unsigned long>, std::hash<unsigned long>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_rehash
+     0.00%  compiler  compiler                     [.] std::_Hashtable<virt_reg*, std::pair<virt_reg* const, std::unique_ptr<virt_reg, std::default_delete<virt_reg> > >, std::allocator<std::pair<virt_reg* const, std::unique_ptr<virt_reg, std::default_delete<virt_reg> > > >, std::__detail::_Select1st, std::equal_to<virt_reg*>, std::hash<virt_reg*>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_rehash
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool>, std::_Select1st<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::pair<std::shared_ptr<CtrlFlowGraphNode> const, bool> > >::_M_erase
+     0.00%  compiler  compiler                     [.] std::_Rb_tree<std::shared_ptr<CtrlFlowGraphNode>, std::shared_ptr<CtrlFlowGraphNode>, std::_Identity<std::shared_ptr<CtrlFlowGraphNode> >, std::less<std::shared_ptr<CtrlFlowGraphNode> >, std::allocator<std::shared_ptr<CtrlFlowGraphNode> > >::_M_erase
+     0.00%  compiler  compiler                     [.] std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_add_ref_copy
+     0.00%  compiler  compiler                     [.] std::__push_heap<__gnu_cxx::__normal_iterator<std::pair<unsigned long, virt_reg*>*, std::vector<std::pair<unsigned long, virt_reg*>, std::allocator<std::pair<unsigned long, virt_reg*> > > >, long, std::pair<unsigned long, virt_reg*>, __gnu_cxx::__ops::_Iter_comp_val<std::greater<void> > >
+     0.00%  compiler  compiler                     [.] std::any::_Manager_internal<decltype(nullptr)>::_S_manage
+     0.00%  compiler  compiler                     [.] stk_info::slen
+     0.00%  compiler  compiler                     [.] uop_icmp_b::givr
+     0.00%  compiler  compiler                     [.] uop_mv::calcu_lvif
+     0.00%  compiler  compiler                     [.] uop_st_stk::~uop_st_stk
+     0.00%  compiler  compiler                     [.] virt_reg::load
+     0.00%  compiler  compiler                     [.] virt_reg::virt_reg
+     0.00%  compiler  compiler                     [.] virt_reg::~virt_reg
+     0.00%  compiler  compiler                     [.] vr_allocor::get_reg
+     0.00%  compiler  ld-linux-x86-64.so.2         [.] 0x0000000000009879
+     0.00%  compiler  ld-linux-x86-64.so.2         [.] 0x00000000000098d0
+     0.00%  compiler  ld-linux-x86-64.so.2         [.] 0x000000000000a1e1
+     0.00%  compiler  ld-linux-x86-64.so.2         [.] 0x0000000000012d3d
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::BailErrorStrategy::sync
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::BufferedTokenStream::LA
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonTokenFactory::create
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::CommonTokenStream::adjustSeekIndex
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::Parser::consume
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::Parser::enterRecursionRule
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ParserRuleContext::ParserRuleContext
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ParserRuleContext::addChild
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ParserRuleContext::addChild
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::ParserRuleContext::copyFrom
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::RuleContext::InitializeInstanceFields
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::RuleContext::setAltNumber
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ATN::addState
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ArrayPredictionContext::ArrayPredictionContext
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ParserATNSimulator::adaptivePredict
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ParserATNSimulator::closureCheckingStopState
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::ParserATNSimulator::ruleTransition
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::PredictionContext::merge
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::PredictionContext::mergeRoot
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::SingletonPredictionContext::SingletonPredictionContext
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::atn::SingletonPredictionContext::getReturnState
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlr4::misc::MurmurHash::finish
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] antlrcpp::Utf8::strictDecode[abi:cxx11]
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] non-virtual thunk to antlr4::Lexer::getLine() const
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x000000000005c4bf
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x0000000000089030
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x0000000000089034
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x00000000000a6944
+     0.00%  compiler  libantlr4-runtime.so.4.13.0  [.] 0x00000000000b10b2
+     0.00%  compiler  libc.so.6                    [.] _IO_enable_locks
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000051a15
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000051b16
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000059878
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000059a45
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000059a60
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000059bd3
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000059ef8
+     0.00%  compiler  libc.so.6                    [.] 0x000000000005a382
+     0.00%  compiler  libc.so.6                    [.] 0x000000000005b801
+     0.00%  compiler  libc.so.6                    [.] 0x000000000005b968
+     0.00%  compiler  libc.so.6                    [.] 0x000000000005b992
+     0.00%  compiler  libc.so.6                    [.] 0x000000000005b9ae
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000084016
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c31
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093c47
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d0a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d4d
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d5c
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d66
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093d79
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093da7
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dbb
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dce
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093dec
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093df6
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093e00
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093e0a
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000093e30
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094d17
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094d88
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094d9e
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094e1f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094f67
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000094ffa
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000956f2
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095704
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000957c2
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095880
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095f89
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000095fff
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009602f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096033
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096037
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096060
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000960fe
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096106
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096118
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961c2
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961e3
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000961e7
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009620c
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009623f
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009624f
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000962fd
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096420
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096458
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000965b6
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000965cf
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009665d
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000966a8
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000968dc
+     0.00%  compiler  libc.so.6                    [.] 0x000000000009699c
+     0.00%  compiler  libc.so.6                    [.] 0x00000000000969ed
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096dc8
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000096e7e
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000156a70
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000156b59
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000156d25
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000156d37
+     0.00%  compiler  libc.so.6                    [.] 0x000000000015749f
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000157573
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001575b6
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000158ecf
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001590bf
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001590c3
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001590cb
+     0.00%  compiler  libc.so.6                    [.] 0x00000000001590cf
+     0.00%  compiler  libc.so.6                    [.] 0x0000000000159840
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::basic_filebuf<char, std::char_traits<char> >::_M_convert_to_external
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::basic_filebuf<char, std::char_traits<char> >::sync
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::basic_filebuf<char, std::char_traits<char> >::xsputn
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::ios_base::_M_init
+     0.00%  compiler  libstdc++.so.6.0.31          [.] std::ostream::sentry::sentry
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

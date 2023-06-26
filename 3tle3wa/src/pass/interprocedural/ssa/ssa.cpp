@@ -163,7 +163,7 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
 
 void SSA::SSADestruction(NormalFuncPtr func) {
     auto &&allNodes = func->TopoSortFromEntry();
-    std::map<AllocaInstPtr, bool> allocaMap;
+    std::unordered_map<AllocaInstPtr, bool> allocaMap;
 
     for (auto node : allNodes) {
         auto &&inst_list = node->GetInstList();

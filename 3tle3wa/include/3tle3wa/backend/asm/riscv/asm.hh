@@ -18,6 +18,7 @@ class rv_inst : public asm_inst {
     const rid_t rs_;
     const rid_t rt_;
     const rid_t ra_;
+    i64 off_;
 
    protected:
     char *inst_;

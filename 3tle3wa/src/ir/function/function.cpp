@@ -28,7 +28,7 @@ void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
 
 CfgNodeList NormalFunction::TopoSortFromEntry() {
-    std::map<CfgNodePtr, bool> visit;
+    std::unordered_map<CfgNodePtr, bool> visit;
     CfgNodeList preorder_node = CfgNodeList();
 
     [[maybe_unused]] auto PredAllVisited = [&visit](CfgNodePtr succ) {
@@ -54,7 +54,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
 }
 
 CfgNodeList NormalFunction::TopoSortFromExit() {
-    std::map<CfgNodePtr, bool> visit;
+    std::unordered_map<CfgNodePtr, bool> visit;
     CfgNodeList postorder_node = CfgNodeList();
 
     [[maybe_unused]] auto SuccAllVisited = [&visit](CfgNodePtr pred) {

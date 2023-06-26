@@ -32,7 +32,7 @@ struct VNScope {
     void Set(BinaryInstPtr);
 };
 
-using ValueNumber = std::map<BaseValuePtr, BaseValuePtr>;
+using ValueNumber = std::unordered_map<BaseValuePtr, BaseValuePtr>;
 
 static ValueNumber VN;
 

@@ -187,7 +187,43 @@ void uop_b::toasm(pblock *pb) {
     pb->push(rv);
 }
 
-void uop_icmp_b::toasm(pblock *pb) { panic("unexpected now"); }
+void uop_icmp_b::toasm(pblock *pb) {
+    spack spk;
+    auto lhs = lhs_->load(pb, spk);
+    auto rhs = rhs_->load(pb, spk);
+
+    switch (kind_) {
+        case COMP_KIND::EQU: {
+            auto rv = new rv_beq(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+
+        case COMP_KIND::NEQ: {
+            auto rv = new rv_bne(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+
+        case COMP_KIND::LTH: {
+            auto rv = new rv_blt(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+
+        case COMP_KIND::GTH: {
+            auto rv = new rv_bgt(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+
+        case COMP_KIND::LEQ: {
+            auto rv = new rv_ble(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+
+        case COMP_KIND::GEQ: {
+            auto rv = new rv_bge(lhs, rhs, gen_pblk_label(lbid_).c_str());
+            pb->push(rv);
+        } break;
+    }
+}
 
 void uop_j::toasm(pblock *pb) {
     auto rv = new rv_j(gen_pblk_label(lbid_).c_str());
@@ -684,11 +720,32 @@ void uop_bin::toasm(pblock *pb) {
                 if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 1) return;
                 if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
             }
+            if (rhs_->kind() == VREG_KIND::IMM && __builtin_popcount(rhs_->value()) == 1) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_slliw(dst, lhs, __builtin_ctz(rhs_->value()));
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+            if (lhs_->kind() == VREG_KIND::IMM && __builtin_popcount(lhs_->value()) == 1) {
+                auto rhs = rhs_->load(pb, spk);
+                auto rv = new rv_slliw(dst, rhs, __builtin_ctz(lhs_->value()));
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
         } break;
 
         case IBIN_KIND::DIV: {
             if (rd_ == lhs_) {
                 if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
+            }
+            if (rhs_->kind() == VREG_KIND::IMM && __builtin_popcount(rhs_->value()) == 1) {
+                auto lhs = lhs_->load(pb, spk);
+                auto rv = new rv_srai(dst, lhs, __builtin_ctz(rhs_->value()));
+                pb->push(rv);
+                rd_->store(pb);
+                return;
             }
         } break;
 
@@ -842,4 +899,34 @@ void uop_fbin::toasm(pblock *pb) {
     rd_->store(pb, dst);
 }
 
-void uop_ftri::toasm(pblock *pb) { panic("unexpected now"); }
+void uop_ftri::toasm(pblock *pb) {
+    spack spk;
+    auto dst = rd_->store_where();
+    auto lhs = lhs_->load(pb, spk);
+    auto rhs = rhs_->load(pb, spk);
+    auto ahs = ahs_->load(pb, spk);
+
+    switch (kind_) {
+        case FTRI_KIND::MADD: {
+            auto rv = new rv_fmadd_s(dst, lhs, rhs, ahs);
+            pb->push(rv);
+        } break;
+
+        case FTRI_KIND::MSUB: {
+            auto rv = new rv_fmsub_s(dst, lhs, rhs, ahs);
+            pb->push(rv);
+        } break;
+
+        case FTRI_KIND::NMADD: {
+            auto rv = new rv_fnmadd_s(dst, lhs, rhs, ahs);
+            pb->push(rv);
+        } break;
+
+        case FTRI_KIND::NMSUB: {
+            auto rv = new rv_fnmsub_s(dst, lhs, rhs, ahs);
+            pb->push(rv);
+        } break;
+    }
+
+    rd_->store(pb, dst);
+}

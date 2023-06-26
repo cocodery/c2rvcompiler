@@ -46,6 +46,7 @@ def build_run(args, exts, cc_arg, simcc_arg):
                 logfile.write("Compile use time: {}\n".format(str(total_time)))
         except subprocess.TimeoutExpired:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mCompile Timeout\033[0m".format(basename))
+            continue
 
         if resp.returncode != 0:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mCompile Error\033[0m".format(basename))
@@ -74,6 +75,7 @@ def build_run(args, exts, cc_arg, simcc_arg):
                 resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
         except subprocess.TimeoutExpired:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mTime Limit Exceed\033[0m".format(basename))
+            continue
         
         recv = resp
         cmd = ['tail', '-c', '1', resname]

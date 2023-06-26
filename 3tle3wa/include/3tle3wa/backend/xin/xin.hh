@@ -29,6 +29,11 @@ class cross_internal_manager {
 
     void pir();
 
+    void irpass_delete_single_jump();
+    void irpass_combine_fallthrough();
+    void irpass_gen_cmpb();
+    void irpass_gen_fmas();
+
    public:
     cross_internal_manager(NormalFuncPtr &fptr, std::unordered_set<uint32_t> &lc_pool);
 
