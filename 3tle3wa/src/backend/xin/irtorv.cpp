@@ -1,6 +1,8 @@
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/xin/xin.hh"
 
+static std::mutex lcmtx;
+
 void cross_internal_manager::irtorv() {
     apg_ = std::make_unique<progress>(rl_pgrs_.label_.data(), rl_pgrs_.bbs_.size());
     for (auto &&rlbb : rl_pgrs_.bbs_) {
@@ -58,5 +60,6 @@ void cross_internal_manager::irtorv() {
 
     back_ilst.push_back(std::move(last));
 
+    std::scoped_lock<std::mutex> lck{lcmtx};
     rl_pgrs_.valc_.give_loc(lc_pool_);
 }

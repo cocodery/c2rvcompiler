@@ -23,8 +23,6 @@ class rl_basicblock {
 
     std::unordered_set<size_t> successer;
 
-    std::unordered_set<size_t> dominator;
-
     std::list<std::unique_ptr<uop_general>> ops_;
 };
 

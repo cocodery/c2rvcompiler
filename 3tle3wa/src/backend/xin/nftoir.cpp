@@ -3,7 +3,9 @@
 #include "3tle3wa/backend/xin/xin.hh"
 
 static size_t file_scope_label_alloc() {
+    static std::mutex fslamtx;
     static size_t lbidx_ = 1;
+    std::scoped_lock<std::mutex> lck{fslamtx};
     auto ret = lbidx_;
     lbidx_ += 1;
     return ret;
@@ -105,11 +107,6 @@ void cross_internal_manager::nftoir() {
         for (auto &&succ : bb->GetSuccessors()) {
             auto idx = succ->GetBlockIdx();
             rlbb->successer.insert(reidx_lbmap[idx]);
-        }
-
-        for (auto &&succ : bb->GetDominatorSet()) {
-            auto idx = succ->GetBlockIdx();
-            rlbb->dominator.insert(reidx_lbmap[idx]);
         }
 
         for (auto &&inst : bb->GetInstList()) {
@@ -235,15 +232,18 @@ void cross_internal_manager::nftoir() {
                     // 获取条件，构造标签
                     auto &&cond = llinst->GetCondition();
                     size_t tgid = 0;
+                    size_t otherid = 0;
                     auto ftgid = llinst->GetFalseTarget()->GetBlockIdx();
                     auto ttgid = llinst->GetTrueTarget()->GetBlockIdx();
 
                     if (nxtlbid == reidx_lbmap[ftgid]) {
                         ontrue = true;
                         tgid = ttgid;
+                        otherid = ftgid;
                     } else if (nxtlbid == reidx_lbmap[ttgid]) {
                         ontrue = false;
                         tgid = ftgid;
+                        otherid = ttgid;
                     }
 
                     if (cond->IsVariable()) {
@@ -260,14 +260,13 @@ void cross_internal_manager::nftoir() {
                         auto evr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
                         op->set_cond(evr);
 
-                        if (auto fnd = reidx_lbmap.find(tgid); fnd != reidx_lbmap.end()) {
-                            op->set_lbid(fnd->second);
-                        } else {
-                            panic("unexpected");
-                        }
+                        op->set_lbid(reidx_lbmap.at(tgid));
 
                         // 记录一次对标签的引用
                         rl_pgrs_.lbmap_[op->get_lbid()].refs_.push_back(op.get());
+                        rl_pgrs_.lbmap_[reidx_lbmap.at(otherid)].refs_.push_back(op.get());
+
+                        op->set_false_lbid(reidx_lbmap.at(otherid));
 
                         // 将操作置入当前块中
                         lst.push_back(std::move(op));
@@ -282,14 +281,12 @@ void cross_internal_manager::nftoir() {
                             auto op = std::make_unique<uop_j>();
 
                             // 设置目的地标签
-                            if (auto fnd = reidx_lbmap.find(ttgid); fnd != reidx_lbmap.end()) {
-                                op->set_lbid(fnd->second);
-                            } else {
-                                panic("unexpected");
-                            }
+                            op->set_lbid(reidx_lbmap.at(ttgid));
 
                             // 记录一次对标签的引用
                             rl_pgrs_.lbmap_[op->get_lbid()].refs_.push_back(op.get());
+
+                            rlbb->successer.erase(reidx_lbmap.at(ftgid));
 
                             // 将操作置入当前块中
                             lst.push_back(std::move(op));
@@ -298,14 +295,12 @@ void cross_internal_manager::nftoir() {
                             auto op = std::make_unique<uop_j>();
 
                             // 设置目的地标签
-                            if (auto fnd = reidx_lbmap.find(ftgid); fnd != reidx_lbmap.end()) {
-                                op->set_lbid(fnd->second);
-                            } else {
-                                panic("unexpected");
-                            }
+                            op->set_lbid(reidx_lbmap.at(ftgid));
 
                             // 记录一次对标签的引用
                             rl_pgrs_.lbmap_[op->get_lbid()].refs_.push_back(op.get());
+                            
+                            rlbb->successer.erase(reidx_lbmap.at(ttgid));
 
                             // 将操作置入当前块中
                             lst.push_back(std::move(op));

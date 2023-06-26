@@ -93,7 +93,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
             auto &&old = bb->dli.live_out;
             std::unordered_set<size_t> nwset;
             for (auto &&m : bb->successer) {
-                auto &&succ = rlp.lbmap_[m].bbp_;
+                auto &&succ = rlp.lbmap_.at(m).bbp_;
                 Assert(succ, "not generate well");
 
                 auto &&cur = succ->dli;

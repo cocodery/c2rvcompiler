@@ -7,7 +7,7 @@ cross_internal_manager::cross_internal_manager(NormalFuncPtr &fptr, std::unorder
     rl_pgrs_.label_ = fptr_->GetFuncName();
 }
 
-void cross_internal_manager::operator()() {
+void cross_internal_manager::do_compile() {
     nftoir();
     irpass();
     rassign();

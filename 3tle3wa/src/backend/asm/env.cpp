@@ -57,11 +57,24 @@ void asm_env::make_gvals(GlobalValuePtr &gvptr) {
 }
 
 void asm_env::make_prog(NormalFuncList &flst) {
+    std::vector<std::unique_ptr<cross_internal_manager>> xinmgrs;
+    std::vector<std::unique_ptr<std::thread>> trds;
+
     for (auto &&fptr : flst) {
-        cross_internal_manager xinmgr(fptr, lc_pool_);
-        xinmgr();
-        if (xinmgr.apg_ != nullptr) {
-            pgrs_.push_back(std::move(xinmgr.apg_));
+        auto xin = std::make_unique<cross_internal_manager>(fptr, lc_pool_);
+        auto bear_xin = xin.get();
+        auto trd = std::make_unique<std::thread>([bear_xin]() -> void { bear_xin->do_compile(); });
+        xinmgrs.push_back(std::move(xin));
+        trds.push_back(std::move(trd));
+    }
+
+    for (auto &&trd: trds) {
+        trd->join();
+    }
+
+    for (auto &&xinmgr: xinmgrs) {
+        if (xinmgr->apg_ != nullptr) {
+            pgrs_.push_back(std::move(xinmgr->apg_));
         }
     }
 }
