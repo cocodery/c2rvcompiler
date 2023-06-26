@@ -29,7 +29,7 @@ $(shell mkdir -p $(BUILD_DIR))
 
 OS 				:= $(shell uname)
 NPROC			:= $(shell nproc)
-ALL_SRC			:= $(shell find src -name '*.cpp') $(shell find src -name '*.hh' -or -name '*.h')
+ALL_SRC			:= $(shell find 3tle3wa -name '*.cpp') $(shell find 3tle3wa -name '*.hh' -or -name '*.h')
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
 CMAKE_BUILD_VAR	:= # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
