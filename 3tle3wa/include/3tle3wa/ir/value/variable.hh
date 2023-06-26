@@ -5,7 +5,7 @@
 class Variable;
 using VariablePtr = std::shared_ptr<Variable>;
 
-class Variable : public BaseValue {
+class Variable final : public BaseValue {
    private:
     size_t idx;
     InstPtr parent;

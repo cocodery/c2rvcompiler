@@ -11,7 +11,7 @@ using ConstArr = std::vector<ConstantPtr>;
 
 // both global-const-array or local-const-array
 // will be put in .data section
-class ConstArray : public BaseValue {
+class ConstArray final : public BaseValue {
    private:
     ConstArr const_arr;
 

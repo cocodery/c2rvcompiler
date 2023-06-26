@@ -8,7 +8,7 @@
 class SitoFpInst;
 using SitoFpInstPtr = std::shared_ptr<SitoFpInst>;
 
-class SitoFpInst : public UnaryInstruction {
+class SitoFpInst final : public UnaryInstruction {
    private:
     static SitoFpInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
@@ -26,7 +26,7 @@ class SitoFpInst : public UnaryInstruction {
 class FptoSiInst;
 using FptoSiInstPtr = std::shared_ptr<FptoSiInst>;
 
-class FptoSiInst : public UnaryInstruction {
+class FptoSiInst final : public UnaryInstruction {
    private:
     static FptoSiInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
@@ -44,7 +44,7 @@ class FptoSiInst : public UnaryInstruction {
 class ZextInst;
 using ZextInstPtr = std::shared_ptr<ZextInst>;
 
-class ZextInst : public UnaryInstruction {
+class ZextInst final : public UnaryInstruction {
    private:
     static ZextInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 

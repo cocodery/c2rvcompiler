@@ -10,7 +10,7 @@ using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
 using CfgNodeList = std::list<CfgNodePtr>;
 using DominatorSet = std::set<CfgNodePtr>;
 
-class CtrlFlowGraphNode : public BasicBlock {
+class CtrlFlowGraphNode final : public BasicBlock {
    private:
     bool dirty;
 

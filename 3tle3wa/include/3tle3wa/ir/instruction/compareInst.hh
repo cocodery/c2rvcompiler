@@ -6,7 +6,7 @@
 class ICmpInst;
 using ICmpInstPtr = std::shared_ptr<ICmpInst>;
 
-class ICmpInst : public BinaryInstruction {
+class ICmpInst final : public BinaryInstruction {
    private:
     static ICmpInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
@@ -26,7 +26,7 @@ class ICmpInst : public BinaryInstruction {
 class FCmpInst;
 using FCmpInstPtr = std::shared_ptr<FCmpInst>;
 
-class FCmpInst : public BinaryInstruction {
+class FCmpInst final : public BinaryInstruction {
    private:
     static FCmpInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 

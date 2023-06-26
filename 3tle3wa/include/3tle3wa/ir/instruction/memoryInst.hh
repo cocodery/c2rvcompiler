@@ -7,7 +7,7 @@
 class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 
-class AllocaInst : public Instruction {
+class AllocaInst final : public Instruction {
    private:
     BaseTypePtr type_stored;
 
@@ -34,7 +34,7 @@ class AllocaInst : public Instruction {
 class StoreInst;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
 
-class StoreInst : public Instruction {
+class StoreInst final : public Instruction {
    private:
     BaseValuePtr store_addr;
     BaseValuePtr store_value;
@@ -62,7 +62,7 @@ class StoreInst : public Instruction {
 class LoadInst;
 using LoadInstPtr = std::shared_ptr<LoadInst>;
 
-class LoadInst : public UnaryInstruction {
+class LoadInst final : public UnaryInstruction {
    public:
     LoadInst(VariablePtr, BaseValuePtr, CfgNodePtr);
     ~LoadInst() = default;
@@ -79,7 +79,7 @@ class LoadInst : public UnaryInstruction {
 class GetElementPtrInst;
 using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
 
-class GetElementPtrInst : public Instruction {
+class GetElementPtrInst final : public Instruction {
    private:
     BaseTypePtr store_type;
     BaseValuePtr base_addr;

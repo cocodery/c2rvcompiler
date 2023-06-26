@@ -11,7 +11,7 @@ class Constant;
 using ConstantPtr = std::shared_ptr<Constant>;
 using ConstType = std::variant<bool, char, int32_t, float, int64_t>;
 
-class Constant : public BaseValue {
+class Constant final : public BaseValue {
    private:
     ConstType value;
 
