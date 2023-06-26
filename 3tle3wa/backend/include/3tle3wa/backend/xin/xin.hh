@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 #include "3tle3wa/backend/asm/riscv/asm.hh"
 #include "3tle3wa/backend/asm/riscv/def.hh"
 #include "3tle3wa/backend/ir/bbtype.hh"
@@ -30,7 +32,7 @@ class cross_internal_manager {
    public:
     cross_internal_manager(NormalFuncPtr &fptr, std::unordered_set<uint32_t> &lc_pool);
 
-    void operator()();
+    void do_compile();
 
     std::unique_ptr<progress> apg_;
 };

@@ -12,47 +12,28 @@ file(GLOB_RECURSE CXXSRC
 
 # 链接 antlr4 cpp runtime
 # 设置寻找路径 official path
-set(ANTLR4_LIB_DIR /usr/local/lib)
-set(ANTLR4_INC_DIR /usr/local/include/antlr4.12-runtime)
 
-set(ANTLR4_CXX_RUNTIME libantlr4-runtime.a)
+# 以下方法适用于高版本的 antlr4
+# 如何使用如下命令
+# 在完成 antlr4 编译或者安装后直接做 find
+# 比如在 archlinux 下安装后就是 find /usr -name antlr4*
+# 找到类似这样的文件名 /usr/lib/cmake/antlr4-runtime/antlr4-runtime-config.cmake
+# 这就是我们所需要的 cmake 文件，他会帮助我们找到 antlr4-runtime
+find_package(/usr/lib/cmake/antlr4-runtime/antlr4-runtime)
 
-if(EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-  link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-else()
-  message("Can't find " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-
-  # 下面参数用于设置 antlr4 cpp runtime 的位置
-  set(ANTLR4_LIB_DIR ${CMAKE_SOURCE_DIR}/ext/antlr4-cpp-runtime-4.12.0/build/runtime)
-
-  if(EXISTS ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-    link_libraries(${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-    message("Using " ${ANTLR4_LIB_DIR}/${ANTLR4_CXX_RUNTIME})
-  else()
-    message(FATAL_ERROR "Can't find " ${ANTLR4_CXX_RUNTIME})
-  endif()
-endif()
-
-if(EXISTS ${ANTLR4_INC_DIR})
-  include_directories(${ANTLR4_INC_DIR})
-else()
-  message("Can't find " ${ANTLR4_INC_DIR})
-
-  # 下面参数用于设置 antlr4 cpp 头文件的位置
-  set(ANTLR4_INC_DIR ${CMAKE_SOURCE_DIR}/ext/antlr4-cpp-runtime-4.12.0/runtime/src)
-
-  if(EXISTS ${ANTLR4_INC_DIR})
-    include_directories(${ANTLR4_INC_DIR})
-    message("Using " ${ANTLR4_INC_DIR})
-  else()
-    message(FATAL_ERROR "Can't find " ${ANTLR4_INC_DIR})
-  endif()
-endif()
+# 以下方法适用于低版本的 antlr4
+# link_libraries(  ... 你的 lib 路径  )
+# include_directories( ... 你的头文件 )
 
 # 设置编译参数
+# 官方参数 m 在后面链接
 add_compile_options(-std=c++17)
 add_compile_options(-O2)
-add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+
+# 用于调试
+add_compile_options(-g)
+add_compile_options(-Wall -Wextra)
+add_compile_options(-Wno-unused-parameter)
 
 # 包含头文件
 include_directories(
@@ -62,9 +43,13 @@ include_directories(
   3tle3wa/ir/include
   3tle3wa/pass/include
   3tle3wa/utils/include
+
+  # 来自 antlr4-runtime-config.cmake
+  # 低版本请手动设置
+  ${ANTLR4_INCLUDE_DIR}
 )
 
 # 编译程序
 add_executable(${PROJECT_NAME} ${CXXSRC})
 
-target_link_libraries(${PROJECT_NAME} m)
+target_link_libraries(${PROJECT_NAME} m antlr4-runtime)

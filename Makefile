@@ -29,11 +29,11 @@ QEMU			:= qemu-$(ARCH)
 SIM_CMD			:= $(QEMU)
 
 
-
 # python test
 PY				:= python
 PYTEST			:= runtest.py
 
+# make build dir
 $(shell mkdir -p $(BUILD_DIR))
 
 OS 				:= $(shell uname)
@@ -69,10 +69,10 @@ $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
 $(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/% $(SYLIB_LL)
-	@$(PY) $(PYTEST) -l -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy"))
+	@$(PY) $(PYTEST) -l -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(LLI)" -s $(SYLIB_LL) -x $(LLLD)
 
 $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
-	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -s $(SYLIB_C) -x $(RVCC) -m "$(SIM_CMD)"
+	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
 
 .PHONY: pyll
 pyll:  build $(PYLL_TARGETS)
@@ -92,41 +92,40 @@ debug: $(ALL_SRC)
 build: release
 
 ifneq ($(DEMO),)
-PRE		= cat $(TEST_DIR)/hidden_functional/$(DEMO)*.sy > $(SINGLE_TEST).sy
-INP		= $(shell ls $(TEST_DIR)/hidden_functional/$(DEMO)*.in)
-REDINP	= $(addprefix < ,$(INP)) 
-CATINP  = $(addprefix cat ,$(INP)) 
+LOAD	= cat $(TEST_DIR)/functional/$(DEMO)*.sy > $(SINGLE_TEST).sy
+INPFILE	= $(shell ls $(TEST_DIR)/functional/$(DEMO)*.in)
+REDINP	= $(addprefix < ,$(INPFILE))
 endif
 
 .PHONY: run
 run: build $(SYLIB_LL)
-	$(PRE)
-# $(CATINP)
+	$(LOAD)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
 	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
-SPKARG	:= -l --log=$(SINGLE_TEST).out.log # -d
-
-ll:
+ll: $(SYLIB_LL)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
 	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
 rv:
-	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
-	$(RVCC) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
-	$(RVOD) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
-	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST).out $(REDINP)
+	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
+	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
+	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
+	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
 
-llrv:
+llrv: $(SYLIB_LL)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
-	$(RVCC) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
-	$(RVOD) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
-	$(SPIKE) $(SPKARG) $(PK) $(SINGLE_TEST).out $(REDINP)
+	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
+	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
+	$(ECHO) $$?
+	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -fno-pic
+	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
+	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
 
 .PHONY: clean
@@ -136,10 +135,17 @@ clean:
 .PHONY: clean-test
 clean-test:
 	-@rm -rf $(OUTPUT_ASM) $(OUTPUT_LOG) $(OUTPUT_RES) $(OUTPUT_IR)
+
+.PHONY: clean-s
+clean-s:
 	-@rm -rf $(SINGLE_TEST).{ll,run.ll} $(SINGLE_TEST).{s,S} $(SINGLE_TEST).{out,out.log,dump,ir.s}
 
+.PHONY: clean-py
+clean-py:
+	-@rm -rf $(BUILD_DIR)/$(CPLER_TEST_DIR)
+
 .PHONY: clean-all
-clean-all: clean clean-test
+clean-all: clean clean-test clean-s
 
 # make formatter fake targets
 FORMAT			:= format
@@ -150,7 +156,6 @@ $(FORMAT_TARGETS): $(FORMAT)/%:%
  
 .PHONY: format-all
 format-all: $(FORMAT_TARGETS)
-
 
 # old shell test
 .PHONY: all

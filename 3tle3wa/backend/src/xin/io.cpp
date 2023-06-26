@@ -21,12 +21,6 @@ void cross_internal_manager::pir() {
         fs << "|" << std::endl;
 
         fs << "\t # ";
-        for (auto &&domi : rlbb->dominator) {
-            fs << domi << " ";
-        }
-        fs << "|" << std::endl;
-
-        fs << "\t # ";
         for (auto &&lv : rlbb->dli.live_out) {
             fs << lv << " ";
         }

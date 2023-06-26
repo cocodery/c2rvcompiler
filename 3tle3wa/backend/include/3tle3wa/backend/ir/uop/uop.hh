@@ -28,10 +28,11 @@ class pblock;
 
 class uop_general : public serializable {
     GETTER_SETTER(uop_idx, size_t)
+    GETTER_SETTER(fa_idx, size_t)
 
    public:
     virtual void trace_call() {}
-    virtual void trace_inst() {}
+    virtual void trace_inst(size_t fa_idx) {};
     virtual void live_info() {}
     virtual void toasm(pblock *pb) = 0;
     virtual void calcu_lvif(detailed_live_info &dli) {}
@@ -46,6 +47,7 @@ class uop_ret : public uop_general {
 
    public:
     void toasm(pblock *pb);
+    void trace_inst(size_t fa_idx);
 };
 
 class uop_set_iparam : public uop_general {
@@ -58,7 +60,7 @@ class uop_set_iparam : public uop_general {
 
    public:
     void trace_call();
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -75,7 +77,7 @@ class uop_set_fparam : public uop_general {
 
    public:
     void trace_call();
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -93,7 +95,7 @@ class uop_call : public uop_general {
 
    public:
     void trace_call();
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -108,7 +110,7 @@ class uop_li : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -123,7 +125,7 @@ class uop_mv : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -138,7 +140,7 @@ class uop_fmv : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -153,7 +155,7 @@ class uop_cvts2w : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -168,7 +170,7 @@ class uop_cvtw2s : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -179,12 +181,13 @@ class uop_b : public uop_general {
     GETTER_SETTER(cond, virt_reg *);
     GETTER_SETTER(lbid, size_t);
     GETTER_SETTER(ontrue, bool);
+    GETTER_SETTER(false_lbid, size_t);
 
    public:
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -203,7 +206,7 @@ class uop_icmp_b : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -218,6 +221,7 @@ class uop_j : public uop_general {
 
    public:
     void toasm(pblock *pb);
+    void trace_inst(size_t fa_idx);
 };
 
 class uop_la : public uop_general {
@@ -228,7 +232,7 @@ class uop_la : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -243,7 +247,7 @@ class uop_lla : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -259,7 +263,7 @@ class uop_ld : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -275,7 +279,7 @@ class uop_st : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -312,7 +316,7 @@ class uop_ld_l : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -328,7 +332,7 @@ class uop_st_l : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -344,7 +348,7 @@ class uop_fld : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -360,7 +364,7 @@ class uop_fst : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -376,7 +380,7 @@ class uop_fld_l : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -392,7 +396,7 @@ class uop_fst_l : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -408,7 +412,7 @@ class uop_fld_ll : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -427,7 +431,7 @@ class uop_icmp : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -446,7 +450,7 @@ class uop_fcmp : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -465,7 +469,7 @@ class uop_bin : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -484,7 +488,7 @@ class uop_fbin : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
@@ -504,7 +508,7 @@ class uop_ftri : public uop_general {
     void format_str(FILE *fp);
 
    public:
-    void trace_inst();
+    void trace_inst(size_t fa_idx);
     void live_info();
     void toasm(pblock *pb);
     void calcu_lvif(detailed_live_info &dli);
