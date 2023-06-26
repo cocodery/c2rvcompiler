@@ -3,7 +3,7 @@
 
 # TODO
 
-- [ ] 解 phi
+- [x] 解 phi
 
 ## 后端
 
@@ -26,4 +26,10 @@
     ]
   }
 }
+```
+
+# RV ToolChain Compile Arg
+
+``` bash
+./configure --prefix="$RISCV" --with-arch=rv64gc --with-abi=lp64d --with-multilib-generator="rv64gc-lp64--"
 ```

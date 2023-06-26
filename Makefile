@@ -16,11 +16,10 @@ TMP				:= /tmp
 
 # 检查 rv 工具链情况
 ifneq ($(RISCV),)
-RVAS			:= $(RISCV)/bin/riscv64-unknown-elf-as
-RVCC			:= $(RISCV)/bin/riscv64-unknown-elf-gcc
-RVOD			:= $(RISCV)/bin/riscv64-unknown-elf-objdump
+RVCC			:= $(RISCV)/bin/riscv64-unknown-linux-gnu-gcc
+RVOD			:= $(RISCV)/bin/riscv64-unknown-linux-gnu-objdump
 SPIKE			:= $(RISCV)/bin/spike
-PK				:= $(RISCV)/riscv64-unknown-elf/bin/pk
+PK				:= $(RISCV)/bin/pk
 endif
 
 PY				:= python
@@ -113,7 +112,7 @@ run: build $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST_NAME).run.ll $(REDINP)
 	$(ECHO) $$?
 
-SPKARG	:= -l --log=$(SINGLE_TEST_NAME).out.log -d
+SPKARG	:= -l --log=$(SINGLE_TEST_NAME).out.log # -d
 
 ll:
 	$(BINARY) -S -o $(SINGLE_TEST_NAME).s -l $(SINGLE_TEST_NAME).ll $(SINGLE_TEST_NAME).sy
@@ -203,3 +202,12 @@ all: build
 			fi
 		fi
 	done
+
+CP_HEADERS	:= $(shell find . -name *.hh -or -name *.h)
+CP_SOURCES	:= $(shell find . -name *.cpp)
+
+CP_DIRS		:= $(foreach head,$(CP_HEADERS),-I$(dir $(head)))
+
+cptest:
+	@$(CC) $(CP_DIRS) -o $(BINARY) $(CP_SOURCES) -I./ext/antlr4-cpp-runtime-4.12.0/runtime/src -l./ext/antlr4-cpp-runtime-4.12.0/build/runtime/libantlr4-runtime.a
+
