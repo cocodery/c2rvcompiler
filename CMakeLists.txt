@@ -21,7 +21,7 @@ file(GLOB_RECURSE CXXSRC
 # 比如在 archlinux 下安装后就是 find /usr -name antlr4*
 # 找到类似这样的文件名 /usr/lib/cmake/antlr4-runtime/antlr4-runtime-config.cmake
 # 这就是我们所需要的 cmake 文件，他会帮助我们找到 antlr4-runtime
-find_package(/usr/lib/cmake/antlr4-runtime/antlr4-runtime)
+find_package(antlr4-runtime REQUIRED)
 
 # 以下方法适用于低版本的 antlr4
 # link_libraries(  ... 你的 lib 路径  )
