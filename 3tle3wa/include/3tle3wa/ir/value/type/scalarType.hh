@@ -5,7 +5,7 @@
 class ScalarType;
 using ScalarTypePtr = std::shared_ptr<ScalarType>;
 
-class ScalarType : public BaseType {
+class ScalarType final : public BaseType {
    public:
     ScalarType(ATTR_TYPE, ATTR_MUTABLE, ATTR_POINTER, ATTR_SCALAR, ATTR_POSITION);
 

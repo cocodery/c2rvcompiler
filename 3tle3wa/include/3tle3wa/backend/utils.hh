@@ -68,7 +68,7 @@ using cstpack_t = std::variant<bool, char, int32_t, float, int64_t>;
  * @return cval_info 常量展开信息
  */
 static inline cval_info xcval(const cstpack_t &cpk) {
-    cval_info cval{false, false, 0, 0};
+    cval_info cval{false, false, {0}, {0}};
     std::visit(
         [&cval](auto &&arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -125,10 +125,10 @@ static inline std::string gen_loc_cst_label(size_t value) {
     // for float
 
     char buf[16] = {0};
-    sprintf(buf,
-            ".LC"
-            "%08lx",
-            value);
+    snprintf(buf, 16,
+             ".LC"
+             "%08lx",
+             value);
     return buf;
 }
 

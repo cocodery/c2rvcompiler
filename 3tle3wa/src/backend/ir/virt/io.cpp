@@ -9,7 +9,7 @@ void virt_reg::format_str(FILE *fp) {
 
     switch (kind_) {
         case VREG_KIND::IMM:
-            fprintf(fp, "%ld", (xlen_t)value_);
+            fprintf(fp, "%lld", (xlen_t)value_);
             break;
 
         case VREG_KIND::LOC:
@@ -23,11 +23,11 @@ void virt_reg::format_str(FILE *fp) {
             break;
 
         case VREG_KIND::PRM: {
-            fprintf(fp, "p%lu", value_);
+            fprintf(fp, "p%llu", value_);
         } break;
 
         case VREG_KIND::REG:
-            fprintf(fp, "%%r%lu", value_);
+            fprintf(fp, "%%r%llu", value_);
             break;
 
         case VREG_KIND::SPEC: {
@@ -36,7 +36,7 @@ void virt_reg::format_str(FILE *fp) {
 
         case VREG_KIND::STK: {
             if (type_ == VREG_TYPE::ARR) {
-                fprintf(fp, "STK: (%s, %ld)", tynm[(size_t)type_], sinfo_->slen() * 4);
+                fprintf(fp, "STK: (%s, %lu)", tynm[(size_t)type_], sinfo_->slen() * 4);
                 break;
             }
             fprintf(fp, "STK: (%s, %d)", tynm[(size_t)type_], (type_ == VREG_TYPE::PTR ? 8 : 4));

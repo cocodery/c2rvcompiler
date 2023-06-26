@@ -10,7 +10,7 @@ using ArrDims = std::vector<size_t>;
 
 constexpr size_t ARR_SIZE_ALIGN = 4;
 
-class ListType : public BaseType {
+class ListType final : public BaseType {
    private:
     ArrDims dims;
     size_t capacity;

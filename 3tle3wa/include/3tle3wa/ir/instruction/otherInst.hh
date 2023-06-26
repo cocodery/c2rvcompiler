@@ -10,7 +10,7 @@ using BaseFuncPtr = std::shared_ptr<BaseFunction>;
 class CallInst;
 using CallInstPtr = std::shared_ptr<CallInst>;
 
-class CallInst : public Instruction {
+class CallInst final : public Instruction {
    private:
     ScalarTypePtr ret_type;
     BaseFuncPtr callee_func;
@@ -40,7 +40,7 @@ class CallInst : public Instruction {
 class BitCastInst;
 using BitCastInstPtr = std::shared_ptr<BitCastInst>;
 
-class BitCastInst : public UnaryInstruction {
+class BitCastInst final : public UnaryInstruction {
    private:
     static BitCastInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
 
@@ -62,7 +62,7 @@ class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using PhiInstList = std::list<PhiInstPtr>;
 
-class PhiInst : public Instruction {
+class PhiInst final : public Instruction {
    private:
     AllocaInstPtr origin_alloca;
 

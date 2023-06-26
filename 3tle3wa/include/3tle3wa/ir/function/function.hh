@@ -14,7 +14,7 @@ class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
 using BlockList = std::list<CfgNodePtr>;
 
-class NormalFunction : public BaseFunction {
+class NormalFunction final : public BaseFunction {
    private:
     CfgNodePtr entry;
     CfgNodePtr exit;
@@ -55,7 +55,7 @@ class NormalFunction : public BaseFunction {
 class LibraryFunction;
 using LibFuncPtr = std::shared_ptr<LibraryFunction>;
 
-class LibraryFunction : public BaseFunction {
+class LibraryFunction final : public BaseFunction {
    public:
     LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
     ~LibraryFunction() = default;

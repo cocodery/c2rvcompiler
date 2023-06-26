@@ -5,7 +5,7 @@
 class GlobalValue;
 using GlobalValuePtr = std::shared_ptr<GlobalValue>;
 
-class GlobalValue : public BaseValue {
+class GlobalValue final : public BaseValue {
    private:
     size_t idx;
     BaseValuePtr init_value;

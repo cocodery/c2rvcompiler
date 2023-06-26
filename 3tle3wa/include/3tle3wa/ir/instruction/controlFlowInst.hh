@@ -7,7 +7,7 @@
 class ReturnInst;
 using RetInstPtr = std::shared_ptr<ReturnInst>;
 
-class ReturnInst : public Instruction {
+class ReturnInst final : public Instruction {
    private:
     ScalarTypePtr ret_type;
     BaseValuePtr ret_value;
@@ -32,7 +32,7 @@ class ReturnInst : public Instruction {
 class JumpInst;
 using JumpInstPtr = std::shared_ptr<JumpInst>;
 
-class JumpInst : public Instruction {
+class JumpInst final : public Instruction {
    private:
     CfgNodePtr dest;
 
@@ -60,7 +60,7 @@ class JumpInst : public Instruction {
 class BranchInst;
 using BranchInstPtr = std::shared_ptr<BranchInst>;
 
-class BranchInst : public Instruction {
+class BranchInst final : public Instruction {
    private:
     BaseValuePtr cond;
     CfgNodePtr iftrue;

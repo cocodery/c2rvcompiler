@@ -33,7 +33,7 @@ void Dominance::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
     ComputeDominatorSet();
 
     // immediate-dominator
-    auto ComputeImmediateDominator = [&entry](const auto &node) {
+    auto ComputeImmediateDominator = [](const auto &node) {
         DominatorSet dominator_set = node->GetDominatorSet();
         for (auto &&dominator : dominator_set) {
             if (dominator == node) continue;
