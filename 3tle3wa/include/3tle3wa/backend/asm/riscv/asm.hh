@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cinttypes>
+
 #include "3tle3wa/backend/asm/inst.hh"
 #include "3tle3wa/backend/asm/riscv/def.hh"
 #include "3tle3wa/utils/Logs.hh"

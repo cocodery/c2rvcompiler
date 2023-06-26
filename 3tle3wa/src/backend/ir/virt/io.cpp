@@ -9,7 +9,7 @@ void virt_reg::format_str(FILE *fp) {
 
     switch (kind_) {
         case VREG_KIND::IMM:
-            fprintf(fp, "%lld", (xlen_t)value_);
+            fprintf(fp, "%" PRId64, (xlen_t)value_);
             break;
 
         case VREG_KIND::LOC:
@@ -23,11 +23,11 @@ void virt_reg::format_str(FILE *fp) {
             break;
 
         case VREG_KIND::PRM: {
-            fprintf(fp, "p%llu", value_);
+            fprintf(fp, "p%" PRIu64, value_);
         } break;
 
         case VREG_KIND::REG:
-            fprintf(fp, "%%r%llu", value_);
+            fprintf(fp, "%%r%" PRIu64, value_);
             break;
 
         case VREG_KIND::SPEC: {

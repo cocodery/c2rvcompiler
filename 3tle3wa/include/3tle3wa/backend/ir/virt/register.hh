@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstring>
 #include <list>
-#include <map>
 #include <memory>
 #include <queue>
 #include <sstream>
@@ -12,6 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <cinttypes>
 
 #include "3tle3wa/backend/asm/progress.hh"
 #include "3tle3wa/backend/asm/riscv/asm.hh"

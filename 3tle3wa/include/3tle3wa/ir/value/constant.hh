@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <variant>
+#include <cinttypes>
 
 #include "3tle3wa/ir/value/baseValue.hh"
 

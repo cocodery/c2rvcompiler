@@ -50,7 +50,7 @@ std::string Constant::tollvmIR() {
                 } cvt = {.f64 = double_value};
                 uint64_t uint64_value = cvt.iu64;
                 char buf[20];
-                snprintf(buf, 20, "0x%016llx", uint64_value);
+                snprintf(buf, 20, "0x%016" PRIx64, uint64_value);
                 ss << buf;
             } else {
                 ss << static_cast<int64_t>(arg);

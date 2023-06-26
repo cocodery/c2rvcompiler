@@ -33,7 +33,7 @@ void uop_li::format_str(FILE *fp) {
 
 void uop_mv::format_str(FILE *fp) {
     if (rs_->kind() == VREG_KIND::STK) {
-        fprintf(fp, "addi %s, fp, %lld # load %s", rd_->c_str(), rs_->sinfo()->off(), rs_->c_str());
+        fprintf(fp, "addi %s, fp, %" PRId64 " # load %s", rd_->c_str(), rs_->sinfo()->off(), rs_->c_str());
         return;
     }
     fprintf(fp, "mv %s, %s", rd_->c_str(), rs_->c_str());
@@ -103,10 +103,10 @@ void uop_lla::format_str(FILE *fp) {
 void uop_ld::format_str(FILE *fp) {
     switch (rd_->type()) {
         case VREG_TYPE::INT:
-            fprintf(fp, "lw %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+            fprintf(fp, "lw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
             break;
         case VREG_TYPE::PTR:
-            fprintf(fp, "ld %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+            fprintf(fp, "ld %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
             break;
         default:
             panic("unexpected");
@@ -116,10 +116,10 @@ void uop_ld::format_str(FILE *fp) {
 void uop_st::format_str(FILE *fp) {
     switch (rd_->type()) {
         case VREG_TYPE::INT:
-            fprintf(fp, "sw %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+            fprintf(fp, "sw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
             break;
         case VREG_TYPE::PTR:
-            fprintf(fp, "sd %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+            fprintf(fp, "sd %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
             break;
         default:
             panic("unexpected");
@@ -149,7 +149,7 @@ void uop_st_l::format_str(FILE *fp) {
 void uop_fld::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "flw %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+    fprintf(fp, "flw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
     //         break;
     // }
 }
@@ -157,7 +157,7 @@ void uop_fld::format_str(FILE *fp) {
 void uop_fst::format_str(FILE *fp) {
     // switch (rd_->type()) {
     //     case VREG_TYPE::FLT:
-    fprintf(fp, "fsw %s, %lld(%s)", rd_->c_str(), off_, rb_->c_str());
+    fprintf(fp, "fsw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
     //         break;
     // }
 }
