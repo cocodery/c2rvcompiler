@@ -27,9 +27,11 @@ PYTEST			:= runtest.py
 
 $(shell mkdir -p $(BUILD_DIR))
 
-OS 				:= $(shell uname)
+OS				:= $(shell uname)
 NPROC			:= $(shell nproc)
-ALL_SRC			:= $(shell find 3tle3wa -name '*.cpp') $(shell find 3tle3wa -name '*.hh' -or -name '*.h')
+ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
+PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
+ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
 # 默认 debug 模式，比较严格的检测和 DEBUG_MODE 宏
 CMAKE_BUILD_VAR	:= # CMAKE_C_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang CMAKE_CXX_COMPILER:FILEPATH=/usr/lib/llvm/15/bin/clang++
@@ -148,7 +150,7 @@ clean-all: clean clean-test
 
 # make formatter fake targets
 FORMAT			:= format
-FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(ALL_SRC))
+FORMAT_TARGETS	:= $(addprefix $(FORMAT)/,$(PROJECT_SRC))
 
 $(FORMAT_TARGETS): $(FORMAT)/%:%
 	$(FORMATTER) $^ -i
