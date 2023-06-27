@@ -518,9 +518,8 @@ void uop_fld_l::toasm(pblock *pb) {
     auto to = rd_->store_where();
 
     auto ginfo = pb->father_->ginfo(glb_idx_);
-    Assert(ginfo->onheap() == false, "can't change heap value via ld/st");
 
-    auto rv = new rv_fsw_l(to, ginfo->name().c_str(), riscv::t2);
+    auto rv = new rv_flw_l(to, ginfo->name().c_str(), riscv::t2);
     pb->push(rv);
 
     rd_->store(pb, to);

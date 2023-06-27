@@ -24,6 +24,7 @@ CLANGXX			:= $(shell which clang++)
 ARCH			:= riscv64
 RVCC_linux		:= $(ARCH)-linux-gnu-gcc
 RVOD_linux		:= $(ARCH)-linux-gnu-objdump
+RVGDB_linux		:= $(ARCH)-linux-gnu-gdb
 RVCC_elf		:= $(ARCH)-elf-gcc
 RVOD_elf		:= $(ARCH)-elf-objdump
 QEMU			:= qemu-$(ARCH)
@@ -121,7 +122,7 @@ ll: $(SYLIB_LL)
 .PHONY: rv
 rv:
 	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
-	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static
+	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -march=rv64gc -g
 	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
 	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
@@ -130,6 +131,10 @@ rv:
 qemu-dbg:
 	$(SIM_CMD) -singlestep -g 1234 $(SINGLE_TEST).out $(REDINP)
 
+.PHONY: rvgdb
+rvgdb:
+	$(RVGDB_linux) -q $(SINGLE_TEST).out
+
 .PHONY: pys
 pys:
 	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(shell ls $(TEST_DIR)/$(SMODE)/$(DEMO)*.sy) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
@@ -137,7 +142,6 @@ pys:
 .PHONY: diff
 diff:
 	code -d $(shell ls $(BUILD_DIR)/$(CPLER_TEST_DIR)/pys/$(DEMO)*.res) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.out)
-
 
 .PHONY: perf
 .ONESHELL:

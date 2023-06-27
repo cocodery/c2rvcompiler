@@ -20,9 +20,9 @@ src/antlr/*
 *.ll
 *.s
 *.S
+*.in
 *.out
 *.log
 *.sy
-
 *.data
 *.old
