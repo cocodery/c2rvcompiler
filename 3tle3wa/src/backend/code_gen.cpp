@@ -1,7 +1,7 @@
 #include "3tle3wa/backend/code_gen.hh"
 
-code_gen::code_gen(const char *path, CompilationUnit &comp_unit)
-    : env_(), fs_(path, std::ios::out), comp_unit_(comp_unit) {
+code_gen::code_gen(CompilationUnit &comp_unit)
+    : env_(std::make_unique<asm_env>()), comp_unit_(comp_unit) {
     Assert(fs_, "can not open file %s", path);
 }
 
@@ -16,10 +16,11 @@ void code_gen::gen_env() {
         if (pair.second->IsGlobalValue()) {
             auto gvp = std::dynamic_pointer_cast<GlobalValue>(pair.second);
             Assert(gvp, "bad dynamic cast");
-            env_.make_gvals(gvp);
+            env_->make_gvals(gvp, pair.first);
+            
         }
     }
-    env_.make_prog(comp_unit_.GetNormalFuncTable());
+    env_->make_prog(comp_unit_.GetNormalFuncTable());
 }
 
-void code_gen::gen_asm() { env_.gen_asm(fs_); }
+std::unique_ptr<asm_env> &code_gen::exports() { return env_; }

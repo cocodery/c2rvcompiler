@@ -1,3 +1,4 @@
+#include "3tle3wa/backend/asm/glb_value.hh"
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/ir/virt/register.hh"
 
@@ -47,6 +48,11 @@ void uop_set_iparam::toasm(pblock *pb) {
     spack spk;
     if (idx_ < 8) {
         auto arg = riscv::a0 + idx_;
+        if (rs_->kind() == VREG_KIND::IMM) {
+            auto rv = new rv_li(arg, rs_->value());
+            pb->push(rv);
+            return;
+        }
         if (rs_->kind() == VREG_KIND::STK) {
             auto rv = new rv_ld(arg, riscv::fp, rs_->sinfo()->off());
             pb->push(rv);
@@ -76,6 +82,11 @@ void uop_set_fparam::toasm(pblock *pb) {
     spack spk;
     if (idx_ < 8) {
         auto arg = riscv::fa0 + idx_;
+        if (rs_->kind() == VREG_KIND::LOC) {
+            auto rv = new rv_flw_l(arg, gen_loc_cst_label(rs_->value()).c_str(), riscv::t2);
+            pb->push(rv);
+            return;
+        }
         if (rs_->kind() == VREG_KIND::STK) {
             auto rv = new rv_flw(arg, riscv::fp, rs_->sinfo()->off());
             pb->push(rv);
@@ -238,7 +249,16 @@ void uop_la::toasm(pblock *pb) { panic("unexpected now"); }
 
 void uop_lla::toasm(pblock *pb) {
     auto act = rd_->store_where();
-    auto rv = new rv_lla_l(act, gen_glb_val_label(glb_idx_).c_str());
+
+    auto ginfo = pb->father_->ginfo(glb_idx_);
+
+    if (ginfo->onheap()) {
+        auto rv = new rv_ld_l(act, ginfo->name().c_str());
+        pb->push(rv);
+        rd_->store(pb, act);
+    }
+
+    auto rv = new rv_lla_l(act, ginfo->name().c_str());
     pb->push(rv);
     rd_->store(pb, act);
 }
@@ -424,7 +444,10 @@ void uop_st_stk::toasm(pblock *pb) {
 void uop_ld_l::toasm(pblock *pb) {
     auto to = rd_->store_where();
 
-    auto rv = new rv_lw_l(to, gen_glb_val_label(glb_idx_).c_str());
+    auto ginfo = pb->father_->ginfo(glb_idx_);
+    Assert(ginfo->onheap() == false, "can't change heap value via ld/st");
+
+    auto rv = new rv_lw_l(to, ginfo->name().c_str());
     pb->push(rv);
 
     rd_->store(pb, to);
@@ -434,7 +457,10 @@ void uop_st_l::toasm(pblock *pb) {
     spack spk;
     auto src = rd_->load(pb, spk);
 
-    auto rv = new rv_sw_l(src, gen_glb_val_label(glb_idx_).c_str(), riscv::t2);
+    auto ginfo = pb->father_->ginfo(glb_idx_);
+    Assert(ginfo->onheap() == false, "can't change heap value via ld/st");
+
+    auto rv = new rv_sw_l(src, ginfo->name().c_str(), riscv::t2);
     pb->push(rv);
 }
 
@@ -491,7 +517,10 @@ void uop_fst::toasm(pblock *pb) {
 void uop_fld_l::toasm(pblock *pb) {
     auto to = rd_->store_where();
 
-    auto rv = new rv_fsw_l(to, gen_glb_val_label(glb_idx_).c_str(), riscv::t2);
+    auto ginfo = pb->father_->ginfo(glb_idx_);
+    Assert(ginfo->onheap() == false, "can't change heap value via ld/st");
+
+    auto rv = new rv_fsw_l(to, ginfo->name().c_str(), riscv::t2);
     pb->push(rv);
 
     rd_->store(pb, to);
@@ -501,7 +530,10 @@ void uop_fst_l::toasm(pblock *pb) {
     spack spk;
     auto src = rd_->load(pb, spk);
 
-    auto rv = new rv_fsw_l(src, gen_glb_val_label(glb_idx_).c_str(), riscv::t2);
+    auto ginfo = pb->father_->ginfo(glb_idx_);
+    Assert(ginfo->onheap() == false, "can't change heap value via ld/st");
+
+    auto rv = new rv_fsw_l(src, ginfo->name().c_str(), riscv::t2);
     pb->push(rv);
 }
 
@@ -746,17 +778,57 @@ void uop_bin::toasm(pblock *pb) {
             }
             if (rhs_->kind() == VREG_KIND::IMM and __builtin_popcount(rhs_->value()) == 1) {
                 auto lhs = lhs_->load(pb, spk);
-                auto rv = new rv_srai(dst, lhs, __builtin_ctz(rhs_->value()));
+                auto ctz = __builtin_ctz(rhs_->value());
+
+                auto sraiw_op = new rv_sraiw(riscv::t2, lhs, 31);
+                pb->push(sraiw_op);
+
+                auto srliw_op = new rv_srliw(riscv::t2, riscv::t2, 32 - ctz);
+                pb->push(srliw_op);
+
+                auto addw_op = new rv_addw(riscv::t2, riscv::t2, lhs);
+                pb->push(addw_op);
+
+                auto rv = new rv_sraiw(dst, riscv::t2, ctz);
                 pb->push(rv);
+
                 rd_->store(pb);
                 return;
             }
         } break;
 
         case IBIN_KIND::REM: {
-            // if (rd_ == lhs_) {
-            //     if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
-            // }
+            if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) {
+                auto rv = new rv_li(dst, 0);
+                pb->push(rv);
+                rd_->store(pb);
+                return;
+            }
+            if (rhs_->kind() == VREG_KIND::IMM and __builtin_popcount(rhs_->value()) == 1) {
+                auto lhs = lhs_->load(pb, spk);
+                auto ctz = __builtin_ctz(rhs_->value());
+
+                auto sraiw_op = new rv_sraiw(riscv::t0, lhs, 31);
+                pb->push(sraiw_op);
+
+                auto srliw_op = new rv_srliw(riscv::t0, riscv::t0, 32 - ctz);
+                pb->push(srliw_op);
+
+                auto addw_op = new rv_addw(dst, riscv::t0, lhs);
+                pb->push(addw_op);
+
+                auto slli_op = new rv_slli(dst, dst, 64 - ctz);
+                pb->push(slli_op);
+
+                auto srli_op = new rv_srli(dst, dst, 64 - ctz);
+                pb->push(srli_op);
+
+                auto subw_op = new rv_subw(dst, dst, riscv::t0);
+                pb->push(subw_op);
+
+                rd_->store(pb);
+                return;
+            }
         } break;
 
         case IBIN_KIND::SLL: {

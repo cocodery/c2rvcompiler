@@ -16,7 +16,8 @@ LLDB 			:= lldb
 LLLD 			:= llvm-link
 LLI 			:= lli
 FORMATTER		:= clang-format
-CLANG			:= clang
+CLANG			:= $(shell which clang)
+CLANGXX			:= $(shell which clang++)
 
 
 # rv toolchain
@@ -42,7 +43,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional # performance # final_performance
+MODE 			?= functional hidden_functional performance final_performance
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -86,6 +87,8 @@ pyasm: build $(PYASM_TARGETS)
 release: $(ALL_SRC)
 	$(CMAKE) -S . -B $(BUILD_DIR)
 	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
+
+CMAKE_BUILD_ENV	:= -DCMAKE_C_COMPILER:FILEPATH=$(CLANG) -DCMAKE_CXX_COMPILER:FILEPATH=$(CLANGXX)
 
 debug: $(ALL_SRC)
 	$(CMAKE) -DCMAKE_BUILD_TYPE="Debug" $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)

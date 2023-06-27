@@ -1,20 +1,25 @@
 #include "3tle3wa/backend/asm/glb_value.hh"
 
-glb_value::glb_value(size_t glb_idx, size_t len, bool uninit, size_t reserve)
-    : glb_idx_(glb_idx), len_(len), uninit_(uninit), values_(reserve) {
+glb_value::glb_value(const std::string &name, size_t len, bool uninit, size_t reserve)
+    : label_(name), len_(len), uninit_(uninit), values_(reserve) {
+    // if (len >= 2048) {
+    //     onheap_ = true;
+    // }
     values_.clear();
 }
 
 void glb_value::push(uint32_t value) { values_.push_back(value); }
 
-void glb_value::gen_asm(std::fstream &fs) {
-    auto label = gen_glb_val_label(glb_idx_);
+bool glb_value::onheap() { return onheap_; }
 
-    fs << "\t.global\t" << label << std::endl;
+std::string &glb_value::name() { return label_; }
+
+void glb_value::gen_asm(std::fstream &fs) {
+    fs << "\t.global\t" << label_ << std::endl;
     fs << "\t.align\t" << 4 << std::endl;
-    fs << "\t.type\t" << label << ", @object" << std::endl;
-    fs << "\t.size\t" << label << ", " << len_ * 4 << std::endl;
-    fs << label << ":" << std::endl;
+    fs << "\t.type\t" << label_ << ", @object" << std::endl;
+    fs << "\t.size\t" << label_ << ", " << len_ * 4 << std::endl;
+    fs << label_ << ":" << std::endl;
     if (uninit_) {
         fs << "\t.zero\t" << len_ * 4 << std::endl;
         return;

@@ -2,7 +2,9 @@
 
 #include "3tle3wa/backend/ir/uop/uop.hh"
 
-pblock::pblock(size_t lbidx, size_t reserve) : lbidx_(lbidx), insts_(reserve) { insts_.clear(); }
+class glb_value;
+
+pblock::pblock(size_t lbidx, size_t reserve, progress *father) : lbidx_(lbidx), insts_(reserve), father_(father) { insts_.clear(); }
 
 void pblock::gen_asm(std::fstream &fs) {
     fs << gen_pblk_label(lbidx_) << ":" << std::endl;
@@ -31,11 +33,13 @@ void progress::gen_asm(std::fstream &fs) {
     fs << "\t.size\t" << label_ << ", .-" << label_ << std::endl;
 }
 
-progress::progress(std::string label, size_t reserve) : label_(label), pblks_(reserve) { pblks_.clear(); }
+progress::progress(std::string label, size_t reserve, const std::unordered_map<size_t, glb_value *> &gname_map) : label_(label), pblks_(reserve), gname_map_(gname_map) { pblks_.clear(); }
 
 void progress::push(std::unique_ptr<pblock> &pblk) { pblks_.push_back(std::move(pblk)); }
 
 std::unique_ptr<pblock> &progress::front() { return pblks_.front(); }
+
+glb_value *progress::ginfo(size_t gidx) const { return  gname_map_.at(gidx); }
 
 std::unique_ptr<pblock> &progress::back() {
     for (auto &&pblk : pblks_) {

@@ -71,7 +71,7 @@ def build_run(args, exts, cc_arg, simcc_arg):
             infile = open(inname, 'r')
 
         try:
-            with open(logname, 'a') as logfile, open(resname, 'w') as resfile, open("/".join([args.dir, "perf.log"]), "a") as perfile:
+            with open(logname, 'a') as logfile, open(resname, 'w') as resfile, open(".".join([args.dir, "perf"]), "a") as perfile:
                 start = time.time()
                 resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
                 total_time = time.time() - start
@@ -114,13 +114,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    with open("/".join([args.dir, "perf.log"]), "w") as perfile:
-        perfile.write("{}:\n".format(args.dir))
-
     print("Testing: {}".format(args.dir))
 
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
+
+    with open(".".join([args.dir, "perf"]), "w") as perfile:
+        perfile.write("{}:\n".format(args.dir))
 
     if args.llvmir:
         exts = {

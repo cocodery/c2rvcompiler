@@ -4,11 +4,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <string_view>
 
 #include "3tle3wa/backend/utils.hh"
 
 class glb_value {
-    const size_t glb_idx_;
+    std::string label_;
 
     const size_t len_;
 
@@ -16,10 +17,16 @@ class glb_value {
 
     std::vector<uint32_t> values_;
 
+    bool onheap_{false};
+
    public:
-    glb_value(size_t glb_idx, size_t len, bool uninit, size_t reserve);
+    glb_value(const std::string &name, size_t len, bool uninit, size_t reserve);
 
     void push(uint32_t value);
+
+    bool onheap();
+
+    std::string &name();
 
     void gen_asm(std::fstream &fs);
 };

@@ -87,31 +87,41 @@ int main(int argc, char *argv[]) {
         dbgf.close();
     }
 
-    ANTLRInputStream source(src);
-    SysYLexer lexer(&source);
-    CommonTokenStream tokens(&lexer);
-    SysYParser parser(&tokens);
-    parser.setErrorHandler(std::make_shared<BailErrorStrategy>());
+    std::unique_ptr<asm_env> asmgen = nullptr;
 
-    SysYParser::CompilationUnitContext *root = parser.compilationUnit();
+    do {
+        ANTLRInputStream source(src);
+        SysYLexer lexer(&source);
+        CommonTokenStream tokens(&lexer);
+        SysYParser parser(&tokens);
+        parser.setErrorHandler(std::make_shared<BailErrorStrategy>());
 
-    CompilationUnit comp_unit;
+        SysYParser::CompilationUnitContext *root = parser.compilationUnit();
 
-    std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
-    visitor->visitCompilationUnit(root);
-    visitor = nullptr;
+        CompilationUnit comp_unit;
 
-    Optimization optimizer(comp_unit);
-    optimizer.DoOptimization();
+        std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
+        visitor->visitCompilationUnit(root);
+        visitor = nullptr;
 
-    if (irfile) {
-        comp_unit.generatellvmIR(irfile);
-    }
+        Optimization optimizer(comp_unit);
+        optimizer.DoOptimization();
 
-    if (output) {
-        code_gen cg(output, comp_unit);
-        cg.gen_env();
-        cg.gen_asm();
+        if (irfile) {
+            comp_unit.generatellvmIR(irfile);
+        }
+
+        if (output) {
+            code_gen cg(comp_unit);
+            cg.gen_env();
+            asmgen = std::move(cg.exports());
+        }
+    } while (0);
+
+    if (output and asmgen != nullptr) {
+        std::fstream fs(output, std::ios::out);
+        asmgen->do_optimize();
+        asmgen->gen_asm(fs);
     }
 
     return 0;

@@ -232,7 +232,7 @@ class vr_allocor {
     // assuming scalar var use offset index more
     // and array use reg index more
     //
-    void plan_stack();
+    void plan_stack(rl_progress &rlp);
 
     /**
      * for integer registers

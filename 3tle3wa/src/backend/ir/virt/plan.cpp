@@ -36,23 +36,17 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
         changed = false;
         for (auto &&bb : rlp.bbs_) {
             auto &&old = bb->dli.live_out;
-            std::unordered_set<size_t> nwset;
+            auto osize = old.size();
             for (auto &&m : bb->successer) {
                 auto &&succ = rlp.lbmap_.at(m).bbp_;
                 Assert(succ, "not generate well");
 
                 auto &&cur = succ->dli;
 
-                for (auto &&v : cur.live_out) {
-                    if (cur.var_kill.find(v) == cur.var_kill.end()) {
-                        nwset.insert(v);
-                    }
-                }
+                std::set_difference(cur.live_out.begin(), cur.live_out.end(), cur.var_kill.begin(), cur.var_kill.end(), std::inserter(old, old.end()));
 
-                nwset.insert(cur.ue_var.begin(), cur.ue_var.end());
+                old.insert(cur.ue_var.begin(), cur.ue_var.end());
             }
-            auto osize = old.size();
-            old.insert(nwset.begin(), nwset.end());
             if (osize != old.size()) {
                 changed = true;
             }
@@ -371,7 +365,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
     }
 }
 
-void vr_allocor::plan_stack() {
+void vr_allocor::plan_stack(rl_progress &rlp) {
     std::vector<stk_info *> sclrstk;
     size_t sclr_total = 0;
 
@@ -392,9 +386,26 @@ void vr_allocor::plan_stack() {
         }
     }
 
-    total_stk_len = round_up(16, sclr_total) + round_up(16, arry_total) + ex_argl * 8 + 16;
+    auto retstk = 0;
+    total_stk_len = round_up(16, sclr_total) + round_up(16, arry_total) + ex_argl * 8;
 
-    int64_t off = 16;
+    if (total_stk_len != 0) {
+        if (rlp.contain_funcall_) {
+            retstk = 16;
+        } else {
+            retstk = 8;
+        }
+    } else {
+        if (rlp.contain_funcall_) {
+            retstk = 8;
+        } else {
+            retstk = 0;
+        }
+    }
+    
+    total_stk_len += retstk;
+
+    int64_t off = retstk;
 
     for (auto &&stkinfo : sclrstk) {
         auto &&len = stkinfo->slen();
@@ -402,7 +413,7 @@ void vr_allocor::plan_stack() {
         stkinfo->set_off(-off);
     }
 
-    off = 16 + round_up(16, sclr_total);
+    off = retstk + round_up(16, sclr_total);
 
     for (auto &&stkinfo : arrystk) {
         auto &&len = stkinfo->slen() * 4;

@@ -1,15 +1,16 @@
 #pragma once
 
 #include <vector>
+#include <set>
 
 #include "3tle3wa/backend/ir/virt/register.hh"
 
 class uop_general;
 
 struct detailed_live_info {
-    std::unordered_set<size_t> live_out;
-    std::unordered_set<size_t> ue_var;
-    std::unordered_set<size_t> var_kill;
+    std::set<size_t> live_out;
+    std::set<size_t> ue_var;
+    std::set<size_t> var_kill;
 };
 
 class rl_basicblock {
@@ -37,6 +38,8 @@ class rl_progress {
         size_t i;
         size_t f;
     } puse_ ;
+
+    bool contain_funcall_{false};
 
     struct rlbb_rcd {
         rl_basicblock *bbp_ = nullptr;

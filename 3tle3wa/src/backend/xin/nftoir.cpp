@@ -72,6 +72,10 @@ void cross_internal_manager::nftoir() {
             panic("Unexpected parameter type");
         }
     }
+    auto &&pu = rl_pgrs_.puse_;
+    
+    pu.i = std::max(pu.i, pa.i);
+    pu.f = std::max(pu.f, pa.f);
 
     std::unordered_map<size_t, size_t> reidx_lbmap;
 
@@ -576,6 +580,8 @@ void cross_internal_manager::nftoir() {
                 } break;
 
                 case Call: {
+                    rl_pgrs_.contain_funcall_ = true;
+                    
                     auto llinst = std::dynamic_pointer_cast<CallInst>(inst);
                     Assert(llinst, "bad dynamic cast");
 

@@ -13,7 +13,7 @@ static void declarr(ConstArrayPtr &bvaptr, std::unique_ptr<glb_value> &result) {
     }
 }
 
-void asm_env::make_gvals(GlobalValuePtr &gvptr) {
+void asm_env::make_gvals(GlobalValuePtr &gvptr, const std::string &name) {
     auto &&initval = gvptr->GetInitValue();
 
     if (initval->IsUnInitVar()) {
@@ -23,15 +23,15 @@ void asm_env::make_gvals(GlobalValuePtr &gvptr) {
         if (uninit_ptr->GetBaseType()->IsArray()) {
             auto &&uninit_arrty_ptr = std::dynamic_pointer_cast<ListType>(initval->GetBaseType());
             Assert(uninit_arrty_ptr, "bad dynamic cast");
-            auto gval =
-                std::make_unique<glb_value>(gvptr->GetGlobalValueIdx(), uninit_arrty_ptr->GetCapacity(), true, 0);
+            auto gval = std::make_unique<glb_value>(name, uninit_arrty_ptr->GetCapacity(), true, 0);
+            gname_map_[gvptr->GetGlobalValueIdx()] = gval.get();
             gvals_.push_back(std::move(gval));
             return;
         }
 
-        auto gval = std::make_unique<glb_value>(gvptr->GetGlobalValueIdx(), 1, true, 0);
+        auto gval = std::make_unique<glb_value>(name, 1, true, 0);
+        gname_map_[gvptr->GetGlobalValueIdx()] = gval.get();
         gvals_.push_back(std::move(gval));
-
         return;
     }
 
@@ -42,16 +42,17 @@ void asm_env::make_gvals(GlobalValuePtr &gvptr) {
         auto &&arrty_ptr = std::dynamic_pointer_cast<ListType>(arr_ptr->GetBaseType());
         Assert(arrty_ptr, "bad dynamic cast");
 
-        auto gval = std::make_unique<glb_value>(gvptr->GetGlobalValueIdx(), arrty_ptr->GetCapacity(), false,
-                                                arr_ptr->GetConstArr().size());
+        auto gval = std::make_unique<glb_value>(name, arrty_ptr->GetCapacity(), false, arr_ptr->GetConstArr().size());
         declarr(arr_ptr, gval);
+        gname_map_[gvptr->GetGlobalValueIdx()] = gval.get();
         gvals_.push_back(std::move(gval));
         return;
     }
 
     auto &&val_ptr = std::dynamic_pointer_cast<Constant>(gvptr->GetInitValue());
     auto pk = xcval(val_ptr->GetValue());
-    auto gval = std::make_unique<glb_value>(gvptr->GetGlobalValueIdx(), 1, false, 1);
+    auto gval = std::make_unique<glb_value>(name, 1, false, 1);
+    gname_map_[gvptr->GetGlobalValueIdx()] = gval.get();
     gval->push(pk.v32);
     gvals_.push_back(std::move(gval));
 }
@@ -61,18 +62,18 @@ void asm_env::make_prog(NormalFuncList &flst) {
     std::vector<std::unique_ptr<std::thread>> trds;
 
     for (auto &&fptr : flst) {
-        auto xin = std::make_unique<cross_internal_manager>(fptr, lc_pool_);
+        auto xin = std::make_unique<cross_internal_manager>(fptr, lc_pool_, gname_map_);
         auto bear_xin = xin.get();
         auto trd = std::make_unique<std::thread>([bear_xin]() -> void { bear_xin->do_compile(); });
         xinmgrs.push_back(std::move(xin));
         trds.push_back(std::move(trd));
     }
 
-    for (auto &&trd: trds) {
+    for (auto &&trd : trds) {
         trd->join();
     }
 
-    for (auto &&xinmgr: xinmgrs) {
+    for (auto &&xinmgr : xinmgrs) {
         if (xinmgr->apg_ != nullptr) {
             pgrs_.push_back(std::move(xinmgr->apg_));
         }

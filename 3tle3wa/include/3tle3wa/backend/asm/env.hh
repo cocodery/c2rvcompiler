@@ -17,9 +17,13 @@ class asm_env {
 
     std::list<std::unique_ptr<progress>> pgrs_;
 
+    std::unordered_map<size_t, glb_value *> gname_map_;
+
    public:
-    void make_gvals(GlobalValuePtr &gvptr);
+    void make_gvals(GlobalValuePtr &gvptr, const std::string &name);
     void make_prog(NormalFuncList &flst);
+
+    void do_optimize();
 
     void gen_asm(std::fstream &fs);
 };

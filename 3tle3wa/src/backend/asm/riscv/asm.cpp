@@ -77,22 +77,22 @@ RVCNAM(ld_l)(rid_t rd, cstr sym) : rv_inst(rd) {
     comt_ = COMMENT_BEGIN "rd <= qword ptr [sym]";
 }
 
-RVCNAM(sb_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(sb_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("sb" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
     comt_ = COMMENT_BEGIN "byte ptr [sym] <= rd";
 }
 
-RVCNAM(sh_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(sh_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("sh" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
     comt_ = COMMENT_BEGIN "word ptr [sym] <= rd";
 }
 
-RVCNAM(sw_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(sw_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("sw" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
     comt_ = COMMENT_BEGIN "dword ptr [sym] <= rd";
 }
 
-RVCNAM(sd_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(sd_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("sd" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
     comt_ = COMMENT_BEGIN "qword ptr [sym] <= rd";
 }
@@ -105,11 +105,11 @@ RVCNAM(fld_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
     GENINST("fld" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
 }
 
-RVCNAM(fsw_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(fsw_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("fsw" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
 }
 
-RVCNAM(fsd_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
+RVCNAM(fsd_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(riscv::zero, rd, rt) {
     GENINST("fsd" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], sym, gpr[rt]);
 }
 
@@ -119,7 +119,10 @@ RVCNAM(fsd_l)(rid_t rd, cstr sym, rid_t rt) : rv_inst(rd, riscv::zero, rt) {
 
 RVCNAM(nop)() : rv_inst() { GENINST("nop"); }
 
-RVCNAM(li)(rid_t rd, i64 imm) : rv_inst(rd) { GENINST("li" TAB "%s" COMMA "%" PRId64, gpr[rd], imm); }
+RVCNAM(li)(rid_t rd, i64 imm) : rv_inst(rd) {
+    GENINST("li" TAB "%s" COMMA "%" PRId64, gpr[rd], imm);
+    imm_ = imm;
+}
 
 RVCNAM(mv)(rid_t rd, rid_t rs) : rv_inst(rd, rs) { GENINST("mv" TAB "%s" COMMA "%s", gpr[rd], gpr[rs]); }
 
@@ -294,22 +297,22 @@ RVCNAM(lwu)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     off_ = off;
 }
 
-RVCNAM(sb)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
+RVCNAM(sb)(rid_t rs, rid_t rt, i64 off) : rv_inst(riscv::zero, rs, rt) {
     GENINST("sb" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
     off_ = off;
 }
 
-RVCNAM(sh)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
+RVCNAM(sh)(rid_t rs, rid_t rt, i64 off) : rv_inst(riscv::zero, rs, rt) {
     GENINST("sh" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
     off_ = off;
 }
 
-RVCNAM(sw)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
+RVCNAM(sw)(rid_t rs, rid_t rt, i64 off) : rv_inst(riscv::zero, rs, rt) {
     GENINST("sw" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
     off_ = off;
 }
 
-RVCNAM(sd)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
+RVCNAM(sd)(rid_t rs, rid_t rt, i64 off) : rv_inst(riscv::zero, rs, rt) {
     GENINST("sd" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
     off_ = off;
 }
@@ -354,7 +357,7 @@ RVCNAM(sll)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
     GENINST("sll" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[rs], gpr[rt]);
 }
 
-RVCNAM(xor)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
+RVCNAM (xor)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
     GENINST("xor" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[rs], gpr[rt]);
 }
 
@@ -474,7 +477,7 @@ RVCNAM(flw)(rid_t frd, rid_t rs, i64 off) : rv_inst(frd, rs) {
     GENINST("flw" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[frd], off, gpr[rs]);
 }
 
-RVCNAM(fsw)(rid_t frs, rid_t rt, i64 off) : rv_inst(frs, rt) {
+RVCNAM(fsw)(rid_t frs, rid_t rt, i64 off) : rv_inst(riscv::zero, frs, rt) {
     GENINST("fsw" TAB TAB "%s" COMMA "%" PRId64 "(%s)", gpr[frs], off, gpr[rt]);
 }
 
