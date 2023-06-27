@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -11,7 +12,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <cinttypes>
 
 #include "3tle3wa/backend/asm/progress.hh"
 #include "3tle3wa/backend/asm/riscv/asm.hh"

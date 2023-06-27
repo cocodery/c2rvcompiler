@@ -1,9 +1,7 @@
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/ir/virt/register.hh"
 
-void uop_ret::trace_inst(size_t fa_idx) {
-    fa_idx_ = fa_idx;
-}
+void uop_ret::trace_inst(size_t fa_idx) { fa_idx_ = fa_idx; }
 
 void uop_set_iparam::trace_inst(size_t fa_idx) {
     fa_idx_ = fa_idx;
@@ -60,9 +58,7 @@ void uop_icmp_b::trace_inst(size_t fa_idx) {
     rhs_->add_ref(this);
 }
 
-void uop_j::trace_inst(size_t fa_idx) {
-    fa_idx_ = fa_idx;
-}
+void uop_j::trace_inst(size_t fa_idx) { fa_idx_ = fa_idx; }
 
 void uop_la::trace_inst(size_t fa_idx) {
     fa_idx_ = fa_idx;

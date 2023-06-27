@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <set>
+#include <vector>
 
 #include "3tle3wa/backend/ir/virt/register.hh"
 
@@ -37,7 +37,7 @@ class rl_progress {
     struct {
         size_t i;
         size_t f;
-    } puse_ ;
+    } puse_;
 
     bool contain_funcall_{false};
 

@@ -8,31 +8,47 @@
 +---------+    +------------------------------+    |
                                                    |
                       +----------------------+     |
-          +---------- | frontend gen llvm ir | <---+
-          |           +----------------------+
-          |
-          |           +---------------------+
-          +---------> | backend distributer |
-                      +---------------------+
-                           |     |     |  
-                           |     |     | <----- compile tasks
-                           |     |     |
-                           |    ...   ...
-                           |
-                           v
-                      +-------------------+
-                      | risc-lang ir      |  <!-- thats why some variable name use prefix rl_ -->
-                      | just uop and vreg |
-                      +-------------------+
-                                |
-                                |
+                +---- | frontend gen llvm ir | <---+
+                |     +----------------------+
+                v
+    +---------------------+
+    | backend distributer |
+    +---------------------+
+        |     |     |  
+        |     |     | <----- compile tasks allocated to multi-threads
+        |     |     |
+        |    ...   ...
+        |
+        v
+  +-------------------+
+  | risc-lang ir      |  <!-- thats why some variable name use prefix rl_ -->
+  | just uop and vreg |
+  +-------------------+
+            |
+            |
+            |
+            v            +--------------+
+      +-------------+    | other thread |
+      |  riscv asm  |    +--------------+
+      +-------------+           v
+            |                   v
+            |                   |                       +--------------+
+            +-------------------+------------------ <<< | other thread |
+                                |                       +--------------+
                                 |
                                 v
-                         +-------------+
-                         |  riscv asm  |
-                         +-------------+
-
-
+                +---------------------------------+
+                | release other resources         |
+                | remain asm env obj              |
+                | for optimization and generation |
+                +---------------------------------+
+                                |
+                                | <--- do some magic (i dont know what
+                                |      will i do before generation yet)
+                                v
+                          +----------+
+                          | asm file |
+                          +----------+
 ```
 
 # TODO
@@ -102,7 +118,18 @@
 | --- | --- | --- |
 | `pyll` | 使用 `runtest.py` 测试 llvm ir 正确性 | 无 |
 | `pyasm` | 使用 `runtest.py` 测试 riscv asm 正确性 | 无 |
-| `release` | 编译出 release 版本的编译器，一般会开启 NDEBUG | 无 |
+| `release` | 编译出 release 版本的编译器，一般会定义 NDEBUG | 无 |
+| `debug` | 编译出 debug 版本的编译器，用于调试 | 无 |
+| `build` | 按照依赖编译编译器 | 无 |
+| `run` | 单测 | `DEMO` 选择测例，$(DEMO)*.sy；`SMODE` 单测模式，可选 `MODE` 里的内容； |
+| `ll` `rv` | 分别以生成 llvm ir 和 riscv asm 为目的进行单测，可用 `run` 的参数 | 无 |
+| `qemu-dbg` | 开启 qemu 调试，目前在端口 1234 | 无 |
+| `pys` | `runtest.py` 单独测试 asm | 无 |
+| `diff` | 对比 `runtest.py` 单独测试最终 res 和正确输出 | 无 |
+| `perf` | 测试编译用时情况 | 无 |
+| `clean*` | 各种清理 | 无 |
+| `format-all` | 用 clang-format 整理所有文件格式 | 无 |
+| `all` | 旧 shell 脚本测试 | 无 |
 
 # CMake VSCode Json Setting
 
@@ -129,4 +156,4 @@
 
 # Antlr 建议
 
-高于 4.12 版本
+高于 4.12 版本，使用包管理器下载。

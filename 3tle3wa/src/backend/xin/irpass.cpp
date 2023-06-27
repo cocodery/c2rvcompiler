@@ -221,7 +221,7 @@ void cross_internal_manager::irpass_gen_cmpb() {
                     break;
             }
         }
-                        
+
         op->trace_inst(rlbb->get_lbid());
 
         auto &&target = rl_pgrs_.lbmap_.at(br->get_lbid());
@@ -301,7 +301,7 @@ void cross_internal_manager::irpass_gen_fmas() {
                         op->set_rhs(lfrom_fbin_mul->get_rhs());
                         op->set_ahs(fbin_as->get_rhs());
                         op->set_rd(fbin_as->get_rd());
-                        
+
                         op->trace_inst(rlbb->get_lbid());
 
                         op->set_kind(FTRI_KIND::MSUB);
@@ -343,7 +343,7 @@ void cross_internal_manager::irpass_gen_fmas() {
                         op->set_rhs(rfrom_fbin_mul->get_rhs());
                         op->set_ahs(fbin_as->get_lhs());
                         op->set_rd(fbin_as->get_rd());
-                        
+
                         op->trace_inst(rlbb->get_lbid());
 
                         op->set_kind(FTRI_KIND::MADD);
@@ -367,7 +367,7 @@ void cross_internal_manager::irpass_gen_fmas() {
                         op->set_rhs(rfrom_fbin_mul->get_rhs());
                         op->set_ahs(fbin_as->get_lhs());
                         op->set_rd(fbin_as->get_rd());
-                        
+
                         op->trace_inst(rlbb->get_lbid());
 
                         op->set_kind(FTRI_KIND::NMSUB);

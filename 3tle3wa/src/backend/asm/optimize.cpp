@@ -257,7 +257,8 @@ void pblock::opm_rm_needless_ls() {
 
             if (auto fnd = lsmap.find(rvinst->rd_); fnd != lsmap.end()) {
                 auto &&info = fnd->second;
-                if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7) and (info.rd_ < riscv::fa0 or info.rd_ > riscv::fa7)) {
+                if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7) and
+                    (info.rd_ < riscv::fa0 or info.rd_ > riscv::fa7)) {
                     // insts_.erase(info.it_);
                 }
                 lsmap.erase(fnd);

@@ -130,21 +130,13 @@ void uop_ld_stk::format_str(FILE *fp) { fprintf(fp, "ld %s, %s", gpr[rd_], rb_->
 
 void uop_st_stk::format_str(FILE *fp) { fprintf(fp, "sd %s, %s", gpr[rd_], rb_->c_str()); }
 
-void uop_ld_l::format_str(FILE *fp) {
-    fprintf(fp, "lw %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
-}
+void uop_ld_l::format_str(FILE *fp) { fprintf(fp, "lw %s, %s", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str()); }
 
-void uop_st_l::format_str(FILE *fp) {
-    fprintf(fp, "sw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());
-}
+void uop_st_l::format_str(FILE *fp) { fprintf(fp, "sw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str()); }
 
-void uop_fld::format_str(FILE *fp) {
-    fprintf(fp, "flw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
-}
+void uop_fld::format_str(FILE *fp) { fprintf(fp, "flw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str()); }
 
-void uop_fst::format_str(FILE *fp) {
-    fprintf(fp, "fsw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str());
-}
+void uop_fst::format_str(FILE *fp) { fprintf(fp, "fsw %s, %" PRId64 "(%s)", rd_->c_str(), off_, rb_->c_str()); }
 
 void uop_fld_l::format_str(FILE *fp) {
     fprintf(fp, "flw %s, %s, t2", rd_->c_str(), gen_glb_val_label(glb_idx_).c_str());

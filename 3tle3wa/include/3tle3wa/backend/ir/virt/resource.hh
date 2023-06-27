@@ -3,7 +3,7 @@
 #include "3tle3wa/backend/ir/virt/register.hh"
 
 class virt_resource {
-public:
+   public:
     std::unordered_map<size_t, size_t> vrsc_map_;
     std::unordered_map<size_t, size_t> fvrsc_map_;
     std::unordered_map<size_t, size_t> hit_map_;
@@ -11,7 +11,7 @@ public:
     std::unordered_map<size_t, size_t> idx_map_;
 
     std::unordered_map<size_t, size_t> rregs_;
-    std::unordered_map<size_t, std::shared_ptr<stk_info>> stks_; 
+    std::unordered_map<size_t, std::shared_ptr<stk_info>> stks_;
 
     std::unordered_set<size_t> ifree_;
     std::unordered_set<size_t> ffree_;
@@ -21,7 +21,7 @@ public:
 
     size_t idx_ = 0;
 
-public:
+   public:
     void set(virt_reg *vr, rid_t vrid);
     void alc(virt_reg *vr);
     void rls(virt_reg *vr);

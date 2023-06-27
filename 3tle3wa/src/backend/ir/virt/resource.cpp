@@ -71,11 +71,11 @@ void virt_resource::access(virt_reg *vr, size_t n) {
 }
 
 void virt_resource::rlsall() {
-    for (auto &&pi: vrsc_map_) {
+    for (auto &&pi : vrsc_map_) {
         ifree_.insert(pi.first);
     }
     vrsc_map_.clear();
-    for (auto &&pi: fvrsc_map_) {
+    for (auto &&pi : fvrsc_map_) {
         ffree_.insert(pi.first);
     }
     fvrsc_map_.clear();

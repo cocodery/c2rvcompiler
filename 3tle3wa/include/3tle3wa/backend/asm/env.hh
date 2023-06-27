@@ -2,8 +2,8 @@
 
 #include <list>
 #include <memory>
-#include <unordered_set>
 #include <thread>
+#include <unordered_set>
 
 #include "3tle3wa/backend/asm/glb_value.hh"
 #include "3tle3wa/backend/asm/progress.hh"

@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <string_view>
+#include <vector>
 
 #include "3tle3wa/backend/utils.hh"
 

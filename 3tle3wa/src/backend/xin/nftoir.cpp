@@ -73,7 +73,7 @@ void cross_internal_manager::nftoir() {
         }
     }
     auto &&pu = rl_pgrs_.puse_;
-    
+
     pu.i = std::max(pu.i, pa.i);
     pu.f = std::max(pu.f, pa.f);
 
@@ -303,7 +303,7 @@ void cross_internal_manager::nftoir() {
 
                             // 记录一次对标签的引用
                             rl_pgrs_.lbmap_[op->get_lbid()].refs_.push_back(op.get());
-                            
+
                             rlbb->successer.erase(reidx_lbmap.at(ttgid));
 
                             // 将操作置入当前块中
@@ -581,7 +581,7 @@ void cross_internal_manager::nftoir() {
 
                 case Call: {
                     rl_pgrs_.contain_funcall_ = true;
-                    
+
                     auto llinst = std::dynamic_pointer_cast<CallInst>(inst);
                     Assert(llinst, "bad dynamic cast");
 
@@ -766,7 +766,7 @@ void cross_internal_manager::nftoir() {
 
                     auto &&extra = rl_pgrs_.valc_.ex_argl;
                     auto &&pu = rl_pgrs_.puse_;
-                    
+
                     pu.i = std::max(pu.i, pa.i);
                     pu.f = std::max(pu.f, pa.f);
                     extra = std::max(extra, pa.pstk);
@@ -775,17 +775,17 @@ void cross_internal_manager::nftoir() {
                         virt_reg *retvr;
                         if (res->GetBaseType()->FloatType()) {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
-                            
+
                             auto &&pu = rl_pgrs_.puse_;
                             pu.f = pu.f > 1 ? pu.f : 1;
-                            
+
                             // retvr->set_rregid(riscv::fa0);
                         } else {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
-                            
+
                             auto &&pu = rl_pgrs_.puse_;
                             pu.i = pu.i > 1 ? pu.i : 1;
-                            
+
                             // retvr->set_rregid(riscv::a0);
                         }
                         // retvr->set_confirm(true);

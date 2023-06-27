@@ -16,9 +16,7 @@ void cross_internal_manager::irtorv() {
 
     auto &&front_ilst = apg_->front()->ilst();
 
-
     if (rl_pgrs_.valc_.total_stk_len != 0) {
-
         if (imm_within(12, rl_pgrs_.valc_.total_stk_len)) {
             auto rv3 = new rv_addi(riscv::sp, riscv::sp, -(i64)rl_pgrs_.valc_.total_stk_len);
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv3));
@@ -29,9 +27,7 @@ void cross_internal_manager::irtorv() {
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv3));
         }
 
-
         if (rl_pgrs_.contain_funcall_) {
-
             auto rv2 = new rv_mv(riscv::fp, riscv::sp);
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv2));
 
@@ -42,13 +38,11 @@ void cross_internal_manager::irtorv() {
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv0));
 
         } else {
-
             auto rv2 = new rv_mv(riscv::fp, riscv::sp);
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv2));
 
             auto rv0 = new rv_sd(riscv::fp, riscv::sp, -8);
             front_ilst.push_front(std::unique_ptr<asm_inst>(rv0));
-            
         }
     }
 
@@ -61,7 +55,6 @@ void cross_internal_manager::irtorv() {
     back_ilst.pop_back();
 
     if (rl_pgrs_.valc_.total_stk_len != 0) {
-
         if (imm_within(12, rl_pgrs_.valc_.total_stk_len)) {
             auto rv5 = new rv_addi(riscv::sp, riscv::sp, rl_pgrs_.valc_.total_stk_len);
             back_ilst.push_back(std::unique_ptr<asm_inst>(rv5));
@@ -74,7 +67,6 @@ void cross_internal_manager::irtorv() {
         }
 
         if (rl_pgrs_.contain_funcall_) {
-
             auto rv7 = new rv_ld(riscv::ra, riscv::sp, -8);
             back_ilst.push_back(std::unique_ptr<asm_inst>(rv7));
 

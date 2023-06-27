@@ -43,7 +43,8 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
                 auto &&cur = succ->dli;
 
-                std::set_difference(cur.live_out.begin(), cur.live_out.end(), cur.var_kill.begin(), cur.var_kill.end(), std::inserter(old, old.end()));
+                std::set_difference(cur.live_out.begin(), cur.live_out.end(), cur.var_kill.begin(), cur.var_kill.end(),
+                                    std::inserter(old, old.end()));
 
                 old.insert(cur.ue_var.begin(), cur.ue_var.end());
             }
@@ -182,7 +183,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
         for (auto &&brj : rlp.lbmap_.at(bb->get_lbid()).refs_) {
             auto fa = brj->get_fa_idx();
-            for (auto &&in: rlp.lbmap_.at(fa).bbp_->dli.live_out) {
+            for (auto &&in : rlp.lbmap_.at(fa).bbp_->dli.live_out) {
                 inouts.insert(in);
                 auto vr = get_reg(in);
                 scope_vrg.insert(vr);
@@ -402,7 +403,7 @@ void vr_allocor::plan_stack(rl_progress &rlp) {
             retstk = 0;
         }
     }
-    
+
     total_stk_len += retstk;
 
     int64_t off = retstk;

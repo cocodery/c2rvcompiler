@@ -32,7 +32,7 @@ class uop_general : public serializable {
 
    public:
     virtual void trace_call() {}
-    virtual void trace_inst(size_t fa_idx) {};
+    virtual void trace_inst(size_t fa_idx){};
     virtual void live_info() {}
     virtual void toasm(pblock *pb) = 0;
     virtual void calcu_lvif(detailed_live_info &dli) {}
