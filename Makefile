@@ -42,7 +42,8 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			:= functional hidden_functional # performance # final_performance
+MODE 			?= functional hidden_functional # performance # final_performance
+SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
 TEST_DIR 		:= $(CPLER_TEST_DIR)/公开样例与运行时库
@@ -94,8 +95,8 @@ debug: $(ALL_SRC)
 build: release
 
 ifneq ($(DEMO),)
-LOAD	= cat $(TEST_DIR)/functional/$(DEMO)*.sy > $(SINGLE_TEST).sy
-INPFILE	= $(shell ls $(TEST_DIR)/functional/$(DEMO)*.in)
+LOAD	= cat $(TEST_DIR)/$(SMODE)/$(DEMO)*.sy > $(SINGLE_TEST).sy
+INPFILE	= $(shell ls $(TEST_DIR)/$(SMODE)/$(DEMO)*.in)
 REDINP	= $(addprefix < ,$(INPFILE))
 endif
 
@@ -107,30 +108,39 @@ run: debug $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
+.PHONY: ll
 ll: $(SYLIB_LL)
-	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
+	$(BINARY) -S -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
 	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
+.PHONY: rv
 rv:
-	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
+	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
 	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static
 	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
 	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
 
-native:
-	cat $(SINGLE_TEST).sy > $(TMP)/$(SINGLE_TEST).c
-	$(CC) -o $(TMP)/$(SINGLE_TEST).out $(TMP)/$(SINGLE_TEST).c $(SYLIB_C) -static
-	$(TMP)/$(SINGLE_TEST).out $(REDINP)
-	$(ECHO) $$?
+.PHONY: qemu-dbg
+qemu-dbg:
+	$(SIM_CMD) -singlestep -g 1234 $(SINGLE_TEST).out $(REDINP)
 
+.PHONY: pys
 pys:
-	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.sy) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
+	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(shell ls $(TEST_DIR)/$(SMODE)/$(DEMO)*.sy) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
 
+.PHONY: diff
 diff:
 	code -d $(shell ls $(BUILD_DIR)/$(CPLER_TEST_DIR)/pys/$(DEMO)*.res) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.out)
+
+
+.PHONY: perf
+.ONESHELL:
+perf:
+	perf record -e cpu-clock -g $(BINARY) -S -o $(SINGLE_TEST).s $(SINGLE_TEST).sy
+
 
 .PHONY: clean
 clean:

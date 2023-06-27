@@ -121,8 +121,10 @@ class alc_info {
    protected:
     bool onstk_{false};
     bool confirm_{false};
+    bool vconfirm_{false};
 
     size_t rregid_{0};
+    size_t vregid_{0};
 
    public:
     void set_onstk(bool on);
@@ -133,6 +135,12 @@ class alc_info {
 
     void set_rregid(size_t inp);
     size_t rregid() const;
+
+    void set_vconfirm(bool on);
+    bool vconfirm() const;
+
+    void set_vregid(size_t inp);
+    size_t vregid() const;
 
     virtual ~alc_info() = default;
 };
@@ -150,7 +158,7 @@ class virt_reg : public itrace, public ctrace, public live_info, public serializ
     // PRM  寄存器该值为 函数参数编号
     uxlen_t value_{0};
 
-    std::unique_ptr<stk_info> sinfo_{nullptr};
+    std::shared_ptr<stk_info> sinfo_{nullptr};
 
    public:
     virt_reg(VREG_KIND kind, VREG_TYPE type, uxlen_t value);
@@ -160,8 +168,9 @@ class virt_reg : public itrace, public ctrace, public live_info, public serializ
     uxlen_t value() const;
     size_t length() const;
 
-    const std::unique_ptr<stk_info> &sinfo() const;
+    const std::shared_ptr<stk_info> &sinfo() const;
     void set_sinfo(std::unique_ptr<stk_info> &info);
+    void set_sinfo(std::shared_ptr<stk_info> &info);
 
     void format_str(FILE *fp);
 

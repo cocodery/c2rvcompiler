@@ -3,10 +3,14 @@
 
 extern char *dbgfile;
 
+static std::mutex dbgf_mtx;
+
 void cross_internal_manager::pir() {
     if (dbgfile == nullptr) {
         return;
     }
+
+    std::scoped_lock<std::mutex> lck(dbgf_mtx);
 
     std::fstream fs(dbgfile, std::ios::app);
 

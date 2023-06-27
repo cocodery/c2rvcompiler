@@ -23,3 +23,6 @@ src/antlr/*
 *.out
 *.log
 *.sy
+
+*.data
+*.old

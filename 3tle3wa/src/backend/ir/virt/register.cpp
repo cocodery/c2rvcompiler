@@ -73,6 +73,14 @@ void alc_info::set_rregid(size_t inp) { rregid_ = inp; };
 
 size_t alc_info::rregid() const { return rregid_; }
 
+void alc_info::set_vconfirm(bool on) { vconfirm_ = on; }
+
+bool alc_info::vconfirm() const { return vconfirm_; }
+
+void alc_info::set_vregid(size_t inp) { vregid_ = inp; }
+
+size_t alc_info::vregid() const { return vregid_; }
+
 //
 // virtual register
 //
@@ -86,9 +94,11 @@ VREG_KIND virt_reg::kind() const { return kind_; }
 
 uxlen_t virt_reg::value() const { return value_; }
 
-const std::unique_ptr<stk_info> &virt_reg::sinfo() const { return sinfo_; }
+const std::shared_ptr<stk_info> &virt_reg::sinfo() const { return sinfo_; }
 
 void virt_reg::set_sinfo(std::unique_ptr<stk_info> &info) { sinfo_ = std::move(info); }
+
+void virt_reg::set_sinfo(std::shared_ptr<stk_info> &info) { sinfo_ = std::move(info); }
 
 size_t virt_reg::length() const {
     switch (type_) {
@@ -229,5 +239,6 @@ void vr_allocor::give_loc(std::unordered_set<uint32_t> &locs) {
 }
 
 void vr_allocor::rmreg(uxlen_t idx) {
-    Assert(vr_map_.erase(idx), "nothing ?");
+    auto res __attribute_maybe_unused__ = vr_map_.erase(idx);
+    Assert(res, "nothing ?");
 }

@@ -71,8 +71,11 @@ def build_run(args, exts, cc_arg, simcc_arg):
             infile = open(inname, 'r')
 
         try:
-            with open(logname, 'a') as logfile, open(resname, 'w') as resfile:
+            with open(logname, 'a') as logfile, open(resname, 'w') as resfile, open("/".join([args.dir, "perf.log"]), "a") as perfile:
+                start = time.time()
                 resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
+                total_time = time.time() - start
+                perfile.write("{},{}\n".format(basename, str(total_time)))
         except subprocess.TimeoutExpired:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mTime Limit Exceed\033[0m".format(basename))
             continue
@@ -111,11 +114,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    with open("/".join([args.dir, "perf.log"]), "w") as perfile:
+        perfile.write("{}:\n".format(args.dir))
+
     print("Testing: {}".format(args.dir))
 
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
-
 
     if args.llvmir:
         exts = {

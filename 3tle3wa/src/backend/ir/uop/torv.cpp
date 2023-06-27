@@ -104,19 +104,6 @@ void uop_set_fparam::toasm(pblock *pb) {
 void uop_call::toasm(pblock *pb) {
     auto rv = new rv_call(callee_);
     pb->push(rv);
-
-    if (retval_) {
-        spack spk;
-        auto act = retval_->load(pb, spk);
-        if (retval_->type() == VREG_TYPE::FLT) {
-            auto rv0 = new rv_fmv_s(act, riscv::fa0);
-            pb->push(rv0);
-        } else {
-            auto rv0 = new rv_mv(act, riscv::a0);
-            pb->push(rv0);
-        }
-        retval_->store(pb);
-    }
 }
 
 void uop_li::toasm(pblock *pb) { panic("unexpected now"); }
@@ -126,6 +113,23 @@ void uop_mv::toasm(pblock *pb) {
     auto to = rd_->store_where();
     if (rs_->kind() == VREG_KIND::STK) {
         lea(pb, rs_, to);
+    } else if (rs_->kind() == VREG_KIND::IMM and not rd_->onstk() and rd_->kind() == VREG_KIND::REG) {
+        auto rv = new rv_li(to, rs_->value());
+        pb->push(rv);
+    } else if (rs_->kind() == VREG_KIND::SPEC) {
+        if (rs_->value() < 32) {
+            auto act = rs_->load(pb, spk, to);
+            if (act != to) {
+                auto rv = new rv_mv(to, act);
+                pb->push(rv);
+            }
+        } else {
+            auto act = rs_->load(pb, spk, to);
+            if (act != to) {
+                auto rv = new rv_fmv_s(to, act);
+                pb->push(rv);
+            }
+        }
     } else {
         auto act = rs_->load(pb, spk, to);
         if (act != to) {
@@ -720,14 +724,14 @@ void uop_bin::toasm(pblock *pb) {
                 if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 1) return;
                 if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
             }
-            if (rhs_->kind() == VREG_KIND::IMM && __builtin_popcount(rhs_->value()) == 1) {
+            if (rhs_->kind() == VREG_KIND::IMM and __builtin_popcount(rhs_->value()) == 1) {
                 auto lhs = lhs_->load(pb, spk);
                 auto rv = new rv_slliw(dst, lhs, __builtin_ctz(rhs_->value()));
                 pb->push(rv);
                 rd_->store(pb);
                 return;
             }
-            if (lhs_->kind() == VREG_KIND::IMM && __builtin_popcount(lhs_->value()) == 1) {
+            if (lhs_->kind() == VREG_KIND::IMM and __builtin_popcount(lhs_->value()) == 1) {
                 auto rhs = rhs_->load(pb, spk);
                 auto rv = new rv_slliw(dst, rhs, __builtin_ctz(lhs_->value()));
                 pb->push(rv);
@@ -740,7 +744,7 @@ void uop_bin::toasm(pblock *pb) {
             if (rd_ == lhs_) {
                 if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
             }
-            if (rhs_->kind() == VREG_KIND::IMM && __builtin_popcount(rhs_->value()) == 1) {
+            if (rhs_->kind() == VREG_KIND::IMM and __builtin_popcount(rhs_->value()) == 1) {
                 auto lhs = lhs_->load(pb, spk);
                 auto rv = new rv_srai(dst, lhs, __builtin_ctz(rhs_->value()));
                 pb->push(rv);

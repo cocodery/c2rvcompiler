@@ -261,46 +261,57 @@ RVCNAM(tail)(cstr off) : rv_inst(riscv::t1) { GENINST("tail" TAB "%s", off); }
 
 RVCNAM(lb)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lb" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(lh)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lh" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(lw)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lw" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(ld)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("ld" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(lbu)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lbu" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(lhu)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lhu" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(lwu)(rid_t rd, rid_t rs, i64 off) : rv_inst(rd, rs) {
     GENINST("lwu" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rd], off, gpr[rs]);
+    off_ = off;
 }
 
 RVCNAM(sb)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
     GENINST("sb" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
+    off_ = off;
 }
 
 RVCNAM(sh)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
     GENINST("sh" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
+    off_ = off;
 }
 
 RVCNAM(sw)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
     GENINST("sw" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
+    off_ = off;
 }
 
 RVCNAM(sd)(rid_t rs, rid_t rt, i64 off) : rv_inst(rs, rt) {
     GENINST("sd" TAB "%s" COMMA "%" PRId64 "(%s)", gpr[rs], off, gpr[rt]);
+    off_ = off;
 }
 
 RVCNAM(addi)(rid_t rd, rid_t rs, i64 imm) : rv_inst(rd, rs) {
@@ -343,7 +354,7 @@ RVCNAM(sll)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
     GENINST("sll" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[rs], gpr[rt]);
 }
 
-RVCNAM (xor)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
+RVCNAM(xor)(rid_t rd, rid_t rs, rid_t rt) : rv_inst(rd, rs, rt) {
     GENINST("xor" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[rs], gpr[rt]);
 }
 

@@ -57,6 +57,8 @@ void vr_allocor::prinfo(std::fstream &fs) {
     fs << "=============== stack info ===============" << std::endl;
 
     fs << "Stack Size: " << total_stk_len << std::endl;
+
+    
 }
 
 static inline void popout(pblock *pb, virt_reg *onstk, rid_t dst) {

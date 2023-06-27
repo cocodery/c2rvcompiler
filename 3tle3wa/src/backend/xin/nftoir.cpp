@@ -759,16 +759,27 @@ void cross_internal_manager::nftoir() {
                     }
 
                     auto &&extra = rl_pgrs_.valc_.ex_argl;
-
+                    auto &&pu = rl_pgrs_.puse_;
+                    
+                    pu.i = std::max(pu.i, pa.i);
+                    pu.f = std::max(pu.f, pa.f);
                     extra = std::max(extra, pa.pstk);
 
                     if (auto &&res = llinst->GetResult(); res != nullptr) {
                         virt_reg *retvr;
                         if (res->GetBaseType()->FloatType()) {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+                            
+                            auto &&pu = rl_pgrs_.puse_;
+                            pu.f = pu.f > 1 ? pu.f : 1;
+                            
                             // retvr->set_rregid(riscv::fa0);
                         } else {
                             retvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
+                            
+                            auto &&pu = rl_pgrs_.puse_;
+                            pu.i = pu.i > 1 ? pu.i : 1;
+                            
                             // retvr->set_rregid(riscv::a0);
                         }
                         // retvr->set_confirm(true);

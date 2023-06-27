@@ -7,13 +7,13 @@
 
 ## 后端
 
-- [ ] 合并 `mul` `add` `sub`
-- [x] 合并 `b` `icmp`
 - [ ] 移除多余的 `load` `save`
-- [x] 移除多余的跳转
 - [ ] 寄存器分配策略
     - [ ] 不会被使用的 arg 寄存器征用
     - [ ] 基于引用次数和函数参数需求的贪心分配
+- [ ] 合并 `fmul` `fadd` `fsub` (x 精度问题放弃)
+- [x] 合并 `b` `icmp`
+- [x] 移除多余的跳转
 
 # CMake VSCode Json Setting
 

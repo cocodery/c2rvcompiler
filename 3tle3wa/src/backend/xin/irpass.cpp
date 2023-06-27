@@ -14,17 +14,18 @@ void cross_internal_manager::irpass() {
 
     irpass_combine_fallthrough();
 
-    // 因为做了块合并，所以需要重新计算 father 标签
+    irpass_gen_cmpb();
+
+    // 有精度问题，放弃
+    // irpass_gen_fmas();
+
+    // 重新计算 father 标签
     for (auto &&rlbb : rl_pgrs_.bbs_) {
         auto falb = rlbb->get_lbid();
         for (auto &&uop : rlbb->ops_) {
             uop->trace_inst(falb);
         }
     }
-
-    irpass_gen_cmpb();
-
-    // irpass_gen_fmas();
 }
 
 // 删除单跳转块
@@ -226,6 +227,10 @@ void cross_internal_manager::irpass_gen_cmpb() {
         auto &&target = rl_pgrs_.lbmap_.at(br->get_lbid());
         target.refs_.remove(lastinst.get());
         target.refs_.emplace_back(op.get());
+
+        auto &&false_target = rl_pgrs_.lbmap_.at(br->get_false_lbid());
+        false_target.refs_.remove(lastinst.get());
+        false_target.refs_.emplace_back(op.get());
 
         rlbb->ops_.remove_if([icmp, br](const std::unique_ptr<uop_general> &elem) -> bool {
             return elem.get() == icmp or elem.get() == br;

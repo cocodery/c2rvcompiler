@@ -33,6 +33,11 @@ class rl_progress {
     std::string_view label_;
     std::vector<virt_reg *> params_;
 
+    struct {
+        size_t i;
+        size_t f;
+    } puse_ ;
+
     struct rlbb_rcd {
         rl_basicblock *bbp_ = nullptr;
         std::list<uop_general *> refs_;
