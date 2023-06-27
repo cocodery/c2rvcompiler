@@ -71,8 +71,6 @@ void virt_resource::access(virt_reg *vr, size_t n) {
 }
 
 void virt_resource::rlsall() {
-    Assert(vr->kind() == VREG_KIND::REG, "only on reg");
-    Assert(vr->vconfirm(), "only on vreg");
     for (auto &&pi: vrsc_map_) {
         ifree_.insert(pi.first);
     }

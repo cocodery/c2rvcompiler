@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <iomanip>
 
-#ifdef DEBUG_MODE
+#define NDEBUG
+
+#ifndef NDEBUG
 
 #define Log(fmt, ...)              \
     std::printf(                   \
