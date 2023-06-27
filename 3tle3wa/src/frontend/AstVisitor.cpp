@@ -1,5 +1,7 @@
 #include "3tle3wa/frontend/AstVisitor.hh"
 
+#include <string>
+
 namespace {
 
 template <typename _Type, typename _ListType>
@@ -155,6 +157,7 @@ std::any AstVisitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
         // for Local Constant-Array
         // store one copy at Global-Table to generate in .data section
         if (cur_position == LOCAL && value->GetBaseType()->IsArray()) {
+            name = "." + name + "." + std::to_string(cur_block->GetBlockIdx()) + "." + cur_func->GetFuncName();
             comp_unit.InsertSymbol(name, value);
         }
     }
