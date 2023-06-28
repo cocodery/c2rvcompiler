@@ -143,11 +143,15 @@ pys:
 diff:
 	code -d $(shell ls $(BUILD_DIR)/$(CPLER_TEST_DIR)/pys/$(DEMO)*.res) $(shell ls $(TEST_DIR)/functional/$(DEMO)*.out)
 
+FG		?= ~/gits/FlameGraph
+
 .PHONY: perf
 .ONESHELL:
 perf:
 	perf record -e cpu-clock -g $(BINARY) -S -o $(SINGLE_TEST).s $(SINGLE_TEST).sy
-
+	perf script -i perf.data &> perf.unfold
+	$(FG)/stackcollapse-perf.pl perf.unfold &> perf.folded
+	$(FG)/flamegraph.pl perf.folded > perf.svg
 
 .PHONY: clean
 clean:
@@ -165,6 +169,10 @@ clean-s:
 clean-py:
 	-@rm -rf $(BUILD_DIR)/$(CPLER_TEST_DIR)
 
+.PHONY: clean-perf
+clean-perf:
+	-@rm -rf perf.data perf.folded perf.svg perf.unfold perf.old.data
+
 .PHONY: clean-all
 clean-all: clean clean-test clean-s
 
@@ -177,6 +185,19 @@ $(FORMAT_TARGETS): $(FORMAT)/%:%
  
 .PHONY: format-all
 format-all: $(FORMAT_TARGETS)
+
+# using competitions way to compile
+
+CP_HSRC		:= $(shell find . -regextype posix-extended -regex  '.*/.*\.(hpp|hh|H|hxx)') $(shell find . -name '*.h') 
+CP_CSRC		:= $(shell find . -regextype posix-extended -regex  '.*/.*\.(cpp|CPP|c++|cxx|C|cc|cp)') $(shell find . -name '*.c') 
+CP_CSRC		:= $(filter %.cpp,$(CP_CSRC))
+CP_LINKDIR	:= $(addprefix -I ,$(sort $(foreach head,$(CP_HSRC),$(dir $(head)))))
+
+.PHONY: cp
+cp: $(CP_OBJS)
+	$(CLANGXX) -std=c++17 -O2 -lm -pipe -Wall -Wextra -lantlr4-runtime -I /usr/include/antlr4-runtime $(CP_CSRC) $(CP_LINKDIR) -o $(BINARY)
+
+
 
 # old shell test
 .PHONY: all

@@ -89,7 +89,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7)) {
                         // insts_.erase(info.it_);
@@ -117,7 +117,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7)) {
                         // insts_.erase(info.it_);
@@ -145,7 +145,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and (info.rd_ < riscv::fa0 or info.rd_ > riscv::fa7)) {
                         // insts_.erase(info.it_);
@@ -173,7 +173,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
                         instit = insts_.erase(instit);
@@ -199,7 +199,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
                         instit = insts_.erase(instit);
@@ -225,7 +225,7 @@ void pblock::opm_rm_needless_ls() {
             }
 
             if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != nullptr) {
+                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
                         instit = insts_.erase(instit);

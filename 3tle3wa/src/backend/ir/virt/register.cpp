@@ -239,6 +239,6 @@ void vr_allocor::give_loc(std::unordered_set<uint32_t> &locs) {
 }
 
 void vr_allocor::rmreg(uxlen_t idx) {
-    auto res __attribute_maybe_unused__ = vr_map_.erase(idx);
+    [[maybe_unused]] auto res = vr_map_.erase(idx);
     Assert(res, "nothing ?");
 }

@@ -15,7 +15,7 @@ class ralcor {
         cur_rinfo[rid] = vr->value();
     }
 
-    void rls(size_t vidx, size_t ridx) {
+    void rls([[maybe_unused]] size_t vidx, size_t ridx) {
         Assert(cur_inuse[ridx] and cur_rinfo[ridx] == vidx, "fail");
         cur_inuse[ridx] = false;
         cur_rinfo[ridx] = 0;

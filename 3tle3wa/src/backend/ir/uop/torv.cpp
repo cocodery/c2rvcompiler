@@ -117,7 +117,7 @@ void uop_call::toasm(pblock *pb) {
     pb->push(rv);
 }
 
-void uop_li::toasm(pblock *pb) { panic("unexpected now"); }
+void uop_li::toasm([[maybe_unused]] pblock *pb) { panic("unexpected now"); }
 
 void uop_mv::toasm(pblock *pb) {
     spack spk;
@@ -245,7 +245,7 @@ void uop_j::toasm(pblock *pb) {
     pb->push(rv);
 }
 
-void uop_la::toasm(pblock *pb) { panic("unexpected now"); }
+void uop_la::toasm([[maybe_unused]] pblock *pb) { panic("unexpected now"); }
 
 void uop_lla::toasm(pblock *pb) {
     auto act = rd_->store_where();
