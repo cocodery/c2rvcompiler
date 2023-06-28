@@ -38,6 +38,12 @@ void pblock::opm_rm_needless_li() {
             curint = li_inst->imm_;
         } else if (auto call_inst = dynamic_cast<rv_call *>(bear_ptr); call_inst != nullptr) {
             online = false;
+        } else if (auto mv_inst = dynamic_cast<rv_mv *>(bear_ptr); mv_inst != nullptr) {
+            if (mv_inst->rs_ == riscv::t0 and online) {
+                auto rv = new rv_li(mv_inst->rd_, curint);
+                insts_.insert(instit, std::unique_ptr<rv_inst>(rv));
+                instit = insts_.erase(instit);
+            }
         } else if (auto rvinst = dynamic_cast<rv_inst *>(bear_ptr); rvinst != nullptr and rvinst->rd_ == riscv::t0) {
             online = false;
         }

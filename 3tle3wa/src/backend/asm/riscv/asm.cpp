@@ -535,6 +535,6 @@ RVCNAM(fle)(rid_t rd, rid_t frs, rid_t frt) : rv_inst(rd, frs, frt) {
     GENINST("fle.s" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[frs], gpr[frt]);
 }
 
-RVCNAM(fmv_w_s)(rid_t frd, rid_t rs) : rv_inst(frd, rs) { GENINST("fmv.w.s" TAB "%s" COMMA "%s", gpr[frd], gpr[rs]); }
+RVCNAM(fmv_w_x)(rid_t frd, rid_t rs) : rv_inst(frd, rs) { GENINST("fmv.w.x" TAB "%s" COMMA "%s", gpr[frd], gpr[rs]); }
 
-RVCNAM(fmv_s_w)(rid_t rd, rid_t frs) : rv_inst(rd, frs) { GENINST("fmv.s.w" TAB "%s" COMMA "%s", gpr[rd], gpr[frs]); }
+RVCNAM(fmv_x_w)(rid_t rd, rid_t frs) : rv_inst(rd, frs) { GENINST("fmv.x.w" TAB "%s" COMMA "%s", gpr[rd], gpr[frs]); }

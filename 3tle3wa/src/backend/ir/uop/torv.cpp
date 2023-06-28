@@ -949,6 +949,8 @@ void uop_fbin::toasm(pblock *pb) {
     auto lhs = lhs_->load(pb, spk);
     auto rhs = rhs_->load(pb, spk);
 
+    
+
     switch (kind_) {
         case FBIN_KIND::ADD: {
             auto rv = new rv_fadd_s(dst, lhs, rhs);

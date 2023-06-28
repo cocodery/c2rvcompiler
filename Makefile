@@ -44,7 +44,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional performance final_performance
+MODE 			?= functional hidden_functional # performance final_performance
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -70,6 +70,9 @@ PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
 PYASM			:= pyasm
 PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
 
+PYFLT			:= float
+PYFLT_TARGETS	:= $(addprefix $(PYFLT)/,float)
+
 $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
@@ -79,11 +82,17 @@ $(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/% $(SYLIB_LL)
 $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
 
+$(PYFLT_TARGETS): $(PYFLT)/%:$(CURDIR)/test/%
+	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/test/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
+
 .PHONY: pyll
 pyll:  build $(PYLL_TARGETS)
 
 .PHONY: pyasm
 pyasm: build $(PYASM_TARGETS)
+
+.PHONY: pyflt
+pyflt: build $(PYFLT_TARGETS)
 
 release: $(ALL_SRC)
 	$(CMAKE) -S . -B $(BUILD_DIR)
@@ -196,8 +205,6 @@ CP_LINKDIR	:= $(addprefix -I ,$(sort $(foreach head,$(CP_HSRC),$(dir $(head)))))
 .PHONY: cp
 cp: $(CP_OBJS)
 	$(CLANGXX) -std=c++17 -O2 -lm -pipe -Wall -Wextra -lantlr4-runtime -I /usr/include/antlr4-runtime $(CP_CSRC) $(CP_LINKDIR) -o $(BINARY)
-
-
 
 # old shell test
 .PHONY: all

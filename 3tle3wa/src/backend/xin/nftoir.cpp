@@ -18,6 +18,8 @@ void cross_internal_manager::nftoir() {
         size_t pstk{0};
     } pa;
 
+    using glb_la_info = std::pair<size_t, size_t>;
+
     // 有脏东西 /(ㄒoㄒ)/~~
     auto alloc_reg = fptr_->GetVarIdx() + 0xdeadbeef;
 
@@ -87,6 +89,8 @@ void cross_internal_manager::nftoir() {
     auto bbit = topo.begin();
 
     while (bbit != topo.end()) {
+        std::map<glb_la_info, size_t> glb_la_history;
+
         auto &&bb = (*bbit);
         ++bbit;
         size_t nxtlbid;
@@ -547,10 +551,37 @@ void cross_internal_manager::nftoir() {
                         auto gval = std::dynamic_pointer_cast<GlobalValue>(base);
                         Assert(gval, "bad dynamic cast");
 
+                        auto gvidx = gval->GetGlobalValueIdx();
+
+                        glb_la_info gli;
+
+                        if (off->kind() == VREG_KIND::IMM) {
+                            gli = glb_la_info(gvidx, off->value());
+
+                            if (auto fnd = glb_la_history.find(gli); fnd != glb_la_history.end()) {
+                                rl_pgrs_.valc_.link(nwvr->value(), fnd->second);
+                                break;
+                            }
+                        } else {
+                            gli = glb_la_info(gvidx, 0);
+
+                            if (auto fnd = glb_la_history.find(gli); fnd != glb_la_history.end()) {
+                                auto tmp = rl_pgrs_.valc_.get_reg(fnd->second);
+
+                                auto opx = std::make_unique<uop_bin>();
+                                opx->set_kind(IBIN_KIND::ADD);
+                                opx->set_lhs(tmp);
+                                opx->set_rhs(off);
+                                opx->set_rd(nwvr);
+                                lst.push_back(std::move(opx));
+                                break;
+                            }
+                        }
+
                         auto tmp = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::PTR, alloc_reg++);
 
                         auto op0 = std::make_unique<uop_lla>();
-                        op0->set_glb_idx(gval->GetGlobalValueIdx());
+                        op0->set_glb_idx(gvidx);
                         op0->set_rd(tmp);
 
                         lst.push_back(std::move(op0));
@@ -560,6 +591,12 @@ void cross_internal_manager::nftoir() {
                         op1->set_lhs(tmp);
                         op1->set_rhs(off);
                         op1->set_rd(nwvr);
+
+                        if (off->kind() == VREG_KIND::IMM) {
+                            glb_la_history[gli] = nwvr->value();
+                        } else {
+                            glb_la_history[gli] = tmp->value();
+                        }
 
                         lst.push_back(std::move(op1));
                     } else if (base->IsVariable()) {
@@ -877,9 +914,9 @@ void cross_internal_manager::nftoir() {
                     auto lhs = llinst->GetLHS();
                     auto rhs = llinst->GetRHS();
 
-                    if (auto &&rtype = res->GetBaseType(); rtype->IntType() or rtype->BoolType()) {
-                        auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
+                    bool linkable = false;
 
+                    if (auto &&rtype = res->GetBaseType(); rtype->IntType() or rtype->BoolType()) {
                         if (lhs->IsConstant() and rhs->IsConstant()) {
                             auto lcst = std::dynamic_pointer_cast<Constant>(lhs);
                             Assert(lcst, "bad dynamic cast");
@@ -918,8 +955,8 @@ void cross_internal_manager::nftoir() {
                                 default:
                                     panic("unexpected");
                             }
+                            auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                             virt_reg *nwvr = rl_pgrs_.valc_.alloc_imm(out);
-
                             auto op = std::make_unique<uop_mv>();
                             op->set_rd(resvr);
                             op->set_rs(nwvr);
@@ -934,14 +971,13 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
-                                lnwvr = rl_pgrs_.valc_.alloc_imm(pk.v32);
-                            } else if (lhs->IsVariable()) {
-                                auto var = std::dynamic_pointer_cast<Variable>(lhs);
-                                Assert(var, "bad dynamic cast");
-
-                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
-                            } else {
-                                panic("unexpected");
+                                if (pk.v32 == 1 and opcode == OP_MUL) {
+                                    linkable = true;
+                                } else if (pk.v32 == 0 and opcode == OP_ADD) {
+                                    linkable = true;
+                                } else {
+                                    lnwvr = rl_pgrs_.valc_.alloc_imm(pk.v32);
+                                }
                             }
 
                             if (rhs->IsConstant()) {
@@ -949,16 +985,44 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
-                                rnwvr = rl_pgrs_.valc_.alloc_imm(pk.v32);
-                            } else if (rhs->IsVariable()) {
+
+                                if (pk.v32 == 1 and (opcode == OP_MUL or opcode == OP_DIV)) {
+                                    linkable = true;
+                                } else if (pk.v32 == 0 and (opcode == OP_ADD or opcode == OP_SUB or
+                                                            opcode == OP_LSHIFT or opcode == OP_RSHIFT)) {
+                                    linkable = true;
+                                } else {
+                                    rnwvr = rl_pgrs_.valc_.alloc_imm(pk.v32);
+                                }
+                            }
+
+                            if (lhs->IsVariable()) {
+                                auto var = std::dynamic_pointer_cast<Variable>(lhs);
+                                Assert(var, "bad dynamic cast");
+
+                                if (linkable) {
+                                    Assert(rnwvr == nullptr, "rhs not imm");
+                                    rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
+                                    break;
+                                }
+
+                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
+                            }
+
+                            if (rhs->IsVariable()) {
                                 auto var = std::dynamic_pointer_cast<Variable>(rhs);
                                 Assert(var, "bad dynamic cast");
 
+                                if (linkable) {
+                                    Assert(lnwvr == nullptr, "rhs not imm");
+                                    rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
+                                    break;
+                                }
+
                                 rnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
-                            } else {
-                                panic("unexpected");
                             }
 
+                            auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_bin>();
                             op->set_kind((IBIN_KIND)opcode);
                             op->set_lhs(lnwvr);
@@ -969,8 +1033,6 @@ void cross_internal_manager::nftoir() {
                         }
 
                     } else if (rtype->FloatType()) {
-                        auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
-
                         if (lhs->IsConstant() and rhs->IsConstant()) {
                             auto lcst = std::dynamic_pointer_cast<Constant>(lhs);
                             Assert(lcst, "bad dynamic cast");
@@ -1000,6 +1062,8 @@ void cross_internal_manager::nftoir() {
                                     panic("unexpected");
                             }
 
+                            auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+
                             union {
                                 float f;
                                 uint32_t iu32;
@@ -1013,6 +1077,9 @@ void cross_internal_manager::nftoir() {
 
                             lst.push_back(std::move(op));
                         } else {
+                            bool addable = false;
+                            [[maybe_unused]] bool mulable = false;
+
                             virt_reg *lnwvr = nullptr;
                             virt_reg *rnwvr = nullptr;
 
@@ -1021,14 +1088,15 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
-                                lnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
-                            } else if (lhs->IsVariable()) {
-                                auto var = std::dynamic_pointer_cast<Variable>(lhs);
-                                Assert(var, "bad dynamic cast");
-
-                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
-                            } else {
-                                panic("unexpected");
+                                if (pk.v32 == 0x3f800000 and opcode == OP_MUL) {
+                                    linkable = true;
+                                } else if (pk.v32 == 0x40000000 and (opcode == OP_MUL)) {
+                                    addable = true;
+                                } else if (pk.v32 == 0 and opcode == OP_ADD) {
+                                    linkable = true;
+                                } else {
+                                    lnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
+                                }
                             }
 
                             if (rhs->IsConstant()) {
@@ -1036,16 +1104,90 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
-                                rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
-                            } else if (rhs->IsVariable()) {
+
+                                if (pk.v32 == 0x3f800000 and (opcode == OP_MUL or opcode == OP_DIV)) {
+                                    linkable = true;
+                                } else if (pk.v32 == 0x40000000 and (opcode == OP_MUL)) {
+                                    addable = true;
+                                } else if (pk.v32 == 0 and (opcode == OP_ADD or opcode == OP_SUB)) {
+                                    linkable = true;
+                                } else if (opcode == OP_DIV) {
+                                    // mulable = true;
+                                    // pk.f32 = 1 / pk.f32;
+                                    // rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
+                                    rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
+                                } else {
+                                    rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
+                                }
+                            }
+
+                            if (lhs->IsVariable()) {
+                                auto var = std::dynamic_pointer_cast<Variable>(lhs);
+                                Assert(var, "bad dynamic cast");
+
+                                if (linkable) {
+                                    Assert(rnwvr == nullptr, "rhs not imm");
+                                    rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
+                                    break;
+                                }
+
+                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
+                                if (addable) {
+                                    Assert(rnwvr == nullptr, "rhs not imm");
+                                    rnwvr = lnwvr;
+
+                                    auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+                                    auto op = std::make_unique<uop_fbin>();
+                                    op->set_kind(FBIN_KIND::ADD);
+                                    op->set_lhs(lnwvr);
+                                    op->set_rhs(rnwvr);
+                                    op->set_rd(resvr);
+
+                                    lst.push_back(std::move(op));
+                                    break;
+                                }
+
+                                // if (mulable) {
+                                //     auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+                                //     auto op = std::make_unique<uop_fbin>();
+                                //     op->set_kind(FBIN_KIND::MUL);
+                                //     op->set_lhs(lnwvr);
+                                //     op->set_rhs(rnwvr);
+                                //     op->set_rd(resvr);
+
+                                //     lst.push_back(std::move(op));
+                                //     break;
+                                // }
+                            }
+
+                            if (rhs->IsVariable()) {
                                 auto var = std::dynamic_pointer_cast<Variable>(rhs);
                                 Assert(var, "bad dynamic cast");
 
+                                if (linkable) {
+                                    Assert(lnwvr == nullptr, "lhs not imm");
+                                    rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
+                                    break;
+                                }
+
                                 rnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
-                            } else {
-                                panic("unexpected");
+                                if (addable) {
+                                    Assert(rnwvr == nullptr, "lhs not imm");
+                                    lnwvr = rnwvr;
+
+                                    auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+                                    auto op = std::make_unique<uop_fbin>();
+                                    op->set_kind(FBIN_KIND::ADD);
+                                    op->set_lhs(lnwvr);
+                                    op->set_rhs(rnwvr);
+                                    op->set_rd(resvr);
+
+                                    lst.push_back(std::move(op));
+                                    break;
+                                }
                             }
 
+                            auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_fbin>();
                             op->set_kind((FBIN_KIND)opcode);
                             op->set_lhs(lnwvr);

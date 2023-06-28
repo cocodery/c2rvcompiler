@@ -203,5 +203,5 @@ RVINST(fcvt_s_w, rid_t frd, rid_t rs);
 RVINST(feq, rid_t rd, rid_t frs, rid_t frt);
 RVINST(flt, rid_t rd, rid_t frs, rid_t frt);
 RVINST(fle, rid_t rd, rid_t frs, rid_t frt);
-RVINST(fmv_w_s, rid_t frd, rid_t rs);
-RVINST(fmv_s_w, rid_t rd, rid_t frs);
+RVINST(fmv_w_x, rid_t frd, rid_t rs);
+RVINST(fmv_x_w, rid_t rd, rid_t frs);
