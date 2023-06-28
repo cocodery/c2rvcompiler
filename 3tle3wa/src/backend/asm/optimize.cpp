@@ -70,25 +70,29 @@ void pblock::opm_rm_needless_ls() {
         auto &&bear_ptr = inst.get();
         bool meet = false;
         bool reduce = false;
+        auto rvinst = dynamic_cast<rv_inst *>(bear_ptr);
+        Assert(rvinst, "not rv inst");
 
         do /* check */ {
             lsinfo status;
 
-            if (auto lw_inst = dynamic_cast<rv_lw *>(bear_ptr); lw_inst != nullptr) {
-                if (lw_inst->rs_ != riscv::fp) {
+            if (dynamic_cast<rv_lw *>(bear_ptr) != nullptr or dynamic_cast<rv_ld *>(bear_ptr) != nullptr or
+                dynamic_cast<rv_flw *>(bear_ptr) != nullptr) {
+                if (rvinst->rs_ != riscv::fp) {
                     // 不在这里解决
                     break;
                 }
 
                 meet = true;
                 status.ls_ = LS_LOAD;
-                status.width_ = 4;
-                status.it_ = instit;
-                status.off_ = lw_inst->off_;
-                status.rd_ = lw_inst->rd_;
-            }
 
-            if (meet) {
+                // 目前先不考虑
+                status.width_ = 8;
+
+                status.it_ = instit;
+                status.off_ = rvinst->off_;
+                status.rd_ = rvinst->rd_;
+
                 if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7)) {
@@ -102,129 +106,23 @@ void pblock::opm_rm_needless_ls() {
                 break;
             }
 
-            if (auto ld_inst = dynamic_cast<rv_ld *>(bear_ptr); ld_inst != nullptr) {
-                if (ld_inst->rs_ != riscv::fp) {
-                    // 不在这里解决
-                    break;
-                }
-
-                meet = true;
-                status.ls_ = LS_LOAD;
-                status.width_ = 8;
-                status.it_ = instit;
-                status.off_ = ld_inst->off_;
-                status.rd_ = ld_inst->rd_;
-            }
-
-            if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
-                    auto &&info = fnd->second;
-                    if (info.ls_ == LS_LOAD and (info.rd_ < riscv::a0 or info.rd_ > riscv::a7)) {
-                        // insts_.erase(info.it_);
-                    }
-                    lsmap.erase(fnd);
-                }
-
-                lsmap[status.rd_] = std::move(status);
-
-                break;
-            }
-
-            if (auto sd_inst = dynamic_cast<rv_flw *>(bear_ptr); sd_inst != nullptr) {
-                if (sd_inst->rs_ != riscv::fp) {
+            if (dynamic_cast<rv_sw *>(bear_ptr) != nullptr or dynamic_cast<rv_sd *>(bear_ptr) != nullptr or
+                dynamic_cast<rv_fsw *>(bear_ptr) != nullptr) {
+                if (rvinst->rs_ != riscv::fp) {
                     // 不在这里解决
                     break;
                 }
 
                 meet = true;
                 status.ls_ = LS_STORE;
+
+                // 目前先不考虑
                 status.width_ = 8;
+                
                 status.it_ = instit;
-                status.off_ = sd_inst->off_;
-                status.rd_ = sd_inst->rs_;
-            }
+                status.off_ = rvinst->off_;
+                status.rd_ = rvinst->rs_;
 
-            if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
-                    auto &&info = fnd->second;
-                    if (info.ls_ == LS_LOAD and (info.rd_ < riscv::fa0 or info.rd_ > riscv::fa7)) {
-                        // insts_.erase(info.it_);
-                    }
-                    lsmap.erase(fnd);
-                }
-
-                lsmap[status.rd_] = std::move(status);
-
-                break;
-            }
-
-            if (auto sw_inst = dynamic_cast<rv_sw *>(bear_ptr); sw_inst != nullptr) {
-                if (sw_inst->rs_ != riscv::fp) {
-                    // 不在这里解决
-                    break;
-                }
-
-                meet = true;
-                status.ls_ = LS_STORE;
-                status.width_ = 4;
-                status.it_ = instit;
-                status.off_ = sw_inst->off_;
-                status.rd_ = sw_inst->rs_;
-            }
-
-            if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
-                    auto &&info = fnd->second;
-                    if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
-                        instit = insts_.erase(instit);
-                        reduce = true;
-                    }
-                }
-
-                break;
-            }
-
-            if (auto sd_inst = dynamic_cast<rv_sd *>(bear_ptr); sd_inst != nullptr) {
-                if (sd_inst->rs_ != riscv::fp) {
-                    // 不在这里解决
-                    break;
-                }
-
-                meet = true;
-                status.ls_ = LS_STORE;
-                status.width_ = 8;
-                status.it_ = instit;
-                status.off_ = sd_inst->off_;
-                status.rd_ = sd_inst->rs_;
-            }
-
-            if (meet) {
-                if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
-                    auto &&info = fnd->second;
-                    if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
-                        instit = insts_.erase(instit);
-                        reduce = true;
-                    }
-                }
-
-                break;
-            }
-
-            if (auto sd_inst = dynamic_cast<rv_fsw *>(bear_ptr); sd_inst != nullptr) {
-                if (sd_inst->rs_ != riscv::fp) {
-                    // 不在这里解决
-                    break;
-                }
-
-                meet = true;
-                status.ls_ = LS_STORE;
-                status.width_ = 8;
-                status.it_ = instit;
-                status.off_ = sd_inst->off_;
-                status.rd_ = sd_inst->rs_;
-            }
-
-            if (meet) {
                 if (auto fnd = lsmap.find(status.rd_); fnd != lsmap.end()) {
                     auto &&info = fnd->second;
                     if (info.ls_ == LS_LOAD and info.off_ == status.off_) {
@@ -242,9 +140,6 @@ void pblock::opm_rm_needless_ls() {
         }
 
         if (not meet) {
-            auto rvinst = dynamic_cast<rv_inst *>(bear_ptr);
-            Assert(rvinst, "not rv inst");
-
             if (auto fnd = lsmap.find(rvinst->rs_); fnd != lsmap.end()) {
                 lsmap.erase(fnd);
             }
