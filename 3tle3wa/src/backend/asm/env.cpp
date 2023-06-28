@@ -93,9 +93,6 @@ void asm_env::gen_asm(std::fstream &fs) {
     fs << std::endl;
 
     if (not gvals_.empty()) {
-        fs << "\t.data" << std::endl;
-        fs << std::endl;
-
         for (auto &&gval : gvals_) {
             gval->gen_asm(fs);
             fs << std::endl;

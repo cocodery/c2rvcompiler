@@ -43,6 +43,15 @@ std::string_view rv_inst::comment() { return comt_; }
 
 void rv_inst::set_comment(cstr comt) { comt_ = comt; }
 
+RVCNAM(fake_lb)(cstr sym) : rv_inst() {
+    GENINST("%s: ", sym);
+    comt_ = COMMENT_BEGIN "fake label";
+}
+
+RVCNAM(fake_br)(rid_t rs, cstr sym) : rv_inst(riscv::zero, rs) {
+    GENINST("beqz" TAB "%s" COMMA "%s", gpr[rs], sym);
+}
+
 //
 // asm with label
 //

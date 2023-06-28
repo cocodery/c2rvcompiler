@@ -1,6 +1,11 @@
+#include <mutex>
+
 #include "3tle3wa/backend/asm/glb_value.hh"
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/ir/virt/register.hh"
+
+std::mutex flb_mtx;
+static size_t internal_lbidx = 0;
 
 static inline size_t lea(pblock *pb, virt_reg *onstk, rid_t dst) {
     if (not onstk->onstk()) {
@@ -691,6 +696,20 @@ void uop_bin::toasm(pblock *pb) {
                     if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 1) return;
                     if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 1) return;
                 }
+                if (rhs_->kind() == VREG_KIND::IMM and __builtin_popcount(rhs_->value()) == 1) {
+                    auto lhs = lhs_->load(pb, spk);
+                    auto rv = new rv_slliw(dst, lhs, __builtin_ctz(rhs_->value()));
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
+                if (lhs_->kind() == VREG_KIND::IMM and __builtin_popcount(lhs_->value()) == 1) {
+                    auto rhs = rhs_->load(pb, spk);
+                    auto rv = new rv_slliw(dst, rhs, __builtin_ctz(lhs_->value()));
+                    pb->push(rv);
+                    rd_->store(pb);
+                    return;
+                }
             } break;
 
             case IBIN_KIND::SLL: {
@@ -943,13 +962,340 @@ void uop_bin::toasm(pblock *pb) {
     rd_->store(pb, dst);
 }
 
+
+/*
+黑魔法优化 1
+源代码如下
+
+源自 fpga 开发经验
+编译由 gcc 完成
+
+依托于测例不会产生 nan 和 inf，下列函数可以简化。
+
+该优化会改变 cfg。
+但是，添加的新内容其实可以看作一个整体，所以可以不用当作真的块处理。
+所以我们选择将其称呼为虚假块，并不认为它是真的基本块。
+
+union flt {
+  struct {
+    unsigned mas: 23;
+    unsigned exp: 8;
+    unsigned sign: 1;
+  };
+  float f;
+} cvt ;
+
+float __crvc_flt_sra(float a, constant_2pow b) {
+  union flt ai, bi, ci;
+  ai.f = a;
+  bi.f = b;
+  ci.mas = ai.mas;
+  int m = bi.exp - 127;
+  int texp = ai.exp - m;
+  if (texp > 255) {
+    texp = 255;
+  } else if (texp < 0) {
+    texp = 0;
+  }
+  ci.exp = texp;
+  ci.sign = ai.sign ^ bi.sign;
+  return ci.f;
+}
+
+float __crvc_flt_sll(float a, constant_2pow b) {
+  union flt ai, bi, ci;
+  ai.f = a;
+  bi.f = b;
+  ci.mas = ai.mas;
+  int m = bi.exp - 127;
+  int texp = ai.exp + m;
+  if (texp > 255) {
+    texp = 255;
+  } else if (texp < 0) {
+    texp = 0;
+  }
+  ci.exp = texp;
+  ci.sign = ai.sign ^ bi.sign;
+  return ci.f;
+}
+
+__crvc_flt_sra:
+   fmv.x.w   a2,fa1
+   fmv.x.w   a4,fa0
+   srliw     a5,a2,23
+   srliw     a3,a4,23
+   andi      a5,a5,0xff
+   andi      a3,a3,0xff
+   addiw     a5,a5,-127
+   subw      a5,a3,a5
+   mv        a3,a5
+   bge       a5,zero,.L2
+   li        a3,0
+   li        a5,0
+.L2:
+   li        a1,255
+   ble       a5,a1,.L3
+   li        a3,255
+.L3:
+   slli      a5,a4,41
+   slliw     a3,a3,23
+   srli      a5,a5,41
+   or        a5,a5,a3
+   srliw     a2,a2,31
+   srliw     a4,a4,31
+   xor       a4,a4,a2
+   slli      a5,a5,33
+   slliw     a4,a4,31
+   srli      a5,a5,33
+   or        a5,a5,a4
+   fmv.w.x   fa0,a5
+   ret
+
+__crvc_flt_sll:
+   fmv.x.w   a2,fa1
+   fmv.x.w   a4,fa0
+   srliw     a3,a2,23
+   andi      a3,a3,0xff
+   srliw     a5,a4,23
+   addiw     a3,a3,-127
+   andi      a5,a5,0xff
+   addw      a5,a3,a5
+   mv        a3,a5
+   bge       a5,zero,.L6
+   li        a3,0
+   li        a5,0
+.L6:
+   li        a1,255
+   ble       a5,a1,.L7
+   li        a3,255
+.L7:
+   slli      a5,a4,41
+   slliw     a3,a3,23
+   srli      a5,a5,41
+   or        a5,a5,a3
+   srliw     a2,a2,31
+   srliw     a4,a4,31
+   xor       a4,a4,a2
+   slli      a5,a5,33
+   slliw     a4,a4,31
+   srli      a5,a5,33
+   or        a5,a5,a4
+   fmv.w.x   fa0,a5
+   ret
+*/
+
+
 void uop_fbin::toasm(pblock *pb) {
     spack spk;
     auto dst = rd_->store_where();
+
+    switch (kind_) {
+        case FBIN_KIND::ADD: {
+            if (rd_ == lhs_ or rd_ == rhs_) {
+                if (lhs_->kind() == VREG_KIND::IMM and lhs_->value() == 0) return;
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+        } break;
+
+        case FBIN_KIND::SUB: {
+            if (rd_ == lhs_) {
+                if (rhs_->kind() == VREG_KIND::IMM and rhs_->value() == 0) return;
+            }
+        } break;
+
+        case FBIN_KIND::MUL: {
+            if (lhs_->kind() == VREG_KIND::LOC and ispowf2(lhs_->value())) {
+                auto rhs = rhs_->load(pb, spk);
+                ieee_flt_pack ieeefpk;
+                ieeefpk.i = lhs_->value();
+
+                auto rv00 = new rv_fmv_x_w(riscv::t1, rhs);
+                pb->push(rv00);
+
+                std::string fakelb;
+
+                do /* alloc */ {
+                    std::scoped_lock<std::mutex> lck(flb_mtx);
+                    fakelb = std::string(".FK") + std::to_string(internal_lbidx);
+                    internal_lbidx += 1;
+                } while (0);
+
+                auto rvx = new rv_fake_br(riscv::t1, fakelb.c_str());
+                pb->push(rvx);
+
+                auto rv01 = new rv_srliw(riscv::t2, riscv::t1, 23);
+                pb->push(rv01);
+
+                auto rv02 = new rv_addiw(riscv::t2, riscv::t2, ieeefpk.exponent - 127);
+                pb->push(rv02);
+
+                auto rv03 = new rv_andi(riscv::t2, riscv::t2, 0xff);
+                pb->push(rv03);
+
+                auto rv04 = new rv_slli(riscv::t0, riscv::t1, 41);
+                pb->push(rv04);
+
+                auto rv05 = new rv_srliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv05);
+
+                auto rv06 = new rv_srli(riscv::t0, riscv::t0, 41);
+                pb->push(rv06);
+
+                auto rv07 = new rv_xori(riscv::t1, riscv::t1, ieeefpk.sign);
+                pb->push(rv07);
+
+                auto rv08 = new rv_slliw(riscv::t2, riscv::t2, 23);
+                pb->push(rv08);
+
+                auto rv09 = new rv_slliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv09);
+
+                auto rv10 = new rv_or(riscv::t2, riscv::t2, riscv::t0);
+                pb->push(rv10);
+
+                auto rv11 = new rv_or(riscv::t2, riscv::t2, riscv::t1);
+                pb->push(rv11);
+
+                auto rv12 = new rv_fmv_w_x(dst, riscv::t2);
+                pb->push(rv12);
+
+                auto rvy = new rv_fake_lb(fakelb.c_str());
+                pb->push(rvy);
+
+                rd_->store(pb, dst);
+                return;
+            }
+            
+            if (rhs_->kind() == VREG_KIND::LOC and ispowf2(rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                ieee_flt_pack ieeefpk;
+                ieeefpk.i = rhs_->value();
+
+                auto rv00 = new rv_fmv_x_w(riscv::t1, lhs);
+                pb->push(rv00);
+
+                std::string fakelb;
+
+                do /* alloc */ {
+                    std::scoped_lock<std::mutex> lck(flb_mtx);
+                    fakelb = std::string(".FK") + std::to_string(internal_lbidx);
+                    internal_lbidx += 1;
+                } while (0);
+
+                auto rvx = new rv_fake_br(riscv::t1, fakelb.c_str());
+                pb->push(rvx);
+
+                auto rv01 = new rv_srliw(riscv::t2, riscv::t1, 23);
+                pb->push(rv01);
+
+                auto rv02 = new rv_addiw(riscv::t2, riscv::t2, ieeefpk.exponent - 127);
+                pb->push(rv02);
+
+                auto rv03 = new rv_andi(riscv::t2, riscv::t2, 0xff);
+                pb->push(rv03);
+
+                auto rv04 = new rv_slli(riscv::t0, riscv::t1, 41);
+                pb->push(rv04);
+
+                auto rv05 = new rv_srliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv05);
+
+                auto rv06 = new rv_srli(riscv::t0, riscv::t0, 41);
+                pb->push(rv06);
+
+                auto rv07 = new rv_xori(riscv::t1, riscv::t1, ieeefpk.sign);
+                pb->push(rv07);
+
+                auto rv08 = new rv_slliw(riscv::t2, riscv::t2, 23);
+                pb->push(rv08);
+
+                auto rv09 = new rv_slliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv09);
+
+                auto rv10 = new rv_or(riscv::t2, riscv::t2, riscv::t0);
+                pb->push(rv10);
+
+                auto rv11 = new rv_or(riscv::t2, riscv::t2, riscv::t1);
+                pb->push(rv11);
+
+                auto rv12 = new rv_fmv_w_x(dst, riscv::t2);
+                pb->push(rv12);
+
+                auto rvy = new rv_fake_lb(fakelb.c_str());
+                pb->push(rvy);
+
+                rd_->store(pb, dst);
+                return;
+            }
+        } break;
+
+        case FBIN_KIND::DIV: {
+            if (rhs_->kind() == VREG_KIND::LOC and ispowf2(rhs_->value())) {
+                auto lhs = lhs_->load(pb, spk);
+                ieee_flt_pack ieeefpk;
+                ieeefpk.i = rhs_->value();
+
+                auto rv00 = new rv_fmv_x_w(riscv::t1, lhs);
+                pb->push(rv00);
+
+                std::string fakelb;
+
+                do /* alloc */ {
+                    std::scoped_lock<std::mutex> lck(flb_mtx);
+                    fakelb = std::string(".FK") + std::to_string(internal_lbidx);
+                    internal_lbidx += 1;
+                } while (0);
+
+                auto rvx = new rv_fake_br(riscv::t1, fakelb.c_str());
+                pb->push(rvx);
+
+                auto rv01 = new rv_srliw(riscv::t2, riscv::t1, 23);
+                pb->push(rv01);
+
+                auto rv02 = new rv_addiw(riscv::t2, riscv::t2, 127 - ieeefpk.exponent);
+                pb->push(rv02);
+
+                auto rv03 = new rv_andi(riscv::t2, riscv::t2, 0xff);
+                pb->push(rv03);
+
+                auto rv04 = new rv_slli(riscv::t0, riscv::t1, 41);
+                pb->push(rv04);
+
+                auto rv05 = new rv_srliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv05);
+
+                auto rv06 = new rv_srli(riscv::t0, riscv::t0, 41);
+                pb->push(rv06);
+
+                auto rv07 = new rv_xori(riscv::t1, riscv::t1, ieeefpk.sign);
+                pb->push(rv07);
+
+                auto rv08 = new rv_slliw(riscv::t2, riscv::t2, 23);
+                pb->push(rv08);
+
+                auto rv09 = new rv_slliw(riscv::t1, riscv::t1, 31);
+                pb->push(rv09);
+
+                auto rv10 = new rv_or(riscv::t2, riscv::t2, riscv::t0);
+                pb->push(rv10);
+
+                auto rv11 = new rv_or(riscv::t2, riscv::t2, riscv::t1);
+                pb->push(rv11);
+
+                auto rv12 = new rv_fmv_w_x(dst, riscv::t2);
+                pb->push(rv12);
+
+                auto rvy = new rv_fake_lb(fakelb.c_str());
+                pb->push(rvy);
+
+                rd_->store(pb, dst);
+                return;
+            }
+        } break;
+    }
+
     auto lhs = lhs_->load(pb, spk);
     auto rhs = rhs_->load(pb, spk);
-
-    
 
     switch (kind_) {
         case FBIN_KIND::ADD: {

@@ -34,6 +34,9 @@ class rv_inst : public asm_inst {
         rv_##name(__VA_ARGS__);        \
     };
 
+RVINST(fake_lb, cstr sym);
+RVINST(fake_br, rid_t rs, cstr sym);
+
 //
 // asm with label
 //

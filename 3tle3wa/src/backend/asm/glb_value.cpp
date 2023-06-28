@@ -15,6 +15,11 @@ bool glb_value::onheap() { return onheap_; }
 std::string &glb_value::name() { return label_; }
 
 void glb_value::gen_asm(std::fstream &fs) {
+    if (uninit_) {
+        fs << "\t.bss" << std::endl;
+    } else {
+        fs << "\t.data" << std::endl;
+    }
     fs << "\t.global\t" << label_ << std::endl;
     fs << "\t.align\t" << 4 << std::endl;
     fs << "\t.type\t" << label_ << ", @object" << std::endl;
