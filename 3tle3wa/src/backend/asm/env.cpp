@@ -85,7 +85,10 @@ void asm_env::make_prog(NormalFuncList &flst) {
     }
 }
 
+const char *skip = "integer-divide-optimization-3";
+
 void asm_env::gen_asm(std::fstream &fs) {
+
     // no pic
     fs << "\t.option nopic" << std::endl;
     // arch info
