@@ -14,18 +14,15 @@ void cross_internal_manager::irpass() {
 
     irpass_combine_fallthrough();
 
+    // 如果关闭给重排序提供更多的空间优化
     irpass_gen_cmpb();
+
+    irpass_simple_peephole();
+
+    irpass_virt_reg_renaming();
 
     // 有精度问题，放弃
     // irpass_gen_fmas();
-
-    // 重新计算 father 标签
-    for (auto &&rlbb : rl_pgrs_.bbs_) {
-        auto falb = rlbb->get_lbid();
-        for (auto &&uop : rlbb->ops_) {
-            uop->trace_inst(falb);
-        }
-    }
 }
 
 // 删除单跳转块
@@ -145,6 +142,7 @@ void cross_internal_manager::irpass_combine_fallthrough() {
         auto opit = nxtbb->ops_.begin();
 
         while (opit != nxtbb->ops_.end()) {
+            (*opit)->set_fa_idx(curbb->get_lbid());
             curbb->ops_.push_back(std::move(*opit));
             opit++;
         }
@@ -394,4 +392,328 @@ void cross_internal_manager::irpass_gen_fmas() {
             curit++;
         }
     }
+}
+
+void cross_internal_manager::irpass_simple_peephole() {
+    for (auto &&rlbb : rl_pgrs_.bbs_) {
+        // 假设不可能为空
+        auto nxtit = rlbb->ops_.begin();
+        auto curit = nxtit++;
+
+        if (nxtit == rlbb->ops_.end()) {
+            // 单指令块没必要
+            continue;
+        }
+
+        while (curit != rlbb->ops_.end() && nxtit != rlbb->ops_.end()) {
+            auto cur_op = curit->get();
+            auto nxt_op = nxtit->get();
+
+            do /* integer bin */ {
+                auto cur_bin = dynamic_cast<uop_bin *>(cur_op);
+                auto nxt_bin = dynamic_cast<uop_bin *>(nxt_op);
+
+                if (cur_bin == nullptr or nxt_bin == nullptr) {
+                    break;
+                }
+
+                // 这里处理同类型
+                if (cur_bin->get_kind() == nxt_bin->get_kind()) {
+                    switch (cur_bin->get_kind()) {
+                        case IBIN_KIND::ADD: {
+                            auto cur_rd = cur_bin->get_rd();
+                            virt_reg *cur_imm = nullptr;
+                            virt_reg *cur_reg = nullptr;
+
+                            if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_lhs();
+                            } else if (cur_bin->get_lhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_lhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_bin->get_rhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_rhs();
+                            } else if (cur_bin->get_rhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_rhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_imm == nullptr) {
+                                // 难以合并
+                                break;
+                            }
+
+                            if (cur_rd->refs().size() > 1) {
+                                // 需要多次使用，先不考虑
+                                break;
+                            }
+
+                            if (cur_rd == nxt_bin->get_lhs() and VREG_KIND::IMM == nxt_bin->get_rhs()->kind()) {
+                                auto nxt_imm = nxt_bin->get_rhs();
+                                nxt_bin->set_lhs(cur_reg);
+                                auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() + cur_imm->value());
+                                nxt_bin->set_rhs(nwimm);
+                                curit = rlbb->ops_.erase(curit);
+                                rl_pgrs_.valc_.rmreg(cur_rd->value());
+                            }
+
+                            if (cur_rd == nxt_bin->get_rhs() and VREG_KIND::IMM == nxt_bin->get_lhs()->kind()) {
+                                auto nxt_imm = nxt_bin->get_lhs();
+                                nxt_bin->set_lhs(cur_reg);
+                                auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() + cur_imm->value());
+                                nxt_bin->set_rhs(nwimm);
+                                curit = rlbb->ops_.erase(curit);
+                                rl_pgrs_.valc_.rmreg(cur_rd->value());
+                            }
+
+                        } break;
+                        case IBIN_KIND::MUL: {
+                            auto cur_rd = cur_bin->get_rd();
+                            virt_reg *cur_imm = nullptr;
+                            virt_reg *cur_reg = nullptr;
+
+                            if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_lhs();
+                            } else if (cur_bin->get_lhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_lhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_bin->get_rhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_rhs();
+                            } else if (cur_bin->get_rhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_rhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_imm == nullptr) {
+                                // 难以合并
+                                break;
+                            }
+
+                            if (cur_rd->refs().size() > 1) {
+                                // 需要多次使用，先不考虑
+                                break;
+                            }
+
+                            if (cur_rd == nxt_bin->get_lhs() and VREG_KIND::IMM == nxt_bin->get_rhs()->kind()) {
+                                auto nxt_imm = nxt_bin->get_rhs();
+                                nxt_bin->set_lhs(cur_reg);
+                                auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() * cur_imm->value());
+                                nxt_bin->set_rhs(nwimm);
+                                curit = rlbb->ops_.erase(curit);
+                                rl_pgrs_.valc_.rmreg(cur_rd->value());
+                            }
+
+                            if (cur_rd == nxt_bin->get_rhs() and VREG_KIND::IMM == nxt_bin->get_lhs()->kind()) {
+                                auto nxt_imm = nxt_bin->get_lhs();
+                                nxt_bin->set_lhs(cur_reg);
+                                auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() * cur_imm->value());
+                                nxt_bin->set_rhs(nwimm);
+                                curit = rlbb->ops_.erase(curit);
+                                rl_pgrs_.valc_.rmreg(cur_rd->value());
+                            }
+
+                        } break;
+                        case IBIN_KIND::SUB: {
+                            auto cur_rd = cur_bin->get_rd();
+                            virt_reg *cur_imm = nullptr;
+                            virt_reg *cur_reg = nullptr;
+
+                            if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_lhs();
+                            } else if (cur_bin->get_lhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_lhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_bin->get_rhs()->kind() == VREG_KIND::IMM) {
+                                cur_imm = cur_bin->get_rhs();
+                            } else if (cur_bin->get_rhs()->kind() == VREG_KIND::REG) {
+                                cur_reg = cur_bin->get_rhs();
+                            } else {
+                                break;
+                            }
+
+                            if (cur_imm == nullptr) {
+                                // 难以合并
+                                break;
+                            }
+
+                            if (cur_rd->refs().size() > 1) {
+                                // 需要多次使用，先不考虑
+                                break;
+                            }
+
+                            if (cur_rd == nxt_bin->get_lhs() and VREG_KIND::IMM == nxt_bin->get_rhs()->kind()) {
+                                if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                                    auto nxt_imm = nxt_bin->get_rhs();
+                                    nxt_bin->set_rhs(cur_reg);
+                                    auto nwimm = rl_pgrs_.valc_.alloc_imm(cur_imm->value() - nxt_imm->value());
+                                    nxt_bin->set_lhs(nwimm);
+                                    curit = rlbb->ops_.erase(curit);
+                                    rl_pgrs_.valc_.rmreg(cur_rd->value());
+                                } else {
+                                    auto nxt_imm = nxt_bin->get_rhs();
+                                    nxt_bin->set_lhs(cur_reg);
+                                    auto nwimm = rl_pgrs_.valc_.alloc_imm(cur_imm->value() + nxt_imm->value());
+                                    nxt_bin->set_rhs(nwimm);
+                                    curit = rlbb->ops_.erase(curit);
+                                    rl_pgrs_.valc_.rmreg(cur_rd->value());
+                                }
+                            }
+
+                            if (cur_rd == nxt_bin->get_rhs() and VREG_KIND::IMM == nxt_bin->get_lhs()->kind()) {
+                                if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                                    auto nxt_imm = nxt_bin->get_rhs();
+                                    nxt_bin->set_rhs(cur_reg);
+                                    auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() - cur_imm->value());
+                                    nxt_bin->set_lhs(nwimm);
+                                    nxt_bin->set_kind(IBIN_KIND::ADD);
+                                    curit = rlbb->ops_.erase(curit);
+                                    rl_pgrs_.valc_.rmreg(cur_rd->value());
+                                } else {
+                                    auto nxt_imm = nxt_bin->get_lhs();
+                                    nxt_bin->set_rhs(cur_reg);
+                                    auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() + cur_imm->value());
+                                    nxt_bin->set_lhs(nwimm);
+                                    curit = rlbb->ops_.erase(curit);
+                                    rl_pgrs_.valc_.rmreg(cur_rd->value());
+                                }
+                            }
+
+                        } break;
+                        case IBIN_KIND::DIV:
+                        case IBIN_KIND::REM:
+                        case IBIN_KIND::SLL:
+                        case IBIN_KIND::SRA:
+                            // 目前不做
+                            break;
+                    }
+
+                    break;
+                }
+
+                // 以下处理不同类型
+                if (cur_bin->get_kind() == IBIN_KIND::ADD and nxt_bin->get_kind() == IBIN_KIND::SUB) {
+                    auto cur_rd = cur_bin->get_rd();
+                    virt_reg *cur_imm = nullptr;
+                    virt_reg *cur_reg = nullptr;
+
+                    if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                        cur_imm = cur_bin->get_lhs();
+                    } else if (cur_bin->get_lhs()->kind() == VREG_KIND::REG) {
+                        cur_reg = cur_bin->get_lhs();
+                    } else {
+                        break;
+                    }
+
+                    if (cur_bin->get_rhs()->kind() == VREG_KIND::IMM) {
+                        cur_imm = cur_bin->get_rhs();
+                    } else if (cur_bin->get_rhs()->kind() == VREG_KIND::REG) {
+                        cur_reg = cur_bin->get_rhs();
+                    } else {
+                        break;
+                    }
+
+                    if (cur_imm == nullptr) {
+                        // 难以合并
+                        break;
+                    }
+
+                    if (cur_rd->refs().size() > 1) {
+                        // 需要多次使用，先不考虑
+                        break;
+                    }
+
+                    if (cur_rd == nxt_bin->get_lhs() and VREG_KIND::IMM == nxt_bin->get_rhs()->kind()) {
+                        auto nxt_imm = nxt_bin->get_rhs();
+                        nxt_bin->set_lhs(cur_reg);
+                        auto nwimm = rl_pgrs_.valc_.alloc_imm(cur_imm->value() - nxt_imm->value());
+                        nxt_bin->set_rhs(nwimm);
+                        nxt_bin->set_kind(IBIN_KIND::ADD);
+                        curit = rlbb->ops_.erase(curit);
+                        rl_pgrs_.valc_.rmreg(cur_rd->value());
+                    }
+
+                    if (cur_rd == nxt_bin->get_rhs() and VREG_KIND::IMM == nxt_bin->get_lhs()->kind()) {
+                        auto nxt_imm = nxt_bin->get_lhs();
+                        nxt_bin->set_rhs(cur_reg);
+                        auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() - cur_imm->value());
+                        nxt_bin->set_lhs(nwimm);
+                        curit = rlbb->ops_.erase(curit);
+                        rl_pgrs_.valc_.rmreg(cur_rd->value());
+                    }
+                    break;
+                }
+
+                if (cur_bin->get_kind() == IBIN_KIND::SUB and nxt_bin->get_kind() == IBIN_KIND::ADD) {
+                    auto cur_rd = cur_bin->get_rd();
+                    virt_reg *cur_imm = nullptr;
+                    virt_reg *cur_reg = nullptr;
+
+                    if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                        cur_imm = cur_bin->get_lhs();
+                    } else if (cur_bin->get_lhs()->kind() == VREG_KIND::REG) {
+                        cur_reg = cur_bin->get_lhs();
+                    } else {
+                        break;
+                    }
+
+                    if (cur_bin->get_rhs()->kind() == VREG_KIND::IMM) {
+                        cur_imm = cur_bin->get_rhs();
+                    } else if (cur_bin->get_rhs()->kind() == VREG_KIND::REG) {
+                        cur_reg = cur_bin->get_rhs();
+                    } else {
+                        break;
+                    }
+
+                    if (cur_imm == nullptr) {
+                        // 难以合并
+                        break;
+                    }
+
+                    if (cur_rd->refs().size() > 1) {
+                        // 需要多次使用，先不考虑
+                        break;
+                    }
+
+                    if ((cur_rd == nxt_bin->get_lhs() or cur_rd == nxt_bin->get_rhs()) and
+                        VREG_KIND::IMM == nxt_bin->get_rhs()->kind()) {
+                        if (cur_bin->get_lhs()->kind() == VREG_KIND::IMM) {
+                            auto nxt_imm = nxt_bin->get_rhs();
+                            nxt_bin->set_rhs(cur_reg);
+                            auto nwimm = rl_pgrs_.valc_.alloc_imm(cur_imm->value() + nxt_imm->value());
+                            nxt_bin->set_lhs(nwimm);
+                            curit = rlbb->ops_.erase(curit);
+                            rl_pgrs_.valc_.rmreg(cur_rd->value());
+                        } else {
+                            auto nxt_imm = nxt_bin->get_rhs();
+                            nxt_bin->set_lhs(cur_reg);
+                            auto nwimm = rl_pgrs_.valc_.alloc_imm(nxt_imm->value() - cur_imm->value());
+                            nxt_bin->set_rhs(nwimm);
+                            curit = rlbb->ops_.erase(curit);
+                            rl_pgrs_.valc_.rmreg(cur_rd->value());
+                        }
+                    }
+                    break;
+                }
+
+            } while (0);
+
+            // (*nxtit)->trace_inst(rlbb->get_lbid());
+
+            curit = nxtit++;
+        }
+    }
+}
+
+void cross_internal_manager::irpass_virt_reg_renaming() {
+    
 }

@@ -3,14 +3,19 @@
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/xin/xin.hh"
 
-static void declarr(ConstArrayPtr &bvaptr, std::unique_ptr<glb_value> &result) {
+static bool declarr(ConstArrayPtr &bvaptr, std::unique_ptr<glb_value> &result) {
+    bool uninit = true;
     auto &&cstarr = bvaptr->GetConstArr();
     for (auto &&v : cstarr) {
         auto pk = xcval(v->GetValue());
 
         // 目前不检查，认为是一定 32 bit
+        if (pk.v32 != 0) {
+            uninit = false;
+        } 
         result->push(pk.v32);
     }
+    return uninit;
 }
 
 void asm_env::make_gvals(GlobalValuePtr &gvptr, const std::string &name) {
@@ -43,7 +48,7 @@ void asm_env::make_gvals(GlobalValuePtr &gvptr, const std::string &name) {
         Assert(arrty_ptr, "bad dynamic cast");
 
         auto gval = std::make_unique<glb_value>(name, arrty_ptr->GetCapacity(), false, arr_ptr->GetConstArr().size());
-        declarr(arr_ptr, gval);
+        gval->uninit_ = declarr(arr_ptr, gval);
         gname_map_[gvptr->GetGlobalValueIdx()] = gval.get();
         gvals_.push_back(std::move(gval));
         return;

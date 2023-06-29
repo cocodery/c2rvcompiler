@@ -36,4 +36,6 @@ void cross_internal_manager::pir() {
     }
 
     rl_pgrs_.valc_.prinfo(fs);
+
+    fs.flush();
 }

@@ -1,7 +1,7 @@
 #include "3tle3wa/backend/asm/glb_value.hh"
 
 glb_value::glb_value(const std::string &name, size_t len, bool uninit, size_t reserve)
-    : label_(name), len_(len), uninit_(uninit), values_(reserve) {
+    : label_(name), len_(len), values_(reserve), uninit_(uninit) {
     // if (len >= 2048) {
     //     onheap_ = true;
     // }

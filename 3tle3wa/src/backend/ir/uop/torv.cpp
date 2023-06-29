@@ -4,8 +4,8 @@
 #include "3tle3wa/backend/ir/uop/uop.hh"
 #include "3tle3wa/backend/ir/virt/register.hh"
 
-std::mutex flb_mtx;
-static size_t internal_lbidx = 0;
+[[maybe_unused]] std::mutex flb_mtx;
+[[maybe_unused]] static size_t internal_lbidx = 0;
 
 static inline size_t lea(pblock *pb, virt_reg *onstk, rid_t dst) {
     if (not onstk->onstk()) {
@@ -118,6 +118,11 @@ void uop_set_fparam::toasm(pblock *pb) {
 }
 
 void uop_call::toasm(pblock *pb) {
+    // if (rec_) {
+    //     auto rv = new rv_jal(callee_);
+    //     pb->push(rv);
+    //     return;
+    // }
     auto rv = new rv_call(callee_);
     pb->push(rv);
 }
@@ -965,6 +970,8 @@ void uop_bin::toasm(pblock *pb) {
 
 /*
 黑魔法优化 1
+目标机器上效果不太好，但是本地有提升
+
 源代码如下
 
 源自 fpga 开发经验
@@ -1104,6 +1111,9 @@ void uop_fbin::toasm(pblock *pb) {
         } break;
 
         case FBIN_KIND::MUL: {
+            // 乘法就不优化了
+            break;
+
             if (lhs_->kind() == VREG_KIND::LOC and ispowf2(lhs_->value())) {
                 auto rhs = rhs_->load(pb, spk);
                 ieee_flt_pack ieeefpk;

@@ -70,15 +70,31 @@ def build_run(args, exts, cc_arg, simcc_arg):
         if os.path.exists(inname):
             infile = open(inname, 'r')
 
-        try:
-            with open(logname, 'a') as logfile, open(resname, 'w') as resfile, open(".".join([args.dir, "perf"]), "a") as perfile:
-                start = time.time()
-                resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
-                total_time = time.time() - start
-                perfile.write("{},{}\n".format(basename, str(total_time)))
-        except subprocess.TimeoutExpired:
-            print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mTime Limit Exceed\033[0m".format(basename))
-            continue
+        with open(".".join([args.dir, "perf"]), "a") as perfile, open(logname, 'a+') as logfile:
+            try:
+                with open(resname, 'w') as resfile:
+                    resp = subprocess.run(cmd, timeout=300, stdin=infile, stdout=resfile, stderr=logfile)
+            except subprocess.TimeoutExpired:
+                print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mTime Limit Exceed\033[0m".format(basename))
+                perfile.write("{},{}\n".format(basename, 300))
+                continue
+            
+            logfile.flush()
+            logfile.seek(0)
+            res: list[str] = logfile.readlines()
+            t: float = 0.0
+            for ss in res:
+                if ss.startswith("TOTAL"):
+                    for k in ss[7:-1].split('-'):
+                        if k[-1] == 'H':
+                            t += int(k[0:-1], 10) * 60 * 60
+                        if k[-1] == 'M':
+                            t += int(k[0:-1], 10) * 60
+                        if k[-1] == 'S':
+                            t += int(k[0:-1], 10)
+                        if k[-1] == 's':
+                            t += int(k[0:-2], 10) / 1000000
+            perfile.write("{},{}\n".format(basename, t))
         
         recv = resp
         cmd = ['tail', '-c', '1', resname]

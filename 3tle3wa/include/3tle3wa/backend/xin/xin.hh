@@ -42,6 +42,10 @@ class cross_internal_manager {
 
     void irpass_gen_fmas();
 
+    void irpass_simple_peephole();
+
+    void irpass_virt_reg_renaming();
+
    public:
     cross_internal_manager(NormalFuncPtr &fptr, std::unordered_set<uint32_t> &lc_pool,
                            const std::unordered_map<size_t, glb_value *> &gname_map);

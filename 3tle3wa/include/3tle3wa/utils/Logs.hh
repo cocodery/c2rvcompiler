@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <iomanip>
 
-#define NDEBUG
+// #define NDEBUG
 
 #ifndef NDEBUG
 

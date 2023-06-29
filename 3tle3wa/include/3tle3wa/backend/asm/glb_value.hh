@@ -13,14 +13,16 @@ class glb_value {
 
     const size_t len_;
 
-    const bool uninit_;
-
     std::vector<uint32_t> values_;
-
-    bool onheap_{false};
 
    public:
     glb_value(const std::string &name, size_t len, bool uninit, size_t reserve);
+
+    // 未来再改！
+    
+    bool onheap_{false};
+
+    bool uninit_{false};
 
     void push(uint32_t value);
 

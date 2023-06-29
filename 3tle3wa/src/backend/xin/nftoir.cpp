@@ -34,7 +34,9 @@ void cross_internal_manager::nftoir() {
                 nwvr->set_param_pos(pa.i);
                 nwvr->set_rregid(pa.i + riscv::a0);
             } else {
+                nwvr->set_rregid(riscv::zero);
                 nwvr->set_param_pos(pa.i);
+                nwvr->set_onstk(true);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
@@ -48,7 +50,9 @@ void cross_internal_manager::nftoir() {
                 nwvr->set_param_pos(pa.i);
                 nwvr->set_rregid(pa.i + riscv::a0);
             } else {
+                nwvr->set_rregid(riscv::zero);
                 nwvr->set_param_pos(pa.i);
+                nwvr->set_onstk(true);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
@@ -62,7 +66,9 @@ void cross_internal_manager::nftoir() {
                 nwvr->set_param_pos(pa.f);
                 nwvr->set_rregid(pa.f + riscv::fa0);
             } else {
+                nwvr->set_rregid(riscv::zero);
                 nwvr->set_param_pos(pa.f);
+                nwvr->set_onstk(true);
                 nwvr->set_pstk(pa.pstk);
                 pa.pstk += 1;
             }
@@ -829,6 +835,7 @@ void cross_internal_manager::nftoir() {
                         op0->set_retval(retvr);
                     }
 
+                    op0->set_rec(llinst->GetCalleeFunc()->GetRecursive());
                     lst.push_back(std::move(op0));
                 } break;
 
@@ -1092,6 +1099,7 @@ void cross_internal_manager::nftoir() {
                                     linkable = true;
                                 } else if (pk.v32 == 0x40000000 and (opcode == OP_MUL)) {
                                     addable = true;
+                                    // lnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
                                 } else if (pk.v32 == 0 and opcode == OP_ADD) {
                                     linkable = true;
                                 } else {
@@ -1109,12 +1117,12 @@ void cross_internal_manager::nftoir() {
                                     linkable = true;
                                 } else if (pk.v32 == 0x40000000 and (opcode == OP_MUL)) {
                                     addable = true;
+                                    // rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
                                 } else if (pk.v32 == 0 and (opcode == OP_ADD or opcode == OP_SUB)) {
                                     linkable = true;
                                 } else if (opcode == OP_DIV) {
                                     // mulable = true;
                                     // pk.f32 = 1 / pk.f32;
-                                    // rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
                                     rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
                                 } else {
                                     rnwvr = rl_pgrs_.valc_.alloc_loc(pk.v32);
@@ -1147,17 +1155,17 @@ void cross_internal_manager::nftoir() {
                                     break;
                                 }
 
-                                // if (mulable) {
-                                //     auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
-                                //     auto op = std::make_unique<uop_fbin>();
-                                //     op->set_kind(FBIN_KIND::MUL);
-                                //     op->set_lhs(lnwvr);
-                                //     op->set_rhs(rnwvr);
-                                //     op->set_rd(resvr);
+                                if (mulable) {
+                                    auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
+                                    auto op = std::make_unique<uop_fbin>();
+                                    op->set_kind(FBIN_KIND::MUL);
+                                    op->set_lhs(lnwvr);
+                                    op->set_rhs(rnwvr);
+                                    op->set_rd(resvr);
 
-                                //     lst.push_back(std::move(op));
-                                //     break;
-                                // }
+                                    lst.push_back(std::move(op));
+                                    break;
+                                }
                             }
 
                             if (rhs->IsVariable()) {
@@ -1172,7 +1180,7 @@ void cross_internal_manager::nftoir() {
 
                                 rnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
                                 if (addable) {
-                                    Assert(rnwvr == nullptr, "lhs not imm");
+                                    Assert(lnwvr == nullptr, "lhs not imm");
                                     lnwvr = rnwvr;
 
                                     auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());

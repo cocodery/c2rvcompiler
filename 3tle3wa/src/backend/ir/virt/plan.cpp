@@ -16,9 +16,10 @@ class ralcor {
     }
 
     void rls([[maybe_unused]] size_t vidx, size_t ridx) {
-        Assert(cur_inuse[ridx] and cur_rinfo[ridx] == vidx, "fail");
-        cur_inuse[ridx] = false;
-        cur_rinfo[ridx] = 0;
+        if (cur_inuse[ridx] and cur_rinfo[ridx] == vidx) {
+            cur_inuse[ridx] = false;
+            cur_rinfo[ridx] = 0;
+        }
     }
 };
 
@@ -60,21 +61,50 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
         size_t uop_idx = 1;
 
         std::unordered_set<virt_reg *> scope_vrg;
+        std::unordered_set<virt_reg *> out_vrg;
+        std::unordered_set<virt_reg *> in_vrg;
+
+        // 导入所有的 live out 寄存器
+        // 它们的结束时间为最大值
         for (auto &&reg : bb->dli.live_out) {
             auto vr = get_reg(reg);
-            scope_vrg.insert(vr);
+            if (not vr->onstk()) {
+                scope_vrg.insert(vr);
+                out_vrg.insert(vr);
+            }
         }
 
+        // 导入所有的当前块会用到的寄存器
+        // 他们都需要参与计算生存时间
         for (auto &&uop : bb->ops_) {
             uop->set_uop_idx(uop_idx);
             uop->givr(scope_vrg);
             uop_idx += 1;
         }
 
-        for (auto &&reg : scope_vrg) {
-            if (reg->vconfirm() and not reg->confirm()) {
-                vrsc.set(reg, reg->vregid());
+        // 导入所有的 live in 寄存器
+        // 他们的生存期从 0 开始
+        for (auto &&brj : rlp.lbmap_.at(bb->get_lbid()).refs_) {
+            auto fa = brj->get_fa_idx();
+            for (auto &&in : rlp.lbmap_.at(fa).bbp_->dli.live_out) {
+                auto vr = get_reg(in);
+                if (not vr->onstk()) {
+                    scope_vrg.insert(vr);
+                    in_vrg.insert(vr);
+                }
             }
+        }
+
+        // 导入参数寄存器
+        // 他们生存期需要运算
+        for (auto &&reg : rlp.params_) {
+            if (not reg->onstk()) {
+                scope_vrg.insert(reg);
+            }
+        }
+
+        // 将已经确定寄存器的变量导入确定好
+        for (auto &&reg : scope_vrg) {
             reg->set_begin(0);
             reg->set_end(uop_idx);
         }
@@ -83,26 +113,30 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
             uop->live_info();
         }
 
+        for (auto &&out : out_vrg) {
+            out->set_end(uop_idx);
+        }
+
+        for (auto &&in : in_vrg) {
+            in->set_begin(0);
+        }
+
         using pqelem_t = std::pair<size_t, virt_reg *>;
 
         std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_begin;
         std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
 
+
         for (auto &&reg : scope_vrg) {
-            if (not reg->vconfirm() and not reg->confirm()) {
+            sort_end.emplace(reg->end(), reg);
+            if (reg->begin() == 0 and reg->vconfirm()) {
+                vrsc.set(reg, reg->vregid());
+            } else {
                 sort_begin.emplace(reg->begin(), reg);
-                sort_end.emplace(reg->end(), reg);
             }
         }
 
         auto nxtit = bb->ops_.begin();
-
-        // while (not sort_begin.empty() and sort_begin.top().first <= 0) {
-        //     auto vr = sort_begin.top().second;
-        //     vrsc.alc(vr);
-        //     vrsc.access(vr, vr->refs().size());
-        //     sort_begin.pop();
-        // }
 
         while (nxtit != bb->ops_.end()) {
             auto curit = nxtit++;
@@ -112,7 +146,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
             while (not sort_end.empty() and sort_end.top().first <= curpos) {
                 auto info = sort_end.top().second;
-                if (bb->dli.live_out.find(info->value()) == bb->dli.live_out.end()) {
+                if (info->vconfirm()) {
                     vrsc.rls(info);
                 }
                 sort_end.pop();
@@ -159,58 +193,77 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
         }
     }
 
-    // 在加载参数之前定一个锚点
-    // 未来用于保存寄存器信息
-    std::list<std::unique_ptr<uop_general>>::iterator anchor;
-    bool set_anchor = false;
-
     // 复用保存栈
     std::unordered_map<size_t, virt_reg *> ctx;
 
     // 开始考虑状态
     for (auto &&bb : rlp.bbs_) {
+
+        // 在加载参数之前定一个锚点
+        // 未来用于保存寄存器信息
+        std::list<std::unique_ptr<uop_general>>::iterator anchor;
+        bool set_anchor = false;
+
         // 本地寄存器分配
         ralcor nst_alcr;
-        std::unordered_set<size_t> inouts;
-
         size_t uop_idx = 1;
+
         std::unordered_set<virt_reg *> scope_vrg;
-        for (auto &&out : bb->dli.live_out) {
-            inouts.insert(out);
-            auto vr = get_reg(out);
+        std::unordered_set<virt_reg *> out_vrg;
+        std::unordered_set<virt_reg *> in_vrg;
+
+        // 导入所有的 live out 寄存器
+        // 它们的结束时间为最大值
+        for (auto &&reg : bb->dli.live_out) {
+            auto vr = get_reg(reg);
             scope_vrg.insert(vr);
+            out_vrg.insert(vr);
         }
 
-        for (auto &&brj : rlp.lbmap_.at(bb->get_lbid()).refs_) {
-            auto fa = brj->get_fa_idx();
-            for (auto &&in : rlp.lbmap_.at(fa).bbp_->dli.live_out) {
-                inouts.insert(in);
-                auto vr = get_reg(in);
-                scope_vrg.insert(vr);
-            }
-        }
-
+        // 导入所有的当前块会用到的寄存器
+        // 他们都需要参与计算生存时间
         for (auto &&uop : bb->ops_) {
             uop->set_uop_idx(uop_idx);
             uop->givr(scope_vrg);
             uop_idx += 1;
         }
 
-        for (auto &&reg : scope_vrg) {
-            if (reg->confirm() and not reg->onstk()) {
-                nst_alcr.set(reg, reg->rregid());
+        // 导入所有的 live in 寄存器
+        // 他们的生存期从 0 开始
+        for (auto &&brj : rlp.lbmap_.at(bb->get_lbid()).refs_) {
+            auto fa = brj->get_fa_idx();
+            for (auto &&in : rlp.lbmap_.at(fa).bbp_->dli.live_out) {
+                auto vr = get_reg(in);
+                scope_vrg.insert(vr);
+                in_vrg.insert(vr);
             }
+        }
 
+        // 导入参数寄存器
+        // 他们生存期需要运算
+        for (auto &&reg : rlp.params_) {
+            if (reg->onstk()) {
+                scope_vrg.erase(reg);
+                continue;
+            }
+            scope_vrg.insert(reg);
+        }
+
+        for (auto &&reg : scope_vrg) {
             reg->set_begin(0);
             reg->set_end(uop_idx);
         }
 
-        for (auto &&reg : rlp.params_) {
-            nst_alcr.set(reg, reg->rregid());
-        }
-
         for (auto &&uop : bb->ops_) {
             uop->live_info();
+        }
+
+        for (auto &&out : out_vrg) {
+            out->set_end(uop_idx);
+        }
+
+        for (auto &&in : in_vrg) {
+            in->set_begin(0);
         }
 
         using pqelem_t = std::pair<size_t, virt_reg *>;
@@ -219,19 +272,17 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
         std::priority_queue<pqelem_t, std::vector<pqelem_t>, std::greater<>> sort_end;
 
         for (auto &&reg : scope_vrg) {
-            if (inouts.find(reg->value()) == inouts.end()) {
-                nst_alcr.rls(reg->value(), reg->rregid());
+            sort_end.emplace(reg->end(), reg);
+            if (reg->begin() == 0) {
+                nst_alcr.set(reg, reg->rregid());
+            } else {
                 sort_begin.emplace(reg->begin(), reg);
-                sort_end.emplace(reg->end(), reg);
-            } else if (reg->begin() != 0) {
-                nst_alcr.rls(reg->value(), reg->rregid());
-                sort_begin.emplace(reg->begin(), reg);
-                sort_end.emplace(reg->end(), reg);
             }
         }
 
         auto nxtit = bb->ops_.begin();
         bool r_edit[64] = {0};
+        const size_t len = 64;
 
         while (nxtit != bb->ops_.end()) {
             auto curit = nxtit++;
@@ -241,7 +292,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
             while (not sort_end.empty() and sort_end.top().first <= curpos) {
                 auto info = sort_end.top().second;
-                if (bb->dli.live_out.find(info->value()) == bb->dli.live_out.end() and not info->onstk()) {
+                if (info->confirm()) {
                     nst_alcr.rls(info->value(), info->rregid());
                 }
                 sort_end.pop();
@@ -263,15 +314,15 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
                         fprm->set_rs(stk);
                     }
-
-                    r_edit[fprm->get_idx() + riscv::fa0] = true;
+                    if (fprm->get_idx() < 8) {
+                        r_edit[fprm->get_idx() + riscv::fa0] = true;
+                    }
                 }
-                if (not set_anchor) anchor = curit;
-
-                set_anchor = true;
-            }
-
-            if (auto iprm = dynamic_cast<uop_set_iparam *>(op.get()); iprm != nullptr) {
+                if (not set_anchor) {
+                    anchor = curit;
+                    set_anchor = true;
+                }
+            } else if (auto iprm = dynamic_cast<uop_set_iparam *>(op.get()); iprm != nullptr) {
                 auto rs = iprm->get_rs();
                 if (rs->confirm() and (rs->rregid() - riscv::a0) < 8) {
                     if (true == r_edit[rs->rregid()]) {
@@ -287,26 +338,21 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
 
                         iprm->set_rs(stk);
                     }
-
-                    r_edit[iprm->get_idx() + riscv::a0] = true;
+                    if (iprm->get_idx() < 8) {
+                        r_edit[iprm->get_idx() + riscv::a0] = true;
+                    }
                 }
-                if (not set_anchor) anchor = curit;
-
-                set_anchor = true;
-            }
-
-            if (set_anchor and dynamic_cast<uop_ret *>(op.get())) {
-                set_anchor = false;
-            }
-
-            const size_t len = 64;
-
-            if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
+                if (not set_anchor) {
+                    anchor = curit;
+                    set_anchor = true;
+                }
+            } else if (auto callinst = dynamic_cast<uop_call *>(op.get()); callinst != nullptr) {
                 if (set_anchor) {
                     set_anchor = false;
                 } else {
                     anchor = curit;
                 }
+
                 memset(r_edit, 0, 64 * sizeof(bool));
 
                 for (size_t i = 1; i < len; ++i) {
@@ -343,6 +389,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
                         nxtit = bb->ops_.insert(nxtit, std::move(nwld));
                     }
                 }
+
                 if (auto retval = callinst->get_retval(); retval != nullptr) {
                     auto getres = std::make_unique<uop_mv>();
                     if (retval->type() == VREG_TYPE::FLT) {

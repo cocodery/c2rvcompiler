@@ -16,8 +16,8 @@ class virt_resource {
     std::unordered_set<size_t> ifree_;
     std::unordered_set<size_t> ffree_;
 
-    std::vector<size_t> ialloced_;
-    std::vector<size_t> falloced_;
+    std::unordered_set<size_t> ialloced_;
+    std::unordered_set<size_t> falloced_;
 
     size_t idx_ = 0;
 

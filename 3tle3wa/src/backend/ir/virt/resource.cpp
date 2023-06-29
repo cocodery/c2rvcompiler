@@ -3,7 +3,6 @@
 #include "3tle3wa/backend/ir/bbtype.hh"
 
 void virt_resource::set(virt_reg *vr, rid_t vrid) {
-    Assert(vr->kind() == VREG_KIND::REG, "only on reg");
     if (vr->type() == VREG_TYPE::FLT) {
         fvrsc_map_[vrid] = vr->value();
         ffree_.erase(vrid);
@@ -14,48 +13,45 @@ void virt_resource::set(virt_reg *vr, rid_t vrid) {
 }
 
 void virt_resource::alc(virt_reg *vr) {
-    Assert(vr->kind() == VREG_KIND::REG, "only on reg");
     if (vr->type() == VREG_TYPE::FLT) {
         size_t alc_idx = 0;
         if (ffree_.empty()) {
             idx_ += 1;
-            falloced_.push_back(idx_);
+            falloced_.insert(idx_);
             alc_idx = idx_;
             hit_map_[idx_] = 1;
         } else {
             alc_idx = *ffree_.begin();
-            ffree_.erase(alc_idx);
+            ffree_.erase(ffree_.begin());
             hit_map_[alc_idx] += 1;
         }
 
         fvrsc_map_[alc_idx] = vr->value();
 
         vr->set_vregid(alc_idx);
-        vr->set_vconfirm(true);
     } else {
         size_t alc_idx = 0;
         if (ifree_.empty()) {
             idx_ += 1;
-            ialloced_.push_back(idx_);
+            ialloced_.insert(idx_);
             alc_idx = idx_;
             hit_map_[idx_] = 1;
         } else {
             alc_idx = *ifree_.begin();
-            ifree_.erase(alc_idx);
+            ifree_.erase(ifree_.begin());
             hit_map_[alc_idx] += 1;
         }
 
         vrsc_map_[alc_idx] = vr->value();
 
         vr->set_vregid(alc_idx);
-        vr->set_vconfirm(true);
     }
 
+    vr->set_vconfirm(true);
     idx_map_[vr->value()] = vr->vregid();
 }
 
 void virt_resource::rls(virt_reg *vr) {
-    Assert(vr->kind() == VREG_KIND::REG, "only on reg");
     auto idx = idx_map_.at(vr->value());
     if (vr->type() == VREG_TYPE::FLT) {
         ffree_.insert(idx);
@@ -65,7 +61,6 @@ void virt_resource::rls(virt_reg *vr) {
 }
 
 void virt_resource::access(virt_reg *vr, size_t n) {
-    Assert(vr->kind() == VREG_KIND::REG, "only on reg");
     Assert(vr->vconfirm(), "only on vreg");
     hit_map_[vr->vregid()] += n;
 }
@@ -98,6 +93,21 @@ void virt_resource::alcreal(rl_progress &rlp, size_t iuse, size_t fuse) {
     };
 
     constexpr size_t f_gpr_len = sizeof(f_gpr) / sizeof(*f_gpr);
+
+    // 给所有的参数寄存器指定位置
+
+    for (auto &&reg : rlp.params_) {
+        if (reg->onstk()) {
+            continue;
+        }
+        auto vidx = reg->vregid();
+        if (reg->type() == VREG_TYPE::FLT) {
+            falloced_.erase(vidx);
+        } else {
+            ialloced_.erase(vidx);
+        }
+        rregs_[vidx] = reg->rregid();
+    }
 
     struct {
         size_t i;

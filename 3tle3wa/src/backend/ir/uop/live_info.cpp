@@ -107,7 +107,7 @@ void uop_ftri::live_info() {
 void uop_set_iparam::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -118,7 +118,7 @@ void uop_set_iparam::calcu_lvif(detailed_live_info &dli) {
 void uop_set_fparam::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -128,7 +128,8 @@ void uop_set_fparam::calcu_lvif(detailed_live_info &dli) {
 
 void uop_call::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (retval_ and retval_->kind() == VREG_KIND::REG) {
+    if (retval_ and
+        (retval_->kind() == VREG_KIND::REG or (retval_->kind() == VREG_KIND::PRM and not retval_->onstk()))) {
         auto idx = retval_->value();
         VarKill.insert(idx);
     }
@@ -136,7 +137,7 @@ void uop_call::calcu_lvif(detailed_live_info &dli) {
 
 void uop_li::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -145,11 +146,11 @@ void uop_li::calcu_lvif(detailed_live_info &dli) {
 void uop_mv::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -160,11 +161,11 @@ void uop_mv::calcu_lvif(detailed_live_info &dli) {
 void uop_fmv::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -175,11 +176,11 @@ void uop_fmv::calcu_lvif(detailed_live_info &dli) {
 void uop_cvts2w::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -190,11 +191,11 @@ void uop_cvts2w::calcu_lvif(detailed_live_info &dli) {
 void uop_cvtw2s::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rs_->kind() == VREG_KIND::REG) {
+    if (rs_->kind() == VREG_KIND::REG or (rs_->kind() == VREG_KIND::PRM and not rs_->onstk())) {
         auto idx = rs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -205,7 +206,7 @@ void uop_cvtw2s::calcu_lvif(detailed_live_info &dli) {
 void uop_b::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (cond_->kind() == VREG_KIND::REG) {
+    if (cond_->kind() == VREG_KIND::REG or (cond_->kind() == VREG_KIND::PRM and not cond_->onstk())) {
         auto idx = cond_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -216,13 +217,13 @@ void uop_b::calcu_lvif(detailed_live_info &dli) {
 void uop_icmp_b::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -232,7 +233,7 @@ void uop_icmp_b::calcu_lvif(detailed_live_info &dli) {
 
 void uop_la::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -240,7 +241,7 @@ void uop_la::calcu_lvif(detailed_live_info &dli) {
 
 void uop_lla::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -249,11 +250,11 @@ void uop_lla::calcu_lvif(detailed_live_info &dli) {
 void uop_ld::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rb_->kind() == VREG_KIND::REG) {
+    if (rb_->kind() == VREG_KIND::REG or (rb_->kind() == VREG_KIND::PRM and not rb_->onstk())) {
         auto idx = rb_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -264,13 +265,13 @@ void uop_ld::calcu_lvif(detailed_live_info &dli) {
 void uop_st::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rb_->kind() == VREG_KIND::REG) {
+    if (rb_->kind() == VREG_KIND::REG or (rb_->kind() == VREG_KIND::PRM and not rb_->onstk())) {
         auto idx = rb_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -280,7 +281,7 @@ void uop_st::calcu_lvif(detailed_live_info &dli) {
 
 void uop_ld_l::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -289,7 +290,7 @@ void uop_ld_l::calcu_lvif(detailed_live_info &dli) {
 void uop_st_l::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -300,11 +301,11 @@ void uop_st_l::calcu_lvif(detailed_live_info &dli) {
 void uop_fld::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (rb_->kind() == VREG_KIND::REG) {
+    if (rb_->kind() == VREG_KIND::REG or (rb_->kind() == VREG_KIND::PRM and not rb_->onstk())) {
         auto idx = rb_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -315,13 +316,13 @@ void uop_fld::calcu_lvif(detailed_live_info &dli) {
 void uop_fst::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rb_->kind() == VREG_KIND::REG) {
+    if (rb_->kind() == VREG_KIND::REG or (rb_->kind() == VREG_KIND::PRM and not rb_->onstk())) {
         auto idx = rb_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -331,7 +332,7 @@ void uop_fst::calcu_lvif(detailed_live_info &dli) {
 
 void uop_fld_l::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -340,7 +341,7 @@ void uop_fld_l::calcu_lvif(detailed_live_info &dli) {
 void uop_fst_l::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -350,7 +351,7 @@ void uop_fst_l::calcu_lvif(detailed_live_info &dli) {
 
 void uop_fld_ll::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
@@ -359,17 +360,17 @@ void uop_fld_ll::calcu_lvif(detailed_live_info &dli) {
 void uop_icmp::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -380,17 +381,17 @@ void uop_icmp::calcu_lvif(detailed_live_info &dli) {
 void uop_fcmp::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -401,17 +402,17 @@ void uop_fcmp::calcu_lvif(detailed_live_info &dli) {
 void uop_bin::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -422,17 +423,17 @@ void uop_bin::calcu_lvif(detailed_live_info &dli) {
 void uop_fbin::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
@@ -443,23 +444,23 @@ void uop_fbin::calcu_lvif(detailed_live_info &dli) {
 void uop_ftri::calcu_lvif(detailed_live_info &dli) {
     auto &&VarKill = dli.var_kill;
     auto &&UEVar = dli.ue_var;
-    if (rd_->kind() == VREG_KIND::REG) {
+    if (rd_->kind() == VREG_KIND::REG or (rd_->kind() == VREG_KIND::PRM and not rd_->onstk())) {
         auto idx = rd_->value();
         VarKill.insert(idx);
     }
-    if (lhs_->kind() == VREG_KIND::REG) {
+    if (lhs_->kind() == VREG_KIND::REG or (lhs_->kind() == VREG_KIND::PRM and not lhs_->onstk())) {
         auto idx = lhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (rhs_->kind() == VREG_KIND::REG) {
+    if (rhs_->kind() == VREG_KIND::REG or (rhs_->kind() == VREG_KIND::PRM and not rhs_->onstk())) {
         auto idx = rhs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
         }
     }
-    if (ahs_->kind() == VREG_KIND::REG) {
+    if (ahs_->kind() == VREG_KIND::REG or (ahs_->kind() == VREG_KIND::PRM and not ahs_->onstk())) {
         auto idx = ahs_->value();
         if (VarKill.find(idx) == VarKill.end()) {
             UEVar.insert(idx);
