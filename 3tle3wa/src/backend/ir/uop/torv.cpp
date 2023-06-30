@@ -118,11 +118,12 @@ void uop_set_fparam::toasm(pblock *pb) {
 }
 
 void uop_call::toasm(pblock *pb) {
-    // if (rec_) {
-    //     auto rv = new rv_jal(callee_);
-    //     pb->push(rv);
-    //     return;
-    // }
+    if (tail_) {
+        auto rv = new rv_tail(callee_);
+        rv->imm_ = pstk_;
+        pb->push(rv);
+        return;
+    }
     auto rv = new rv_call(callee_);
     pb->push(rv);
 }
@@ -806,8 +807,10 @@ void uop_bin::toasm(pblock *pb) {
                 auto sraiw_op = new rv_sraiw(riscv::t2, lhs, 31);
                 pb->push(sraiw_op);
 
-                auto srliw_op = new rv_srliw(riscv::t2, riscv::t2, 32 - ctz);
-                pb->push(srliw_op);
+                if (31 != 32 - ctz) {
+                    auto srliw_op = new rv_srliw(riscv::t2, riscv::t2, 32 - ctz);
+                    pb->push(srliw_op);
+                }
 
                 auto addw_op = new rv_addw(riscv::t2, riscv::t2, lhs);
                 pb->push(addw_op);

@@ -5,6 +5,7 @@
 #include "3tle3wa/backend/asm/inst.hh"
 #include "3tle3wa/backend/asm/riscv/def.hh"
 #include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/backend/asm/riscv/sifiveu74/facility.hh"
 
 class rv_inst : public asm_inst {
    public:
@@ -22,6 +23,10 @@ class rv_inst : public asm_inst {
     const rid_t ra_;
     i64 off_{};
     i64 imm_{};
+
+    U74_FACILITY type_{UNDEFINED};
+    i64 latency_;
+    i64 weight_;
 
    protected:
     char *inst_;

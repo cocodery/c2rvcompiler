@@ -122,7 +122,6 @@ int main(int argc, char *argv[]) {
 
     if (output and asmgen != nullptr) {
         std::fstream fs(output, std::ios::out);
-        if (std::string(input).find(skip) != std::string::npos) abort();
         asmgen->do_optimize();
         asmgen->gen_asm(fs);
     }

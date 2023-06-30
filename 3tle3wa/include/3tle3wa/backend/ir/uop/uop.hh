@@ -89,7 +89,8 @@ class uop_call : public uop_general {
     // 默认保存在 abi 对应的第一个返回值寄存器中
     GETTER_SETTER(retval, virt_reg *);
     GETTER_SETTER(callee, const char *);
-    GETTER_SETTER(rec, bool);
+    GETTER_SETTER(pstk, size_t);
+    GETTER_SETTER(tail, bool);
 
    public:
     void format_str(FILE *fp);

@@ -12,12 +12,17 @@ void cross_internal_manager::irpass() {
 
     irpass_delete_single_jump();
 
+    irpass_gen_tail();
+    pir();
+
     irpass_combine_fallthrough();
 
     // 如果关闭给重排序提供更多的空间优化
     irpass_gen_cmpb();
 
     irpass_simple_peephole();
+
+    irpass_fold_peephole();
 
     irpass_virt_reg_renaming();
 
@@ -714,6 +719,209 @@ void cross_internal_manager::irpass_simple_peephole() {
     }
 }
 
-void cross_internal_manager::irpass_virt_reg_renaming() {
+void cross_internal_manager::irpass_fold_peephole() {
+    using pkit = std::list<std::unique_ptr<uop_general>>::iterator;
+
+    for (auto &&rlbb : rl_pgrs_.bbs_) {
+        // 假设不可能为空
+        auto nxtit = rlbb->ops_.begin();
+        auto curit = nxtit++;
+
+        std::vector<pkit> pk;
+        virt_reg *repeater = nullptr;
+        virt_reg *baser = nullptr;
+        bool entered = false;
+
+        while (nxtit != rlbb->ops_.end()) {
+            auto curop = (*curit).get();
+            auto nxtop = (*nxtit).get();
+
+            bool curenter = false;
+
+            do {
+                auto cur = dynamic_cast<uop_bin *>(curop);
+                auto nxt = dynamic_cast<uop_bin *>(nxtop);
+
+                if (cur == nullptr or nxt == nullptr) {
+                    break;
+                }
+
+                if (cur->get_kind() == IBIN_KIND::ADD and nxt->get_kind() == IBIN_KIND::ADD) {
+                    if (cur->get_rd()->refs().size() > 1) {
+                        // 不在这里处理
+                        break;
+                    }
+
+                    if (repeater == nullptr) {
+                        if (cur->get_lhs() == nxt->get_lhs() and cur->get_rd() == nxt->get_rhs()) {
+                            repeater = cur->get_lhs();
+                            baser = cur->get_rhs();
+
+                            pk.push_back(curit);
+                            pk.push_back(nxtit);
+
+                            curenter = true;
+                            entered = true;
+                            break;
+                        } else if (cur->get_lhs() == nxt->get_rhs() and cur->get_rd() == nxt->get_lhs()) {
+                            repeater = cur->get_lhs();
+                            baser = cur->get_rhs();
+
+                            pk.push_back(curit);
+                            pk.push_back(nxtit);
+
+                            curenter = true;
+                            entered = true;
+                            break;
+                        } else if (cur->get_rhs() == nxt->get_lhs() and cur->get_rd() == nxt->get_rhs()) {
+                            repeater = cur->get_rhs();
+                            baser = cur->get_lhs();
+
+                            pk.push_back(curit);
+                            pk.push_back(nxtit);
+
+                            curenter = true;
+                            entered = true;
+                            break;
+                        } else if (cur->get_rhs() == nxt->get_rhs() and cur->get_rd() == nxt->get_lhs()) {
+                            repeater = cur->get_rhs();
+                            baser = cur->get_lhs();
+
+                            pk.push_back(curit);
+                            pk.push_back(nxtit);
+
+                            curenter = true;
+                            entered = true;
+                            break;
+                        }
+                    }
+
+                    if (repeater == nullptr) {
+                        // 无法折叠
+                        break;
+                    }
+
+                    if (repeater == nxt->get_lhs() and cur->get_rd() == nxt->get_rhs()) {
+                        pk.push_back(nxtit);
+                        curenter = true;
+                        break;
+                    }
+                    if (repeater == nxt->get_rhs() and cur->get_rd() == nxt->get_lhs()) {
+                        pk.push_back(nxtit);
+                        curenter = true;
+                        break;
+                    }
+                }
+            } while (0);
+
+            if (entered and not curenter) {
+                do /* fold expressions */ {
+                    if (pk.size() <= 2 or (baser != repeater and pk.size() <= 3)) {
+                        // 放弃
+                        pk.clear();
+                        pk.shrink_to_fit();
+                        baser = repeater = nullptr;
+                        entered = false;
+                        break;
+                    }
+
+                    if (baser == repeater) {
+                        auto totoal = pk.size() + 1;
+
+                        auto back = dynamic_cast<uop_bin *>((*pk.back()).get());
+                        pk.pop_back();
+
+                        back->set_lhs(repeater);
+                        auto imm = rl_pgrs_.valc_.alloc_imm(totoal);
+                        back->set_rhs(imm);
+
+                        back->set_kind(IBIN_KIND::MUL);
+
+                        for (auto &&it : pk) {
+                            rlbb->ops_.erase(it);
+                        }
+                        pk.clear();
+                        pk.shrink_to_fit();
+                        baser = repeater = nullptr;
+                        entered = false;
+                    } else {
+                        auto totoal = pk.size();
+
+                        auto back = dynamic_cast<uop_bin *>((*pk.back()).get());
+                        pk.pop_back();
+                        auto back1 = dynamic_cast<uop_bin *>((*pk.back()).get());
+                        pk.pop_back();
+
+                        back1->set_lhs(repeater);
+                        auto imm = rl_pgrs_.valc_.alloc_imm(totoal);
+                        back1->set_rhs(imm);
+
+                        back1->set_kind(IBIN_KIND::MUL);
+
+                        back->set_lhs(back1->get_rd());
+                        back->set_rhs(baser);
+
+                        for (auto &&it : pk) {
+                            rlbb->ops_.erase(it);
+                        }
+                        pk.clear();
+                        pk.shrink_to_fit();
+                        baser = repeater = nullptr;
+                        entered = false;
+                    }
+                } while (0);
+            }
+            curit = nxtit++;
+        }
+    }
+}
+
+void cross_internal_manager::irpass_virt_reg_renaming() {}
+
+void cross_internal_manager::irpass_gen_tail() {
+    auto retblk_info = rl_pgrs_.lbmap_[rl_pgrs_.retlbidx_];
+    if (retblk_info.bbp_->ops_.size() > 3) {
+        // 目前不解决这类
+        return;
+    }
+
+    auto it = retblk_info.bbp_->ops_.begin();
+    auto load = dynamic_cast<uop_ld *>((*it).get());
+    if (load != nullptr) {
+        auto base = load->get_rb();
+        auto off = load->get_off();
+
+        for (auto &&ref : retblk_info.refs_) {
+            auto &&ops = rl_pgrs_.lbmap_[ref->get_fa_idx()].bbp_->ops_;
+            auto rit = ops.rbegin();
+            rit++;
+            auto stinst = dynamic_cast<uop_st *>(rit->get());
+            if (stinst != nullptr and stinst->get_rb() == base and stinst->get_off() == off) {
+                auto rs = stinst->get_rd();
+                rit++;
+                if (rit == ops.rend()) {
+                    continue;
+                }
+                auto callinst = dynamic_cast<uop_call *>(rit->get());
+                if (callinst != nullptr and callinst->get_retval() == rs) {
+                    callinst->set_tail(true);
+                }
+            }
+        }
+    }
     
+    if (retblk_info.bbp_->ops_.size() == 1) {
+        for (auto &&ref : retblk_info.refs_) {
+            auto &&ops = rl_pgrs_.lbmap_[ref->get_fa_idx()].bbp_->ops_;
+            auto rit = ops.rbegin();
+            rit++;
+            if (rit == ops.rend()) {
+                continue;
+            }
+            auto callinst = dynamic_cast<uop_call *>(rit->get());
+            if (callinst != nullptr and callinst->get_retval() == nullptr) {
+                callinst->set_tail(true);
+            }
+        }
+    }
 }

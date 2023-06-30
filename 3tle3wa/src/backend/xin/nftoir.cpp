@@ -19,6 +19,11 @@ void cross_internal_manager::nftoir() {
     } pa;
 
     using glb_la_info = std::pair<size_t, size_t>;
+    using norm_la_info = std::pair<size_t, size_t>;
+
+    using binop_elem = std::pair<size_t, size_t>;
+    using fibinop_elem = std::pair<binop_elem, size_t>;
+    using fibinopi_elem = std::pair<size_t, binop_elem>;
 
     // 有脏东西 /(ㄒoㄒ)/~~
     auto alloc_reg = fptr_->GetVarIdx() + 0xdeadbeef;
@@ -96,6 +101,11 @@ void cross_internal_manager::nftoir() {
 
     while (bbit != topo.end()) {
         std::map<glb_la_info, size_t> glb_la_history;
+        std::map<glb_la_info, size_t> glb_lwd_history;
+        std::map<norm_la_info, size_t> norm_lwd_history;
+        std::map<binop_elem, size_t> imm_history;
+        std::map<fibinopi_elem, size_t> binimm_history;
+        std::map<fibinop_elem, size_t> binvar_history;
 
         auto &&bb = (*bbit);
         ++bbit;
@@ -211,6 +221,8 @@ void cross_internal_manager::nftoir() {
                     // 必定有的 ret
                     auto op1 = std::make_unique<uop_ret>();
                     lst.push_back(std::move(op1));
+
+                    rl_pgrs_.retlbidx_ = rlbb->get_lbid();
                 } break;
 
                 case Jump: {
@@ -404,6 +416,12 @@ void cross_internal_manager::nftoir() {
                         auto gval = std::dynamic_pointer_cast<GlobalValue>(aval);
                         auto &&gidx = gval->GetGlobalValueIdx();
                         if (onflt) {
+                            auto p = std::make_pair(gidx, 0ul);
+
+                            if (auto fnd = glb_lwd_history.find(p); fnd != glb_lwd_history.end()) {
+                                glb_lwd_history.erase(fnd);
+                            }
+
                             // 这里未来需要指派一个非 zero 的寄存器
                             auto reserve = rl_pgrs_.valc_.alloc_zero();
 
@@ -414,6 +432,12 @@ void cross_internal_manager::nftoir() {
 
                             lst.push_back(std::move(op));
                         } else {
+                            auto p = std::make_pair(gidx, 0ul);
+
+                            if (auto fnd = glb_lwd_history.find(p); fnd != glb_lwd_history.end()) {
+                                glb_lwd_history.erase(fnd);
+                            }
+
                             // 这里未来需要指派一个非 zero 的寄存器
                             auto reserve = rl_pgrs_.valc_.alloc_zero();
 
@@ -427,6 +451,13 @@ void cross_internal_manager::nftoir() {
                     } else if (aval->IsVariable()) {
                         auto avar = std::dynamic_pointer_cast<Variable>(aval);
                         Assert(avar, "store addr should be var");
+
+                        auto p = std::make_pair(avar->GetVariableIdx(), 0ul);
+
+                        if (auto fnd = norm_lwd_history.find(p); fnd != norm_lwd_history.end()) {
+                            norm_lwd_history.erase(fnd);
+                        }
+
                         if (onflt) {
                             auto op = std::make_unique<uop_fst>();
                             op->set_rb(rl_pgrs_.valc_.get_reg(avar->GetVariableIdx()));
@@ -464,9 +495,6 @@ void cross_internal_manager::nftoir() {
                     bool onflt = false;
                     if (auto rtype = res->GetBaseType(); rtype->FloatType()) {
                         onflt = true;
-                        nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
-                    } else if (rtype->IntType()) {
-                        nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                     }
 
                     auto &&aval = llinst->GetOprand();
@@ -476,15 +504,35 @@ void cross_internal_manager::nftoir() {
                         auto gidx = gval->GetGlobalValueIdx();
 
                         if (onflt) {
+                            auto p = std::make_pair(gidx, 0ul);
+
+                            if (auto fnd = glb_lwd_history.find(p); fnd != glb_lwd_history.end()) {
+                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                break;
+                            }
+
+                            nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_fld_l>();
                             op->set_glb_idx(gidx);
                             op->set_rd(nwvr);
 
+                            glb_lwd_history[p] = nwvr->value();
+
                             lst.push_back(std::move(op));
                         } else {
+                            auto p = std::make_pair(gidx, 0ul);
+
+                            if (auto fnd = glb_lwd_history.find(p); fnd != glb_lwd_history.end()) {
+                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                break;
+                            }
+
+                            nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_ld_l>();
                             op->set_glb_idx(gidx);
                             op->set_rd(nwvr);
+
+                            glb_lwd_history[p] = nwvr->value();
 
                             lst.push_back(std::move(op));
                         }
@@ -493,17 +541,37 @@ void cross_internal_manager::nftoir() {
                         Assert(avar, "store addr should be var");
 
                         if (onflt) {
+                            auto p = std::make_pair(avar->GetVariableIdx(), 0ul);
+
+                            if (auto fnd = norm_lwd_history.find(p); fnd != norm_lwd_history.end()) {
+                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                break;
+                            }
+
+                            nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::FLT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_fld>();
                             op->set_rb(rl_pgrs_.valc_.get_reg(avar->GetVariableIdx()));
                             op->set_rd(nwvr);
                             op->set_off(0);
 
+                            norm_lwd_history[p] = nwvr->value();
+
                             lst.push_back(std::move(op));
                         } else {
+                            auto p = std::make_pair(avar->GetVariableIdx(), 0ul);
+
+                            if (auto fnd = norm_lwd_history.find(p); fnd != norm_lwd_history.end()) {
+                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                break;
+                            }
+
+                            nwvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                             auto op = std::make_unique<uop_ld>();
                             op->set_rb(rl_pgrs_.valc_.get_reg(avar->GetVariableIdx()));
                             op->set_rd(nwvr);
                             op->set_off(0);
+
+                            norm_lwd_history[p] = nwvr->value();
 
                             lst.push_back(std::move(op));
                         }
@@ -831,11 +899,12 @@ void cross_internal_manager::nftoir() {
 
                             // retvr->set_rregid(riscv::a0);
                         }
+                        op0->set_pstk(pa.pstk);
+
                         // retvr->set_confirm(true);
                         op0->set_retval(retvr);
                     }
 
-                    op0->set_rec(llinst->GetCalleeFunc()->GetRecursive());
                     lst.push_back(std::move(op0));
                 } break;
 
@@ -962,22 +1031,37 @@ void cross_internal_manager::nftoir() {
                                 default:
                                     panic("unexpected");
                             }
+                            auto p = binop_elem(out, (size_t)opcode);
+                            if (auto fnd = imm_history.find(p); fnd != imm_history.end()) {
+                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                break;
+                            }
+
                             auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
                             virt_reg *nwvr = rl_pgrs_.valc_.alloc_imm(out);
                             auto op = std::make_unique<uop_mv>();
                             op->set_rd(resvr);
                             op->set_rs(nwvr);
 
+                            imm_history[p] = res->GetVariableIdx();
+
                             lst.push_back(std::move(op));
                         } else {
                             virt_reg *lnwvr = nullptr;
                             virt_reg *rnwvr = nullptr;
+
+                            bool meetimm = false;
+                            size_t imm = 0;
 
                             if (lhs->IsConstant()) {
                                 auto cst = std::dynamic_pointer_cast<Constant>(lhs);
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
+
+                                meetimm = true;
+                                imm = pk.v32;
+
                                 if (pk.v32 == 1 and opcode == OP_MUL) {
                                     linkable = true;
                                 } else if (pk.v32 == 0 and opcode == OP_ADD) {
@@ -993,6 +1077,9 @@ void cross_internal_manager::nftoir() {
 
                                 auto &&pk = xcval(cst->GetValue());
 
+                                meetimm = true;
+                                imm = pk.v32;
+
                                 if (pk.v32 == 1 and (opcode == OP_MUL or opcode == OP_DIV)) {
                                     linkable = true;
                                 } else if (pk.v32 == 0 and (opcode == OP_ADD or opcode == OP_SUB or
@@ -1006,27 +1093,163 @@ void cross_internal_manager::nftoir() {
                             if (lhs->IsVariable()) {
                                 auto var = std::dynamic_pointer_cast<Variable>(lhs);
                                 Assert(var, "bad dynamic cast");
+                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
+
+                                if (meetimm) {
+                                    bool hit = false;
+                                    switch (opcode) {
+                                        case OP_MUL:
+                                        case OP_ADD: {
+                                            size_t optype = (size_t)opcode;
+                                            auto p = binop_elem(lnwvr->value(), imm);
+                                            auto fip = fibinopi_elem(optype, p);
+
+                                            if (auto fnd = binimm_history.find(fip); fnd != binimm_history.end()) {
+                                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                                hit = true;
+                                                break;
+                                            }
+
+                                            binimm_history[fip] = res->GetVariableIdx();
+                                        } break;
+                                        case OP_SUB:
+                                        case OP_REM:
+                                        case OP_DIV:
+                                        case OP_LSHIFT:
+                                        case OP_RSHIFT: {
+                                            size_t optype = (size_t)opcode;
+                                            auto p = binop_elem(lnwvr->value(), imm);
+                                            auto fip = fibinopi_elem(optype, p);
+
+                                            if (auto fnd = binimm_history.find(fip); fnd != binimm_history.end()) {
+                                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                                hit = true;
+                                                break;
+                                            }
+
+                                            binimm_history[fip] = res->GetVariableIdx();
+
+                                        } break;
+
+                                        default:
+                                            panic("unexpected");
+                                    }
+                                    if (hit) {
+                                        break;
+                                    }
+                                }
 
                                 if (linkable) {
                                     Assert(rnwvr == nullptr, "rhs not imm");
                                     rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
                                     break;
                                 }
-
-                                lnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
                             }
 
                             if (rhs->IsVariable()) {
                                 auto var = std::dynamic_pointer_cast<Variable>(rhs);
                                 Assert(var, "bad dynamic cast");
+                                rnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
+
+                                if (meetimm) {
+                                    bool hit = false;
+                                    switch (opcode) {
+                                        case OP_MUL:
+                                        case OP_ADD: {
+                                            size_t optype = (size_t)opcode;
+                                            auto p = binop_elem(rnwvr->value(), imm);
+                                            auto fip = fibinopi_elem(optype, p);
+
+                                            if (auto fnd = binimm_history.find(fip); fnd != binimm_history.end()) {
+                                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                                hit = true;
+                                                break;
+                                            }
+
+                                            binimm_history[fip] = res->GetVariableIdx();
+                                        } break;
+                                        case OP_SUB:
+                                        case OP_REM:
+                                        case OP_DIV:
+                                        case OP_LSHIFT:
+                                        case OP_RSHIFT: {
+                                            size_t optype = (size_t)opcode | 0x1ul << 63;
+                                            auto p = binop_elem(rnwvr->value(), imm);
+                                            auto fip = fibinopi_elem(optype, p);
+
+                                            if (auto fnd = binimm_history.find(fip); fnd != binimm_history.end()) {
+                                                rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                                hit = true;
+                                                break;
+                                            }
+
+                                            binimm_history[fip] = res->GetVariableIdx();
+                                        } break;
+
+                                        default:
+                                            panic("unexpected");
+                                    }
+                                    if (hit) {
+                                        break;
+                                    }
+                                }
 
                                 if (linkable) {
                                     Assert(lnwvr == nullptr, "rhs not imm");
                                     rl_pgrs_.valc_.link(res->GetVariableIdx(), var->GetVariableIdx());
                                     break;
                                 }
+                            }
 
-                                rnwvr = rl_pgrs_.valc_.get_reg(var->GetVariableIdx());
+                            if (not meetimm) {
+                                bool hit = false;
+                                switch (opcode) {
+                                    case OP_MUL:
+                                    case OP_ADD: {
+                                        size_t optype = (size_t)opcode;
+                                        auto p1 = binop_elem(lnwvr->value(), rnwvr->value());
+                                        auto p2 = binop_elem(rnwvr->value(), lnwvr->value());
+                                        auto fip1 = fibinop_elem(p1, optype);
+                                        auto fip2 = fibinop_elem(p2, optype);
+
+                                        if (auto fnd1 = binvar_history.find(fip1); fnd1 != binvar_history.end()) {
+                                            rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd1->second);
+                                            hit = true;
+                                            break;
+                                        } else if (auto fnd2 = binvar_history.find(fip2);
+                                                   fnd2 != binvar_history.end()) {
+                                            rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd2->second);
+                                            hit = true;
+                                            break;
+                                        }
+
+                                        binvar_history[fip1] = res->GetVariableIdx();
+                                        binvar_history[fip2] = res->GetVariableIdx();
+                                    } break;
+                                    case OP_SUB:
+                                    case OP_REM:
+                                    case OP_DIV:
+                                    case OP_LSHIFT:
+                                    case OP_RSHIFT: {
+                                        size_t optype = (size_t)opcode;
+                                        auto p = binop_elem(lnwvr->value(), rnwvr->value());
+                                        auto fip = fibinop_elem(p, optype);
+
+                                        if (auto fnd = binvar_history.find(fip); fnd != binvar_history.end()) {
+                                            rl_pgrs_.valc_.link(res->GetVariableIdx(), fnd->second);
+                                            hit = true;
+                                            break;
+                                        }
+
+                                        binvar_history[fip] = res->GetVariableIdx();
+                                    } break;
+
+                                    default:
+                                        panic("unexpected");
+                                }
+                                if (hit) {
+                                    break;
+                                }
                             }
 
                             auto resvr = rl_pgrs_.valc_.alloc_reg(VREG_TYPE::INT, res->GetVariableIdx());
@@ -1084,6 +1307,9 @@ void cross_internal_manager::nftoir() {
 
                             lst.push_back(std::move(op));
                         } else {
+                            [[maybe_unused]] bool meetimm = false;
+                            [[maybe_unused]] size_t imm = 0;
+
                             bool addable = false;
                             [[maybe_unused]] bool mulable = false;
 
@@ -1095,6 +1321,10 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
+
+                                meetimm = true;
+                                imm = pk.v32;
+
                                 if (pk.v32 == 0x3f800000 and opcode == OP_MUL) {
                                     linkable = true;
                                 } else if (pk.v32 == 0x40000000 and (opcode == OP_MUL)) {
@@ -1112,6 +1342,9 @@ void cross_internal_manager::nftoir() {
                                 Assert(cst, "bad dynamic cast");
 
                                 auto &&pk = xcval(cst->GetValue());
+
+                                meetimm = true;
+                                imm = pk.v32;
 
                                 if (pk.v32 == 0x3f800000 and (opcode == OP_MUL or opcode == OP_DIV)) {
                                     linkable = true;

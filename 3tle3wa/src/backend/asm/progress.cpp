@@ -55,3 +55,18 @@ std::unique_ptr<pblock> &progress::back() {
     }
     return pblks_.back();
 }
+
+std::vector<ret_elem> progress::tails() {
+    std::vector<ret_elem> backs;
+    for (auto pbit = pblks_.begin(); pbit != pblks_.end(); pbit++) {
+        auto &&pblk = *pbit;
+        auto &&lst = pblk->ilst();
+        for (auto it = lst.begin(); it != lst.end(); it++) {
+            auto inst = it->get();
+            if (dynamic_cast<rv_tail *>(inst) != nullptr) {
+                backs.push_back(ret_elem(pbit, it));
+            }
+        }
+    }
+    return backs;
+}

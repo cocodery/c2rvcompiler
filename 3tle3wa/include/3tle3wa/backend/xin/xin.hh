@@ -43,8 +43,12 @@ class cross_internal_manager {
     void irpass_gen_fmas();
 
     void irpass_simple_peephole();
-
+    
+    void irpass_fold_peephole();
+    
     void irpass_virt_reg_renaming();
+
+    void irpass_gen_tail();
 
    public:
     cross_internal_manager(NormalFuncPtr &fptr, std::unordered_set<uint32_t> &lc_pool,

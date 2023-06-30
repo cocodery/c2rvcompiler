@@ -84,6 +84,49 @@ void cross_internal_manager::irtorv() {
 
     back_ilst.push_back(std::move(last));
 
+    auto tails = apg_->tails();
+    for (auto &&tail : tails) {
+        auto pb = tail.first->get();
+        auto &&tail_ilst = pb->ilst();
+        auto inst_it = tail.second;
+
+        auto tailinst = dynamic_cast<rv_tail *>(inst_it->get());
+        auto pstk = tailinst->imm_;
+        for (size_t i = 0; i < (size_t)pstk; ++i) {
+            auto rvx = new rv_ld(riscv::t0, riscv::sp, i * 8);
+            tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rvx));
+
+            auto rvy = new rv_sd(riscv::t0, riscv::fp, i * 8);
+            tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rvy));
+        }
+
+        if (rl_pgrs_.valc_.total_stk_len != 0) {
+            if (imm_within(12, rl_pgrs_.valc_.total_stk_len)) {
+                auto rv5 = new rv_addi(riscv::sp, riscv::sp, rl_pgrs_.valc_.total_stk_len);
+                tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv5));
+            } else {
+                auto rv5 = new rv_li(riscv::t0, rl_pgrs_.valc_.total_stk_len);
+                tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv5));
+
+                auto rv6 = new rv_add(riscv::sp, riscv::sp, riscv::t0);
+                tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv6));
+            }
+
+            if (rl_pgrs_.contain_funcall_) {
+                auto rv7 = new rv_ld(riscv::ra, riscv::sp, -8);
+                tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv7));
+
+                if (rl_pgrs_.valc_.total_stk_len > 8) {
+                    auto rv8 = new rv_ld(riscv::fp, riscv::sp, -16);
+                    tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv8));
+                }
+            } else {
+                auto rv8 = new rv_ld(riscv::fp, riscv::sp, -8);
+                tail_ilst.insert(inst_it, std::unique_ptr<asm_inst>(rv8));
+            }
+        }
+    }
+
     std::scoped_lock<std::mutex> lck{lcmtx};
     rl_pgrs_.valc_.give_loc(lc_pool_);
 }

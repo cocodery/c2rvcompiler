@@ -17,6 +17,8 @@ void progress::do_optimize() {
 void pblock::do_optimize() {
     opm_rm_needless_ls();
     opm_rm_needless_li();
+
+    opm_reorder();
 }
 
 void pblock::opm_rm_needless_li() {
@@ -124,7 +126,7 @@ void pblock::opm_rm_needless_ls() {
 
                 // 目前先不考虑
                 status.width_ = 8;
-                
+
                 status.it_ = instit;
                 status.off_ = rvinst->off_;
                 status.rd_ = rvinst->rs_;
@@ -168,4 +170,250 @@ void pblock::opm_rm_needless_ls() {
 
         instit++;
     }
+}
+
+void pblock::opm_reorder() {
+    return;
+
+    aov_node *reguser[64] = {nullptr};
+    uint64_t busy = 0;
+
+    std::unordered_set<aov_node *> free_to_issue;
+
+    for (auto &&inst : insts_) {
+        if (dynamic_cast<rv_call *>(inst.get()) != nullptr) {
+            return;
+        }
+        auto bear_ptr = inst.get();
+        auto rvinst = dynamic_cast<rv_inst *>(bear_ptr);
+
+        auto aovp = std::make_unique<aov_node>();
+        aovp->cur_ = rvinst;
+
+        if (rvinst->rd_ != riscv::zero) {
+            aovp->write_reg_ |= 1l << rvinst->rd_;
+        }
+        if (rvinst->rs_ != riscv::zero) {
+            aovp->issue_need_ |= 1l << rvinst->rs_;
+        }
+        if (rvinst->rt_ != riscv::zero) {
+            aovp->issue_need_ |= 1l << rvinst->rt_;
+        }
+        if (rvinst->ra_ != riscv::zero) {
+            aovp->issue_need_ |= 1l << rvinst->ra_;
+        }
+
+        auto need_wait = busy & aovp->issue_need_;
+        uint64_t msk = 0x1;
+        for (size_t i = 1; i < 64; ++i) {
+            if (need_wait & (msk << i)) {
+                if (reguser[i] != nullptr) {
+                    auto prev = reguser[i];
+                    aovp->prevs_.insert(prev);
+                    prev->posts_.insert(aovp.get());
+                }
+            }
+        }
+
+        if (aovp->write_reg_ != 0) {
+            auto use = __builtin_ctzll(aovp->write_reg_);
+            busy |= 1l << use;
+            reguser[use] = aovp.get();
+        }
+
+        if (aovp->prevs_.size() == 0) {
+            free_to_issue.insert(aovp.get());
+        }
+
+        aov_source.push_back(std::move(aovp));
+    }
+
+    while (not free_to_issue.empty()) {
+        size_t num_take = 0;
+        aov_node *first = nullptr;
+        aov_node *second = nullptr;
+        busy = 0;
+
+        // 选择一个内存存取操作
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == ACCMEM) {
+                bool taken = false;
+                if (num_take == 0) {
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        busy |= 0x1 << rd;
+                    }
+                    first = node;
+                    taken = true;
+                    num_take += 1;
+                } else if (num_take == 1) {
+                    uint64_t curbusy = 0;
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        curbusy |= 0x1 << rd;
+                    }
+                    if ((curbusy & busy) != 0) {
+                        continue;
+                    }
+                    second = node;
+                    taken = true;
+                    num_take += 1;
+                } else {
+                    break;
+                }
+                if (taken) {
+                    for (auto &&post : node->posts_) {
+                        post->prevs_.erase(node);
+                        if (post->prevs_.empty()) {
+                            free_to_issue.insert(post);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 选择浮点操作
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == FLTOP) {
+                bool taken = false;
+                if (num_take == 0) {
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        busy |= 0x1 << rd;
+                    }
+                    first = node;
+                    taken = true;
+                    num_take += 1;
+                } else if (num_take == 1) {
+                    uint64_t curbusy = 0;
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        curbusy |= 0x1 << rd;
+                    }
+                    if ((curbusy & busy) != 0) {
+                        continue;
+                    }
+                    second = node;
+                    taken = true;
+                    num_take += 1;
+                } else {
+                    break;
+                }
+                if (taken) {
+                    for (auto &&post : node->posts_) {
+                        post->prevs_.erase(node);
+                        if (post->prevs_.empty()) {
+                            free_to_issue.insert(post);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 选择乘除操作
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == INTMDR) {
+                bool taken = false;
+                if (num_take == 0) {
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        busy |= 0x1 << rd;
+                    }
+                    first = node;
+                    taken = true;
+                    num_take += 1;
+                } else if (num_take == 1) {
+                    uint64_t curbusy = 0;
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        curbusy |= 0x1 << rd;
+                    }
+                    if ((curbusy & busy) != 0) {
+                        continue;
+                    }
+                    second = node;
+                    taken = true;
+                    num_take += 1;
+                } else {
+                    break;
+                }
+                if (taken) {
+                    for (auto &&post : node->posts_) {
+                        post->prevs_.erase(node);
+                        if (post->prevs_.empty()) {
+                            free_to_issue.insert(post);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 选择一般操作
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == NORM) {
+                bool taken = false;
+                if (num_take == 0) {
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        busy |= 0x1 << rd;
+                    }
+                    first = node;
+                    taken = true;
+                    num_take += 1;
+                } else if (num_take == 1) {
+                    uint64_t curbusy = 0;
+                    auto rd = node->cur_->rd_;
+                    if (rd != riscv::zero) {
+                        curbusy |= 0x1 << rd;
+                    }
+                    if ((curbusy & busy) != 0) {
+                        continue;
+                    }
+                    second = node;
+                    taken = true;
+                    num_take += 1;
+                } else {
+                    break;
+                }
+                if (taken) {
+                    for (auto &&post : node->posts_) {
+                        post->prevs_.erase(node);
+                        if (post->prevs_.empty()) {
+                            free_to_issue.insert(post);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (first != nullptr) {
+            inst_view_.push_back(first->cur_);
+            free_to_issue.erase(first);
+        }
+
+        if (second != nullptr) {
+            inst_view_.push_back(second->cur_);
+            free_to_issue.erase(second);
+        }
+
+        // 只剩下跳转则直接包含
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == BRJMP) {
+                inst_view_.push_back(node->cur_);
+                free_to_issue.clear();
+            }
+        }
+
+        for (auto &&node : free_to_issue) {
+            if (node->cur_->type_ == UNDEFINED) {
+                panic("unexpected");
+            }
+        }
+    }
+
+    Assert(inst_view_.size() == insts_.size(), "not all inst issued");
 }

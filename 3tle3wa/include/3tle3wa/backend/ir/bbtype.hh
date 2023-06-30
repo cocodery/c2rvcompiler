@@ -39,6 +39,8 @@ class rl_progress {
         size_t f;
     } puse_;
 
+    size_t retlbidx_{0};
+
     bool contain_funcall_{false};
 
     struct rlbb_rcd {

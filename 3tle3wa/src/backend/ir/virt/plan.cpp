@@ -171,7 +171,7 @@ void vr_allocor::plan_reg(rl_progress &rlp) {
     // 然后分配真实寄存器
     for (auto &&reginfo : vr_map_) {
         auto &&reg = reginfo.second;
-        if (reg->kind() == VREG_KIND::PRM) {
+        if (reg->kind() == VREG_KIND::PRM or reg->vconfirm() == false) {
             continue;
         }
 
