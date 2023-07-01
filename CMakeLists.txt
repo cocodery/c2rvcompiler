@@ -7,6 +7,8 @@ enable_testing()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 file(GLOB_RECURSE CXXSRC
   ${CMAKE_SOURCE_DIR}/3tle3wa/src/*.cpp
   ${CMAKE_SOURCE_DIR}/antlr/*.cpp
@@ -30,6 +32,7 @@ find_package(antlr4-runtime REQUIRED)
 # 设置编译参数
 # 官方参数 m 在后面链接
 add_compile_options(-std=c++17)
+
 # add_compile_options(-O2)
 
 # 用于调试
