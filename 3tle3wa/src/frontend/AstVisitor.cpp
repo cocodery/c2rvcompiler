@@ -1,6 +1,9 @@
 #include "3tle3wa/frontend/AstVisitor.hh"
 
 #include <string>
+#include <tuple>
+
+#include "3tle3wa/ir/value/constant.hh"
 
 namespace {
 
@@ -660,7 +663,12 @@ std::any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
 }
 
 std::any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    return ConstantAllocator::FindConstantPtr(static_cast<float>(std::stof(ctx->getText())));
+    ConstantPtr constant = ConstantAllocator::FindConstantPtr(static_cast<float>(std::stof(ctx->getText())));
+    if (std::get<float>(constant->GetValue()) != static_cast<float>(0)) {
+        std::string name = "Float_" + constant->tollvmIR();
+        comp_unit.InsertSymbol(name, constant);
+    }
+    return constant;
 }
 
 std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {

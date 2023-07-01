@@ -1,5 +1,7 @@
 #include "3tle3wa/ir/IR.hh"
 
+#include <cassert>
+
 SymbolTable &CompilationUnit::getGlbTable() { return this->glb_table; }
 
 void CompilationUnit::InsertSymbol(std::string &name, BaseValuePtr value) { glb_table.InsertSymbol(name, value); }
@@ -21,7 +23,13 @@ void CompilationUnit::generatellvmIR(std::string irfile) {
         BaseTypePtr &&type = glb_value->GetBaseType();
         // // there is no need to emit global-constant llvmIR
         if (type->IsImMutable() && type->IsScalar()) {
-            llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4";
+            if (type->IntType()) {
+                llir << "; @" << name << " = " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4";
+            } else if (type->FloatType()) {
+                llir << "@" << name << " = global " << type->tollvmIR() << ' ' << glb_value->tollvmIR() << ", align 4";
+            } else {
+                assert(false);
+            }
         } else {
             llir << glb_value->tollvmIR() << " = ";
             if (type->IsImMutable()) {
