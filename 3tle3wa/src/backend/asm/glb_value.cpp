@@ -1,7 +1,7 @@
 #include "3tle3wa/backend/asm/glb_value.hh"
 
 glb_value::glb_value(const std::string &name, size_t len, bool uninit, size_t reserve)
-    : label_(name), len_(len), values_(reserve), uninit_(uninit) {
+    : label_(name), len_(len), uninit_(uninit), values_(reserve) {
     // if (len >= 2048) {
     //     onheap_ = true;
     // }
@@ -15,11 +15,6 @@ bool glb_value::onheap() { return onheap_; }
 std::string &glb_value::name() { return label_; }
 
 void glb_value::gen_asm(std::fstream &fs) {
-    if (uninit_) {
-        fs << "\t.bss" << std::endl;
-    } else {
-        fs << "\t.data" << std::endl;
-    }
     fs << "\t.global\t" << label_ << std::endl;
     fs << "\t.align\t" << 4 << std::endl;
     fs << "\t.type\t" << label_ << ", @object" << std::endl;

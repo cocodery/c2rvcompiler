@@ -15,4 +15,5 @@ void cross_internal_manager::do_compile() {
     irpass();
     rassign();
     irtorv();
+    pir();
 }

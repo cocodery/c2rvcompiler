@@ -23,19 +23,11 @@ void virt_reg::format_str(FILE *fp) {
             break;
 
         case VREG_KIND::PRM: {
-            if (onstk_) {
-                fprintf(fp, "%" PRId64 "(fp)", pstk_ * 8);
-            } else {
-                fprintf(fp, "%s", gpr[rregid_]);
-            }
+            fprintf(fp, "p%" PRIu64, value_);
         } break;
 
         case VREG_KIND::REG:
-            if (confirm_) {
-                fprintf(fp, "%%r%" PRIu64 "<%s>", value_, gpr[rregid_]);
-            } else {
-                fprintf(fp, "%%r%" PRIu64, value_);
-            }
+            fprintf(fp, "%%r%" PRIu64, value_);
             break;
 
         case VREG_KIND::SPEC: {
@@ -44,10 +36,10 @@ void virt_reg::format_str(FILE *fp) {
 
         case VREG_KIND::STK: {
             if (type_ == VREG_TYPE::ARR) {
-                fprintf(fp, "STK: (%s, %lu, %ld)", tynm[(size_t)type_], sinfo_->slen() * 4, sinfo_->off());
+                fprintf(fp, "STK: (%s, %lu)", tynm[(size_t)type_], sinfo_->slen() * 4);
                 break;
             }
-            fprintf(fp, "STK: (%s, %d, %ld)", tynm[(size_t)type_], (type_ == VREG_TYPE::PTR ? 8 : 4), sinfo_->off());
+            fprintf(fp, "STK: (%s, %d)", tynm[(size_t)type_], (type_ == VREG_TYPE::PTR ? 8 : 4));
         } break;
 
         case VREG_KIND::ZERO: {
@@ -226,15 +218,15 @@ size_t virt_reg::load(pblock *pb, spack &spk, size_t to) {
             }
 
             if (type_ == VREG_TYPE::FLT) {
-                if (rregid_  - riscv::fa0 < 8) {
-                    return rregid_;
+                if (value_ < 8) {
+                    return riscv::fa0 + value_;
                 }
                 auto rv = new rv_flw(saver, riscv::fp, pstk_ * 8);
                 pb->push(rv);
                 return saver;
             } else {
-                if (rregid_  - riscv::a0 < 8) {
-                    return rregid_;
+                if (value_ < 8) {
+                    return riscv::a0 + value_;
                 }
                 auto rv = new rv_ld(saver, riscv::fp, pstk_ * 8);
                 pb->push(rv);
@@ -279,13 +271,13 @@ size_t virt_reg::store_where() {
 
         case VREG_KIND::PRM: {
             if (type_ == VREG_TYPE::FLT) {
-                if (rregid_  - riscv::fa0 < 8) {
-                    return rregid_;
+                if (value_ < 8) {
+                    return riscv::fa0 + value_;
                 }
                 return riscv::fs0;
             } else {
-                if (rregid_  - riscv::a0 < 8) {
-                    return rregid_;
+                if (value_ < 8) {
+                    return riscv::a0 + value_;
                 }
                 return riscv::t2;
             }
@@ -323,7 +315,7 @@ void virt_reg::store(pblock *pb, size_t to) {
 
         case VREG_KIND::PRM: {
             if (type_ == VREG_TYPE::FLT) {
-                if (rregid_ - riscv::fa0 < 8) {
+                if (value_ < 8) {
                     return;
                 }
                 rv_fsw *rv;
@@ -334,7 +326,7 @@ void virt_reg::store(pblock *pb, size_t to) {
                 }
                 pb->push(rv);
             } else {
-                if (rregid_ - riscv::a0 < 8) {
+                if (value_ < 8) {
                     return;
                 }
                 rv_sd *rv;

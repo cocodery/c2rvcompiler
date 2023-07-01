@@ -118,8 +118,6 @@ int main(int argc, char *argv[]) {
         }
     } while (0);
 
-    extern const char *skip;
-
     if (output and asmgen != nullptr) {
         std::fstream fs(output, std::ios::out);
         asmgen->do_optimize();

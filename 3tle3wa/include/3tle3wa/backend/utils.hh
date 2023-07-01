@@ -137,23 +137,3 @@ static inline std::string gen_glb_val_label(size_t idx) {
 
     return ".GV" + std::to_string(idx);
 }
-
-
-// must be packed
-// can use __attribute__((packed))
-union ieee_flt_pack {
-    struct {
-        unsigned fraction: 23;
-        unsigned exponent: 8;
-        unsigned sign: 1;
-    };
-    uint32_t i;
-    float f;
-};
-
-
-static inline bool ispowf2(uint32_t value) {
-    ieee_flt_pack ieeepk;
-    ieeepk.i = value;
-    return ieeepk.fraction == 0;
-}

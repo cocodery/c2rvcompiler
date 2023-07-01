@@ -194,7 +194,7 @@ virt_reg *vr_allocor::alloc_prm(VREG_TYPE type, uxlen_t idx, uxlen_t rid) {
         return fnd->second;
     }
 
-    auto ptr = std::make_unique<virt_reg>(VREG_KIND::PRM, type, idx);
+    auto ptr = std::make_unique<virt_reg>(VREG_KIND::PRM, type, rid);
     auto raw = ptr.get();
     vr_map_[idx] = raw;
 

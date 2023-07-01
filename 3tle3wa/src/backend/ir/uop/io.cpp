@@ -19,11 +19,10 @@ void uop_set_fparam::format_str(FILE *fp) {
 
 void uop_call::format_str(FILE *fp) {
     //
-    const char *name[] = {"call", "tail"};
     if (retval_) {
-        fprintf(fp, "%s %s => %s", name[tail_], callee_, retval_->c_str());
+        fprintf(fp, "call %s => %s", callee_, retval_->c_str());
     } else {
-        fprintf(fp, "%s %s", name[tail_], callee_);
+        fprintf(fp, "call %s", callee_);
     }
 }
 
