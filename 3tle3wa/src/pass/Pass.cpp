@@ -18,5 +18,8 @@ void Optimization::DoOptimization() {
         // DCE::EliminateUselessControlFlow(func);
 
         SSA::SSADestruction(func);
+
+        func->SetVarIdx(Variable::GetVarIdx());
+        func->SetBlkIdx(BasicBlock::GetBlkIdx());
     }
 }
