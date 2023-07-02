@@ -1,5 +1,7 @@
 #include "3tle3wa/ir/funcTable.hh"
 
+#include "3tle3wa/ir/function/function.hh"
+
 FunctionTable::FunctionTable() {
     // void, i32, float
     ScalarTypePtr ret_type[3] = {type_void, type_int_L, type_float_L};
@@ -40,19 +42,20 @@ FunctionTable::FunctionTable() {
     // 11 - _sysy_stoptime
     // 12 - llvm.memset.p0i8.i64
     LibFuncPtr lib_func[13];
-    lib_func[0] = LibraryFunction::CreatePtr(ret_type[1], "getint", param_list[0]);
-    lib_func[1] = LibraryFunction::CreatePtr(ret_type[1], "getch", param_list[0]);
-    lib_func[2] = LibraryFunction::CreatePtr(ret_type[2], "getfloat", param_list[0]);
-    lib_func[3] = LibraryFunction::CreatePtr(ret_type[1], "getarray", param_list[3]);
-    lib_func[4] = LibraryFunction::CreatePtr(ret_type[1], "getfarray", param_list[4]);
-    lib_func[5] = LibraryFunction::CreatePtr(ret_type[0], "putint", param_list[1]);
-    lib_func[6] = LibraryFunction::CreatePtr(ret_type[0], "putch", param_list[1]);
-    lib_func[7] = LibraryFunction::CreatePtr(ret_type[0], "putfloat", param_list[2]);
-    lib_func[8] = LibraryFunction::CreatePtr(ret_type[0], "putarray", param_list[5]);
-    lib_func[9] = LibraryFunction::CreatePtr(ret_type[0], "putfarray", param_list[6]);
-    lib_func[10] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_starttime", param_list[1]);
-    lib_func[11] = LibraryFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
-    lib_func[12] = LibraryFunction::CreatePtr(ret_type[0], "llvm.memset.p0i8.i64", param_list[7]);
+    lib_func[0] = SYSYLibFunction::CreatePtr(ret_type[1], "getint", param_list[0]);
+    lib_func[1] = SYSYLibFunction::CreatePtr(ret_type[1], "getch", param_list[0]);
+    lib_func[2] = SYSYLibFunction::CreatePtr(ret_type[2], "getfloat", param_list[0]);
+    lib_func[3] = SYSYLibFunction::CreatePtr(ret_type[1], "getarray", param_list[3]);
+    lib_func[4] = SYSYLibFunction::CreatePtr(ret_type[1], "getfarray", param_list[4]);
+    lib_func[5] = SYSYLibFunction::CreatePtr(ret_type[0], "putint", param_list[1]);
+    lib_func[6] = SYSYLibFunction::CreatePtr(ret_type[0], "putch", param_list[1]);
+    lib_func[7] = SYSYLibFunction::CreatePtr(ret_type[0], "putfloat", param_list[2]);
+    lib_func[8] = SYSYLibFunction::CreatePtr(ret_type[0], "putarray", param_list[5]);
+    lib_func[9] = SYSYLibFunction::CreatePtr(ret_type[0], "putfarray", param_list[6]);
+    lib_func[10] = SYSYLibFunction::CreatePtr(ret_type[0], "_sysy_starttime", param_list[1]);
+    lib_func[11] = SYSYLibFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
+
+    lib_func[12] = LLVMLibFunction::CreatePtr("memset", 3, ret_type[0], "llvm.memset.p0i8.i64", param_list[7]);
 
     for (auto &&func_ptr : lib_func) {
         libraryFuncTable.push_back(func_ptr);

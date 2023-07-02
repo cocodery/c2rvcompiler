@@ -1,14 +1,20 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <list>
 #include <map>
+#include <memory>
 #include <queue>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "3tle3wa/ir/function/basefunc.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/value/type/listType.hh"
+#include "3tle3wa/ir/value/type/scalarType.hh"
 
 class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
@@ -55,16 +61,48 @@ class NormalFunction final : public BaseFunction {
 class LibraryFunction;
 using LibFuncPtr = std::shared_ptr<LibraryFunction>;
 
-class LibraryFunction final : public BaseFunction {
+class LibraryFunction : public BaseFunction {
    public:
     LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
     ~LibraryFunction() = default;
 
     bool IsLibFunction() const;
 
-    static LibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &);
+    virtual bool IsSYSYLibFunction() const;
 
     std::string tollvmIR();
+};
+
+class SYSYLibFunction;
+using SYSYLibFuncPtr = std::shared_ptr<SYSYLibFunction>;
+
+class SYSYLibFunction final : public LibraryFunction {
+   public:
+    SYSYLibFunction(ScalarTypePtr, std::string &, ParamList &);
+    ~SYSYLibFunction() = default;
+
+    bool IsSYSYLibFunction() const;
+
+    static SYSYLibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &);
+};
+
+class LLVMLibFunction;
+using LLVMLibFuncPtr = std::shared_ptr<LLVMLibFunction>;
+
+class LLVMLibFunction final : public LibraryFunction {
+   public:
+    std::string proto_name;
+    size_t proto_arg_nums;
+
+    LLVMLibFunction(std::string &, size_t, ScalarTypePtr, std::string &, ParamList &);
+    ~LLVMLibFunction() = default;
+
+    bool IsSYSYLibFunction() const;
+
+    std::string &GetProtoName();
+    size_t GetProtoArgNums() const;
+
+    static LLVMLibFuncPtr CreatePtr(std::string, size_t, ScalarTypePtr, std::string, ParamList &);
 };
 
 std::ostream &operator<<(std::ostream &, BaseFuncPtr);

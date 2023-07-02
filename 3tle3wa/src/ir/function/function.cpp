@@ -1,5 +1,9 @@
 #include "3tle3wa/ir/function/function.hh"
 
+#include <cstddef>
+#include <memory>
+#include <string>
+
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation
 //===-----------------------------------------------------------===//
@@ -121,9 +125,6 @@ LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamL
     assert(side_effect == true && recursive == false);
 }
 
-LibFuncPtr LibraryFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
-    return std::make_shared<LibraryFunction>(_type, _name, _list);
-}
 bool LibraryFunction::IsLibFunction() const { return true; }
 
 std::string LibraryFunction::tollvmIR() {
@@ -141,6 +142,37 @@ std::string LibraryFunction::tollvmIR() {
     ss << ")";
 
     return ss.str();
+}
+
+//===-----------------------------------------------------------===//
+//                     SYSYLibFunction Implementation
+//===-----------------------------------------------------------===//
+
+SYSYLibFunction::SYSYLibFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : LibraryFunction(_type, _name, _list) {}
+
+bool SYSYLibFunction::IsSYSYLibFunction() const { return true; }
+
+SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
+    return std::make_shared<SYSYLibFunction>(_type, _name, _list);
+}
+
+//===-----------------------------------------------------------===//
+//                     LLVMLibFunction Implementation
+//===-----------------------------------------------------------===//
+
+LLVMLibFunction::LLVMLibFunction(std::string &_prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
+                                 std::string &_name, ParamList &_list)
+    : LibraryFunction(_type, _name, _list), proto_name(_prote_name), proto_arg_nums(_proto_arg_nums) {}
+
+bool LLVMLibFunction::IsSYSYLibFunction() const { return false; }
+
+std::string &LLVMLibFunction::GetProtoName() { return proto_name; }
+size_t LLVMLibFunction::GetProtoArgNums() const { return proto_arg_nums; }
+
+LLVMLibFuncPtr LLVMLibFunction::CreatePtr(std::string _prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
+                                          std::string _name, ParamList &_list) {
+    return std::make_shared<LLVMLibFunction>(_prote_name, _proto_arg_nums, _type, _name, _list);
 }
 
 std::ostream &operator<<(std::ostream &os, BaseFuncPtr func) {
