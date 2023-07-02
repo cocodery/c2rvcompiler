@@ -68,7 +68,7 @@ class LibraryFunction : public BaseFunction {
 
     bool IsLibFunction() const;
 
-    virtual bool IsSYSYLibFunction() const;
+    virtual bool IsSYSYLibFunction() const = 0;
 
     std::string tollvmIR();
 };
