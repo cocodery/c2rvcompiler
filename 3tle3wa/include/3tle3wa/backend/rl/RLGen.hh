@@ -23,18 +23,20 @@ class RLGen : public Serializable {
 
     std::unique_ptr<AsmGen> asm_gen_;
 
-    void registerGlobalValue(GlobalValue *, const std::string &);
+    void registerGlobalValue(GlobalValue *gvp, const std::string &name);
 
-    void registerNormalFunction(NormalFuncList &);
+    void registerLocalConstant(Constant *cvp, const size_t idx);
+
+    void registerNormalFunction(NormalFuncList &nflst);
 
    public:
-    RLGen(CompilationUnit &comp_unit_);
+    RLGen(CompilationUnit &comp_unit);
 
     ~RLGen();
 
     std::unique_ptr<AsmGen> &ExportAsmGen();
 
-    void Register(CompilationUnit &comp_unit_);
+    void Register(CompilationUnit &comp_unit);
 
     void SerialGenerate();
 

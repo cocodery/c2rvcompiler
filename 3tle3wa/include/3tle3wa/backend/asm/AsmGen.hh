@@ -8,12 +8,14 @@
 
 // asm class declaration
 class AsmGlobalValue;
+class AsmLocalConstant;
 class AsmProgress;
 
 class AsmGen : public Serializable {
 
     // for storage
     std::list<std::unique_ptr<AsmGlobalValue>> gv_storage_;
+    std::list<std::unique_ptr<AsmGlobalValue>> lc_storage_;
     std::list<std::unique_ptr<AsmProgress>> pg_storage_;
 
     void formatString(FILE *fp) final;
@@ -21,5 +23,7 @@ class AsmGen : public Serializable {
    public:
     void PushAsmGlobalValue(std::unique_ptr<AsmGlobalValue> &agv);
 
-    void PushAsmProgress(std::unique_ptr<AsmProgress> &agv);
+    void PushAsmLocalConstant(std::unique_ptr<AsmLocalConstant> &alc);
+
+    void PushAsmProgress(std::unique_ptr<AsmProgress> &ap);
 };

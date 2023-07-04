@@ -1,9 +1,10 @@
 #include <thread>
 
-#include "3tle3wa/backend/AsmGen.hh"
-#include "3tle3wa/backend/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmGen.hh"
+#include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/InternalTranslation.hh"
-#include "3tle3wa/backend/BackendIRGen.hh"
+#include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/utils/Logs.hh"
@@ -12,17 +13,26 @@ RLGen::RLGen(CompilationUnit &comp_unit) : asm_gen_(std::make_unique<AsmGen>()) 
 
 RLGen::~RLGen() {}
 
-void RLGen::Register(CompilationUnit &comp_unit_) {
-    auto &&nvmap = comp_unit_.getGlbTable().GetNameValueMap();
+void RLGen::Register(CompilationUnit &comp_unit) {
+    auto &&nvmap = comp_unit.getGlbTable().GetNameValueMap();
     for (auto &&[name, value] : nvmap) {
         if (value->IsGlobalValue()) {
             auto gvp = dynamic_cast<GlobalValue *>(value.get());
             Assert(gvp, "bad dynamic cast");
             registerGlobalValue(gvp, name);
+            continue;
+        }
+
+        if (value->IsConstant() and value->GetBaseType()->FloatType()) {
+            static size_t lc_idx_alloc = 0;
+            auto cvp = dynamic_cast<Constant *>(value.get());
+            Assert(cvp, "bad dynamic cast");
+            registerLocalConstant(cvp, lc_idx_alloc++);
+            continue;
         }
     }
 
-    registerNormalFunction(comp_unit_.GetNormalFuncTable());
+    registerNormalFunction(comp_unit.GetNormalFuncTable());
 }
 
 std::unique_ptr<AsmGen> &RLGen::ExportAsmGen() { return asm_gen_; }
@@ -103,6 +113,17 @@ void RLGen::registerNormalFunction(NormalFuncList &nflst) {
         translation_tasks_.push_back(std::move(itunit));
     }
 }
+
+void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
+    auto cinfo = XConstValue(cvp->GetValue());
+    Assert(cinfo.isflt_ and cinfo.width_ == 32, "not float local constant");
+    auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
+    auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
+    Assert(result.second, "insert global variable fail!");
+
+    asm_gen_->PushAsmLocalConstant(lcv);
+}
+
 
 void RLGen::SerialGenerate() {
     for (auto &&task: translation_tasks_) {

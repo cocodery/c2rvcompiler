@@ -7,3 +7,4 @@ InternalTranslation::InternalTranslation(const NormalFuncPtr &fptr, const std::u
 void InternalTranslation::DoTranslation() {
     
 }
+

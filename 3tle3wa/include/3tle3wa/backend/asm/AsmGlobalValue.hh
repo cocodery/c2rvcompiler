@@ -9,8 +9,8 @@
 #include "3tle3wa/backend/Interface.hh"
 
 class AsmGlobalValue : public Serializable {
-    char *name_{nullptr};
-    size_t name_len_{0};
+    char *label_{nullptr};
+    size_t label_len_{0};
 
     std::vector<uint32_t> values_;
 
@@ -33,5 +33,5 @@ class AsmGlobalValue : public Serializable {
 
     bool OnHeap() const;
 
-    const char *Name() const;
+    const char *Label() const;
 };
