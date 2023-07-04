@@ -135,6 +135,7 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                         replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(0)) {
+                        assert((std::is_same_v<T, int32_t>));
                         replacee = result;
                         replacer = lhs;
                     }
@@ -165,8 +166,9 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                         replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(1)) {
+                        assert((std::is_same_v<T, int32_t>));
                         replacee = result;
-                        replacer = lhs;
+                        replacer = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
                     }
                 },
                 constant_rhs->GetValue());
