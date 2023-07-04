@@ -38,3 +38,14 @@ AsmBasicBlock *AsmProgress::CreateEntryBlock() {
 }
 
 AsmBasicBlock *AsmProgress::ReturnBlock() { return ret_; }
+
+const char *AsmProgress::Label() const {
+    return label_;
+}
+
+void AsmProgress::formatString(FILE *fp) {
+    fprintf(fp, "%s:\n", label_);
+    for (auto &&blk: ablks_) {
+        fprintf(fp, "%s", blk->CString());
+    }
+}

@@ -25,3 +25,17 @@ class Serializable {
 
     ~Serializable();
 };
+
+class Weightable {
+    protected:
+     double weight_;
+
+     virtual void calculateWeight() = 0;
+
+    public:
+     virtual bool operator>(const Weightable &other) final;
+
+     virtual bool operator==(const Weightable &other) final;
+     
+     virtual bool operator<(const Weightable &other) final;
+};

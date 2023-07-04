@@ -5,16 +5,20 @@
 #include <memory>
 #include <unordered_map>
 
+#include "3tle3wa/backend/Interface.hh"
+
 class AsmBasicBlock;
 class AsmGlobalValue;
 
-class AsmProgress {
+class AsmProgress : public Serializable {
     char *label_;
     size_t label_len_;
 
     std::list<std::unique_ptr<AsmBasicBlock>> ablks_;
 
     AsmBasicBlock *ret_;
+
+    void formatString(FILE *fp) final;
 
    public:
     AsmProgress(std::string &name);
@@ -25,4 +29,6 @@ class AsmProgress {
     AsmBasicBlock *CreateEntryBlock();
 
     AsmBasicBlock *ReturnBlock();
+
+    const char *Label() const;
 };
