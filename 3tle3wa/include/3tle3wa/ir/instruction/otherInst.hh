@@ -35,6 +35,8 @@ class CallInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class BitCastInst;
@@ -53,6 +55,8 @@ class BitCastInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class PhiInst;
@@ -91,4 +95,6 @@ class PhiInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };

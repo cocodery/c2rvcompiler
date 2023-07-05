@@ -29,7 +29,10 @@ enum class IBIN_KIND {
     DIV = OP_DIV,
     REM = OP_REM,
     SLL = OP_LSHIFT,
-    SRA = OP_RSHIFT
+    SRA = OP_RSHIFT,
+    XOR,
+    AND,
+    OR,
 };
 
 enum class FBIN_KIND {
@@ -39,6 +42,11 @@ enum class FBIN_KIND {
     SUB = OP_SUB,
     MUL = OP_MUL,
     DIV = OP_DIV
+};
+
+enum class PHI_KIND {
+    IMM,
+    REG
 };
 
 class UopGeneral : public Serializable {
@@ -56,21 +64,9 @@ class UopGeneral : public Serializable {
 };
 
 template <typename T>
-class InternalUop : UopGeneral {};
+class InternalUop : public UopGeneral {};
 
 class UopRet : public InternalUop<UopRet> {
-    VirtualRegister *src_;
-
-    void formatString(FILE *fp) final;
-
-   public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
-};
-
-class UopCall : public InternalUop<UopCall> {
-    std::vector<VirtualRegister *> params_;
-
     VirtualRegister *retval_;
 
     void formatString(FILE *fp) final;
@@ -78,6 +74,27 @@ class UopCall : public InternalUop<UopCall> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetRetVal(VirtualRegister *retval);
+};
+
+class UopCall : public InternalUop<UopCall> {
+    std::vector<VirtualRegister *> params_;
+
+    VirtualRegister *retval_;
+
+    std::string callee_;
+
+    void formatString(FILE *fp) final;
+
+   public:
+    const std::vector<VirtualRegister *> GetOperands() const;
+    VirtualRegister *GetResult() const;
+
+    void SetRetVal(VirtualRegister *retval);
+    void SetCallee(std::string &callee);
+
+    void PushParam(VirtualRegister *param);
 };
 
 class UopLui : public InternalUop<UopLui> {
@@ -90,6 +107,9 @@ class UopLui : public InternalUop<UopLui> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetImm(uint32_t imm);
 };
 
 class UopMv : public InternalUop<UopMv> {
@@ -101,6 +121,9 @@ class UopMv : public InternalUop<UopMv> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetSrc(VirtualRegister *src);
 };
 
 class UopCvtS2W : public InternalUop<UopCvtS2W> {
@@ -112,6 +135,9 @@ class UopCvtS2W : public InternalUop<UopCvtS2W> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetSrc(VirtualRegister *src);
 };
 
 class UopCvtW2S : public InternalUop<UopCvtW2S> {
@@ -123,31 +149,26 @@ class UopCvtW2S : public InternalUop<UopCvtW2S> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetSrc(VirtualRegister *src);
 };
 
 class UopBranch : public InternalUop<UopBranch> {
     VirtualRegister *cond_;
 
     size_t dst_idx_;
+    bool on_true_;
 
     void formatString(FILE *fp) final;
 
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
-};
 
-class UopICmpBranch : public InternalUop<UopICmpBranch> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
-
-    size_t dst_idx_;
-
-    void formatString(FILE *fp) final;
-
-   public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    void SetCond(VirtualRegister *cond);
+    void SetOnTrue(bool cond);
+    void SetDstIdx(size_t dst_idx);
 };
 
 class UopJump : public InternalUop<UopJump> {
@@ -158,9 +179,11 @@ class UopJump : public InternalUop<UopJump> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDstIdx(size_t dst_idx);
 };
 
-class UopLLa : public InternalUop<UopLLa> {
+class UopLla : public InternalUop<UopLla> {
     VirtualRegister *dst_;
 
     std::string src_;
@@ -170,6 +193,9 @@ class UopLLa : public InternalUop<UopLLa> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetSrc(std::string &src);
 };
 
 class UopLoad : public InternalUop<UopLoad> {
@@ -183,6 +209,10 @@ class UopLoad : public InternalUop<UopLoad> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetBase(VirtualRegister *base);
+    void SetOff(int32_t off);
 };
 
 class UopStore : public InternalUop<UopStore> {
@@ -196,6 +226,10 @@ class UopStore : public InternalUop<UopStore> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetSrc(VirtualRegister *src);
+    void SetBase(VirtualRegister *base);
+    void SetOff(int32_t off);
 };
 
 class UopFLoad : public InternalUop<UopFLoad> {
@@ -209,6 +243,10 @@ class UopFLoad : public InternalUop<UopFLoad> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetDst(VirtualRegister *dst);
+    void SetBase(VirtualRegister *base);
+    void SetOff(int32_t off);
 };
 
 class UopFStore : public InternalUop<UopFStore> {
@@ -222,6 +260,10 @@ class UopFStore : public InternalUop<UopFStore> {
    public:
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetSrc(VirtualRegister *src);
+    void SetBase(VirtualRegister *base);
+    void SetOff(int32_t off);
 };
 
 class UopICmp : public InternalUop<UopICmp> {
@@ -239,6 +281,11 @@ class UopICmp : public InternalUop<UopICmp> {
 
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(COMP_KIND kind);
 };
 
 class UopFCmp : public InternalUop<UopFCmp> {
@@ -256,6 +303,11 @@ class UopFCmp : public InternalUop<UopFCmp> {
 
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(COMP_KIND kind);
 };
 
 class UopIBin : public InternalUop<UopIBin> {
@@ -273,6 +325,11 @@ class UopIBin : public InternalUop<UopIBin> {
 
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(IBIN_KIND kind);
 };
 
 class UopIBinImm : public InternalUop<UopIBinImm> {
@@ -290,6 +347,11 @@ class UopIBinImm : public InternalUop<UopIBinImm> {
 
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetImm(uint32_t imm);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(IBIN_KIND kind);
 };
 
 class UopFBin : public InternalUop<UopFBin> {
@@ -307,4 +369,53 @@ class UopFBin : public InternalUop<UopFBin> {
 
     const std::vector<VirtualRegister *> GetOperands() const;
     VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(FBIN_KIND kind);
+};
+
+class UopICmpBranch : public InternalUop<UopICmpBranch> {
+    VirtualRegister *lhs_;
+    VirtualRegister *rhs_;
+
+    size_t dst_idx_;
+
+    COMP_KIND kind_;
+
+    void formatString(FILE *fp) final;
+
+   public:
+    const std::vector<VirtualRegister *> GetOperands() const;
+    VirtualRegister *GetResult() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDstIdx(size_t dst_idx);
+    void SetKind(COMP_KIND kind);
+};
+
+// for phi operation
+
+struct PhiOperand {
+    PHI_KIND kind;
+    size_t data;
+    size_t lbidx;
+};
+
+class UopPhi : public InternalUop<UopPhi> {
+    std::vector<PhiOperand> operands_;
+
+    VirtualRegister *dst_;
+
+    void formatString(FILE *fp) final;
+
+   public:
+    const std::vector<VirtualRegister *> GetOperands() const;
+    VirtualRegister *GetResult() const;
+
+    void PushOperand(PhiOperand &operand);
+    void SetDst(size_t dst_idx);
+    void SetKind(COMP_KIND kind);
 };

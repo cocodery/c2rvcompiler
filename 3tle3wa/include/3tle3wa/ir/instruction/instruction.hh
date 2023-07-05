@@ -6,6 +6,7 @@
 #include <string>
 #include <type_traits>
 
+#include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/ir/exprFlod.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
@@ -17,7 +18,7 @@ using InstPtr = std::shared_ptr<Instruction>;
 class CtrlFlowGraphNode;
 using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
 
-class Instruction {
+class Instruction : public Translatable {
    protected:
     size_t idx;
 

@@ -28,9 +28,11 @@ class RLGen : public Serializable {
     void registerLocalConstant(Constant *cvp, const size_t idx);
 
     void registerNormalFunction(NormalFuncList &nflst);
+    
+    void formatString(FILE *fp);
 
    public:
-    RLGen(CompilationUnit &comp_unit);
+    RLGen();
 
     ~RLGen();
 

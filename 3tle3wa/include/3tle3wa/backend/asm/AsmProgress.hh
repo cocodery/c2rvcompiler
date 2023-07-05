@@ -24,7 +24,7 @@ class AsmProgress : public Serializable {
     AsmProgress(std::string &name);
     ~AsmProgress();
 
-    void Push(std::unique_ptr<AsmBasicBlock> &ablk, bool isRet = false);
+    void Push(std::unique_ptr<AsmBasicBlock> &ablk, bool is_ret = false);
 
     AsmBasicBlock *CreateEntryBlock();
 

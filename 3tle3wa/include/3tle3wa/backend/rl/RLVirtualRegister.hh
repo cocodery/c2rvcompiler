@@ -4,7 +4,7 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
-enum class VREG_TYPE { FLT, PTR, INT, ARR };
+enum class VREG_TYPE { FLT, PTR, INT };
 
 class StackInfo;
 

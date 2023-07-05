@@ -3,7 +3,7 @@
 using VecVR = std::vector<VirtualRegister *>;
 
 const VecVR UopRet::GetOperands() const {
-    return VecVR{src_};
+    return VecVR{retval_};
 }
 
 VirtualRegister *UopRet::GetResult() const {
@@ -74,11 +74,11 @@ VirtualRegister *UopJump::GetResult() const {
     return nullptr;
 }
 
-const VecVR UopLLa::GetOperands() const {
+const VecVR UopLla::GetOperands() const {
     return VecVR{};
 }
 
-VirtualRegister *UopLLa::GetResult() const {
+VirtualRegister *UopLla::GetResult() const {
     return dst_;
 }
 

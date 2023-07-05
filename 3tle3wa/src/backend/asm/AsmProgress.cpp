@@ -22,8 +22,8 @@ AsmProgress::~AsmProgress() {
     }
 }
 
-void AsmProgress::Push(std::unique_ptr<AsmBasicBlock> &ablk, bool isRet) {
-    if (isRet) {
+void AsmProgress::Push(std::unique_ptr<AsmBasicBlock> &ablk, bool is_ret) {
+    if (is_ret) {
         if (ret_ != nullptr) {
             panic("double ret block");
         }

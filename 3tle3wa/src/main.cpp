@@ -8,7 +8,8 @@
 #include <memory>
 #include <string>
 
-#include "3tle3wa/backend/code_gen.hh"
+#include "3tle3wa/backend/asm/AsmGen.hh"
+#include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/frontend/AstVisitor.hh"
 #include "3tle3wa/pass/Pass.hh"
 #include "3tle3wa/utils/Logs.hh"
@@ -19,15 +20,15 @@ using namespace antlr4;
 using std::cout;
 using std::endl;
 
-char *dbgfile = nullptr;
-char optlvl = 0;
-
 int main(int argc, char *argv[]) {
     bool pusage = false;
 
     const char *input = nullptr;
     const char *output = nullptr;
     const char *irfile = nullptr;
+    const char *dbgfile = nullptr;
+
+    char optlvl = 0;
 
     for (int ch; (ch = getopt(argc, argv, "SO:l:o:d:h")) != -1;) {
         switch (ch) {
@@ -87,41 +88,45 @@ int main(int argc, char *argv[]) {
         dbgf.close();
     }
 
-    std::unique_ptr<asm_env> asmgen = nullptr;
+    ANTLRInputStream source(src);
+    SysYLexer lexer(&source);
+    CommonTokenStream tokens(&lexer);
+    SysYParser parser(&tokens);
+    parser.setErrorHandler(std::make_shared<BailErrorStrategy>());
 
-    do {
-        ANTLRInputStream source(src);
-        SysYLexer lexer(&source);
-        CommonTokenStream tokens(&lexer);
-        SysYParser parser(&tokens);
-        parser.setErrorHandler(std::make_shared<BailErrorStrategy>());
+    SysYParser::CompilationUnitContext *root = parser.compilationUnit();
 
-        SysYParser::CompilationUnitContext *root = parser.compilationUnit();
+    CompilationUnit comp_unit;
 
-        CompilationUnit comp_unit;
+    std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
+    visitor->visitCompilationUnit(root);
+    visitor = nullptr;
 
-        std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
-        visitor->visitCompilationUnit(root);
-        visitor = nullptr;
+    Optimization optimizer(comp_unit);
+    optimizer.DoOptimization();
 
-        Optimization optimizer(comp_unit);
-        optimizer.DoOptimization();
+    if (irfile) {
+        comp_unit.generatellvmIR(irfile);
+    }
 
-        if (irfile) {
-            comp_unit.generatellvmIR(irfile);
+    std::unique_ptr<AsmGen> asmgen = nullptr;
+
+    if (output != nullptr or dbgfile != nullptr) {
+        RLGen rlgen;
+        rlgen.Register(comp_unit);
+        rlgen.SerialGenerate();
+
+        if (dbgfile != nullptr) {
+            std::fstream fs(dbgfile, std::ios::out);
+            fs << rlgen.CString();
         }
 
-        if (output) {
-            code_gen cg(comp_unit);
-            cg.gen_env();
-            asmgen = std::move(cg.exports());
-        }
-    } while (0);
+        asmgen = std::move(rlgen.ExportAsmGen());
+    }
 
-    if (output and asmgen != nullptr) {
+    if (output != nullptr and asmgen != nullptr) {
         std::fstream fs(output, std::ios::out);
-        asmgen->do_optimize();
-        asmgen->gen_asm(fs);
+        fs << asmgen->CString();
     }
 
     return 0;

@@ -5,6 +5,8 @@
 
 #include "3tle3wa/utils/Logs.hh"
 
+class InternalTranslation;
+
 class Serializable {
    private:
     char *buf_{nullptr};
@@ -38,4 +40,9 @@ class Weightable {
      virtual bool operator==(const Weightable &other) final;
      
      virtual bool operator<(const Weightable &other) final;
+};
+
+class Translatable {
+    public:
+     virtual void TranslateTo(InternalTranslation &itx);
 };

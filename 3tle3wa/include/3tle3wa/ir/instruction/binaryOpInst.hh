@@ -21,6 +21,8 @@ class IBinaryInst final : public BinaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class FBinaryInst;
@@ -41,4 +43,6 @@ class FBinaryInst final : public BinaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };

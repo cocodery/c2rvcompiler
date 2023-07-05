@@ -9,7 +9,7 @@
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/utils/Logs.hh"
 
-RLGen::RLGen(CompilationUnit &comp_unit) : asm_gen_(std::make_unique<AsmGen>()) {}
+RLGen::RLGen() : asm_gen_(std::make_unique<AsmGen>()) {}
 
 RLGen::~RLGen() {}
 
@@ -81,7 +81,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
             auto &&cstarr = init_array_ptr->GetConstArr();
 
             for (auto &&v : cstarr) {
-                auto cinfo = XConstValue(v->GetValue());
+                auto &&cinfo = XConstValue(v->GetValue());
 
                 // no need to check for now
                 agv->Push(cinfo.v32_.u32_);
@@ -97,7 +97,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
     }
 
     auto init_val = dynamic_cast<Constant *>(init_val_ptr);
-    auto cinfo = XConstValue(init_val->GetValue());
+    auto &&cinfo = XConstValue(init_val->GetValue());
     auto agv = std::make_unique<AsmGlobalValue>(name, 4, false, 1);
     agv->Push(cinfo.v32_.u32_);
 
@@ -115,7 +115,7 @@ void RLGen::registerNormalFunction(NormalFuncList &nflst) {
 }
 
 void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
-    auto cinfo = XConstValue(cvp->GetValue());
+    auto &&cinfo = XConstValue(cvp->GetValue());
     Assert(cinfo.isflt_ and cinfo.width_ == 32, "not float local constant");
     auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
     auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);

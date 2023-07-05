@@ -9,28 +9,32 @@ class VirtualRegister;
 class StackInfo;
 enum VREG_TYPE;
 
-class StackPlanner {
+class RLPlanner {
     std::unordered_map<uint64_t, StackInfo *> sinfo_map_;
-
-    std::list<std::unique_ptr<StackInfo>> storage_;
-
-   public:
-    StackInfo *Alloca(VREG_TYPE type, size_t len);
-
-    void Plan();
-};
-
-class VirtRegPlanner {
     std::unordered_map<uint64_t, VirtualRegister *> vr_map_;
 
-    std::list<std::unique_ptr<VirtualRegister>> storage_;
+    std::list<std::unique_ptr<VirtualRegister>> vr_storage_;
+    std::list<std::unique_ptr<StackInfo>> stk_storage_;
+
+    size_t stkidx_;
+    size_t regidx_;
 
    public:
+    RLPlanner(size_t regidx);
+
+    StackInfo *Alloca(VREG_TYPE type, size_t len);
+
+    VirtualRegister *Alloca(uint64_t vridx, size_t len);
+
     VirtualRegister *AllocVReg(VREG_TYPE type, uint64_t vridx);
+
+    VirtualRegister *NewVReg(VREG_TYPE type);
 
     VirtualRegister *GetVReg(uint64_t vridx);
 
     void Link(uint64_t income, uint64_t old);
 
-    void Plan();
+    void PlanRegisters();
+
+    void PlanStackSpace();
 };

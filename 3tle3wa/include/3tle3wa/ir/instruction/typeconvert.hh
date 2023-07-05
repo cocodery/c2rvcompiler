@@ -21,6 +21,8 @@ class SitoFpInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class FptoSiInst;
@@ -39,6 +41,8 @@ class FptoSiInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class ZextInst;
@@ -57,4 +61,6 @@ class ZextInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };

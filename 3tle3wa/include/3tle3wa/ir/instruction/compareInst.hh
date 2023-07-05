@@ -21,6 +21,8 @@ class ICmpInst final : public BinaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class FCmpInst;
@@ -41,4 +43,6 @@ class FCmpInst final : public BinaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };

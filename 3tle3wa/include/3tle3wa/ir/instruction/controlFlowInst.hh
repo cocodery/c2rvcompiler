@@ -27,6 +27,8 @@ class ReturnInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class JumpInst;
@@ -55,6 +57,8 @@ class JumpInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class BranchInst;
@@ -88,4 +92,6 @@ class BranchInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };

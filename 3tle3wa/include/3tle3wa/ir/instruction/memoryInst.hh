@@ -29,6 +29,8 @@ class AllocaInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class StoreInst;
@@ -57,6 +59,8 @@ class StoreInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class LoadInst;
@@ -74,6 +78,8 @@ class LoadInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
 
 class GetElementPtrInst;
@@ -104,4 +110,6 @@ class GetElementPtrInst final : public Instruction {
     const BaseValueList GetOprands() const;
 
     std::string tollvmIR();
+
+    void TranslateTo(InternalTranslation &itx) final override;
 };
