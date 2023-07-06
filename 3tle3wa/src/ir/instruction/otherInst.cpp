@@ -162,6 +162,7 @@ void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr blo
     _value->InsertUser(inst);
 }
 
+std::list<std::pair<BaseValuePtr, CfgNodePtr>> &PhiInst::GetRefList() { return datalist; }
 const std::list<std::pair<BaseValuePtr, CfgNodePtr>> &PhiInst::GetDataList() const { return datalist; }
 
 void PhiInst::RemoveResParent() { result->SetParent(nullptr); }

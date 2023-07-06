@@ -3,6 +3,7 @@
 #include "3tle3wa/ir/function/basefunc.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
 
 class BaseFunction;
 using BaseFuncPtr = std::shared_ptr<BaseFunction>;
@@ -80,6 +81,7 @@ class PhiInst final : public Instruction {
 
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 
+    std::list<std::pair<BaseValuePtr, CfgNodePtr>> &GetRefList();
     const std::list<std::pair<BaseValuePtr, CfgNodePtr>> &GetDataList() const;
 
     void RemoveResParent();
