@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <iomanip>
 
-#define NDEBUG
+#define CRVC_UNUSE [[maybe_unused]]
+
+// #define NDEBUG
 
 #ifndef NDEBUG
 
@@ -41,3 +43,4 @@
 #define Assert(expr, fmt, ...)
 
 #endif
+

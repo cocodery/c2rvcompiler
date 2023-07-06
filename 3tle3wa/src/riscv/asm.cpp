@@ -6,7 +6,6 @@
 
 #define GENINST(fmt, ...)                                  \
     do {                                                   \
-        size_t len;                                        \
         FILE *out = open_memstream(&inst_txt_, &txt_len_); \
         fprintf(out, fmt, ##__VA_ARGS__);                  \
         fflush(out);                                       \

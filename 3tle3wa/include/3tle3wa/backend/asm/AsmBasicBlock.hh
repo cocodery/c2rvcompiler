@@ -21,5 +21,7 @@ class AsmBasicBlock : public Serializable {
    public:
     AsmBasicBlock(size_t lbidx, AsmProgress *father);
 
+    virtual ~AsmBasicBlock() = default;
+
     void Push(AsmInstruction *inst);
 };

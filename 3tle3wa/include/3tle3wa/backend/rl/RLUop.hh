@@ -4,50 +4,11 @@
 #include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
+#include "3tle3wa/backend/rl/Enums.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 
 class VirtualRegister;
 class AsmBasicBlock;
-
-enum class COMP_KIND {
-    // 比较枚举对应 opCode
-
-    LTH = OP_LTH,
-    GTH = OP_GTH,
-    LEQ = OP_LEQ,
-    GEQ = OP_GEQ,
-    EQU = OP_EQU,
-    NEQ = OP_NEQ,
-};
-
-enum class IBIN_KIND {
-    // 运算枚举对应 opCode
-
-    ADD = OP_ADD,
-    SUB = OP_SUB,
-    MUL = OP_MUL,
-    DIV = OP_DIV,
-    REM = OP_REM,
-    SLL = OP_LSHIFT,
-    SRA = OP_RSHIFT,
-    XOR,
-    AND,
-    OR,
-};
-
-enum class FBIN_KIND {
-    // 运算枚举对应 opCode
-
-    ADD = OP_ADD,
-    SUB = OP_SUB,
-    MUL = OP_MUL,
-    DIV = OP_DIV
-};
-
-enum class PHI_KIND {
-    IMM,
-    REG
-};
 
 class UopGeneral : public Serializable {
    protected:
@@ -59,6 +20,8 @@ class UopGeneral : public Serializable {
 
     virtual const std::vector<VirtualRegister *> GetOperands() const = 0;
     virtual VirtualRegister *GetResult() const = 0;
+
+    virtual OPERATION_KIND GetOpKind() const = 0;
 
     virtual ~UopGeneral() = default;
 };
@@ -76,6 +39,8 @@ class UopRet : public InternalUop<UopRet> {
     VirtualRegister *GetResult() const;
 
     void SetRetVal(VirtualRegister *retval);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopCall : public InternalUop<UopCall> {
@@ -85,6 +50,9 @@ class UopCall : public InternalUop<UopCall> {
 
     std::string callee_;
 
+    bool libcall_{false};
+    bool tailcall_{false};
+
     void formatString(FILE *fp) final;
 
    public:
@@ -93,8 +61,12 @@ class UopCall : public InternalUop<UopCall> {
 
     void SetRetVal(VirtualRegister *retval);
     void SetCallee(std::string &callee);
+    void SetLibCall(bool libcall);
+    void SetTailCall(bool tailcall);
 
     void PushParam(VirtualRegister *param);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopLui : public InternalUop<UopLui> {
@@ -110,6 +82,8 @@ class UopLui : public InternalUop<UopLui> {
 
     void SetDst(VirtualRegister *dst);
     void SetImm(uint32_t imm);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopMv : public InternalUop<UopMv> {
@@ -124,6 +98,8 @@ class UopMv : public InternalUop<UopMv> {
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopCvtS2W : public InternalUop<UopCvtS2W> {
@@ -138,6 +114,8 @@ class UopCvtS2W : public InternalUop<UopCvtS2W> {
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopCvtW2S : public InternalUop<UopCvtW2S> {
@@ -152,6 +130,8 @@ class UopCvtW2S : public InternalUop<UopCvtW2S> {
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopBranch : public InternalUop<UopBranch> {
@@ -169,6 +149,8 @@ class UopBranch : public InternalUop<UopBranch> {
     void SetCond(VirtualRegister *cond);
     void SetOnTrue(bool cond);
     void SetDstIdx(size_t dst_idx);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopJump : public InternalUop<UopJump> {
@@ -181,6 +163,8 @@ class UopJump : public InternalUop<UopJump> {
     VirtualRegister *GetResult() const;
 
     void SetDstIdx(size_t dst_idx);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopLla : public InternalUop<UopLla> {
@@ -196,6 +180,8 @@ class UopLla : public InternalUop<UopLla> {
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(std::string &src);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopLoad : public InternalUop<UopLoad> {
@@ -213,6 +199,8 @@ class UopLoad : public InternalUop<UopLoad> {
     void SetDst(VirtualRegister *dst);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopStore : public InternalUop<UopStore> {
@@ -230,6 +218,8 @@ class UopStore : public InternalUop<UopStore> {
     void SetSrc(VirtualRegister *src);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopFLoad : public InternalUop<UopFLoad> {
@@ -247,6 +237,8 @@ class UopFLoad : public InternalUop<UopFLoad> {
     void SetDst(VirtualRegister *dst);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopFStore : public InternalUop<UopFStore> {
@@ -264,6 +256,8 @@ class UopFStore : public InternalUop<UopFStore> {
     void SetSrc(VirtualRegister *src);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopICmp : public InternalUop<UopICmp> {
@@ -286,6 +280,8 @@ class UopICmp : public InternalUop<UopICmp> {
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(COMP_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopFCmp : public InternalUop<UopFCmp> {
@@ -308,6 +304,8 @@ class UopFCmp : public InternalUop<UopFCmp> {
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(COMP_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopIBin : public InternalUop<UopIBin> {
@@ -330,11 +328,13 @@ class UopIBin : public InternalUop<UopIBin> {
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(IBIN_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopIBinImm : public InternalUop<UopIBinImm> {
     VirtualRegister *lhs_;
-    uint32_t imm_lo12_;
+    int32_t imm_lo12_;
 
     VirtualRegister *dst_;
 
@@ -349,9 +349,11 @@ class UopIBinImm : public InternalUop<UopIBinImm> {
     VirtualRegister *GetResult() const;
 
     void SetLhs(VirtualRegister *lhs);
-    void SetImm(uint32_t imm);
+    void SetImm(int32_t imm);
     void SetDst(VirtualRegister *dst);
     void SetKind(IBIN_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopFBin : public InternalUop<UopFBin> {
@@ -374,6 +376,8 @@ class UopFBin : public InternalUop<UopFBin> {
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(FBIN_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 class UopICmpBranch : public InternalUop<UopICmpBranch> {
@@ -394,6 +398,8 @@ class UopICmpBranch : public InternalUop<UopICmpBranch> {
     void SetRhs(VirtualRegister *rhs);
     void SetDstIdx(size_t dst_idx);
     void SetKind(COMP_KIND kind);
+
+    OPERATION_KIND GetOpKind() const;
 };
 
 // for phi operation
@@ -417,5 +423,6 @@ class UopPhi : public InternalUop<UopPhi> {
 
     void PushOperand(PhiOperand &operand);
     void SetDst(size_t dst_idx);
-    void SetKind(COMP_KIND kind);
+
+    OPERATION_KIND GetOpKind() const { return OPERATION_KIND::INTOPT; };
 };

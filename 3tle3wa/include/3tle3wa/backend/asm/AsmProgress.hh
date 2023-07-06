@@ -21,8 +21,9 @@ class AsmProgress : public Serializable {
     void formatString(FILE *fp) final;
 
    public:
-    AsmProgress(std::string &name);
-    ~AsmProgress();
+    AsmProgress(const std::string &name);
+
+    virtual ~AsmProgress();
 
     void Push(std::unique_ptr<AsmBasicBlock> &ablk, bool is_ret = false);
 

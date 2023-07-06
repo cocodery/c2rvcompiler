@@ -4,6 +4,8 @@
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/rl/RLPlanner.hh"
+#include "3tle3wa/backend/rl/RLStackInfo.hh"
+#include "3tle3wa/backend/rl/RLUop.hh"
 #include "3tle3wa/utils/Logs.hh"
 #include "3tle3wa/ir/IR.hh"
 
@@ -47,12 +49,16 @@ void InternalTranslation::DoTranslation() {
     while (cur_cfgit != topo.end()) {
         auto rlbb = std::make_unique<RLBasicBlock>(*cur_cfgit);
 
-        curstat_ = {cur_cfgit->get(), nxt_cfgit->get(), rlbb.get()};
+        curstat_.cur_cfg = cur_cfgit->get();
+        curstat_.nxt_cfg = nxt_cfgit->get();
+        curstat_.cur_blk = rlbb.get();
         curstat_.meettail = false;
 
         for (auto &inst : (*cur_cfgit)->GetInstList()) {
             inst->TranslateTo(*this);
         }
+
+        rlps_->Push(rlbb);
 
         cur_cfgit = nxt_cfgit++;
     }

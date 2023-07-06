@@ -27,7 +27,7 @@ class AsmGlobalValue : public Serializable {
    public:
     AsmGlobalValue(const std::string &name, size_t len, bool uninit, size_t reserve);
 
-    ~AsmGlobalValue();
+    virtual ~AsmGlobalValue();
 
     void Push(uint32_t value);
 

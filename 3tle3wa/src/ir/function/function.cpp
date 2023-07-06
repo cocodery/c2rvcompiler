@@ -1,4 +1,5 @@
 #include "3tle3wa/ir/function/function.hh"
+#include "3tle3wa/utils/Logs.hh"
 
 #include <cstddef>
 #include <memory>
@@ -35,7 +36,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
     std::unordered_map<CfgNodePtr, bool> visit;
     CfgNodeList preorder_node = CfgNodeList();
 
-    [[maybe_unused]] auto PredAllVisited = [&visit](CfgNodePtr succ) {
+    CRVC_UNUSE auto PredAllVisited = [&visit](CfgNodePtr succ) {
         if (succ->FindBlkAttr(LOOPBEGIN)) return true;
         for (auto &&pred : succ->GetPredcessors()) {
             if (pred->GetDominatorSet().size() == 0) continue;
@@ -61,7 +62,7 @@ CfgNodeList NormalFunction::TopoSortFromExit() {
     std::unordered_map<CfgNodePtr, bool> visit;
     CfgNodeList postorder_node = CfgNodeList();
 
-    [[maybe_unused]] auto SuccAllVisited = [&visit](CfgNodePtr pred) {
+    CRVC_UNUSE auto SuccAllVisited = [&visit](CfgNodePtr pred) {
         if (pred->GetBlockAttr() == LOOPBEGIN) return true;
         for (auto &&succ : pred->GetSuccessors()) {
             if (visit[succ] == false) return false;

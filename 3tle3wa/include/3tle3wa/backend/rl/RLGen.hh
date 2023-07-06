@@ -12,7 +12,12 @@ class AsmGen;
 class AsmGlobalValue;
 class CompilationUnit;
 class InternalTranslation;
-class NormalFuncList;
+class GlobalValue;
+class Constant;
+class NormalFunction;
+
+using NormalFuncPtr = std::shared_ptr<NormalFunction>;
+using NormalFuncList = std::list<NormalFuncPtr>;
 
 class RLGen : public Serializable {
     // look up table
@@ -29,7 +34,7 @@ class RLGen : public Serializable {
 
     void registerNormalFunction(NormalFuncList &nflst);
     
-    void formatString(FILE *fp);
+    void formatString(FILE *fp) final;
 
    public:
     RLGen();

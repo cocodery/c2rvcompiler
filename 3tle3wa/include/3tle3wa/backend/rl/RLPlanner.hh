@@ -5,11 +5,13 @@
 #include <memory>
 #include <unordered_map>
 
+#include "3tle3wa/backend/Interface.hh"
+#include "3tle3wa/backend/rl/Enums.hh"
+
 class VirtualRegister;
 class StackInfo;
-enum VREG_TYPE;
 
-class RLPlanner {
+class RLPlanner : public Serializable {
     std::unordered_map<uint64_t, StackInfo *> sinfo_map_;
     std::unordered_map<uint64_t, VirtualRegister *> vr_map_;
 
@@ -19,10 +21,14 @@ class RLPlanner {
     size_t stkidx_;
     size_t regidx_;
 
+    void formatString(FILE *fp) final;
+
    public:
     RLPlanner(size_t regidx);
 
-    StackInfo *Alloca(VREG_TYPE type, size_t len);
+    virtual ~RLPlanner() = default;
+
+    StackInfo *Alloca(size_t len);
 
     VirtualRegister *Alloca(uint64_t vridx, size_t len);
 

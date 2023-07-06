@@ -94,7 +94,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         RemoveNode(i);
     };
 
-    [[maybe_unused]] auto HoistBranch = [](CfgNodePtr i, CfgNodePtr j) {
+    auto HoistBranch = [](CfgNodePtr i, CfgNodePtr j) {
         auto &&j_branch_inst = std::static_pointer_cast<BranchInst>(j->GetLastInst());
         auto &&i_branch_inst = BranchInst::CreatePtr(j_branch_inst->GetCondition(), j_branch_inst->GetTrueTarget(),
                                                      j_branch_inst->GetFalseTarget(), i);

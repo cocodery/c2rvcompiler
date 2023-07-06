@@ -22,5 +22,5 @@ class AsmLocalConstant : public Serializable {
    public:
     AsmLocalConstant(size_t idx, uint32_t values);
 
-    ~AsmLocalConstant();
+    virtual ~AsmLocalConstant();
 };

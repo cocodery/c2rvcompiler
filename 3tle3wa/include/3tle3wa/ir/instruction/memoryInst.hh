@@ -24,7 +24,7 @@ class AllocaInst final : public Instruction {
 
     void RemoveResParent();
 
-    bool ReplaceSRC([[maybe_unused]] BaseValuePtr, [[maybe_unused]] BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
 
     const BaseValueList GetOprands() const;
 

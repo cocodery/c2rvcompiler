@@ -4,11 +4,16 @@
 #include <unordered_map>
 #include <memory>
 
-class NormalFuncPtr;
+#include "3tle3wa/backend/Interface.hh"
+
+class NormalFunction;
+class CtrlFlowGraphNode;
+
 class AsmGlobalValue;
 class RLProgress;
 class RLBasicBlock;
 class RLPlanner;
+class VirtualRegister;
 
 // control flow inst
 class ReturnInst;
@@ -39,7 +44,9 @@ class CallInst;
 class BitCastInst;
 class PhiInst;
 
-class InternalTranslation {
+using NormalFuncPtr = std::shared_ptr<NormalFunction>;
+
+class InternalTranslation : public Serializable {
     const NormalFuncPtr &fptr_;
     const std::unordered_map<uint32_t, size_t> &lc_map_;
     const std::unordered_map<size_t, AsmGlobalValue *> &gv_map_;
@@ -57,11 +64,23 @@ class InternalTranslation {
         bool meettail;
     } curstat_;
 
+    void li(VirtualRegister *dst, uint32_t imm);
+
+    void formatString(FILE *fp);
+
    public:
     InternalTranslation(const NormalFuncPtr &fptr, const std::unordered_map<uint32_t, size_t> &lc_map,
                         const std::unordered_map<size_t, AsmGlobalValue *> &gv_map);
     
     void DoTranslation();
+
+    void DoVSchedule();
+
+    void NoSchedule();
+
+    void DoAssignment();
+
+    void DoRSchedule();
 
     void Translate(ReturnInst *);
     void Translate(JumpInst *);

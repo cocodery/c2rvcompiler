@@ -29,7 +29,7 @@ const VariablePtr AllocaInst::GetAllocaAddr() const { return result; }
 
 void AllocaInst::RemoveResParent() { result->SetParent(nullptr); }
 
-bool AllocaInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
+bool AllocaInst::ReplaceSRC(CRVC_UNUSE BaseValuePtr replacee, CRVC_UNUSE BaseValuePtr replacer) { return false; }
 
 const BaseValueList AllocaInst::GetOprands() const { return BaseValueList(); }
 

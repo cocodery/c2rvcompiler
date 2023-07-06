@@ -3,9 +3,10 @@
 #include <string>
 
 #include "3tle3wa/backend/asm/AsmBasicBlock.hh"
+#include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/utils/Logs.hh"
 
-AsmProgress::AsmProgress(std::string &name) {
+AsmProgress::AsmProgress(const std::string &name) {
     ret_ = nullptr;
 
     FILE *fp = open_memstream(&label_, &label_len_);
@@ -33,7 +34,8 @@ void AsmProgress::Push(std::unique_ptr<AsmBasicBlock> &ablk, bool is_ret) {
 }
 
 AsmBasicBlock *AsmProgress::CreateEntryBlock() {
-    ablks_.push_front(std::make_unique<AsmBasicBlock>());
+    // TODO: fix this magic number
+    ablks_.push_front(std::make_unique<AsmBasicBlock>(0xdeadbeef, this));
     return ablks_.front().get();
 }
 

@@ -4,6 +4,8 @@
 #include <cstdint>
 
 class StackInfo {
+    size_t sidx_;
+
     size_t stack_len_;
 
     int64_t offset_;
@@ -11,9 +13,12 @@ class StackInfo {
     bool allocated_;
 
    public:
-    void SetOff(int64_t off) const;
-    int64_t GetOff() const;
+    StackInfo(size_t sidx, size_t slen);
 
-    void SetSLen(size_t slen) const;
+    size_t GetSidx() const;
+
     size_t GetSLen() const;
+
+    void SetOff(int64_t off);
+    int64_t GetOff() const;
 };

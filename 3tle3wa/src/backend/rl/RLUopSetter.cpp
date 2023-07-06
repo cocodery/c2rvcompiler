@@ -1,6 +1,7 @@
 #include <cinttypes>
 
 #include "3tle3wa/backend/rl/RLUop.hh"
+#include "3tle3wa/backend/utils.hh"
 
 void UopRet::SetRetVal(VirtualRegister *retval) { retval_ = retval; }
 
@@ -8,13 +9,17 @@ void UopCall::SetRetVal(VirtualRegister *retval) { retval_ = retval; }
 
 void UopCall::SetCallee(std::string &callee) { callee_ = callee; }
 
+void UopCall::SetLibCall(bool libcall) { libcall_ = libcall; }
+
+void UopCall::SetTailCall(bool tailcall) { tailcall_ = tailcall; }
+
 void UopCall::PushParam(VirtualRegister *param) { params_.push_back(param); }
 
 void UopLui::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
 void UopLui::SetImm(uint32_t imm) {
     uint32_t msk = 0xFFF;
-    if (msk & imm != 0) {
+    if ((msk & imm) != 0) {
         panic("illegel immediate <%" PRIx32 ">", imm);
     }
     imm_up20_ = imm;
@@ -49,9 +54,7 @@ void UopLoad::SetDst(VirtualRegister *dst) { dst_ = dst; }
 void UopLoad::SetBase(VirtualRegister *base) { base_ = base; }
 
 void UopLoad::SetOff(int32_t off) {
-    uint32_t msk = 0xFFF;
-    msk = ~msk;
-    if (msk & off != 0) {
+    if (not ImmWithin(12, off)) {
         panic("illegel immediate <%" PRIx32 ">", off);
     }
     off_lo12_ = off;
@@ -62,9 +65,7 @@ void UopStore::SetSrc(VirtualRegister *src) { src_ = src; }
 void UopStore::SetBase(VirtualRegister *base) { base_ = base; }
 
 void UopStore::SetOff(int32_t off) {
-    uint32_t msk = 0xFFF;
-    msk = ~msk;
-    if (msk & off != 0) {
+    if (not ImmWithin(12, off)) {
         panic("illegel immediate <%" PRIx32 ">", off);
     }
     off_lo12_ = off;
@@ -75,9 +76,7 @@ void UopFLoad::SetDst(VirtualRegister *dst) { dst_ = dst; }
 void UopFLoad::SetBase(VirtualRegister *base) { base_ = base; }
 
 void UopFLoad::SetOff(int32_t off) {
-    uint32_t msk = 0xFFF;
-    msk = ~msk;
-    if (msk & off != 0) {
+    if (not ImmWithin(12, off)) {
         panic("illegel immediate <%" PRIx32 ">", off);
     }
     off_lo12_ = off;
@@ -88,9 +87,7 @@ void UopFStore::SetSrc(VirtualRegister *src) { src_ = src; }
 void UopFStore::SetBase(VirtualRegister *base) { base_ = base; }
 
 void UopFStore::SetOff(int32_t off) {
-    uint32_t msk = 0xFFF;
-    msk = ~msk;
-    if (msk & off != 0) {
+    if (not ImmWithin(12, off)) {
         panic("illegel immediate <%" PRIx32 ">", off);
     }
     off_lo12_ = off;
@@ -122,10 +119,8 @@ void UopIBin::SetKind(IBIN_KIND kind) { kind_ = kind; }
 
 void UopIBinImm::SetLhs(VirtualRegister *lhs) { lhs_ = lhs; }
 
-void UopIBinImm::SetImm(uint32_t imm) {
-    uint32_t msk = 0xFFF;
-    msk = ~msk;
-    if (msk & imm != 0) {
+void UopIBinImm::SetImm(int32_t imm) {
+    if (not ImmWithin(12, imm)) {
         panic("illegel immediate <%" PRIx32 ">", imm);
     }
     imm_lo12_ = imm;

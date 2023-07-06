@@ -4,12 +4,15 @@
 #include <memory>
 #include <vector>
 
+#include "3tle3wa/backend/Interface.hh"
+#include "3tle3wa/backend/rl/Enums.hh"
+
 class RLPlanner;
 class RLBasicBlock;
 class VirtualRegister;
-enum class VREG_TYPE;
+class Variable;
 
-class RLProgress {
+class RLProgress : public Serializable {
     char *label_;
     size_t label_len_;
 
@@ -19,6 +22,8 @@ class RLProgress {
 
     std::list<std::unique_ptr<RLBasicBlock>> rlbbs_;
 
+    void formatString(FILE *fp) final;
+
    public:
     RLProgress(const std::string &name);
 
@@ -27,4 +32,10 @@ class RLProgress {
     void Push(std::unique_ptr<RLBasicBlock> &rlbb);
 
     void SetParam(Variable *var, VREG_TYPE type);
+
+    void VirtualSchedule();
+
+    void RealSchedule();
+    
+    void NoSchedule();
 };

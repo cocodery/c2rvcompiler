@@ -1,10 +1,20 @@
+#include "3tle3wa/backend/rl/RLGen.hh"
+
 #include <thread>
 
+#include "3tle3wa/backend/InternalTranslation.hh"
+#include "3tle3wa/backend/asm/AsmBasicBlock.hh"
 #include "3tle3wa/backend/asm/AsmGen.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/backend/asm/AsmLocalConstant.hh"
-#include "3tle3wa/backend/InternalTranslation.hh"
-#include "3tle3wa/backend/rl/RLGen.hh"
+#include "3tle3wa/backend/asm/AsmProgress.hh"
+#include "3tle3wa/backend/rl/RLBasicBlock.hh"
+#include "3tle3wa/backend/rl/RLPlanner.hh"
+#include "3tle3wa/backend/rl/RLProgress.hh"
+#include "3tle3wa/backend/rl/RLStackInfo.hh"
+#include "3tle3wa/backend/rl/RLUop.hh"
+#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/utils/Logs.hh"
@@ -50,7 +60,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
 
             auto agv = std::make_unique<AsmGlobalValue>(name, uninit_array_type_ptr->GetCapacity() * 4, true, 0);
 
-            auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
+            CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
             Assert(result.second, "insert global variable fail!");
 
             asm_gen_->PushAsmGlobalValue(agv);
@@ -59,7 +69,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
 
         auto agv = std::make_unique<AsmGlobalValue>(name, 4, true, 0);
 
-        auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
+        CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
         Assert(result.second, "insert global variable fail!");
 
         asm_gen_->PushAsmGlobalValue(agv);
@@ -75,7 +85,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
 
         auto capacity = init_array_type_ptr->GetCapacity();
         auto agv = std::make_unique<AsmGlobalValue>(name, capacity * 4, false, capacity);
-        
+
         // extract const array
         auto push_init_value = [init_array_ptr, &agv]() {
             auto &&cstarr = init_array_ptr->GetConstArr();
@@ -89,7 +99,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
         };
         push_init_value();
 
-        auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
+        CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
         Assert(result.second, "insert global variable fail!");
 
         asm_gen_->PushAsmGlobalValue(agv);
@@ -101,14 +111,14 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
     auto agv = std::make_unique<AsmGlobalValue>(name, 4, false, 1);
     agv->Push(cinfo.v32_.u32_);
 
-    auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
+    CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
     Assert(result.second, "insert global variable fail!");
 
     asm_gen_->PushAsmGlobalValue(agv);
 }
 
 void RLGen::registerNormalFunction(NormalFuncList &nflst) {
-    for (auto &&nf: nflst) {
+    for (auto &&nf : nflst) {
         auto itunit = std::make_unique<InternalTranslation>(nf, lc_map_, gv_map_);
         translation_tasks_.push_back(std::move(itunit));
     }
@@ -118,25 +128,30 @@ void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
     auto &&cinfo = XConstValue(cvp->GetValue());
     Assert(cinfo.isflt_ and cinfo.width_ == 32, "not float local constant");
     auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
-    auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
+    CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
     Assert(result.second, "insert global variable fail!");
 
     asm_gen_->PushAsmLocalConstant(lcv);
 }
 
-
 void RLGen::SerialGenerate() {
-    for (auto &&task: translation_tasks_) {
+    for (auto &&task : translation_tasks_) {
         task->DoTranslation();
+        task->DoVSchedule();
+        task->DoAssignment();
+        task->DoRSchedule();
     }
 }
 
 void RLGen::ParallelGenerate() {
     std::vector<std::unique_ptr<std::thread>> trds;
 
-    for (auto &&task: translation_tasks_) {
+    for (auto &&task : translation_tasks_) {
         auto trd = std::make_unique<std::thread>([&task]() {
             task->DoTranslation();
+            task->DoVSchedule();
+            task->DoAssignment();
+            task->DoRSchedule();
         });
         trds.push_back(std::move(trd));
     }

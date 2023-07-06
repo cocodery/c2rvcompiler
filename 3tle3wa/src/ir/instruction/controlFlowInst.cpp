@@ -90,7 +90,7 @@ void JumpInst::ReplaceTarget(CfgNodePtr i, CfgNodePtr j) {
 
 void JumpInst::RemoveResParent() { return; }
 
-bool JumpInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) { return false; }
+bool JumpInst::ReplaceSRC(CRVC_UNUSE BaseValuePtr replacee, CRVC_UNUSE BaseValuePtr replacer) { return false; }
 
 const BaseValueList JumpInst::GetOprands() const { return BaseValueList(); }
 

@@ -8,6 +8,11 @@
 #include <memory>
 #include <string>
 
+#include "3tle3wa/backend/asm/AsmBasicBlock.hh"
+#include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmProgress.hh"
+#include "3tle3wa/backend/asm/AsmInstruction.hh"
+#include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/asm/AsmGen.hh"
 #include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/frontend/AstVisitor.hh"
@@ -28,7 +33,7 @@ int main(int argc, char *argv[]) {
     const char *irfile = nullptr;
     const char *dbgfile = nullptr;
 
-    char optlvl = 0;
+    CRVC_UNUSE char optlvl = 0;
 
     for (int ch; (ch = getopt(argc, argv, "SO:l:o:d:h")) != -1;) {
         switch (ch) {

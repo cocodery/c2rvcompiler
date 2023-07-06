@@ -18,7 +18,7 @@ AsmGlobalValue::AsmGlobalValue(const std::string &name, size_t len, bool uninit,
 }
 
 AsmGlobalValue::~AsmGlobalValue() {
-    if (label_ = nullptr) {
+    if (label_ == nullptr) {
         free(label_);
         label_ = nullptr;
         label_len_ = 0;
@@ -61,7 +61,7 @@ void AsmGlobalValue::formatString(FILE *fp) {
         fprintf(fp, "\t.zero\t%" PRIu64 "\n", data_len_);
         return;
     }
-    int cntz = 0;
+    uint64_t cntz = 0;
     for (auto &&v : values_) {
         if (v == 0) {
             cntz += 1;

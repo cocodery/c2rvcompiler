@@ -6,6 +6,14 @@
 #include <type_traits>
 #include <variant>
 
+#define SEXT32(val, prev)               \
+    do {                                \
+        struct {                        \
+            int32_t v : prev;           \
+        } val##__sext__ = {.v = val};   \
+        val = (int32_t)val##__sext__.v; \
+    } while (0)
+
 /**
  * @brief 判断立即数 imm 是否能够用宽度为 width bit 的补码表示
  *
@@ -121,3 +129,4 @@ static inline ConstValueInfo XConstValue(const ConstPackage &cpk) {
 
     return cvalinfo;
 }
+
