@@ -1,5 +1,7 @@
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 
+#include "3tle3wa/ir/instruction/instruction.hh"
+
 bool GVN::VNExpr::operator==(const VNExpr &e) const {
     if (opcode != e.opcode) {
         return false;
@@ -88,10 +90,14 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
             if (IsMeaingLess(inst) || IsRedundant(node, inst)) {
                 assert(inst->GetOprands().size() > 0);
                 VN[result] = GetVN((*inst->GetOprands().begin()));
+
+                RemoveInst(inst);
                 iter = inst_list.erase(iter);
                 continue;
             } else if (IsPhiOprandSame(inst)) {
                 VN[result] = (*inst->GetOprands().begin());
+
+                RemoveInst(inst);
                 iter = inst_list.erase(iter);
                 continue;
             } else {
@@ -115,6 +121,8 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         }
         if (auto [replacee, replacer] = inst->DoFlod(); replacee != nullptr && replacer != nullptr) {
             ReplaceSRC(replacee, replacer);
+
+            RemoveInst(inst);
             iter = inst_list.erase(iter);
             continue;
         }
@@ -124,6 +132,8 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
 
             if (auto res = Scope.Get(bin_inst)) {
                 VN[result] = res;
+
+                RemoveInst(inst);
                 iter = inst_list.erase(iter);
                 continue;
             } else {
