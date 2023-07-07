@@ -3,7 +3,7 @@
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 
-RLPlanner::RLPlanner(size_t regidx) : regidx_(regidx) { stkidx_ = 0; }
+RLPlanner::RLPlanner(size_t regidx) : stkidx_(0), regidx_(regidx), param_stack_(0) {}
 
 StackInfo *RLPlanner::Alloca(size_t len) {
     stkidx_ += 1;
@@ -22,9 +22,24 @@ VirtualRegister *RLPlanner::Alloca(uint64_t vridx, size_t len) {
     auto ptr = AllocVReg(VREG_TYPE::PTR, vridx);
     auto stk = Alloca(len);
 
-    ptr->SetOnStack(true);
+    stk->SetFromAlloca(true);
     ptr->SetStackInfo(stk);
 
+    return ptr;
+}
+
+VirtualRegister *RLPlanner::AllocParam(VREG_TYPE type, uint64_t vridx, size_t len, bool onstk, size_t pos) {
+    auto ptr = AllocVReg(type, vridx);
+    if (onstk) {
+        auto stk = Alloca(len);
+        stk->SetParam(pos * 8);
+        ptr->SetOnStack(true);
+        ptr->SetStackInfo(stk);
+        ptr->SetParam(pos);
+    } else {
+        ptr->SetOnStack(false);
+        ptr->SetParam(pos);
+    }
     return ptr;
 }
 
@@ -67,3 +82,5 @@ void RLPlanner::Link(uint64_t income, uint64_t old) {
     // avoid format
     vr_map_[income] = vr_map_.at(old);
 }
+
+void RLPlanner::SetPstkSiz(size_t sps) { param_stack_ = std::max(param_stack_, sps); }

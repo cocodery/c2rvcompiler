@@ -137,9 +137,11 @@ void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
 void RLGen::SerialGenerate() {
     for (auto &&task : translation_tasks_) {
         task->DoTranslation();
-        task->DoVSchedule();
+        task->NoSchedule();
         task->DoAssignment();
-        task->DoRSchedule();
+        // task->DoRSchedule();
+        task->DoTranslateToAsm();
+        asm_gen_->PushAsmProgress(task->ExportAPG());
     }
 }
 
@@ -152,11 +154,16 @@ void RLGen::ParallelGenerate() {
             task->DoVSchedule();
             task->DoAssignment();
             task->DoRSchedule();
+            task->DoTranslateToAsm();
         });
         trds.push_back(std::move(trd));
     }
 
     for (auto &&trd : trds) {
         trd->join();
+    }
+
+    for (auto &&task : translation_tasks_) {
+        asm_gen_->PushAsmProgress(task->ExportAPG());
     }
 }

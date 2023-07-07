@@ -18,6 +18,10 @@ class AsmProgress : public Serializable {
 
     AsmBasicBlock *ret_;
 
+    size_t first_bidx_;
+
+    size_t align_;
+
     void formatString(FILE *fp) final;
 
    public:
@@ -30,6 +34,10 @@ class AsmProgress : public Serializable {
     AsmBasicBlock *CreateEntryBlock();
 
     AsmBasicBlock *ReturnBlock();
+
+    size_t FirstBlk() const;
+
+    void SetFirstBlk(size_t idx);
 
     const char *Label() const;
 };

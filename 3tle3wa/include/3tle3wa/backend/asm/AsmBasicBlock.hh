@@ -16,6 +16,8 @@ class AsmBasicBlock : public Serializable {
 
     const AsmProgress *father_;
 
+    bool is_ret_;
+
     void formatString(FILE *fp) final;
 
    public:
@@ -24,4 +26,14 @@ class AsmBasicBlock : public Serializable {
     virtual ~AsmBasicBlock() = default;
 
     void Push(AsmInstruction *inst);
+
+    void Pop();
+
+    void SetIsRet(bool on);
+
+    bool IsRet();
+
+    const char *FatherLabel() const;
+
+    size_t SearchFirst();
 };

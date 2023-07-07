@@ -13,7 +13,11 @@ void UopCall::SetLibCall(bool libcall) { libcall_ = libcall; }
 
 void UopCall::SetTailCall(bool tailcall) { tailcall_ = tailcall; }
 
+void UopCall::SetCallSelf(bool callself) { callself_ = callself; }
+
 void UopCall::PushParam(VirtualRegister *param) { params_.push_back(param); }
+
+void UopCall::PushLiver(VirtualRegister *liver) { living_regs_.push_back(liver); }
 
 void UopLui::SetDst(VirtualRegister *dst) { dst_ = dst; }
 

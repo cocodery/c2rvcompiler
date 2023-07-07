@@ -30,11 +30,11 @@ class Serializable {
 
 class Weightable {
     protected:
-     double weight_;
-
-     virtual void calculateWeight() = 0;
+     double weight_{};
 
     public:
+     virtual double Weight() final;
+
      virtual bool operator>(const Weightable &other) final;
 
      virtual bool operator==(const Weightable &other) final;

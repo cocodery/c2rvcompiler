@@ -735,7 +735,7 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
 
         off = curstat_.planner->NewVReg(VREG_TYPE::PTR);
 
-        li(off, cinfo.v32_.u32_);
+        li(off, cinfo.v32_.u32_ << 2);
     } else {
         panic("unexpected");
     }
@@ -783,6 +783,7 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
 
 void InternalTranslation::Translate(CallInst *ll) {
     curstat_.meetcall = true;
+
     // decide if is tail call
 
     auto &&params = ll->GetParamList();
@@ -790,11 +791,36 @@ void InternalTranslation::Translate(CallInst *ll) {
 
     auto uop = new UopCall;
 
+    if (callee->GetFuncName() != fptr_->GetFuncName()) {
+        rlps_->MeetCallOther();
+        uop->SetCallSelf(false);
+    } else {
+        uop->SetCallSelf(true);
+    }
+
     auto make_param = [&params, &uop, this](size_t num) {
         size_t pcnt = 0;
 
+        size_t ips = 0;
+        size_t fps = 0;
+        size_t sps = 0;
+
+        extern size_t abi_arg_reg;
+
         for (auto &&param : params) {
             auto &&ptype = param->GetBaseType();
+
+            if (ptype->FloatType()) {
+                if (fps < abi_arg_reg) {
+                    fps += 1;
+                }
+                sps += 1;
+            } else {
+                if (ips < abi_arg_reg) {
+                    ips += 1;
+                }
+                sps += 1;
+            }
 
             if (param->IsVariable()) {
                 auto var = dynamic_cast<Variable *>(param.get());
@@ -844,12 +870,16 @@ void InternalTranslation::Translate(CallInst *ll) {
                 break;
             }
         }
+
+        curstat_.planner->SetPstkSiz(sps);
     };
 
     if (callee->IsLibFunction()) {
         bool meet = false;
 
         uop->SetLibCall(true);
+
+        rlps_->MeetLibCall();
 
         do /* sylib */ {
             auto sylib_func = dynamic_cast<SYSYLibFunction *>(callee.get());

@@ -4,28 +4,22 @@
 #include <cstdint>
 #include <vector>
 
-struct AtCall {
-    size_t CallIdx{0};
-    size_t AtParamPos{0};
-
-    bool operator>(const AtCall &other) { return CallIdx > other.CallIdx; }
-    bool operator==(const AtCall &other) { return CallIdx == other.CallIdx; }
-    bool operator<(const AtCall &other) { return CallIdx < other.CallIdx; }
-};
-
+// [Begin, End)
 struct LiveInterval {
     size_t LableIdx;
     size_t Begin;
     size_t End;
-};
 
-struct VRIndicator {
-    double StaticLoop{0.0};
-    double HotLoop{0.0};
+    size_t CallTime[64] = {0};
+    size_t CallVec = 0;
 
-    uint64_t LiveLength{0};
-    uint64_t ActiveTime{0};
-    uint64_t SliceNum{0};
+    size_t UseTime = 0;
 
-    std::vector<AtCall> Calls;
+    void UseThis();
+
+    void CallThis(size_t pos);
+
+    bool operator()(size_t point) const;
+
+    bool operator^(const LiveInterval &other) const;
 };

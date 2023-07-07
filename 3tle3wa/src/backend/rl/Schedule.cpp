@@ -45,7 +45,7 @@ void RLProgress::RealSchedule() {
     }
 }
 
-void RLProgress::RealSchedule() {
+void RLProgress::NoSchedule() {
     for (auto &&bb : rlbbs_) {
         bb->NoSchedule();
     }

@@ -14,6 +14,7 @@ class RLProgress;
 class RLBasicBlock;
 class RLPlanner;
 class VirtualRegister;
+class AsmProgress;
 
 // control flow inst
 class ReturnInst;
@@ -53,7 +54,9 @@ class InternalTranslation : public Serializable {
 
     std::unique_ptr<RLProgress> rlps_;
 
-    struct {
+    std::unique_ptr<AsmProgress> apg_;
+
+    struct IT_STAT {
         CtrlFlowGraphNode *cur_cfg;
         CtrlFlowGraphNode *nxt_cfg;
 
@@ -81,6 +84,10 @@ class InternalTranslation : public Serializable {
     void DoAssignment();
 
     void DoRSchedule();
+
+    void DoTranslateToAsm();
+
+    std::unique_ptr<AsmProgress> &ExportAPG();
 
     void Translate(ReturnInst *);
     void Translate(JumpInst *);

@@ -76,6 +76,16 @@ MV::MV(uint64_t rd, uint64_t rs) {
     GENINST("mv" TAB "%s" COMMA "%s", gpr[rd], gpr[rs]);
 }
 
+LI::LI(uint64_t rd, int64_t imm) {
+    // avoid format
+    GENINST("li" TAB "%s" COMMA "%" PRId64, gpr[rd], imm);
+}
+
+LUI::LUI(uint64_t rd, int64_t imm) {
+    // avoid format
+    GENINST("lui" TAB "%s" COMMA "%" PRId64, gpr[rd], imm);
+}
+
 SEXT_W::SEXT_W(uint64_t rd, uint64_t rs) {
     // avoid format
     GENINST("sext.w" TAB "%s" COMMA "%s", gpr[rd], gpr[rs]);

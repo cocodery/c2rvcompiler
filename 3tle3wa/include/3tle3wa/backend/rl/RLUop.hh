@@ -9,6 +9,7 @@
 
 class VirtualRegister;
 class AsmBasicBlock;
+class RLPlanner;
 
 class UopGeneral : public Serializable {
    protected:
@@ -24,6 +25,8 @@ class UopGeneral : public Serializable {
     virtual OPERATION_KIND GetOpKind() const = 0;
 
     virtual ~UopGeneral() = default;
+
+    virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan) = 0;
 };
 
 template <typename T>
@@ -41,6 +44,7 @@ class UopRet : public InternalUop<UopRet> {
     void SetRetVal(VirtualRegister *retval);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopCall : public InternalUop<UopCall> {
@@ -50,8 +54,11 @@ class UopCall : public InternalUop<UopCall> {
 
     std::string callee_;
 
+    std::vector<VirtualRegister *> living_regs_;
+
     bool libcall_{false};
     bool tailcall_{false};
+    bool callself_{false};
 
     void formatString(FILE *fp) final;
 
@@ -63,10 +70,15 @@ class UopCall : public InternalUop<UopCall> {
     void SetCallee(std::string &callee);
     void SetLibCall(bool libcall);
     void SetTailCall(bool tailcall);
+    void SetCallSelf(bool callself);
 
     void PushParam(VirtualRegister *param);
+    void PushLiver(VirtualRegister *liver);
+
+    void BroadCastCall(size_t lbidx);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopLui : public InternalUop<UopLui> {
@@ -84,6 +96,7 @@ class UopLui : public InternalUop<UopLui> {
     void SetImm(uint32_t imm);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopMv : public InternalUop<UopMv> {
@@ -100,6 +113,7 @@ class UopMv : public InternalUop<UopMv> {
     void SetSrc(VirtualRegister *src);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopCvtS2W : public InternalUop<UopCvtS2W> {
@@ -116,6 +130,7 @@ class UopCvtS2W : public InternalUop<UopCvtS2W> {
     void SetSrc(VirtualRegister *src);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopCvtW2S : public InternalUop<UopCvtW2S> {
@@ -132,6 +147,7 @@ class UopCvtW2S : public InternalUop<UopCvtW2S> {
     void SetSrc(VirtualRegister *src);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopBranch : public InternalUop<UopBranch> {
@@ -151,6 +167,7 @@ class UopBranch : public InternalUop<UopBranch> {
     void SetDstIdx(size_t dst_idx);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopJump : public InternalUop<UopJump> {
@@ -165,6 +182,7 @@ class UopJump : public InternalUop<UopJump> {
     void SetDstIdx(size_t dst_idx);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopLla : public InternalUop<UopLla> {
@@ -182,6 +200,7 @@ class UopLla : public InternalUop<UopLla> {
     void SetSrc(std::string &src);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopLoad : public InternalUop<UopLoad> {
@@ -201,6 +220,7 @@ class UopLoad : public InternalUop<UopLoad> {
     void SetOff(int32_t off);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopStore : public InternalUop<UopStore> {
@@ -220,6 +240,7 @@ class UopStore : public InternalUop<UopStore> {
     void SetOff(int32_t off);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopFLoad : public InternalUop<UopFLoad> {
@@ -239,6 +260,7 @@ class UopFLoad : public InternalUop<UopFLoad> {
     void SetOff(int32_t off);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopFStore : public InternalUop<UopFStore> {
@@ -258,6 +280,7 @@ class UopFStore : public InternalUop<UopFStore> {
     void SetOff(int32_t off);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopICmp : public InternalUop<UopICmp> {
@@ -282,6 +305,7 @@ class UopICmp : public InternalUop<UopICmp> {
     void SetKind(COMP_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopFCmp : public InternalUop<UopFCmp> {
@@ -306,6 +330,7 @@ class UopFCmp : public InternalUop<UopFCmp> {
     void SetKind(COMP_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopIBin : public InternalUop<UopIBin> {
@@ -330,6 +355,7 @@ class UopIBin : public InternalUop<UopIBin> {
     void SetKind(IBIN_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopIBinImm : public InternalUop<UopIBinImm> {
@@ -354,6 +380,7 @@ class UopIBinImm : public InternalUop<UopIBinImm> {
     void SetKind(IBIN_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopFBin : public InternalUop<UopFBin> {
@@ -378,6 +405,7 @@ class UopFBin : public InternalUop<UopFBin> {
     void SetKind(FBIN_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 class UopICmpBranch : public InternalUop<UopICmpBranch> {
@@ -400,6 +428,7 @@ class UopICmpBranch : public InternalUop<UopICmpBranch> {
     void SetKind(COMP_KIND kind);
 
     OPERATION_KIND GetOpKind() const;
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
 // for phi operation
@@ -425,4 +454,5 @@ class UopPhi : public InternalUop<UopPhi> {
     void SetDst(size_t dst_idx);
 
     OPERATION_KIND GetOpKind() const { return OPERATION_KIND::INTOPT; };
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };

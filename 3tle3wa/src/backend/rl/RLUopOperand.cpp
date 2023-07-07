@@ -48,20 +48,20 @@ VirtualRegister *UopLoad::GetResult() const { return dst_; }
 
 const VecVR UopStore::GetOperands() const {
     if (src_ != nullptr) {
-        return VecVR{src_};
+        return VecVR{src_, base_};
     }
-    return VecVR{};
+    return VecVR{base_};
 }
 
-VirtualRegister *UopStore::GetResult() const { return base_; }
+VirtualRegister *UopStore::GetResult() const { return nullptr; }
 
 const VecVR UopFLoad::GetOperands() const { return VecVR{base_}; }
 
 VirtualRegister *UopFLoad::GetResult() const { return dst_; }
 
-const VecVR UopFStore::GetOperands() const { return VecVR{src_}; }
+const VecVR UopFStore::GetOperands() const { return VecVR{src_, base_}; }
 
-VirtualRegister *UopFStore::GetResult() const { return base_; }
+VirtualRegister *UopFStore::GetResult() const { return nullptr; }
 
 const VecVR UopICmp::GetOperands() const { return VecVR{lhs_, rhs_}; }
 

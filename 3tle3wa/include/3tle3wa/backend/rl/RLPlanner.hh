@@ -7,9 +7,12 @@
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
+#include "3tle3wa/backend/rl/Indicater.hh"
+#include "3tle3wa/backend/IntervalTree.hh"
 
 class VirtualRegister;
 class StackInfo;
+class AsmBasicBlock;
 
 class RLPlanner : public Serializable {
     std::unordered_map<uint64_t, StackInfo *> sinfo_map_;
@@ -21,7 +24,22 @@ class RLPlanner : public Serializable {
     size_t stkidx_;
     size_t regidx_;
 
+    size_t param_stack_;
+    size_t total_stack_size_;
+
+    std::unordered_map<size_t, std::unique_ptr<IntervalManager>> real_reg_inval_;
+
+    std::vector<std::unique_ptr<IntervalManager>> real_stk_inval_;
+
+    std::vector<StackInfo *> real_stkinfo_;
+
+    std::unordered_map<size_t, int64_t> place_to_save;
+
     void formatString(FILE *fp) final;
+
+    bool tryUse(VirtualRegister *vr, size_t rridx);
+
+    void spillOn(VirtualRegister *vr);
 
    public:
     RLPlanner(size_t regidx);
@@ -29,6 +47,8 @@ class RLPlanner : public Serializable {
     virtual ~RLPlanner() = default;
 
     StackInfo *Alloca(size_t len);
+
+    VirtualRegister *AllocParam(VREG_TYPE type, uint64_t vridx, size_t len, bool onstk, size_t pos);
 
     VirtualRegister *Alloca(uint64_t vridx, size_t len);
 
@@ -40,7 +60,17 @@ class RLPlanner : public Serializable {
 
     void Link(uint64_t income, uint64_t old);
 
-    void PlanRegisters();
+    void PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen);
 
     void PlanStackSpace();
+
+    void SetPstkSiz(size_t sps);
+
+    void Init(AsmBasicBlock *abb);
+
+    void Recover(AsmBasicBlock *abb);
+
+    void BeforeCall(AsmBasicBlock *abb, std::vector<VirtualRegister *> living_regs);
+
+    void RecoverCall(AsmBasicBlock *abb);
 };

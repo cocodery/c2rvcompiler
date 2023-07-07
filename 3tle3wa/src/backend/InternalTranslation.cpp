@@ -1,13 +1,18 @@
 #include "3tle3wa/backend/InternalTranslation.hh"
 
-#include "3tle3wa/backend/rl/RLProgress.hh"
+#include "3tle3wa/backend/asm/AsmBasicBlock.hh"
+#include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmInstruction.hh"
+#include "3tle3wa/backend/asm/AsmLocalConstant.hh"
+#include "3tle3wa/backend/asm/AsmProgress.hh"
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
-#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/rl/RLPlanner.hh"
+#include "3tle3wa/backend/rl/RLProgress.hh"
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLUop.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/ir/IR.hh"
+#include "3tle3wa/utils/Logs.hh"
 
 InternalTranslation::InternalTranslation(const NormalFuncPtr &fptr, const std::unordered_map<uint32_t, size_t> &lc_map,
                                          const std::unordered_map<size_t, AsmGlobalValue *> &gv_map)
@@ -20,6 +25,8 @@ InternalTranslation::InternalTranslation(const NormalFuncPtr &fptr, const std::u
 
     rlps_ = std::make_unique<RLProgress>(func_name);
     rlps_->RegisterPlanner(planner);
+
+    apg_ = std::make_unique<AsmProgress>(func_name);
 }
 
 void InternalTranslation::DoTranslation() {
@@ -47,7 +54,7 @@ void InternalTranslation::DoTranslation() {
     curstat_.meetcall = false;
 
     while (cur_cfgit != topo.end()) {
-        auto rlbb = std::make_unique<RLBasicBlock>(*cur_cfgit);
+        auto rlbb = std::make_unique<RLBasicBlock>(*cur_cfgit, curstat_.planner);
 
         curstat_.cur_cfg = cur_cfgit->get();
         curstat_.nxt_cfg = nxt_cfgit->get();
@@ -63,3 +70,5 @@ void InternalTranslation::DoTranslation() {
         cur_cfgit = nxt_cfgit++;
     }
 }
+
+std::unique_ptr<AsmProgress> &InternalTranslation::ExportAPG() { return apg_; }

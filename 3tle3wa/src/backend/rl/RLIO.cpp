@@ -35,6 +35,31 @@ void RLProgress::formatString(FILE *fp) {
 
 void RLBasicBlock::formatString(FILE *fp) {
     fprintf(fp, ".b%" PRIu64 ":\n", lbidx_);
+
+    fprintf(fp, "\t# LDef:");
+    for (auto &&def : live_def_) {
+        fprintf(fp, " %" PRIu64, def);
+    }
+    fputc('\n', fp);
+
+    fprintf(fp, "\t# LUse:");
+    for (auto &&use : live_use_) {
+        fprintf(fp, " %" PRIu64, use);
+    }
+    fputc('\n', fp);
+
+    fprintf(fp, "\t# LOut:");
+    for (auto &&out : live_out_) {
+        fprintf(fp, " %" PRIu64, out);
+    }
+    fputc('\n', fp);
+
+    fprintf(fp, "\t# LIn :");
+    for (auto &&in : live_in_) {
+        fprintf(fp, " %" PRIu64, in);
+    }
+    fputc('\n', fp);
+
     for (auto &&uop : op_view_) {
         fprintf(fp, "%s", uop->CString());
     }
@@ -58,7 +83,8 @@ void RLPlanner::formatString(FILE *fp) {
     uint64_t offs = 0;
     for (auto &&stk : stk_storage_) {
         offs -= stk->GetSLen();
-        fprintf(fp, "%06" PRIu64 " : (%010" PRIu64 ", 0x%016" PRIx64 ") <- %" PRId64 "(fp)\n", stk->GetSidx(), stk->GetSLen(),
-                stk->GetOff(), offs);
+        fprintf(fp, "%06" PRIu64 " : (%010" PRIu64 ", 0x%016" PRIx64 ") <- %" PRId64 "(fp)\n", stk->GetSidx(),
+                stk->GetSLen(), stk->GetOff(), offs);
     }
+    fputc('\n', fp);
 }

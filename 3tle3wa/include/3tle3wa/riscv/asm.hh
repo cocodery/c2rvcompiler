@@ -37,6 +37,8 @@ RVINST(FSW_LB, uint64_t frs, const char *sym, uint64_t rt);
 //
 
 RVINST(MV, uint64_t rd, uint64_t rs);
+RVINST(LI, uint64_t rd, int64_t imm);
+RVINST(LUI, uint64_t rd, int64_t imm);
 RVINST(SEXT_W, uint64_t rd, uint64_t rs);
 
 //
