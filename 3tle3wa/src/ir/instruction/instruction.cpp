@@ -31,7 +31,7 @@ bool Instruction::IsCallInst() const { return opcode == Call; }
 bool Instruction::IsPhiInst() const { return opcode == Phi; }
 
 bool Instruction::IsCriticalOperation() const {
-    return IsStoreInst() || IsCallInst() || IsReturnInst() || IsBranchInst();
+    return IsStoreInst() || IsCallInst() || IsReturnInst() || IsJumpInst() || IsBranchInst();
 }
 
 bool Instruction::IsValueNumberInst() const { return IsTwoOprandInst() || IsGepInst(); }
