@@ -144,3 +144,42 @@ std::string FBinaryInst::tollvmIR() {
     }
     return ss.str();
 }
+
+//===-----------------------------------------------------------===//
+//                     FNegInst Implementation
+//===-----------------------------------------------------------===//
+
+FNegInst::FNegInst(VariablePtr _res, BaseValuePtr _value, CfgNodePtr _node)
+    : UnaryInstruction(_res, FNeg, _value, _node) {
+    assert(_res->GetBaseType()->FloatType());
+    assert(_value->GetBaseType()->FloatType());
+}
+
+FNegInstPtr FNegInst::CreatePtr(VariablePtr _res, BaseValuePtr _value, CfgNodePtr _node) {
+    return std::make_shared<FNegInst>(_res, _value, _node);
+}
+
+VariablePtr FNegInst::DoFloatNeg(BaseValuePtr _value, CfgNodePtr _node) {
+    VariablePtr _res = Variable::CreatePtr(type_float_L, nullptr);
+    auto inst = CreatePtr(_res, _value, _node);
+    _res->SetParent(inst);
+    _value->InsertUser(inst);
+    _node->InsertInstBack(inst);
+    return _res;
+}
+
+bool FNegInst::ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
+    bool ret = false;
+    if (oprand == replacee) {
+        assert(replacer->GetBaseType()->FloatType() && replacer->IsOprand());
+        oprand = replacer;
+        ret = true;
+    }
+    return ret;
+}
+
+std::string FNegInst::tollvmIR() {
+    std::stringstream ss;
+    ss << result->tollvmIR() << " = fneg float " << oprand->tollvmIR();
+    return ss.str();
+}

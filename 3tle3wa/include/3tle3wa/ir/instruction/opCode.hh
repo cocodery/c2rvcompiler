@@ -16,6 +16,7 @@ enum OpCode {
     SiToFp,
     FpToSi,
     Zext,
+    FNeg,
     // only exist in front-end
     OP_NOT,    // unary not, replaced by OP_EQU in expr
     OP_MINUS,  // unary minus, replaced by OP_SUB in expr

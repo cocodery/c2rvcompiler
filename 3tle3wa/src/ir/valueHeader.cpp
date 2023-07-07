@@ -11,7 +11,11 @@ BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePt
                            : (_type == INT32) ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
                                               : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
         if (op == OP_MINUS) {
-            return BinaryOperate(OP_SUB, zero, oprand, block);
+            if (oprand->GetBaseType()->FloatType()) {
+                return FNegInst::DoFloatNeg(oprand, block);
+            } else {
+                return BinaryOperate(OP_SUB, zero, oprand, block);
+            }
         } else if (op == OP_NOT) {
             if (_type == FLOAT) {
                 return FCmpInst::DoFCompare(OP_EQU, oprand, zero, block);
@@ -52,7 +56,11 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
         if (lhs_type == INT32) {
             return IBinaryInst::DoIBinOperate(op, i_lhs, i_rhs, block);
         } else {
-            return FBinaryInst::DoFBinOperate(op, f_lhs, f_rhs, block);
+            if (f_lhs == ConstantAllocator::FindConstantPtr(static_cast<float>(0))) {
+                return FNegInst::DoFloatNeg(f_rhs, block);
+            } else {
+                return FBinaryInst::DoFBinOperate(op, f_lhs, f_rhs, block);
+            }
         }
     } else if (OP_LTH <= op && op <= OP_NEQ) {
         // when do compare operation, lhs_type == rhs_type in { BOOL, INT32, FLOAT }

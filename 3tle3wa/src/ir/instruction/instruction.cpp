@@ -16,7 +16,7 @@ void Instruction::SetParent(CfgNodePtr node) { parent = node; }
 void Instruction::ClearParent() { SetParent(nullptr); }
 
 bool Instruction::IsTwoOprandInst() const { return (OP_ADD <= opcode && opcode <= OP_NEQ); }
-bool Instruction::IsOneOprandInst() const { return (Load <= opcode && opcode <= Zext); }
+bool Instruction::IsOneOprandInst() const { return (Load <= opcode && opcode <= FNeg); }
 
 bool Instruction::IsReturnInst() const { return opcode == Ret; }
 bool Instruction::IsJumpInst() const { return opcode == Jump; }
@@ -72,6 +72,10 @@ std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
                     case Zext:
                         assert((std::is_same_v<T, bool>));
                         value = static_cast<int32_t>(arg);
+                        break;
+                    case FNeg:
+                        assert((std::is_same_v<T, float>));
+                        value = -static_cast<float>(arg);
                         break;
                     default:
                         assert(false);
