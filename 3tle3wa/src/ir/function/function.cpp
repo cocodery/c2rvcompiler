@@ -9,7 +9,7 @@
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list) {}
+    : BaseFunction(_type, _name, _list), tail_call(false) {}
 
 CfgNodePtr NormalFunction::CreateEntry() {
     entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL);
@@ -30,6 +30,9 @@ CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 
 void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
+
+void NormalFunction::SetTailCall(bool _tail_call) { tail_call = _tail_call; }
+bool NormalFunction::GetTailCall() const { return tail_call; }
 
 CfgNodeList NormalFunction::TopoSortFromEntry() {
     std::unordered_map<CfgNodePtr, bool> visit;
