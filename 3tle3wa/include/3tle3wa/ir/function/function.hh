@@ -25,6 +25,8 @@ class NormalFunction final : public BaseFunction {
     CfgNodePtr entry;
     CfgNodePtr exit;
 
+    bool tail_call;
+
     size_t var_idx;
     size_t blk_idx;
 
@@ -43,6 +45,9 @@ class NormalFunction final : public BaseFunction {
 
     void SetEntryNode(CfgNodePtr);
     void SetExitNode(CfgNodePtr);
+
+    void SetTailCall(bool);
+    bool GetTailCall() const;
 
     CfgNodeList TopoSortFromEntry();
     CfgNodeList TopoSortFromExit();

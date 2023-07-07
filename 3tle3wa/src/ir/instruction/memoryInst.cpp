@@ -1,5 +1,11 @@
 #include "3tle3wa/ir/instruction/memoryInst.hh"
 
+#include <cstdint>
+
+#include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/type/scalarType.hh"
+
 //===-----------------------------------------------------------===//
 //                     AllocaInst Implementation
 //===-----------------------------------------------------------===//
@@ -63,6 +69,14 @@ StoreInstPtr StoreInst::CreatePtr(BaseValuePtr addr, BaseValuePtr value, CfgNode
 }
 
 void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr block) {
+    BaseTypePtr addr_type = addr->GetBaseType();
+    assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->IntType() || addr_type->FloatType()));
+
+    if (addr_type->IsGlobal()) {
+        addr = GetElementPtrInst::DoGetPointer(
+            addr_type->IntType() ? type_int_L : type_float_L, addr,
+            BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
+    }
     // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
     BaseValuePtr convertee = Value::ScalarTypeConvert(addr->GetBaseType()->GetAttrType(), value, block);
@@ -130,6 +144,13 @@ LoadInstPtr LoadInst::CreatePtr(VariablePtr value, BaseValuePtr addr, CfgNodePtr
 BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     BaseTypePtr addr_type = addr->GetBaseType();
     assert(addr_type->IsPointer() && addr_type->IsScalar() && (addr_type->IntType() || addr_type->FloatType()));
+
+    if (addr_type->IsGlobal()) {
+        addr = GetElementPtrInst::DoGetPointer(
+            addr_type->IntType() ? type_int_L : type_float_L, addr,
+            BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
+    }
+
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(value, addr, block);
     value->SetParent(inst);

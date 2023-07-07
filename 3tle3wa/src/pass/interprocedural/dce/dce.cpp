@@ -36,11 +36,9 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
             for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
                 auto &&inst = (*iter);
                 if (visitSet.find(inst) == visitSet.end()) {
-                    if (inst->IsJumpInst() == false) {
-                        RemoveInst(inst);
-                        iter = inst_list.erase(iter);
-                        continue;
-                    }
+                    RemoveInst(inst);
+                    iter = inst_list.erase(iter);
+                    continue;
                 }
                 ++iter;
             }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -10,6 +11,7 @@
 #include "3tle3wa/ir/exprFlod.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/variable.hh"
 
 class Instruction;
