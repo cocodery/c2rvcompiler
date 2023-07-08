@@ -374,8 +374,15 @@ void UopRet::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
 
 void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     for (auto &&param : params_) {
-        if (not param->OnStk() and riscv::a0 <= param->GetRRid() and riscv::a7 >= param->GetRRid()) {
-            living_regs_.insert(param);
+        if (not param->OnStk()) {
+            if (riscv::a0 <= param->GetRRid() and riscv::a7 >= param->GetRRid()) {
+                living_regs_.insert(param);
+                continue;
+            }
+            if (riscv::fa0 <= param->GetRRid() and riscv::fa7 >= param->GetRRid()) {
+                living_regs_.insert(param);
+                continue;
+            }
         }
     }
     plan->BeforeCall(abb, living_regs_);

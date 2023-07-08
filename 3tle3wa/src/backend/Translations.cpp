@@ -137,7 +137,7 @@ void InternalTranslation::Translate(BranchInst *ll) {
     auto &&cond = ll->GetCondition();
 
     if (cond->IsConstant()) {
-        panic("unexpected");
+        panic("constant condition should be optimized");
     }
 
     auto var_cond = dynamic_cast<Variable *>(cond.get());
