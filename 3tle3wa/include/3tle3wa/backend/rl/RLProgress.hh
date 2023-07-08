@@ -19,7 +19,7 @@ class RLProgress : public Serializable {
     size_t label_len_;
 
     bool has_lib_call_;
-    bool has_call_other_;
+    bool has_call_other_; 
 
     std::vector<VirtualRegister *> params_;
 

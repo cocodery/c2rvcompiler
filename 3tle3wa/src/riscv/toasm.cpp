@@ -46,8 +46,13 @@ void RLPlanner::Init(AsmBasicBlock *abb) {
 
     for (auto &&[rridx, off] : place_to_save) {
         if (callee_save.find(rridx) != callee_save.end()) {
-            auto save_reg = new riscv::SD(rridx, riscv::fp, off);
-            abb->Push(save_reg);
+            if (rridx >= 32) {
+                auto save_reg = new riscv::FSW(rridx, riscv::fp, off);
+                abb->Push(save_reg);
+            } else {
+                auto save_reg = new riscv::SD(rridx, riscv::fp, off);
+                abb->Push(save_reg);
+            }
         }
     }
 }
@@ -55,8 +60,13 @@ void RLPlanner::Init(AsmBasicBlock *abb) {
 void RLPlanner::Recover(AsmBasicBlock *abb) {
     for (auto &&[rridx, off] : place_to_save) {
         if (callee_save.find(rridx) != callee_save.end()) {
-            auto recover_reg = new riscv::LD(rridx, riscv::fp, off);
-            abb->Push(recover_reg);
+            if (rridx >= 32) {
+                auto recover_reg = new riscv::FLW(rridx, riscv::fp, off);
+                abb->Push(recover_reg);
+            } else {
+                auto recover_reg = new riscv::LD(rridx, riscv::fp, off);
+                abb->Push(recover_reg);
+            }
         }
     }
 
@@ -77,13 +87,18 @@ void RLPlanner::Recover(AsmBasicBlock *abb) {
     abb->Push(recover_fp);
 }
 
-void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::vector<VirtualRegister *> living_regs) {
+void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegister *> &living_regs) {
     for (auto &&reg : living_regs) {
         if (not reg->OnStk() and not reg->IsSaving() and caller_save.find(reg->GetRRid()) != caller_save.end()) {
             auto rridx = reg->GetRRid();
             auto off = place_to_save.at(rridx);
-            auto store = new riscv::SD(rridx, riscv::fp, off);
-            abb->Push(store);
+            if (reg->GetType() == VREG_TYPE::FLT) {
+                auto store = new riscv::FSW(rridx, riscv::fp, off);
+                abb->Push(store);
+            } else {
+                auto store = new riscv::SD(rridx, riscv::fp, off);
+                abb->Push(store);
+            }
             reg->SetSaving(off);
         }
     }
@@ -99,8 +114,13 @@ void RLPlanner::RecoverCall(AsmBasicBlock *abb) {
 
 size_t VirtualRegister::GetRRidWithSaving(AsmBasicBlock *abb) {
     if (saving_) {
-        auto load = new riscv::LD(real_regidx_, riscv::fp, save_off_);
-        abb->Push(load);
+        if (type_ == VREG_TYPE::FLT) {
+            auto load = new riscv::FLW(real_regidx_, riscv::fp, save_off_);
+            abb->Push(load);
+        } else {
+            auto load = new riscv::LD(real_regidx_, riscv::fp, save_off_);
+            abb->Push(load);
+        }
         saving_ = false;
     }
     return real_regidx_;
@@ -113,6 +133,57 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
 
     Assert(sinfo_ != nullptr, "sinfo should not be nullptr");
     auto off = sinfo_->GetOff();
+
+    if (param_) {
+        switch (type_) {
+            case VREG_TYPE::PTR: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::LD(to, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    auto load_imm = new riscv::LI(to, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to, to, riscv::fp);
+                    auto load_to = new riscv::LD(to, to, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            case VREG_TYPE::FLT: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::FLW(to, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    Assert(to_tmp != riscv::zero, "set another tmp reg");
+                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
+                    auto load_to = new riscv::FLW(to, to_tmp, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            case VREG_TYPE::INT: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::LW(to, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    auto load_imm = new riscv::LI(to, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to, to, riscv::fp);
+                    auto load_to = new riscv::LW(to, to, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            default:
+                panic("unexpected");
+        }
+        return;
+    }
 
     switch (type_) {
         case VREG_TYPE::PTR: {
@@ -170,6 +241,58 @@ void VirtualRegister::StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp) 
 
     Assert(sinfo_ != nullptr, "sinfo should not be nullptr");
     auto off = sinfo_->GetOff();
+
+    if (param_) {
+        switch (type_) {
+            case VREG_TYPE::PTR: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::SD(from, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    Assert(to_tmp != riscv::zero, "set another tmp reg");
+                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
+                    auto load_to = new riscv::SD(from, to_tmp, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            case VREG_TYPE::FLT: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::FSW(from, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    Assert(to_tmp != riscv::zero, "set another tmp reg");
+                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
+                    auto load_to = new riscv::FSW(from, to_tmp, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            case VREG_TYPE::INT: {
+                if (ImmWithin(12, off)) {
+                    auto load_to = new riscv::SW(from, riscv::fp, off);
+                    abb->Push(load_to);
+                } else {
+                    Assert(to_tmp != riscv::zero, "set another tmp reg");
+                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
+                    auto load_to = new riscv::SW(from, to_tmp, 0);
+                    abb->Push(load_imm);
+                    abb->Push(gen_addr);
+                    abb->Push(load_to);
+                }
+            } break;
+
+            default:
+                panic("unexpected");
+        }
+    }
 
     switch (type_) {
         case VREG_TYPE::PTR: {
@@ -232,6 +355,11 @@ void UopRet::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
             } else {
                 retval_->LoadTo(riscv::a0, abb);
             }
+        } else if (retval_->FGPR()) {
+            if (retval_->GetRRidWithSaving(abb) != riscv::fa0) {
+                auto set_retval = new riscv::FMV_S(riscv::fa0, retval_->GetRRidWithSaving(abb));
+                abb->Push(set_retval);
+            }
         } else if (retval_->GetRRidWithSaving(abb) != riscv::a0) {
             auto set_retval = new riscv::MV(riscv::a0, retval_->GetRRidWithSaving(abb));
             abb->Push(set_retval);
@@ -245,6 +373,11 @@ void UopRet::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
 }
 
 void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
+    for (auto &&param : params_) {
+        if (not param->OnStk() and riscv::a0 <= param->GetRRid() and riscv::a7 >= param->GetRRid()) {
+            living_regs_.insert(param);
+        }
+    }
     plan->BeforeCall(abb, living_regs_);
 
     std::unordered_set<size_t> editted;
@@ -266,12 +399,13 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                     param->LoadTo(riscv::fa0 + fps, abb, riscv::t0);
                 } else {
                     auto rrid = param->GetRRid();
-                    if (rrid == riscv::a0 + ips) {
-                        edit = false;
-                    } else if (editted.find(rrid) != editted.end()) {
-                        Assert(param->IsSaving(), "not save before call");
+                    if (param->IsSaving() or editted.find(rrid) != editted.end()) {
+                        Assert(param->IsSaving() or (*param->Imgr().AskInterval(abb->GetBlockIdx()))[uop_idx_] == false,
+                               "not save before call");
                         auto set_param = new riscv::FLW(riscv::fa0 + fps, riscv::fp, param->SavingInfo());
                         abb->Push(set_param);
+                    } else if (rrid == riscv::fa0 + fps) {
+                        edit = false;
                     } else {
                         auto set_param = new riscv::FMV_S(riscv::fa0 + fps, rrid);
                         abb->Push(set_param);
@@ -283,22 +417,50 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 }
 
                 fps += 1;
+            } else {
+                if (param->OnStk()) {
+                    param->LoadTo(riscv::ft0, abb);
+                    auto set_param = new riscv::FSW(riscv::ft0, riscv::sp, sps * 8);
+                    abb->Push(set_param);
+                } else {
+                    auto rrid = param->GetRRid();
+                    if (param->IsSaving() or editted.find(rrid) != editted.end()) {
+                        Assert(param->IsSaving() or (*param->Imgr().AskInterval(abb->GetBlockIdx()))[uop_idx_] == false,
+                               "not save before call");
+                        auto load = new riscv::LW(riscv::t0, riscv::fp, param->SavingInfo());
+                        auto set_param = new riscv::SW(riscv::t0, riscv::sp, sps * 8);
+                        abb->Push(load);
+                        abb->Push(set_param);
+                    } else {
+                        auto set_param = new riscv::FSW(rrid, riscv::sp, sps * 8);
+                        abb->Push(set_param);
+                    }
+                }
+
+                sps += 1;
             }
-            sps += 1;
         } else {
             if (ips < abi_arg_reg) {
                 if (param->OnStk()) {
                     param->LoadTo(riscv::a0 + ips, abb);
                 } else {
                     auto rrid = param->GetRRid();
-                    if (rrid == riscv::a0 + ips) {
+                    if (param->IsSaving() or editted.find(rrid) != editted.end()) {
+                        Assert(param->IsSaving() or (*param->Imgr().AskInterval(abb->GetBlockIdx()))[uop_idx_] == false,
+                               "not save before call");
+                        if (param->GetType() == VREG_TYPE::PTR) {
+                            auto set_param = new riscv::LD(riscv::a0 + ips, riscv::fp, param->SavingInfo());
+                            abb->Push(set_param);
+                        } else if (param->GetType() == VREG_TYPE::INT) {
+                            auto set_param = new riscv::LW(riscv::a0 + ips, riscv::fp, param->SavingInfo());
+                            abb->Push(set_param);
+                        } else {
+                            panic("unexpected");
+                        }
+                    } else if (rrid == riscv::a0 + ips) {
                         edit = false;
-                    } else if (editted.find(rrid) != editted.end()) {
-                        Assert(param->IsSaving(), "not save before call");
-                        auto set_param = new riscv::LD(riscv::a0 + fps, riscv::fp, param->SavingInfo());
-                        abb->Push(set_param);
                     } else {
-                        auto set_param = new riscv::MV(riscv::a0 + fps, rrid);
+                        auto set_param = new riscv::MV(riscv::a0 + ips, rrid);
                         abb->Push(set_param);
                     }
                 }
@@ -308,8 +470,36 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 }
 
                 ips += 1;
+            } else {
+                if (param->OnStk()) {
+                    param->LoadTo(riscv::t0, abb);
+                    auto set_param = new riscv::SD(riscv::t0, riscv::sp, sps * 8);
+                    abb->Push(set_param);
+                } else {
+                    auto rrid = param->GetRRid();
+                    if (param->IsSaving() or editted.find(rrid) != editted.end()) {
+                        Assert(param->IsSaving() or (*param->Imgr().AskInterval(abb->GetBlockIdx()))[uop_idx_] == false,
+                               "not save before call");
+                        if (param->GetType() == VREG_TYPE::PTR) {
+                            auto load = new riscv::LD(riscv::t0, riscv::fp, param->SavingInfo());
+                            abb->Push(load);
+                        } else if (param->GetType() == VREG_TYPE::INT) {
+                            auto load = new riscv::LW(riscv::t0, riscv::fp, param->SavingInfo());
+                            abb->Push(load);
+                        } else {
+                            panic("unexpected");
+                        }
+
+                        auto set_param = new riscv::SD(riscv::t0, riscv::sp, sps * 8);
+                        abb->Push(set_param);
+                    } else {
+                        auto set_param = new riscv::SD(rrid, riscv::sp, sps * 8);
+                        abb->Push(set_param);
+                    }
+                }
+
+                sps += 1;
             }
-            sps += 1;
         }
     }
 
@@ -368,7 +558,10 @@ void UopLui::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 void UopMv::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
-    if (src_->OnStk()) {
+    if (src_ == nullptr and dst_->GetType() == VREG_TYPE::FLT) {
+        auto fmvwx = new riscv::FMV_W_X(dst_->GetRRidWithSaving(abb), riscv::zero);
+        abb->Push(fmvwx);
+    } else if (src_->OnStk()) {
         src_->LoadTo(riscv::t0, abb);
         src = riscv::t0;
     } else {
@@ -377,7 +570,7 @@ void UopMv::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 
     if (dst_->OnStk()) {
         dst_->StoreFrom(src, abb, riscv::t1);
-    } else {
+    } else if (src_ != nullptr) {
         auto mv = new riscv::MV(dst_->GetRRidWithSaving(abb), src);
         abb->Push(mv);
     }
@@ -529,7 +722,9 @@ void UopStore::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         base = base_->GetRRidWithSaving(abb);
     }
 
-    if (src_->OnStk()) {
+    if (src_ == nullptr) {
+        src = riscv::zero;
+    } else if (src_->OnStk()) {
         src_->LoadTo(riscv::t1, abb);
         src = riscv::t1;
     } else {
@@ -587,14 +782,18 @@ void UopICmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t lhs = 0;
     size_t rhs = 0;
 
-    if (lhs_->OnStk()) {
+    if (lhs_ == nullptr) {
+        lhs = riscv::zero;
+    } else if (lhs_->OnStk()) {
         lhs_->LoadTo(riscv::t0, abb);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
-    if (rhs_->OnStk()) {
+    if (rhs_ == nullptr) {
+        rhs = riscv::zero;
+    } else if (rhs_->OnStk()) {
         rhs_->LoadTo(riscv::t1, abb);
         rhs = riscv::t1;
     } else {
@@ -659,6 +858,9 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t lhs = 0;
     size_t rhs = 0;
 
+    if (lhs_ == nullptr) {
+        lhs = riscv::zero;
+    }
     if (lhs_->OnStk()) {
         lhs_->LoadTo(riscv::ft0, abb, riscv::t0);
         lhs = riscv::ft0;
@@ -666,6 +868,9 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
+    if (rhs_ == nullptr) {
+        rhs = riscv::zero;
+    }
     if (rhs_->OnStk()) {
         rhs_->LoadTo(riscv::ft1, abb, riscv::t0);
         rhs = riscv::ft1;
@@ -689,7 +894,7 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         } break;
         case COMP_KIND::NEQ: {
             auto cmp = new riscv::FEQ(dst, lhs, rhs);
-            auto res = new riscv::SNEZ(dst, dst);
+            auto res = new riscv::SEQZ(dst, dst);
 
             abb->Push(cmp);
             abb->Push(res);
@@ -725,14 +930,18 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t lhs = 0;
     size_t rhs = 0;
 
-    if (lhs_->OnStk()) {
+    if (lhs_ == nullptr) {
+        lhs = riscv::zero;
+    } else if (lhs_->OnStk()) {
         lhs_->LoadTo(riscv::t0, abb);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
-    if (rhs_->OnStk()) {
+    if (rhs_ == nullptr) {
+        rhs = riscv::zero;
+    } else if (rhs_->OnStk()) {
         rhs_->LoadTo(riscv::t1, abb);
         rhs = riscv::t1;
     } else {

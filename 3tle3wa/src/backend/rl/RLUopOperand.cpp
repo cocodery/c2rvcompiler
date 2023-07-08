@@ -14,7 +14,12 @@ const VecVR UopLui::GetOperands() const { return VecVR{}; }
 
 VirtualRegister *UopLui::GetResult() const { return dst_; }
 
-const VecVR UopMv::GetOperands() const { return VecVR{src_}; }
+const VecVR UopMv::GetOperands() const {
+    if (src_ != nullptr) {
+        return VecVR{src_};
+    }
+    return VecVR{};
+}
 
 VirtualRegister *UopMv::GetResult() const { return dst_; }
 
@@ -63,7 +68,16 @@ const VecVR UopFStore::GetOperands() const { return VecVR{src_, base_}; }
 
 VirtualRegister *UopFStore::GetResult() const { return nullptr; }
 
-const VecVR UopICmp::GetOperands() const { return VecVR{lhs_, rhs_}; }
+const VecVR UopICmp::GetOperands() const {
+    VecVR vec;
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
+    return vec;
+}
 
 VirtualRegister *UopICmp::GetResult() const { return dst_; }
 
@@ -71,7 +85,16 @@ const VecVR UopFCmp::GetOperands() const { return VecVR{lhs_, rhs_}; }
 
 VirtualRegister *UopFCmp::GetResult() const { return dst_; }
 
-const VecVR UopIBin::GetOperands() const { return VecVR{lhs_, rhs_}; }
+const VecVR UopIBin::GetOperands() const {
+    VecVR vec;
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
+    return vec;
+}
 
 VirtualRegister *UopIBin::GetResult() const { return dst_; }
 

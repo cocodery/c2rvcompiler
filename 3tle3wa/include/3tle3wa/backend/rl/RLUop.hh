@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <unordered_set>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
@@ -33,7 +34,7 @@ template <typename T>
 class InternalUop : public UopGeneral {};
 
 class UopRet : public InternalUop<UopRet> {
-    VirtualRegister *retval_;
+    VirtualRegister *retval_{nullptr};
 
     void formatString(FILE *fp) final;
 
@@ -48,13 +49,13 @@ class UopRet : public InternalUop<UopRet> {
 };
 
 class UopCall : public InternalUop<UopCall> {
-    std::vector<VirtualRegister *> params_;
+    std::vector<VirtualRegister *> params_{};
 
-    VirtualRegister *retval_;
+    VirtualRegister *retval_{nullptr};
 
-    std::string callee_;
+    std::string callee_{};
 
-    std::vector<VirtualRegister *> living_regs_;
+    std::unordered_set<VirtualRegister *> living_regs_;
 
     bool libcall_{false};
     bool tailcall_{false};
@@ -82,9 +83,9 @@ class UopCall : public InternalUop<UopCall> {
 };
 
 class UopLui : public InternalUop<UopLui> {
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    uint32_t imm_up20_;
+    uint32_t imm_up20_{};
 
     void formatString(FILE *fp) final;
 
@@ -100,8 +101,8 @@ class UopLui : public InternalUop<UopLui> {
 };
 
 class UopMv : public InternalUop<UopMv> {
-    VirtualRegister *dst_;
-    VirtualRegister *src_;
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
@@ -117,8 +118,8 @@ class UopMv : public InternalUop<UopMv> {
 };
 
 class UopCvtS2W : public InternalUop<UopCvtS2W> {
-    VirtualRegister *dst_;
-    VirtualRegister *src_;
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
@@ -134,8 +135,8 @@ class UopCvtS2W : public InternalUop<UopCvtS2W> {
 };
 
 class UopCvtW2S : public InternalUop<UopCvtW2S> {
-    VirtualRegister *dst_;
-    VirtualRegister *src_;
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
@@ -151,10 +152,10 @@ class UopCvtW2S : public InternalUop<UopCvtW2S> {
 };
 
 class UopBranch : public InternalUop<UopBranch> {
-    VirtualRegister *cond_;
+    VirtualRegister *cond_{nullptr};
 
-    size_t dst_idx_;
-    bool on_true_;
+    size_t dst_idx_{};
+    bool on_true_{false};
 
     void formatString(FILE *fp) final;
 
@@ -171,7 +172,7 @@ class UopBranch : public InternalUop<UopBranch> {
 };
 
 class UopJump : public InternalUop<UopJump> {
-    size_t dst_idx_;
+    size_t dst_idx_{};
 
     void formatString(FILE *fp) final;
 
@@ -186,9 +187,9 @@ class UopJump : public InternalUop<UopJump> {
 };
 
 class UopLla : public InternalUop<UopLla> {
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    std::string src_;
+    std::string src_{};
 
     void formatString(FILE *fp) final;
 
@@ -204,10 +205,10 @@ class UopLla : public InternalUop<UopLla> {
 };
 
 class UopLoad : public InternalUop<UopLoad> {
-    VirtualRegister *dst_;
-    VirtualRegister *base_;
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *base_{nullptr};
 
-    int32_t off_lo12_;
+    int32_t off_lo12_{};
 
     void formatString(FILE *fp) final;
 
@@ -224,10 +225,10 @@ class UopLoad : public InternalUop<UopLoad> {
 };
 
 class UopStore : public InternalUop<UopStore> {
-    VirtualRegister *src_;
-    VirtualRegister *base_;
+    VirtualRegister *src_{nullptr};
+    VirtualRegister *base_{nullptr};
 
-    int32_t off_lo12_;
+    int32_t off_lo12_{};
 
     void formatString(FILE *fp) final;
 
@@ -244,10 +245,10 @@ class UopStore : public InternalUop<UopStore> {
 };
 
 class UopFLoad : public InternalUop<UopFLoad> {
-    VirtualRegister *dst_;
-    VirtualRegister *base_;
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *base_{nullptr};
 
-    int32_t off_lo12_;
+    int32_t off_lo12_{};
 
     void formatString(FILE *fp) final;
 
@@ -264,10 +265,10 @@ class UopFLoad : public InternalUop<UopFLoad> {
 };
 
 class UopFStore : public InternalUop<UopFStore> {
-    VirtualRegister *src_;
-    VirtualRegister *base_;
+    VirtualRegister *src_{nullptr};
+    VirtualRegister *base_{nullptr};
 
-    int32_t off_lo12_;
+    int32_t off_lo12_{};
 
     void formatString(FILE *fp) final;
 
@@ -284,12 +285,12 @@ class UopFStore : public InternalUop<UopFStore> {
 };
 
 class UopICmp : public InternalUop<UopICmp> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    COMP_KIND kind_;
+    COMP_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -309,12 +310,12 @@ class UopICmp : public InternalUop<UopICmp> {
 };
 
 class UopFCmp : public InternalUop<UopFCmp> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    COMP_KIND kind_;
+    COMP_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -334,12 +335,12 @@ class UopFCmp : public InternalUop<UopFCmp> {
 };
 
 class UopIBin : public InternalUop<UopIBin> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    IBIN_KIND kind_;
+    IBIN_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -359,12 +360,12 @@ class UopIBin : public InternalUop<UopIBin> {
 };
 
 class UopIBinImm : public InternalUop<UopIBinImm> {
-    VirtualRegister *lhs_;
-    int32_t imm_lo12_;
+    VirtualRegister *lhs_{nullptr};
+    int32_t imm_lo12_{};
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    IBIN_KIND kind_;
+    IBIN_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -384,12 +385,12 @@ class UopIBinImm : public InternalUop<UopIBinImm> {
 };
 
 class UopFBin : public InternalUop<UopFBin> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
-    FBIN_KIND kind_;
+    FBIN_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -409,12 +410,12 @@ class UopFBin : public InternalUop<UopFBin> {
 };
 
 class UopICmpBranch : public InternalUop<UopICmpBranch> {
-    VirtualRegister *lhs_;
-    VirtualRegister *rhs_;
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
 
-    size_t dst_idx_;
+    size_t dst_idx_{};
 
-    COMP_KIND kind_;
+    COMP_KIND kind_{};
 
     void formatString(FILE *fp) final;
 
@@ -442,7 +443,7 @@ struct PhiOperand {
 class UopPhi : public InternalUop<UopPhi> {
     std::vector<PhiOperand> operands_;
 
-    VirtualRegister *dst_;
+    VirtualRegister *dst_{nullptr};
 
     void formatString(FILE *fp) final;
 

@@ -4,6 +4,7 @@
 #include <list>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
@@ -70,7 +71,7 @@ class RLPlanner : public Serializable {
 
     void Recover(AsmBasicBlock *abb);
 
-    void BeforeCall(AsmBasicBlock *abb, std::vector<VirtualRegister *> living_regs);
+    void BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegister *> &living_regs);
 
     void RecoverCall(AsmBasicBlock *abb);
 };

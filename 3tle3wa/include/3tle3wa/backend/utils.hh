@@ -23,8 +23,8 @@
  * @return false
  */
 static inline constexpr bool ImmWithin(size_t width, int64_t imm) {
-    uint64_t max_ = (1 << (width - 1)) - 1;
-    uint64_t min_ = ~(1 << (width - 1)) + 1;
+    uint64_t max_ = (1ul << (width - 1)) - 1;
+    uint64_t min_ = ~(1ul << (width - 1)) + 1;
     return (int64_t)min_ <= imm and imm <= (int64_t)max_;
 }
 
@@ -74,12 +74,12 @@ union Reinterp64Bit {
  *
  */
 struct ConstValueInfo {
-    size_t width_;
-    bool isflt_;
-    bool illegel_;
+    size_t width_{0};
+    bool isflt_{false};
+    bool illegel_{false};
 
-    Reinterp32Bit v32_;
-    Reinterp64Bit v64_;
+    Reinterp32Bit v32_{0};
+    Reinterp64Bit v64_{0};
 };
 
 using ConstPackage = std::variant<bool, char, int32_t, float, int64_t>;

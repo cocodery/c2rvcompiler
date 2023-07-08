@@ -1,11 +1,12 @@
+#include <cinttypes>
 #include <queue>
 #include <unordered_set>
 
 #include "3tle3wa/backend/rl/RLPlanner.hh"
-#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
-#include "3tle3wa/riscv/spec.hh"
+#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
+#include "3tle3wa/riscv/spec.hh"
 
 void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen) {
     std::priority_queue<VirtualRegister *> vrpq;
@@ -61,9 +62,25 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
 
     while (not spill.empty()) {
         auto top = spill.top();
-        spillOn(top);
         spill.pop();
+
+        spill2.push(top);
     }
+
+    //
+    // spill
+    //
+
+    Log("spill %" PRIu64, spill2.size());
+
+    while (not spill2.empty()) {
+        auto top = spill2.top();
+        spill2.pop();
+
+        spillOn(top);
+    }
+
+    Log("use stack %" PRIu64, real_stkinfo_.size());
 }
 
 bool RLPlanner::tryUse(VirtualRegister *vr, size_t rridx) {
@@ -92,7 +109,7 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
 
     for (size_t i = 0; i < real_stk_inval_.size(); ++i) {
         auto &&imgr = real_stk_inval_[i];
-        if (vr->Imgr() && *imgr) {
+        if ((real_stkinfo_[i]->GetSLen() != vr->GetSize()) or (vr->Imgr() && *imgr)) {
             continue;
         }
 
@@ -105,10 +122,12 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
         *imgr |= vr->Imgr();
 
         allocated = true;
+        break;
     }
 
     if (not allocated) {
         auto mgr = std::make_unique<IntervalManager>();
+        auto bptr = mgr.get();
         real_stk_inval_.push_back(std::move(mgr));
 
         auto sinfo = Alloca(vr->GetSize());
@@ -118,7 +137,7 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
         vr->SetStackInfo(sinfo);
         sinfo->SuccWeight(vr->NowWeight());
 
-        *mgr |= vr->Imgr();
+        *bptr |= vr->Imgr();
     }
 }
 
@@ -133,6 +152,9 @@ void RLPlanner::PlanStackSpace() {
     for (auto &&sinfo : stk_storage_) {
         if (sinfo->IsFromAlloca()) {
             allocas.push(sinfo.get());
+        }
+        if (sinfo->IsParam()) {
+            continue;
         }
         stkpq.push(sinfo.get());
     }
@@ -164,7 +186,7 @@ void RLPlanner::PlanStackSpace() {
     int64_t idx = 0;
     idx -= 16;
 
-    for (auto &&[rridx, imgr]: real_reg_inval_) {
+    for (auto &&[rridx, imgr] : real_reg_inval_) {
         idx -= 8;
         place_to_save[rridx] = idx;
     }

@@ -124,6 +124,10 @@ void RLBasicBlock::CalcuInterval() {
     std::vector<UopGeneral *> callidx;
     std::vector<VirtualRegister *> scope_vr;
 
+    for (auto &&in : live_in_) {
+        scope_vr.push_back(planner_->GetVReg(in));
+    }
+
     for (auto &&rit = ops_.rbegin(); rit != ops_.rend(); rit++) {
         auto &&uop = *rit;
 
@@ -134,6 +138,7 @@ void RLBasicBlock::CalcuInterval() {
         auto result = uop->GetResult();
         if (result != nullptr) {
             result->UpdateIntervalBegin(lbidx_, uop->GetUopIdx(), op_idx_ + 1);
+            scope_vr.push_back(result);
         }
 
         auto &&operands = uop->GetOperands();
@@ -141,6 +146,7 @@ void RLBasicBlock::CalcuInterval() {
             for (auto &&operand : operands) {
                 operand->UpdateIntervalEnd(lbidx_, 0, uop->GetUopIdx(), op_idx_ + 1);
                 operand->UseAt(lbidx_);
+                scope_vr.push_back(operand);
             }
         }
     }

@@ -4,7 +4,7 @@ void LiveInterval::UseThis() { UseTime += 1; }
 
 void LiveInterval::CallThis(size_t pos) {
     CallTime[pos] += 1;
-    CallVec |= (1 << pos);
+    CallVec |= (1ul << pos);
 }
 
 bool LiveInterval::operator()(size_t point) const { return point >= Begin && point < End; }

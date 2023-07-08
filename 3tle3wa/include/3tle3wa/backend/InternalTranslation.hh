@@ -15,6 +15,7 @@ class RLBasicBlock;
 class RLPlanner;
 class VirtualRegister;
 class AsmProgress;
+class ConstValueInfo;
 
 // control flow inst
 class ReturnInst;
@@ -67,7 +68,7 @@ class InternalTranslation : public Serializable {
         bool meettail;
     } curstat_;
 
-    void li(VirtualRegister *dst, uint32_t imm);
+    void li(VirtualRegister *dst, ConstValueInfo &cinfo);
 
     void formatString(FILE *fp);
 

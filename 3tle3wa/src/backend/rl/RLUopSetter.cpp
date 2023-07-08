@@ -1,4 +1,5 @@
 #include <cinttypes>
+#include <unordered_set>
 
 #include "3tle3wa/backend/rl/RLUop.hh"
 #include "3tle3wa/backend/utils.hh"
@@ -17,7 +18,7 @@ void UopCall::SetCallSelf(bool callself) { callself_ = callself; }
 
 void UopCall::PushParam(VirtualRegister *param) { params_.push_back(param); }
 
-void UopCall::PushLiver(VirtualRegister *liver) { living_regs_.push_back(liver); }
+void UopCall::PushLiver(VirtualRegister *liver) { living_regs_.insert(liver); }
 
 void UopLui::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
@@ -26,7 +27,7 @@ void UopLui::SetImm(uint32_t imm) {
     if ((msk & imm) != 0) {
         panic("illegel immediate <%" PRIx32 ">", imm);
     }
-    imm_up20_ = imm;
+    imm_up20_ = imm >> 12;
 }
 
 void UopMv::SetDst(VirtualRegister *dst) { dst_ = dst; }

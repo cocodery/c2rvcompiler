@@ -43,6 +43,10 @@ void UopLui::formatString(FILE *fp) {
 
 void UopMv::formatString(FILE *fp) {
     // avoid format
+    if (src_ == nullptr and dst_->GetType() == VREG_TYPE::FLT) {
+        fprintf(fp, "\tfmv.w.x\t%s, zero\n", dst_->CString());
+        return;
+    }
     fprintf(fp, "\tmv\t%s, %s\n", dst_->CString(), src_->CString());
 }
 
@@ -147,6 +151,13 @@ void UopICmp::formatString(FILE *fp) {
         case COMP_KIND::GEQ:
             fprintf(fp, "ge");
             break;
+    }
+    if (lhs_ == nullptr) {
+        fprintf(fp, "\t%s, zero, %s\n", dst_->CString(), rhs_->CString());
+        return;
+    } else if (rhs_ == nullptr) {
+        fprintf(fp, "\t%s, %s, zero\n", dst_->CString(), lhs_->CString());
+        return;
     }
     fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }

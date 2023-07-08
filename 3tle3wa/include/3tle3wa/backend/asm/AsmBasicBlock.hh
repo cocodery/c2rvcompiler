@@ -36,4 +36,6 @@ class AsmBasicBlock : public Serializable {
     const char *FatherLabel() const;
 
     size_t SearchFirst();
+
+    size_t GetBlockIdx();
 };

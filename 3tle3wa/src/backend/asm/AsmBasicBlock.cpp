@@ -21,6 +21,8 @@ void AsmBasicBlock::SetIsRet(bool on) { is_ret_ = on; }
 
 bool AsmBasicBlock::IsRet() { return is_ret_; }
 
+size_t AsmBasicBlock::GetBlockIdx() { return lbidx_; }
+
 const char *AsmBasicBlock::FatherLabel() const { return father_->Label(); }
 
 size_t AsmBasicBlock::SearchFirst() { return father_->FirstBlk(); }

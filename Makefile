@@ -114,7 +114,7 @@ REDINP	= $(addprefix < ,$(INPFILE))
 endif
 
 .PHONY: run
-run: debug $(SYLIB_LL)
+run: build $(SYLIB_LL)
 	$(LOAD)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
 	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll

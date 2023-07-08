@@ -56,7 +56,7 @@ size_t f_gpr_caller_first[] = {
 };
 
 std::unordered_set<size_t> caller_save{
-    riscv::a2,  riscv::a3,  riscv::a4,  riscv::a5,  riscv::a6,   riscv::a7,   riscv::t1,  riscv::t2,
+    riscv::a0, riscv::a1, riscv::a2,  riscv::a3,  riscv::a4,  riscv::a5,  riscv::a6,   riscv::a7,   riscv::t1,  riscv::t2,
     riscv::t3,  riscv::t4,  riscv::t5,  riscv::t6,  riscv::fa0,  riscv::fa1,  riscv::fa2, riscv::fa3,
     riscv::fa4, riscv::fa5, riscv::fa6, riscv::fa7, riscv::ft2,  riscv::ft3,  riscv::ft4, riscv::ft5,
     riscv::ft6, riscv::ft7, riscv::ft8, riscv::ft9, riscv::ft10, riscv::ft11,

@@ -13,14 +13,12 @@ void Interval::Cover(size_t begin, size_t end) {
     const auto &&begin_bit = begin - begin_elem * 64;
     const auto &&end_bit = end - end_elem * 64;
 
-    if (end_elem > 0) {
-        for (size_t i = begin_elem + 1; i < end_elem - 1; ++i) {
-            intval_[i] = (size_t)-1;
-        }
+    for (size_t i = begin_elem + 1; i < end_elem; ++i) {
+        intval_[i] = (size_t)-1;
     }
 
-    const auto &&begin_msk = ~((1 << begin_bit) - 1);
-    const auto &&end_msk = (1 << end_bit) - 1;
+    const auto &&begin_msk = ~((1ul << begin_bit) - 1);
+    const auto &&end_msk = (1ul << end_bit) - 1;
 
     if (begin_elem == end_elem) {
         intval_[begin_elem] |= (begin_msk & end_msk);
@@ -37,14 +35,12 @@ void Interval::Uncover(size_t begin, size_t end) {
     const auto &&begin_bit = begin - begin_elem * 64;
     const auto &&end_bit = end - end_elem * 64;
 
-    if (end_elem > 0) {
-        for (size_t i = begin_elem + 1; i < end_elem - 1; ++i) {
-            intval_[i] = (size_t)0;
-        }
+    for (size_t i = begin_elem + 1; i < end_elem; ++i) {
+        intval_[i] = (size_t)0;
     }
 
-    const auto &&begin_msk = ~((1 << begin_bit) - 1);
-    const auto &&end_msk = (1 << end_bit) - 1;
+    const auto &&begin_msk = ~((1ul << begin_bit) - 1);
+    const auto &&end_msk = (1ul << end_bit) - 1;
 
     if (begin_elem == end_elem) {
         intval_[begin_elem] &= ~(begin_msk & end_msk);
@@ -58,7 +54,7 @@ bool Interval::operator[](size_t idx) {
     const auto &&elem = idx / 64;
     const auto &&bit = idx - elem * 64;
 
-    const auto &&result = intval_[elem] & (0x1 << bit);
+    const auto &&result = intval_[elem] & (1ul << bit);
 
     return result != 0;
 }

@@ -67,6 +67,8 @@ class IntervalManager {
     size_t BlkLiveSpan(size_t lbidx);
     size_t TotalLiveSpan();
 
+    // void CheapSplits(IntervalManager &other);
+
     bool operator&&(IntervalManager &other);
 
     void operator|=(IntervalManager &other);
