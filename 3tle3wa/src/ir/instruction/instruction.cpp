@@ -38,7 +38,7 @@ bool Instruction::IsValueNumberInst() const { return IsTwoOprandInst() || IsGepI
 
 VariablePtr Instruction::GetResult() const { return result; }
 
-std::pair<BaseValuePtr, BaseValuePtr> Instruction::DoFlod() const { return {nullptr, nullptr}; }
+BaseValuePtr Instruction::DoFlod() const { return nullptr; }
 
 void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
 
@@ -51,7 +51,7 @@ UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _o
 
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
-std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
+BaseValuePtr UnaryInstruction::DoFlod() const {
     if (oprand->IsConstant()) {
         ConstType value;
 
@@ -84,9 +84,9 @@ std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
             },
             constant->GetValue());
 
-        return {result, ConstantAllocator::FindConstantPtr(value)};
+        return ConstantAllocator::FindConstantPtr(value);
     }
-    return {nullptr, nullptr};
+    return nullptr;
 }
 
 void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
@@ -109,11 +109,9 @@ bool BinaryInstruction::IsFBinaryInst() const { return false; }
 bool BinaryInstruction::IsICmpInst() const { return false; }
 bool BinaryInstruction::IsFCmpInst() const { return false; }
 
-std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
-    BaseValuePtr replacee = nullptr;
+BaseValuePtr BinaryInstruction::DoFlod() const {
     BaseValuePtr replacer = nullptr;
     if (lhs->IsConstant() && rhs->IsConstant()) {
-        replacee = result;
         replacer = ExprFlod::BinaryOperate(opcode, std::static_pointer_cast<Constant>(lhs),
                                            std::static_pointer_cast<Constant>(rhs));
     } else if (OP_ADD <= opcode && opcode <= OP_RSHIFT) {
@@ -125,22 +123,17 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                     using T = std::decay_t<decltype(arg)>;
                     assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = rhs;
                     } else if (opcode == OP_MUL) {
                         if (arg == static_cast<T>(0)) {
-                            replacee = result;
                             replacer = lhs;
                         } else if (arg == static_cast<T>(1)) {
-                            replacee = result;
                             replacer = rhs;
                         }
                     } else if (opcode == OP_DIV && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(0)) {
                         assert((std::is_same_v<T, int32_t>));
-                        replacee = result;
                         replacer = lhs;
                     }
                 },
@@ -153,32 +146,26 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                     using T = std::decay_t<decltype(arg)>;
                     assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_SUB && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_MUL) {
                         if (arg == static_cast<T>(0)) {
-                            replacee = result;
                             replacer = rhs;
                         } else if (arg == static_cast<T>(1)) {
-                            replacee = result;
                             replacer = lhs;
                         }
                     } else if (opcode == OP_DIV && arg == static_cast<T>(1)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(1)) {
                         assert((std::is_same_v<T, int32_t>));
-                        replacee = result;
                         replacer = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
                     }
                 },
                 constant_rhs->GetValue());
         }
     }
-    return {replacee, replacer};
+    return replacer;
 }
 
 void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }

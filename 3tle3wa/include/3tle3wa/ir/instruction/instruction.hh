@@ -64,7 +64,8 @@ class Instruction {
 
     virtual const BaseValueList GetOprands() const = 0;
 
-    virtual std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
+    // only unary-inst binary-inst can be flod
+    virtual BaseValuePtr DoFlod() const;
 
     virtual void ReplaceTarget(CfgNodePtr, CfgNodePtr);
 
@@ -87,7 +88,7 @@ class UnaryInstruction : public Instruction {
 
     BaseValuePtr GetOprand() const;
 
-    std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
+    BaseValuePtr DoFlod() const;
 
     void RemoveResParent();
 
@@ -115,7 +116,7 @@ class BinaryInstruction : public Instruction {
     virtual bool IsICmpInst() const;
     virtual bool IsFCmpInst() const;
 
-    std::pair<BaseValuePtr, BaseValuePtr> DoFlod() const;
+    BaseValuePtr DoFlod() const;
 
     void RemoveResParent();
 
