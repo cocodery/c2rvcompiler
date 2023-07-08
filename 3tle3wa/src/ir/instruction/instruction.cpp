@@ -1,5 +1,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 
+#include "3tle3wa/ir/instruction/opCode.hh"
+
 //===-----------------------------------------------------------===//
 //                     Instruction Implementation
 //===-----------------------------------------------------------===//
@@ -51,7 +53,39 @@ UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _o
 
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
-BaseValuePtr UnaryInstruction::DoFlod() const {
+BaseValuePtr UnaryInstruction::DoFlod() const { return DoUnaryFlod(opcode, oprand); }
+
+void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
+
+const BaseValueList UnaryInstruction::GetOprands() const { return BaseValueList({oprand}); }
+
+//===-----------------------------------------------------------===//
+//                     BinaryInstruction Implementation
+//===-----------------------------------------------------------===//
+
+BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
+                                     CfgNodePtr node)
+    : Instruction(_res, _op, node), lhs(_lhs), rhs(_rhs) {}
+
+BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
+BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
+
+bool BinaryInstruction::IsIBinaryInst() const { return false; }
+bool BinaryInstruction::IsFBinaryInst() const { return false; }
+bool BinaryInstruction::IsICmpInst() const { return false; }
+bool BinaryInstruction::IsFCmpInst() const { return false; }
+
+BaseValuePtr BinaryInstruction::DoFlod() const { return DoBinaryFlod(opcode, lhs, rhs); }
+
+void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
+
+const BaseValueList BinaryInstruction::GetOprands() const { return BaseValueList({lhs, rhs}); }
+
+//===-----------------------------------------------------------===//
+//                     DoFlod Implementation
+//===-----------------------------------------------------------===//
+
+BaseValuePtr DoUnaryFlod(OpCode opcode, BaseValuePtr oprand) {
     if (oprand->IsConstant()) {
         ConstType value;
 
@@ -89,27 +123,7 @@ BaseValuePtr UnaryInstruction::DoFlod() const {
     return nullptr;
 }
 
-void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
-
-const BaseValueList UnaryInstruction::GetOprands() const { return BaseValueList({oprand}); }
-
-//===-----------------------------------------------------------===//
-//                     BinaryInstruction Implementation
-//===-----------------------------------------------------------===//
-
-BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs,
-                                     CfgNodePtr node)
-    : Instruction(_res, _op, node), lhs(_lhs), rhs(_rhs) {}
-
-BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
-BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
-
-bool BinaryInstruction::IsIBinaryInst() const { return false; }
-bool BinaryInstruction::IsFBinaryInst() const { return false; }
-bool BinaryInstruction::IsICmpInst() const { return false; }
-bool BinaryInstruction::IsFCmpInst() const { return false; }
-
-BaseValuePtr BinaryInstruction::DoFlod() const {
+BaseValuePtr DoBinaryFlod(OpCode opcode, BaseValuePtr lhs, BaseValuePtr rhs) {
     BaseValuePtr replacer = nullptr;
     if (lhs->IsConstant() && rhs->IsConstant()) {
         replacer = ExprFlod::BinaryOperate(opcode, std::static_pointer_cast<Constant>(lhs),
@@ -167,10 +181,6 @@ BaseValuePtr BinaryInstruction::DoFlod() const {
     }
     return replacer;
 }
-
-void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
-
-const BaseValueList BinaryInstruction::GetOprands() const { return BaseValueList({lhs, rhs}); }
 
 //===-----------------------------------------------------------===//
 //                     ReplaceSRC Implementation

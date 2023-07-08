@@ -125,5 +125,8 @@ class BinaryInstruction : public Instruction {
     virtual std::string tollvmIR() = 0;
 };
 
+BaseValuePtr DoUnaryFlod(OpCode, BaseValuePtr);
+BaseValuePtr DoBinaryFlod(OpCode, BaseValuePtr, BaseValuePtr);
+
 void ReplaceSRC(BaseValuePtr, BaseValuePtr);
 void RemoveInst(InstPtr);
