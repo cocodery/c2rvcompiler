@@ -82,7 +82,7 @@ void InternalTranslation::Translate(ReturnInst *ll) {
             auto &&cinfo = XConstValue(cst->GetValue());
 
             if (cinfo.isflt_) {
-                auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+                auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
                 auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
                 auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -253,7 +253,7 @@ void InternalTranslation::Translate(FCmpInst *ll) {
 
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -292,7 +292,7 @@ void InternalTranslation::Translate(FCmpInst *ll) {
 
             curstat_.cur_blk->Push(uop_mv);
         } else {
-            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+            auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
             auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
             auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -464,7 +464,7 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -496,7 +496,7 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrrhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -898,7 +898,7 @@ void InternalTranslation::Translate(CallInst *ll) {
                 auto &&cinfo = XConstValue(cst->GetValue());
 
                 if (cinfo.isflt_) {
-                    auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+                    auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
                     auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
                     auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);

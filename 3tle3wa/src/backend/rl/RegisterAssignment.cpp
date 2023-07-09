@@ -64,7 +64,7 @@ void RLBasicBlock::SetCalcuParam(std::vector<VirtualRegister *> &params) {
 }
 
 void RLBasicBlock::CalcuInit() {
-    for (auto &&uop : op_view_) {
+    for (auto &&uop : ops_) {
         auto operands = uop->GetOperands();
         if (not operands.empty()) {
             for (auto &&operand : operands) {

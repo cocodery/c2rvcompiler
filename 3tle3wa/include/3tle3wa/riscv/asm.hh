@@ -1,6 +1,11 @@
 #pragma once
 
+#include <vector>
+
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
+#include "3tle3wa/riscv/spec.hh"
+
+class Transaction;
 
 namespace riscv {
 
@@ -8,14 +13,25 @@ class Instruction : public AsmInstruction {
    protected:
     virtual void formatString(FILE *fp) final;
 
-    char *inst_txt_;
-    size_t txt_len_;
+    char *inst_txt_{nullptr};
+    size_t txt_len_{};
+
+    uint64_t rd_{};
+    uint64_t rs_{};
+    uint64_t rt_{};
+    int64_t imm_{};
+
+   public:
+    Instruction(uint64_t rd = riscv::zero, uint64_t rs = riscv::zero, uint64_t rt = riscv::zero, int64_t imm = 0);
+
+    virtual Transaction ToTrx() = 0;
 };
 
 #define RVINST(name, ...)             \
     class name : public Instruction { \
        public:                        \
         name(__VA_ARGS__);            \
+        Transaction ToTrx();          \
     }
 
 //

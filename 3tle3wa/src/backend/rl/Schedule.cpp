@@ -3,6 +3,7 @@
 
 #include "3tle3wa/backend/InternalTranslation.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/asm/AsmProgress.hh"
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
 #include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/backend/rl/RLPlanner.hh"
@@ -12,6 +13,8 @@
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
+
+// scheduler need restrict pointer
 
 struct AOVNode {
     std::unordered_set<AOVNode *> prev;
@@ -29,19 +32,13 @@ struct RWStatus {
 
 void InternalTranslation::DoVSchedule() { rlps_->VirtualSchedule(); }
 
-void InternalTranslation::DoRSchedule() { rlps_->RealSchedule(); }
+void InternalTranslation::DoRSchedule() { apg_->ArchSchedule(); }
 
 void InternalTranslation::NoSchedule() { rlps_->NoSchedule(); }
 
 void RLProgress::VirtualSchedule() {
     for (auto &&bb : rlbbs_) {
         bb->VirtualSchedule();
-    }
-}
-
-void RLProgress::RealSchedule() {
-    for (auto &&bb : rlbbs_) {
-        bb->RealSchedule();
     }
 }
 
@@ -215,6 +212,7 @@ void RLBasicBlock::VirtualSchedule() {
                     }
                 }
             }
+
             it++;
         }
 
@@ -237,5 +235,3 @@ void RLBasicBlock::VirtualSchedule() {
         op_view_.push_back(choice->self);
     }
 }
-
-void RLBasicBlock::RealSchedule() {}

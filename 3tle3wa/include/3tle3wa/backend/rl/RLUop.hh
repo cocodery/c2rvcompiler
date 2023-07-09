@@ -14,7 +14,7 @@ class RLPlanner;
 
 class UopGeneral : public Serializable {
    protected:
-    size_t uop_idx_;
+    size_t uop_idx_{};
 
    public:
     size_t GetUopIdx() const;

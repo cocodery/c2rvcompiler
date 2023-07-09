@@ -128,8 +128,8 @@ void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
     auto &&cinfo = XConstValue(cvp->GetValue());
     Assert(cinfo.isflt_ and cinfo.width_ == 32, "not float local constant");
     auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
-    CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
-    Assert(result.second, "insert global variable fail!");
+    CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v64_.u64_, idx);
+    // Assert(result.second, "insert local constant fail!");
 
     asm_gen_->PushAsmLocalConstant(lcv);
 }
@@ -139,8 +139,8 @@ void RLGen::SerialGenerate() {
         task->DoTranslation();
         task->NoSchedule();
         task->DoAssignment();
-        // task->DoRSchedule();
         task->DoTranslateToAsm();
+        task->DoRSchedule();
         asm_gen_->PushAsmProgress(task->ExportAPG());
     }
 }
@@ -151,10 +151,10 @@ void RLGen::ParallelGenerate() {
     for (auto &&task : translation_tasks_) {
         auto trd = std::make_unique<std::thread>([&task]() {
             task->DoTranslation();
-            task->DoVSchedule();
+            task->NoSchedule();
             task->DoAssignment();
-            task->DoRSchedule();
             task->DoTranslateToAsm();
+            task->DoRSchedule();
         });
         trds.push_back(std::move(trd));
     }

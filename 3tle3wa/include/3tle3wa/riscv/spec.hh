@@ -7,6 +7,15 @@ extern const char *gpr[];
 
 namespace riscv {
 
+enum class OpType {
+    JumpBranch = 0,
+    StoreData = 1,
+    IntegerOperation = 2,
+    FloatRelated = 3,
+    MulDivRemOperation = 4,
+    LoadData = 5,
+};
+
 constexpr uint64_t zero = 0;
 constexpr uint64_t ra = 1;
 constexpr uint64_t sp = 2;

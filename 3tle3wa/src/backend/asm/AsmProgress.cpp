@@ -53,6 +53,7 @@ void AsmProgress::formatString(FILE *fp) {
     for (auto &&blk : ablks_) {
         fprintf(fp, "%s", blk->CString());
     }
+    fprintf(fp, "\t.size\t%s, .-%s\n", label_, label_);
 }
 
 size_t AsmProgress::FirstBlk() const { return first_bidx_; }

@@ -54,8 +54,6 @@ class RLBasicBlock : public Serializable {
 
     void VirtualSchedule();
 
-    void RealSchedule();
-
     void NoSchedule();
 
     void operator+=(RLBasicBlock &income);

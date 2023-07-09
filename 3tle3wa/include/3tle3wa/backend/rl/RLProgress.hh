@@ -56,8 +56,6 @@ class RLProgress : public Serializable {
 
     void VirtualSchedule();
 
-    void RealSchedule();
-    
     void NoSchedule();
 
     void DoAssignment();

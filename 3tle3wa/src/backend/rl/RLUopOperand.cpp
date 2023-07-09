@@ -2,7 +2,12 @@
 
 using VecVR = std::vector<VirtualRegister *>;
 
-const VecVR UopRet::GetOperands() const { return VecVR{retval_}; }
+const VecVR UopRet::GetOperands() const {
+    if (retval_ != nullptr) {
+        return VecVR{retval_};
+    }
+    return VecVR{};
+}
 
 VirtualRegister *UopRet::GetResult() const { return nullptr; }
 

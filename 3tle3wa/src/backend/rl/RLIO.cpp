@@ -60,7 +60,7 @@ void RLBasicBlock::formatString(FILE *fp) {
     }
     fputc('\n', fp);
 
-    for (auto &&uop : op_view_) {
+    for (auto &&uop : ops_) {
         fprintf(fp, "%s", uop->CString());
     }
 }

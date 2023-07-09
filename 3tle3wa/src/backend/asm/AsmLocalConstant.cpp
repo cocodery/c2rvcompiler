@@ -14,7 +14,7 @@ void AsmLocalConstant::formatString(FILE *fp) {
             "\t.section\t.rodata\n"
 
             // declare global
-            "\t.global\t%" PRIu64
+            "\t.global\t.LC%" PRIu64
             "\n"
 
             // alignment
@@ -22,11 +22,11 @@ void AsmLocalConstant::formatString(FILE *fp) {
             "\n"
 
             // type
-            "\t.type\t%" PRIu64
+            "\t.type\t.LC%" PRIu64
             ", @object\n"
 
             // data size
-            "\t.size\t%" PRIu64 ", %" PRIu64
+            "\t.size\t.LC%" PRIu64 ", %" PRIu64
             "\n"
 
             // label begin

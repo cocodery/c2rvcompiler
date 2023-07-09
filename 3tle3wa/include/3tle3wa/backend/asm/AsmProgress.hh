@@ -40,4 +40,6 @@ class AsmProgress : public Serializable {
     void SetFirstBlk(size_t idx);
 
     const char *Label() const;
+
+    void ArchSchedule();
 };

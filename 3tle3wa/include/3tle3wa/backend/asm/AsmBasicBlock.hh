@@ -14,6 +14,8 @@ class AsmBasicBlock : public Serializable {
 
     std::list<std::unique_ptr<AsmInstruction>> insts_;
 
+    std::list<AsmInstruction *> view_insts_;
+
     const AsmProgress *father_;
 
     bool is_ret_;
@@ -38,4 +40,6 @@ class AsmBasicBlock : public Serializable {
     size_t SearchFirst();
 
     size_t GetBlockIdx();
+
+    void ArchSchedule();
 };

@@ -1078,6 +1078,18 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 auto ibini = new riscv::SRAI(dst, lhs, imm_lo12_);
                 abb->Push(ibini);
             } break;
+            case IBIN_KIND::OR: {
+                auto ibini = new riscv::ORI(dst, lhs, imm_lo12_);
+                abb->Push(ibini);
+            } break;
+            case IBIN_KIND::XOR: {
+                auto ibini = new riscv::XORI(dst, lhs, imm_lo12_);
+                abb->Push(ibini);
+            } break;
+            case IBIN_KIND::AND: {
+                auto ibini = new riscv::ANDI(dst, lhs, imm_lo12_);
+                abb->Push(ibini);
+            } break;
             default:
                 panic("imm op not support this");
         }

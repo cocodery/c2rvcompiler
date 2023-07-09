@@ -102,8 +102,9 @@ static inline ConstValueInfo XConstValue(const ConstPackage &cpk) {
                 cvalinfo.width_ = 32;
             } else if constexpr (std::is_same_v<T, double>) {
                 cvalinfo.v32_.flt_ = arg;
+                cvalinfo.v64_.dlb_ = arg;
                 cvalinfo.isflt_ = true;
-                cvalinfo.width_ = 32;
+                cvalinfo.width_ = 64;
             } else if constexpr (std::is_same_v<T, int32_t>) {
                 cvalinfo.v32_.i32_ = arg;
                 cvalinfo.isflt_ = false;
