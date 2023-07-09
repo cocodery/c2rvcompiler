@@ -600,7 +600,8 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
         StoreInst::DoStoreValue(ret_addr, ret_value, cur_block);
 
         if (ret_value->IsVariable() && ret_value->GetParent()->IsCallInst()) {
-            cur_func->SetTailCall(true);
+            auto call_inst = std::static_pointer_cast<CallInst>(ret_value->GetParent());
+            call_inst->SetTailCall(true);
         }
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);

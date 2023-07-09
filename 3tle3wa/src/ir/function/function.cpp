@@ -31,9 +31,6 @@ CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
 
-void NormalFunction::SetTailCall(bool _tail_call) { tail_call = _tail_call; }
-bool NormalFunction::GetTailCall() const { return tail_call; }
-
 CfgNodeList NormalFunction::TopoSortFromEntry() {
     std::unordered_map<CfgNodePtr, bool> visit;
     CfgNodeList preorder_node = CfgNodeList();
