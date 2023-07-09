@@ -682,11 +682,17 @@ void UopJump::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (src_.empty()) {
         auto stkinfo = dst_->GetAllocaInfo();
-        auto off = stkinfo->GetOff();
+        int64_t off = stkinfo->GetOff();
+        int64_t off_fp = plan->TotalStackSize() - off;
 
         if (dst_->OnStk()) {
             if (ImmWithin(12, off)) {
                 auto stkp_gen = new riscv::ADDI(riscv::t0, riscv::sp, off);
+                abb->Push(stkp_gen);
+
+                dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto stkp_gen = new riscv::ADDI(riscv::t0, riscv::fp, -off_fp);
                 abb->Push(stkp_gen);
 
                 dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
@@ -702,6 +708,9 @@ void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         } else {
             if (ImmWithin(12, off)) {
                 auto stkp_gen = new riscv::ADDI(dst_->GetRRidWithSaving(abb), riscv::sp, off);
+                abb->Push(stkp_gen);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto stkp_gen = new riscv::ADDI(dst_->GetRRidWithSaving(abb), riscv::fp, -off_fp);
                 abb->Push(stkp_gen);
             } else {
                 auto load_imm = new riscv::LI(riscv::t0, off);
@@ -1206,7 +1215,7 @@ void UopFBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
             abb->Push(fbin);
         } break;
         case FBIN_KIND::DIV: {
-            auto fbin = new riscv::FDIV_S(dst, rhs, lhs);
+            auto fbin = new riscv::FDIV_S(dst, lhs, rhs);
 
             abb->Push(fbin);
         } break;

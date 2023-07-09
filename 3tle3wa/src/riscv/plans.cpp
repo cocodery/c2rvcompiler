@@ -1,4 +1,5 @@
 #include <cinttypes>
+#include <deque>
 #include <queue>
 #include <unordered_set>
 
@@ -162,11 +163,15 @@ void RLPlanner::PlanStackSpace() {
     spoff += 8 * param_stack_;
 
     std::priority_queue<STKElem> stkpq;
-    std::queue<StackInfo *> allocas;
+    std::deque<StackInfo *> allocas;
 
     for (auto &&sinfo : stk_storage_) {
         if (sinfo->IsFromAlloca()) {
-            allocas.push(sinfo.get());
+            if (sinfo->GetSLen() > 8) {
+                allocas.push_back(sinfo.get());
+            } else {
+                allocas.push_front(sinfo.get());
+            }
         }
         if (sinfo->IsParam()) {
             continue;
@@ -186,15 +191,33 @@ void RLPlanner::PlanStackSpace() {
 
         top->SetOff(spoff);
         spoff += siz;
+
+        if (not ImmWithin(12, spoff)) {
+            break;
+        }
     }
 
     while (not allocas.empty()) {
         auto stk = allocas.front();
-        allocas.pop();
+        allocas.pop_front();
 
         auto siz = stk->GetSLen();
 
         stk->SetOff(spoff);
+        spoff += siz;
+    }
+
+    while (not stkpq.empty()) {
+        auto top = stkpq.top().stk_;
+        stkpq.pop();
+
+        auto siz = top->GetSLen();
+
+        if (siz == 8) {
+            spoff = RoundUp(8, spoff);
+        }
+
+        top->SetOff(spoff);
         spoff += siz;
     }
 
