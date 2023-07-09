@@ -5,7 +5,7 @@
 //===-----------------------------------------------------------===//
 
 CallInst::CallInst(ScalarTypePtr _type, VariablePtr _ret, BaseFuncPtr _func, ParamList &_list, CfgNodePtr block)
-    : Instruction(_ret, Call, block), ret_type(_type), callee_func(_func), rparam_list(_list) {
+    : Instruction(_ret, Call, block), ret_type(_type), callee_func(_func), rparam_list(_list), tail_call(false) {
     if (ret_type->VoidType()) {
         assert(_ret == nullptr);
     } else {
@@ -33,6 +33,9 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
 ScalarTypePtr CallInst::GetRetType() const { return ret_type; }
 BaseFuncPtr CallInst::GetCalleeFunc() const { return callee_func; }
 const ParamList &CallInst::GetParamList() const { return rparam_list; }
+
+void CallInst::SetTailCall(bool _tail_call) { tail_call = _tail_call; }
+bool CallInst::GetTailCall() const { return tail_call; }
 
 void CallInst::RemoveResParent() {
     if (result != nullptr) {

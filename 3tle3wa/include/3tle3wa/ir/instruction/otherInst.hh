@@ -17,6 +17,8 @@ class CallInst final : public Instruction {
     BaseFuncPtr callee_func;
     ParamList rparam_list;
 
+    bool tail_call;
+
     static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
    public:
@@ -28,6 +30,9 @@ class CallInst final : public Instruction {
     ScalarTypePtr GetRetType() const;
     BaseFuncPtr GetCalleeFunc() const;
     const ParamList &GetParamList() const;
+
+    void SetTailCall(bool);
+    bool GetTailCall() const;
 
     void RemoveResParent();
 
