@@ -201,5 +201,7 @@ RVINST(FLT, uint64_t rd, uint64_t frs, uint64_t frt);
 RVINST(FLE, uint64_t rd, uint64_t frs, uint64_t frt);
 RVINST(FMV_W_X, uint64_t frd, uint64_t rs);
 RVINST(FMV_X_W, uint64_t rd, uint64_t frs);
+RVINST(FMAX_S, uint64_t rd, uint64_t frs, uint64_t frt);
+RVINST(FMIN_S, uint64_t rd, uint64_t frs, uint64_t frt);
 
 }  // namespace riscv

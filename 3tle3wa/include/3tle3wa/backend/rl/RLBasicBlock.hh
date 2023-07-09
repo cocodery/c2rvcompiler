@@ -49,6 +49,8 @@ class RLBasicBlock : public Serializable {
     void CalcuClear();
     
     void SetCalcuParam(std::vector<VirtualRegister *> &params);
+
+    void SetLiveinParam(std::vector<VirtualRegister *> &params);
     
     void CalcuInit();
     

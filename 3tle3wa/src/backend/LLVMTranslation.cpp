@@ -32,6 +32,10 @@ void FBinaryInst::TranslateTo(InternalTranslation &itx) {
     itx.Translate(this);
 }
 
+void FNegInst::TranslateTo(InternalTranslation &itx) {
+    itx.Translate(this);
+}
+
 // memory inst
 void AllocaInst::TranslateTo(InternalTranslation &itx) {
     itx.Translate(this);

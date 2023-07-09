@@ -70,88 +70,88 @@ void SCCP::SetLatticeAttr(BaseValuePtr _value, LatticeAttr _attr) {
 bool SCCP::EvaluateOnInst(InstPtr inst) {
     bool ret = false;
 
-    if (inst->IsJumpInst()) {
-        auto jump_inst = std::static_pointer_cast<JumpInst>(inst);
-        CFGWorkList.push_back(jump_inst->GetTarget());
-    } else if (inst->IsBranchInst()) {
-        auto br_inst = std::static_pointer_cast<BranchInst>(inst);
-        auto cond = br_inst->GetCondition();
-        assert(cond->GetBaseType()->BoolType());
+    // if (inst->IsJumpInst()) {
+    //     auto jump_inst = std::static_pointer_cast<JumpInst>(inst);
+    //     CFGWorkList.push_back(jump_inst->GetTarget());
+    // } else if (inst->IsBranchInst()) {
+    //     auto br_inst = std::static_pointer_cast<BranchInst>(inst);
+    //     auto cond = br_inst->GetCondition();
+    //     assert(cond->GetBaseType()->BoolType());
 
-        if (cond->IsConstant()) {
-            CFGWorkList.push_back(std::get<bool>(std::static_pointer_cast<Constant>(cond)->GetValue())
-                                      ? br_inst->GetTrueTarget()
-                                      : br_inst->GetFalseTarget());
-        } else {
-            CFGWorkList.push_back(br_inst->GetTrueTarget());
-            CFGWorkList.push_back(br_inst->GetFalseTarget());
-        }
-    } else if (inst->IsOneOprandInst()) {
-        auto _attr = CreateNotAConstant();
-        auto unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
+    //     if (cond->IsConstant()) {
+    //         CFGWorkList.push_back(std::get<bool>(std::static_pointer_cast<Constant>(cond)->GetValue())
+    //                                   ? br_inst->GetTrueTarget()
+    //                                   : br_inst->GetFalseTarget());
+    //     } else {
+    //         CFGWorkList.push_back(br_inst->GetTrueTarget());
+    //         CFGWorkList.push_back(br_inst->GetFalseTarget());
+    //     }
+    // } else if (inst->IsOneOprandInst()) {
+    //     auto _attr = CreateNotAConstant();
+    //     auto unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
 
-        auto [replacee, replacer] = unary_inst->DoFlod();
+    //     // auto [replacee, replacer] = unary_inst->DoFlod();
 
-        if (replacee != nullptr && replacee != nullptr) {  // replace successful
-            ret = true;
-            ReplaceSRC(replacee, replacer);
-            assert(replacer->IsConstant());  // only constant result on unary-inst floding
-        } else {
-            SetLatticeAttr(unary_inst->GetResult(), _attr);
-        }
-    } else if (inst->IsTwoOprandInst()) {
-        auto _attr = CreateNotAConstant();
-        auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-        assert(!GetLatticeAttr(bin_inst->GetLHS()).IsUndefine() && !GetLatticeAttr(bin_inst->GetRHS()).IsUndefine());
+    //     if (replacee != nullptr && replacee != nullptr) {  // replace successful
+    //         ret = true;
+    //         // ReplaceSRC(replacee, replacer);
+    //         assert(replacer->IsConstant());  // only constant result on unary-inst floding
+    //     } else {
+    //         SetLatticeAttr(unary_inst->GetResult(), _attr);
+    //     }
+    // } else if (inst->IsTwoOprandInst()) {
+    //     auto _attr = CreateNotAConstant();
+    //     auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+    //     assert(!GetLatticeAttr(bin_inst->GetLHS()).IsUndefine() && !GetLatticeAttr(bin_inst->GetRHS()).IsUndefine());
 
-        auto [replacee, replacer] = bin_inst->DoFlod();
+    //     // auto [replacee, replacer] = bin_inst->DoFlod();
 
-        if (replacee != nullptr && replacer != nullptr) {  // replace successful
-            ret = true;
-            ReplaceSRC(replacee, replacer);
-            // replacer have been set in ValueMap when it first travelled
-        } else {
-            SetLatticeAttr(bin_inst->GetResult(), _attr);
-        }
-    } else if (inst->IsPhiInst()) {
-        auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
-        LatticeAttr _attr;  // Undefine
+    //     if (replacee != nullptr && replacer != nullptr) {  // replace successful
+    //         ret = true;
+    //         // ReplaceSRC(replacee, replacer);
+    //         // replacer have been set in ValueMap when it first travelled
+    //     } else {
+    //         SetLatticeAttr(bin_inst->GetResult(), _attr);
+    //     }
+    // } else if (inst->IsPhiInst()) {
+    //     auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
+    //     LatticeAttr _attr;  // Undefine
 
-        auto &&ref_list = phi_inst->GetRefList();
-        for (auto &&iter = ref_list.begin(); iter != ref_list.end();) {
-            auto [_value, _node] = (*iter);
+    //     auto &&ref_list = phi_inst->GetRefList();
+    //     for (auto &&iter = ref_list.begin(); iter != ref_list.end();) {
+    //         auto [_value, _node] = (*iter);
 
-            auto excutable = ExcutedMap[_node];
-            if (excutable.IsFalse()) {
-                iter = ref_list.erase(iter);
-            } else {
-                if (excutable.IsTrue()) {
-                    _attr = Meet(_attr, GetLatticeAttr(_value));
-                }
-                ++iter;
-            }
-        }
-        if (ref_list.size() == 1) {
-            ret = true;
+    //         auto excutable = ExcutedMap[_node];
+    //         if (excutable.IsFalse()) {
+    //             iter = ref_list.erase(iter);
+    //         } else {
+    //             if (excutable.IsTrue()) {
+    //                 _attr = Meet(_attr, GetLatticeAttr(_value));
+    //             }
+    //             ++iter;
+    //         }
+    //     }
+    //     if (ref_list.size() == 1) {
+    //         ret = true;
 
-            BaseValuePtr replacee = phi_inst->GetResult();
-            BaseValuePtr replacer = ref_list.begin()->first;
+    //         BaseValuePtr replacee = phi_inst->GetResult();
+    //         BaseValuePtr replacer = ref_list.begin()->first;
 
-            ReplaceSRC(replacee, replacer);
-        } else {
-            _attr = CreateNotAConstant();
-            SetLatticeAttr(phi_inst->GetResult(), _attr);
-        }
-    } else {
-        auto result = inst->GetResult();
-        if (result != nullptr) {
-            if (result->IsConstant()) {
-                SetLatticeAttr(result, CreateConstant(result));
-            } else {
-                SetLatticeAttr(result, CreateNotAConstant());
-            }
-        }
-    }
+    //         ReplaceSRC(replacee, replacer);
+    //     } else {
+    //         _attr = CreateNotAConstant();
+    //         SetLatticeAttr(phi_inst->GetResult(), _attr);
+    //     }
+    // } else {
+    //     auto result = inst->GetResult();
+    //     if (result != nullptr) {
+    //         if (result->IsConstant()) {
+    //             SetLatticeAttr(result, CreateConstant(result));
+    //         } else {
+    //             SetLatticeAttr(result, CreateNotAConstant());
+    //         }
+    //     }
+    // }
     return ret;
 }
 

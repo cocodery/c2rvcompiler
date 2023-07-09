@@ -48,6 +48,8 @@ void RLProgress::computeLivenessInfomation() {
             changed = (*rit)->CalcuIO(lbmap_) || changed;
         }
     } while (changed);
+
+    (*rlbbs_.begin())->SetLiveinParam(params_);
 }
 
 void RLBasicBlock::CalcuClear() {
@@ -60,6 +62,12 @@ void RLBasicBlock::CalcuClear() {
 void RLBasicBlock::SetCalcuParam(std::vector<VirtualRegister *> &params) {
     for (auto &&param : params) {
         live_def_.insert(param->GetVRIdx());
+    }
+}
+
+void RLBasicBlock::SetLiveinParam(std::vector<VirtualRegister *> &params) {
+    for (auto &&param : params) {
+        live_in_.insert(param->GetVRIdx());
     }
 }
 

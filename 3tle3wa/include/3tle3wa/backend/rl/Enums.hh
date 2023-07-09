@@ -36,7 +36,11 @@ enum class FBIN_KIND {
     ADD = OP_ADD,
     SUB = OP_SUB,
     MUL = OP_MUL,
-    DIV = OP_DIV
+    DIV = OP_DIV,
+    NEG,
+    MAX,
+    MIN,
+    ABS,
 };
 
 enum class PHI_KIND {

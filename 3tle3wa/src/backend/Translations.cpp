@@ -83,24 +83,37 @@ void InternalTranslation::Translate(ReturnInst *ll) {
 
             if (cinfo.isflt_) {
                 auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-                auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-                auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-                auto flt_val = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+                if (cinfo.v32_.u32_ == 0) {
+                    auto flt_val = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-                auto uop_lla = new UopLla;
-                uop_lla->SetSrc(lbname);
-                uop_lla->SetDst(lc_addr);
+                    auto uop_mv = new UopMv;
+                    uop_mv->SetDst(flt_val);
+                    uop_mv->SetSrc(nullptr);
 
-                auto uop_fload = new UopFLoad;
-                uop_fload->SetOff(0);
-                uop_fload->SetBase(lc_addr);
-                uop_fload->SetDst(flt_val);
+                    curstat_.cur_blk->Push(uop_mv);
 
-                curstat_.cur_blk->Push(uop_lla);
-                curstat_.cur_blk->Push(uop_fload);
+                    uop->SetRetVal(flt_val);
+                } else {
+                    auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-                uop->SetRetVal(flt_val);
+                    auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+                    auto flt_val = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+
+                    auto uop_lla = new UopLla;
+                    uop_lla->SetSrc(lbname);
+                    uop_lla->SetDst(lc_addr);
+
+                    auto uop_fload = new UopFLoad;
+                    uop_fload->SetOff(0);
+                    uop_fload->SetBase(lc_addr);
+                    uop_fload->SetDst(flt_val);
+
+                    curstat_.cur_blk->Push(uop_lla);
+                    curstat_.cur_blk->Push(uop_fload);
+
+                    uop->SetRetVal(flt_val);
+                }
             } else {
                 auto vr_retval = curstat_.planner->NewVReg(VREG_TYPE::INT);
 
@@ -391,21 +404,30 @@ void InternalTranslation::Translate(FCmpInst *ll) {
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
         auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-        auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-        auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+        if (cinfo.v32_.u32_ == 0) {
+            auto uop_mv = new UopMv;
+            uop_mv->SetDst(vrlhs);
+            uop_mv->SetSrc(nullptr);
 
-        auto uop_lla = new UopLla;
-        uop_lla->SetSrc(lbname);
-        uop_lla->SetDst(lc_addr);
+            curstat_.cur_blk->Push(uop_mv);
+        } else {
+            auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-        auto uop_fload = new UopFLoad;
-        uop_fload->SetOff(0);
-        uop_fload->SetBase(lc_addr);
-        uop_fload->SetDst(vrlhs);
+            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
 
-        curstat_.cur_blk->Push(uop_lla);
-        curstat_.cur_blk->Push(uop_fload);
+            auto uop_lla = new UopLla;
+            uop_lla->SetSrc(lbname);
+            uop_lla->SetDst(lc_addr);
+
+            auto uop_fload = new UopFLoad;
+            uop_fload->SetOff(0);
+            uop_fload->SetBase(lc_addr);
+            uop_fload->SetDst(vrlhs);
+
+            curstat_.cur_blk->Push(uop_lla);
+            curstat_.cur_blk->Push(uop_fload);
+        }
     } else {
         auto var = dynamic_cast<Variable *>(lhs.get());
         Assert(var, "bad dynamic cast");
@@ -601,22 +623,30 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-        auto lbname = std::string(".LC") + std::to_string(lc_idx);
+        if (cinfo.v32_.u32_ == 0) {
+            auto uop_mv = new UopMv;
+            uop_mv->SetDst(vrlhs);
+            uop_mv->SetSrc(nullptr);
 
-        auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+            curstat_.cur_blk->Push(uop_mv);
+        } else {
+            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+            auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-        auto uop_lla = new UopLla;
-        uop_lla->SetSrc(lbname);
-        uop_lla->SetDst(lc_addr);
+            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
 
-        auto uop_fload = new UopFLoad;
-        uop_fload->SetOff(0);
-        uop_fload->SetBase(lc_addr);
-        uop_fload->SetDst(vrlhs);
+            auto uop_lla = new UopLla;
+            uop_lla->SetSrc(lbname);
+            uop_lla->SetDst(lc_addr);
 
-        curstat_.cur_blk->Push(uop_lla);
-        curstat_.cur_blk->Push(uop_fload);
+            auto uop_fload = new UopFLoad;
+            uop_fload->SetOff(0);
+            uop_fload->SetBase(lc_addr);
+            uop_fload->SetDst(vrlhs);
+
+            curstat_.cur_blk->Push(uop_lla);
+            curstat_.cur_blk->Push(uop_fload);
+        }
     } else {
         auto var = dynamic_cast<Variable *>(lhs.get());
         Assert(var, "bad dynamic cast");
@@ -633,22 +663,30 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrrhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-        auto lbname = std::string(".LC") + std::to_string(lc_idx);
+        if (cinfo.v32_.u32_ == 0) {
+            auto uop_mv = new UopMv;
+            uop_mv->SetDst(vrrhs);
+            uop_mv->SetSrc(nullptr);
 
-        auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+            curstat_.cur_blk->Push(uop_mv);
+        } else {
+            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+            auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-        auto uop_lla = new UopLla;
-        uop_lla->SetSrc(lbname);
-        uop_lla->SetDst(lc_addr);
+            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
 
-        auto uop_fload = new UopFLoad;
-        uop_fload->SetOff(0);
-        uop_fload->SetBase(lc_addr);
-        uop_fload->SetDst(vrrhs);
+            auto uop_lla = new UopLla;
+            uop_lla->SetSrc(lbname);
+            uop_lla->SetDst(lc_addr);
 
-        curstat_.cur_blk->Push(uop_lla);
-        curstat_.cur_blk->Push(uop_fload);
+            auto uop_fload = new UopFLoad;
+            uop_fload->SetOff(0);
+            uop_fload->SetBase(lc_addr);
+            uop_fload->SetDst(vrrhs);
+
+            curstat_.cur_blk->Push(uop_lla);
+            curstat_.cur_blk->Push(uop_fload);
+        }
     } else {
         auto var = dynamic_cast<Variable *>(rhs.get());
         Assert(var, "bad dynamic cast");
@@ -996,6 +1034,8 @@ void InternalTranslation::Translate(CallInst *ll) {
         uop->SetCallSelf(true);
     }
 
+    uop->SetTailCall(ll->GetTailCall());
+
     auto make_param = [&params, &uop, this](size_t num) {
         size_t pcnt = 0;
 
@@ -1035,25 +1075,38 @@ void InternalTranslation::Translate(CallInst *ll) {
                 auto &&cinfo = XConstValue(cst->GetValue());
 
                 if (cinfo.isflt_) {
-                    auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-                    auto lbname = std::string(".LC") + std::to_string(lc_idx);
+                    if (cinfo.v32_.u32_ == 0) {
+                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-                    auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-                    auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+                        auto uop_mv = new UopMv;
+                        uop_mv->SetDst(vr_param);
+                        uop_mv->SetSrc(nullptr);
 
-                    auto uop_lla = new UopLla;
-                    uop_lla->SetSrc(lbname);
-                    uop_lla->SetDst(lc_addr);
+                        curstat_.cur_blk->Push(uop_mv);
 
-                    auto uop_fload = new UopFLoad;
-                    uop_fload->SetOff(0);
-                    uop_fload->SetBase(lc_addr);
-                    uop_fload->SetDst(vr_param);
+                        uop->PushParam(vr_param);
+                    } else {
+                        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+                        auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
-                    curstat_.cur_blk->Push(uop_lla);
-                    curstat_.cur_blk->Push(uop_fload);
+                        auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-                    uop->PushParam(vr_param);
+                        auto uop_lla = new UopLla;
+                        uop_lla->SetSrc(lbname);
+                        uop_lla->SetDst(lc_addr);
+
+                        auto uop_fload = new UopFLoad;
+                        uop_fload->SetOff(0);
+                        uop_fload->SetBase(lc_addr);
+                        uop_fload->SetDst(vr_param);
+
+                        curstat_.cur_blk->Push(uop_lla);
+                        curstat_.cur_blk->Push(uop_fload);
+
+                        uop->PushParam(vr_param);
+                    }
+
                 } else {
                     auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::INT);
 
@@ -1134,6 +1187,26 @@ void InternalTranslation::Translate(CallInst *ll) {
         retvr = curstat_.planner->AllocVReg(vtype, res->GetVariableIdx());
         uop->SetRetVal(retvr);
     }
+
+    curstat_.cur_blk->Push(uop);
+}
+
+void InternalTranslation::Translate(FNegInst *ll) {
+    auto uop = new UopFBin;
+
+    auto res = ll->GetResult();
+    auto operand = ll->GetOprand();
+
+    auto srcopd = dynamic_cast<Variable *>(operand.get());
+    Assert(srcopd != nullptr, "should be fold");
+
+    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    auto src = curstat_.planner->GetVReg(srcopd->GetVariableIdx());
+
+    uop->SetDst(dst);
+    uop->SetLhs(src);
+    uop->SetRhs(nullptr);
+    uop->SetKind(FBIN_KIND::NEG);
 
     curstat_.cur_blk->Push(uop);
 }

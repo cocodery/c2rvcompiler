@@ -121,6 +121,15 @@ const VecVR UopIBinImm::GetOperands() const {
 
 VirtualRegister *UopIBinImm::GetResult() const { return dst_; }
 
-const VecVR UopFBin::GetOperands() const { return VecVR{lhs_, rhs_}; }
+const VecVR UopFBin::GetOperands() const {
+    VecVR vec;
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
+    return vec;
+}
 
 VirtualRegister *UopFBin::GetResult() const { return dst_; }

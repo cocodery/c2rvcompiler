@@ -923,6 +923,24 @@ Transaction FMV_X_W::ToTrx() {
                        .redundant_ = redundant};
 }
 
+Transaction FMAX_S::ToTrx() {
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
+}
+
+Transaction FMIN_S::ToTrx() {
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
+}
+
 };  // namespace riscv
 
 constexpr double latencyOf(riscv::OpType type) {

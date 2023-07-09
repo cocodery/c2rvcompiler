@@ -262,17 +262,28 @@ void UopFBin::formatString(FILE *fp) {
     fprintf(fp, "\t");
     switch (kind_) {
         case FBIN_KIND::ADD:
-            fprintf(fp, "add");
+            fprintf(fp, "add\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::SUB:
-            fprintf(fp, "sub");
+            fprintf(fp, "sub\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::MUL:
-            fprintf(fp, "mul");
+            fprintf(fp, "mul\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::DIV:
-            fprintf(fp, "div");
+            fprintf(fp, "div\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            break;
+        case FBIN_KIND::MAX:
+            fprintf(fp, "max\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            break;
+        case FBIN_KIND::MIN:
+            fprintf(fp, "min\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            break;
+        case FBIN_KIND::ABS:
+            fprintf(fp, "abs\t%s, %s\n", dst_->CString(), lhs_->CString());
+            break;
+        case FBIN_KIND::NEG:
+            fprintf(fp, "neg\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
     }
-    fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }

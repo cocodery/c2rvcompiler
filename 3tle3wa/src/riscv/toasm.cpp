@@ -894,7 +894,7 @@ void UopICmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, riscv::t0, abb, plan);
+        dst_->StoreFrom(dst, riscv::t1, abb, plan);
     }
 }
 
@@ -966,7 +966,7 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, riscv::t0, abb, plan);
+        dst_->StoreFrom(dst, riscv::t1, abb, plan);
     }
 }
 
@@ -1027,7 +1027,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         }
 
         if (dst_->OnStk()) {
-            dst_->StoreFrom(dst, riscv::t0, abb, plan);
+            dst_->StoreFrom(dst, riscv::t1, abb, plan);
         }
 
         return;
@@ -1077,7 +1077,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, riscv::t0, abb, plan);
+        dst_->StoreFrom(dst, riscv::t1, abb, plan);
     }
 }
 
@@ -1132,7 +1132,7 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         }
 
         if (dst_->OnStk()) {
-            dst_->StoreFrom(dst, riscv::t0, abb, plan);
+            dst_->StoreFrom(dst, riscv::t1, abb, plan);
         }
 
         return;
@@ -1168,7 +1168,7 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, riscv::t0, abb, plan);
+        dst_->StoreFrom(dst, riscv::t1, abb, plan);
     }
 }
 
@@ -1183,7 +1183,9 @@ void UopFBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
-    if (rhs_->OnStk()) {
+    if (rhs_ == nullptr) {
+        rhs = riscv::zero;
+    } else if (rhs_->OnStk()) {
         rhs_->LoadTo(riscv::ft1, riscv::t1, abb, plan);
         rhs = riscv::ft1;
     } else {
@@ -1219,10 +1221,30 @@ void UopFBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 
             abb->Push(fbin);
         } break;
+        case FBIN_KIND::MAX: {
+            auto fbin = new riscv::FMAX_S(dst, lhs, rhs);
+
+            abb->Push(fbin);
+        } break;
+        case FBIN_KIND::MIN: {
+            auto fbin = new riscv::FMIN_S(dst, lhs, rhs);
+
+            abb->Push(fbin);
+        } break;
+        case FBIN_KIND::ABS: {
+            auto fbin = new riscv::FABS_S(dst, lhs);
+
+            abb->Push(fbin);
+        } break;
+        case FBIN_KIND::NEG: {
+            auto fbin = new riscv::FNEG_S(dst, lhs);
+
+            abb->Push(fbin);
+        } break;
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, riscv::t0, abb, plan);
+        dst_->StoreFrom(dst, riscv::t1, abb, plan);
     }
 }
 

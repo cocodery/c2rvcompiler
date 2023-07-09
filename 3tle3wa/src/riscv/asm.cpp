@@ -592,4 +592,14 @@ FMV_X_W::FMV_X_W(uint64_t rd, uint64_t frs) : Instruction(rd, frs) {
     GENINST("fmv.x.w" TAB "%s" COMMA "%s", gpr[rd], gpr[frs]);
 }
 
+FMAX_S::FMAX_S(uint64_t rd, uint64_t frs, uint64_t frt) : Instruction(rd, frs, frt) {
+    // avoid format
+    GENINST("fmax.s" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[frs], gpr[frt]);
+}
+
+FMIN_S::FMIN_S(uint64_t rd, uint64_t frs, uint64_t frt) : Instruction(rd, frs, frt) {
+    // avoid format
+    GENINST("fmin.s" TAB "%s" COMMA "%s" COMMA "%s", gpr[rd], gpr[frs], gpr[frt]);
+}
+
 }  // namespace riscv

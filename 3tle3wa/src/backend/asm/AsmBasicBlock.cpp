@@ -12,7 +12,7 @@ void AsmBasicBlock::Pop() { insts_.pop_back(); }
 
 void AsmBasicBlock::formatString(FILE *fp) {
     fprintf(fp, ".L.%s.b%" PRIu64 ":\n", father_->Label(), lbidx_);
-    for (auto &&inst : insts_) {
+    for (auto &&inst : view_insts_) {
         fprintf(fp, "%s", inst->CString());
     }
 }
