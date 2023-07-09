@@ -18,6 +18,8 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
             result = FptoSiInst::DoFptoSi(type, oprand, parent);
         } else if (opcode == Zext) {
             result = ZextInst::DoZeroExt(oprand, parent);
+        } else if (opcode == FNeg) {
+            result = FNegInst::DoFloatNeg(oprand, parent);
         } else {
             assert(false);
         }

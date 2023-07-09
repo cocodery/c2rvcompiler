@@ -119,8 +119,8 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 assert(inst->ReplaceSRC(oprand, vn));
             }
         }
-        if (auto [replacee, replacer] = inst->DoFlod(); replacee != nullptr && replacer != nullptr) {
-            ReplaceSRC(replacee, replacer);
+        if (auto replacer = inst->DoFlod(); replacer != nullptr) {
+            ReplaceSRC(inst->GetResult(), replacer);
 
             RemoveInst(inst);
             iter = inst_list.erase(iter);

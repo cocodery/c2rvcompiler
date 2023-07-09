@@ -1,9 +1,12 @@
 #include "3tle3wa/frontend/AstVisitor.hh"
 
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <tuple>
 
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
 
 namespace {
 
@@ -124,6 +127,7 @@ std::any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContext *ct
         }
         ++iter;
     }
+    InsertConstantToGlbTable();
     return have_main_func;
 }
 
@@ -667,12 +671,7 @@ std::any AstVisitor::visitNumber1(SysYParser::Number1Context *ctx) {
 }
 
 std::any AstVisitor::visitNumber2(SysYParser::Number2Context *ctx) {
-    ConstantPtr constant = ConstantAllocator::FindConstantPtr(static_cast<float>(std::stof(ctx->getText())));
-    if (std::get<float>(constant->GetValue()) != static_cast<float>(0)) {
-        std::string name = "Float_" + constant->tollvmIR();
-        comp_unit.InsertSymbol(name, constant);
-    }
-    return constant;
+    return ConstantAllocator::FindConstantPtr(static_cast<float>(std::stof(ctx->getText())));
 }
 
 std::any AstVisitor::visitFuncRParams(SysYParser::FuncRParamsContext *ctx) {
@@ -1046,6 +1045,25 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             }
             return total_size;
         };
-    /* size_t init_size =  */ function(ctx, list_type->GetArrDims(), 0, 0);
+    /* size_t init_size =  */
+    function(ctx, list_type->GetArrDims(), 0, 0);
+    return;
+}
+
+void AstVisitor::InsertConstantToGlbTable() {
+    auto glb_table = comp_unit.getGlbTable().GetNameValueMap();
+    std::map<Constant *, bool> ConstantMap;
+    for (auto [name, value] : glb_table) {
+        if (value->IsConstant()) {
+            ConstantMap[std::static_pointer_cast<Constant>(value).get()] = true;
+        }
+    }
+    for (auto [type, constant] : ConstantAllocator::GetConstantAllocator()) {
+        if (ConstantMap[constant.get()] == false && constant->GetBaseType()->FloatType() &&
+            std::get<float>(constant->GetValue()) != static_cast<float>(0)) {
+            std::string name = "Float_" + constant->tollvmIR();
+            comp_unit.InsertSymbol(name, constant);
+        }
+    }
     return;
 }

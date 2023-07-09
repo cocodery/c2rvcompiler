@@ -39,7 +39,7 @@ class BaseValue : public Use {
     virtual bool IsUnInitVar() const;
     virtual bool IsVariable() const;
 
-    InstList GetUserList() const;
+    InstList &GetUserList();
     void InsertUser(InstPtr);
     void RemoveUser(InstPtr);
 

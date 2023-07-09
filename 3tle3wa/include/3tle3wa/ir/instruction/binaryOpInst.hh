@@ -46,3 +46,20 @@ class FBinaryInst final : public BinaryInstruction {
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
+
+class FNegInst;
+using FNegInstPtr = std::shared_ptr<FNegInst>;
+class FNegInst final : public UnaryInstruction {
+   private:
+    static FNegInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
+
+   public:
+    FNegInst(VariablePtr, BaseValuePtr, CfgNodePtr);
+    ~FNegInst() = default;
+
+    static VariablePtr DoFloatNeg(BaseValuePtr, CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+
+    std::string tollvmIR();
+};

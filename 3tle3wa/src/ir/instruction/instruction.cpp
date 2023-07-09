@@ -1,5 +1,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 
+#include "3tle3wa/ir/instruction/opCode.hh"
+
 //===-----------------------------------------------------------===//
 //                     Instruction Implementation
 //===-----------------------------------------------------------===//
@@ -16,7 +18,7 @@ void Instruction::SetParent(CfgNodePtr node) { parent = node; }
 void Instruction::ClearParent() { SetParent(nullptr); }
 
 bool Instruction::IsTwoOprandInst() const { return (OP_ADD <= opcode && opcode <= OP_NEQ); }
-bool Instruction::IsOneOprandInst() const { return (Load <= opcode && opcode <= Zext); }
+bool Instruction::IsOneOprandInst() const { return (Load <= opcode && opcode <= FNeg); }
 
 bool Instruction::IsReturnInst() const { return opcode == Ret; }
 bool Instruction::IsJumpInst() const { return opcode == Jump; }
@@ -38,7 +40,7 @@ bool Instruction::IsValueNumberInst() const { return IsTwoOprandInst() || IsGepI
 
 VariablePtr Instruction::GetResult() const { return result; }
 
-std::pair<BaseValuePtr, BaseValuePtr> Instruction::DoFlod() const { return {nullptr, nullptr}; }
+BaseValuePtr Instruction::DoFlod() const { return nullptr; }
 
 void Instruction::ReplaceTarget(CfgNodePtr, CfgNodePtr) { return; }
 
@@ -51,39 +53,7 @@ UnaryInstruction::UnaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr _o
 
 BaseValuePtr UnaryInstruction::GetOprand() const { return oprand; }
 
-std::pair<BaseValuePtr, BaseValuePtr> UnaryInstruction::DoFlod() const {
-    if (oprand->IsConstant()) {
-        ConstType value;
-
-        auto constant = std::static_pointer_cast<Constant>(oprand);
-        std::visit(
-            [&value, op = opcode](auto &&arg) {
-                using T = std::decay_t<decltype(arg)>;
-                assert((std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
-                switch (op) {
-                    case SiToFp:
-                        assert((std::is_same_v<T, bool>) || (std::is_same_v<T, int32_t>));
-                        value = static_cast<float>(arg);
-                        break;
-                    case FpToSi:
-                        assert((std::is_same_v<T, float>));
-                        value = static_cast<int32_t>(arg);
-                        break;
-                    case Zext:
-                        assert((std::is_same_v<T, bool>));
-                        value = static_cast<int32_t>(arg);
-                        break;
-                    default:
-                        assert(false);
-                        break;
-                }
-            },
-            constant->GetValue());
-
-        return {result, ConstantAllocator::FindConstantPtr(value)};
-    }
-    return {nullptr, nullptr};
-}
+BaseValuePtr UnaryInstruction::DoFlod() const { return DoUnaryFlod(opcode, oprand); }
 
 void UnaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
 
@@ -105,11 +75,57 @@ bool BinaryInstruction::IsFBinaryInst() const { return false; }
 bool BinaryInstruction::IsICmpInst() const { return false; }
 bool BinaryInstruction::IsFCmpInst() const { return false; }
 
-std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
-    BaseValuePtr replacee = nullptr;
+BaseValuePtr BinaryInstruction::DoFlod() const { return DoBinaryFlod(opcode, lhs, rhs); }
+
+void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
+
+const BaseValueList BinaryInstruction::GetOprands() const { return BaseValueList({lhs, rhs}); }
+
+//===-----------------------------------------------------------===//
+//                     DoFlod Implementation
+//===-----------------------------------------------------------===//
+
+BaseValuePtr DoUnaryFlod(OpCode opcode, BaseValuePtr oprand) {
+    if (oprand->IsConstant()) {
+        ConstType value;
+
+        auto constant = std::static_pointer_cast<Constant>(oprand);
+        std::visit(
+            [&value, op = opcode](auto &&arg) {
+                using T = std::decay_t<decltype(arg)>;
+                assert((std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
+                switch (op) {
+                    case SiToFp:
+                        assert((std::is_same_v<T, bool>) || (std::is_same_v<T, int32_t>));
+                        value = static_cast<float>(arg);
+                        break;
+                    case FpToSi:
+                        assert((std::is_same_v<T, float>));
+                        value = static_cast<int32_t>(arg);
+                        break;
+                    case Zext:
+                        assert((std::is_same_v<T, bool>));
+                        value = static_cast<int32_t>(arg);
+                        break;
+                    case FNeg:
+                        assert((std::is_same_v<T, float>));
+                        value = -static_cast<float>(arg);
+                        break;
+                    default:
+                        assert(false);
+                        break;
+                }
+            },
+            constant->GetValue());
+
+        return ConstantAllocator::FindConstantPtr(value);
+    }
+    return nullptr;
+}
+
+BaseValuePtr DoBinaryFlod(OpCode opcode, BaseValuePtr lhs, BaseValuePtr rhs) {
     BaseValuePtr replacer = nullptr;
     if (lhs->IsConstant() && rhs->IsConstant()) {
-        replacee = result;
         replacer = ExprFlod::BinaryOperate(opcode, std::static_pointer_cast<Constant>(lhs),
                                            std::static_pointer_cast<Constant>(rhs));
     } else if (OP_ADD <= opcode && opcode <= OP_RSHIFT) {
@@ -121,22 +137,17 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                     using T = std::decay_t<decltype(arg)>;
                     assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = rhs;
                     } else if (opcode == OP_MUL) {
                         if (arg == static_cast<T>(0)) {
-                            replacee = result;
                             replacer = lhs;
                         } else if (arg == static_cast<T>(1)) {
-                            replacee = result;
                             replacer = rhs;
                         }
                     } else if (opcode == OP_DIV && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(0)) {
                         assert((std::is_same_v<T, int32_t>));
-                        replacee = result;
                         replacer = lhs;
                     }
                 },
@@ -149,37 +160,27 @@ std::pair<BaseValuePtr, BaseValuePtr> BinaryInstruction::DoFlod() const {
                     using T = std::decay_t<decltype(arg)>;
                     assert((std::is_same_v<T, int32_t> || std::is_same_v<T, float>));
                     if (opcode == OP_ADD && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_SUB && arg == static_cast<T>(0)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_MUL) {
                         if (arg == static_cast<T>(0)) {
-                            replacee = result;
                             replacer = rhs;
                         } else if (arg == static_cast<T>(1)) {
-                            replacee = result;
                             replacer = lhs;
                         }
                     } else if (opcode == OP_DIV && arg == static_cast<T>(1)) {
-                        replacee = result;
                         replacer = lhs;
                     } else if (opcode == OP_REM && arg == static_cast<T>(1)) {
                         assert((std::is_same_v<T, int32_t>));
-                        replacee = result;
                         replacer = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
                     }
                 },
                 constant_rhs->GetValue());
         }
     }
-    return {replacee, replacer};
+    return replacer;
 }
-
-void BinaryInstruction::RemoveResParent() { result->SetParent(nullptr); }
-
-const BaseValueList BinaryInstruction::GetOprands() const { return BaseValueList({lhs, rhs}); }
 
 //===-----------------------------------------------------------===//
 //                     ReplaceSRC Implementation
