@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "3tle3wa/ir/IR.hh"
+#include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 #include "3tle3wa/pass/intraprocedural/inline/inline.hh"
 #include "SysYBaseVisitor.h"
@@ -197,4 +198,6 @@ class AstVisitor : public SysYBaseVisitor {
     SymbolTable *InitParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
 
     void ParseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr);
+
+    void InsertConstantToGlbTable();
 };

@@ -21,7 +21,7 @@ bool BaseValue::IsGlobalValue() const { return false; }
 bool BaseValue::IsUnInitVar() const { return false; }
 bool BaseValue::IsVariable() const { return false; }
 
-InstList BaseValue::GetUserList() const { return use_list; }
+InstList &BaseValue::GetUserList() { return use_list; }
 
 void BaseValue::InsertUser(InstPtr inst) {
     if (IsConstant()) return;
