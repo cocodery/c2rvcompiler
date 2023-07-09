@@ -14,6 +14,7 @@
 class VirtualRegister;
 class StackInfo;
 class AsmBasicBlock;
+class RLProgress;
 
 class RLPlanner : public Serializable {
     std::unordered_map<uint64_t, StackInfo *> sinfo_map_;
@@ -27,6 +28,8 @@ class RLPlanner : public Serializable {
 
     size_t param_stack_;
     size_t total_stack_size_;
+
+    RLProgress *belong_to_;
 
     std::unordered_map<size_t, std::unique_ptr<IntervalManager>> real_reg_inval_;
 
@@ -74,4 +77,8 @@ class RLPlanner : public Serializable {
     void BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegister *> &living_regs);
 
     void RecoverCall(AsmBasicBlock *abb);
+
+    void RegisterOwner(RLProgress *rlp);
+
+    size_t TotalStackSize();
 };

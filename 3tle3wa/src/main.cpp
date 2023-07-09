@@ -95,9 +95,13 @@ int main(int argc, char *argv[]) {
 
     CompilationUnit comp_unit;
 
+    Log("start parsing");
+
     std::unique_ptr<AstVisitor> visitor = std::make_unique<AstVisitor>(comp_unit);
     visitor->visitCompilationUnit(root);
     visitor = nullptr;
+
+    Log("start llvm ir optimizing");
 
     Optimization optimizer(comp_unit);
     optimizer.DoOptimization();
@@ -112,9 +116,13 @@ int main(int argc, char *argv[]) {
         RLGen rlgen;
         rlgen.Register(comp_unit);
 
+        Log("generating asm");
+
         rlgen.SerialGenerate();
 
         if (dbgfile != nullptr) {
+            Log("output backend ir file");
+
             std::fstream fs(dbgfile, std::ios::out);
             fs << rlgen.CString();
         }
@@ -123,6 +131,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (output != nullptr and asmgen != nullptr) {
+        Log("output asm file");
+
         std::fstream fs(output, std::ios::out);
         fs << asmgen->CString();
     }

@@ -35,11 +35,11 @@ class Weightable {
     public:
      virtual double Weight() final;
 
-     virtual bool operator>(const Weightable &other) final;
+    //  virtual bool operator>(const Weightable &other);
 
-     virtual bool operator==(const Weightable &other) final;
+    //  virtual bool operator==(const Weightable &other);
      
-     virtual bool operator<(const Weightable &other) final;
+    //  virtual bool operator<(const Weightable &other);
 };
 
 class Translatable {

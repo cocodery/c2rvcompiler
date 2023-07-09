@@ -82,7 +82,7 @@ void InternalTranslation::Translate(ReturnInst *ll) {
             auto &&cinfo = XConstValue(cst->GetValue());
 
             if (cinfo.isflt_) {
-                auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+                auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
                 auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
                 auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -129,16 +129,145 @@ void InternalTranslation::Translate(JumpInst *ll) {
 void InternalTranslation::Translate(BranchInst *ll) {
     auto nxtblkidx = curstat_.nxt_cfg->GetBlockIdx();
 
-    auto uop = new UopBranch;
-
     auto tridx = ll->GetTrueTarget()->GetBlockIdx();
     auto faidx = ll->GetFalseTarget()->GetBlockIdx();
 
     auto &&cond = ll->GetCondition();
 
+    // auto &&users = cond->GetUserList();
+    // if (users.size() == 1 and users.front()->GetInstIdx() == ll->GetInstIdx()) {
+    //     auto &&parant = cond->GetParent();
+
+    //     auto icmp = dynamic_cast<ICmpInst *>(parant.get());
+
+    //     if (icmp != nullptr) {
+    //         if (auto fnd = icmp_map.find(icmp); fnd != icmp_map.end()) {
+    //             // icmp_map.erase(fnd);
+
+    //             auto lhs = icmp->GetLHS();
+    //             auto rhs = icmp->GetRHS();
+
+    //             if (lhs->IsConstant() and rhs->IsConstant()) {
+    //                 panic("unexpected");
+    //             }
+
+    //             VirtualRegister *vrlhs;
+    //             VirtualRegister *vrrhs;
+
+    //             if (lhs->IsConstant()) {
+    //                 auto cst = dynamic_cast<Constant *>(lhs.get());
+    //                 Assert(cst, "bad dynamic cast");
+
+    //                 auto &&cinfo = XConstValue(cst->GetValue());
+    //                 Assert(not cinfo.isflt_, "unexpected");
+
+    //                 if (cinfo.v32_.u32_ == 0) {
+    //                     vrlhs = nullptr;
+    //                 } else {
+    //                     vrlhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
+
+    //                     li(vrlhs, cinfo);
+    //                 }
+    //             } else if (lhs->IsVariable()) {
+    //                 auto var = dynamic_cast<Variable *>(lhs.get());
+    //                 Assert(var, "bad dynamic cast");
+
+    //                 vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+    //             } else {
+    //                 panic("unexpected");
+    //             }
+
+    //             if (rhs->IsConstant()) {
+    //                 auto cst = dynamic_cast<Constant *>(rhs.get());
+    //                 Assert(cst, "bad dynamic cast");
+
+    //                 auto &&cinfo = XConstValue(cst->GetValue());
+    //                 Assert(not cinfo.isflt_, "unexpected");
+
+    //                 if (cinfo.v32_.u32_ == 0) {
+    //                     vrrhs = nullptr;
+    //                 } else {
+    //                     vrrhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
+
+    //                     li(vrrhs, cinfo);
+    //                 }
+    //             } else if (rhs->IsVariable()) {
+    //                 auto var = dynamic_cast<Variable *>(rhs.get());
+    //                 Assert(var, "bad dynamic cast");
+
+    //                 vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+    //             } else {
+    //                 panic("unexpected");
+    //             }
+
+    //             if (vrlhs == nullptr and vrrhs == nullptr) {
+    //                 panic("unexpected");
+    //             }
+
+    //             auto uop = new UopICmpBranch;
+    //             uop->SetLhs(vrlhs);
+    //             uop->SetRhs(vrrhs);
+
+    //             if (nxtblkidx == tridx) {
+    //                 switch (icmp->GetOpCode()) {
+    //                     case OP_EQU:
+    //                         uop->SetKind(COMP_KIND::NEQ);
+    //                         break;
+    //                     case OP_NEQ:
+    //                         uop->SetKind(COMP_KIND::EQU);
+    //                         break;
+    //                     case OP_LTH:
+    //                         uop->SetKind(COMP_KIND::GEQ);
+    //                         break;
+    //                     case OP_GTH:
+    //                         uop->SetKind(COMP_KIND::LEQ);
+    //                         break;
+    //                     case OP_LEQ:
+    //                         uop->SetKind(COMP_KIND::GTH);
+    //                         break;
+    //                     case OP_GEQ:
+    //                         uop->SetKind(COMP_KIND::LTH);
+    //                         break;
+    //                     default:
+    //                         panic("unexpected");
+    //                 }
+    //                 uop->SetDstIdx(faidx);
+    //             } else if (nxtblkidx == faidx) {
+    //                 uop->SetKind((COMP_KIND)icmp->GetOpCode());
+    //                 uop->SetDstIdx(tridx);
+    //             } else {
+    //                 panic("unexpected");
+    //             }
+
+    //             curstat_.cur_blk->Push(uop);
+
+    //             return;
+    //         }
+    //     }
+    // }
+
     if (cond->IsConstant()) {
-        panic("constant condition should be optimized");
+        auto cst = dynamic_cast<Constant *>(cond.get());
+        Assert(cst, "bad dynamic cast");
+
+        auto &&cinfo = XConstValue(cst->GetValue());
+
+        auto uop = new UopJump;
+
+        if (cinfo.v32_.u32_ != 0) {
+            uop->SetDstIdx(tridx);
+        } else {
+            uop->SetDstIdx(faidx);
+        }
+
+        curstat_.cur_blk->Push(uop);
+
+        return;
+
+        // panic("constant condition should be optimized");
     }
+
+    auto uop = new UopBranch;
 
     auto var_cond = dynamic_cast<Variable *>(cond.get());
     auto vr_cond = curstat_.planner->GetVReg(var_cond->GetVariableIdx());
@@ -159,6 +288,14 @@ void InternalTranslation::Translate(BranchInst *ll) {
 
 void InternalTranslation::Translate(ICmpInst *ll) {
     auto &&res = ll->GetResult();
+
+    // if (auto &&uses = res->GetUserList(); uses.size() == 1) {
+    //     if (uses.front()->GetOpCode() == Branch) {
+    //         icmp_map.insert(ll);
+    //         return;
+    //     }
+    // }
+
     auto lhs = ll->GetLHS();
     auto rhs = ll->GetRHS();
     auto opcode = ll->GetOpCode();
@@ -199,7 +336,7 @@ void InternalTranslation::Translate(ICmpInst *ll) {
 
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(not cinfo.isflt_, "unexpected");
-        
+
         if (cinfo.v32_.u32_ == 0) {
             vrrhs = nullptr;
         } else {
@@ -253,7 +390,7 @@ void InternalTranslation::Translate(FCmpInst *ll) {
 
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -292,7 +429,7 @@ void InternalTranslation::Translate(FCmpInst *ll) {
 
             curstat_.cur_blk->Push(uop_mv);
         } else {
-            auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
             auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
             auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -464,7 +601,7 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -496,7 +633,7 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
 
         vrrhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
 
-        auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
         auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
         auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
@@ -898,7 +1035,7 @@ void InternalTranslation::Translate(CallInst *ll) {
                 auto &&cinfo = XConstValue(cst->GetValue());
 
                 if (cinfo.isflt_) {
-                    auto lc_idx = lc_map_.at(cinfo.v64_.u64_);
+                    auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
                     auto lbname = std::string(".LC") + std::to_string(lc_idx);
 
                     auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);

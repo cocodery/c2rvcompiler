@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 
 #include "3tle3wa/backend/Interface.hh"
@@ -56,6 +57,8 @@ class InternalTranslation : public Serializable {
     std::unique_ptr<RLProgress> rlps_;
 
     std::unique_ptr<AsmProgress> apg_;
+
+    std::unordered_set<ICmpInst *> icmp_map;
 
     struct IT_STAT {
         CtrlFlowGraphNode *cur_cfg;

@@ -31,3 +31,39 @@ void StackInfo::CalcuWeight() {
 }
 
 void StackInfo::SuccWeight(double w) { weight_ += w; }
+
+bool StackInfo::operator>(const StackInfo &other) {
+    if (weight_ > other.weight_) {
+        return true;
+    } else if (weight_ < other.weight_) {
+        return false;
+    }
+
+    if (sidx_ > other.sidx_) {
+        return true;
+    } else if (sidx_ < other.sidx_) {
+        return false;
+    }
+
+    return false;
+}
+
+bool StackInfo::operator==(const StackInfo &other) {
+    return weight_ == other.weight_ and sidx_ == other.sidx_;
+}
+
+bool StackInfo::operator<(const StackInfo &other) {
+    if (weight_ > other.weight_) {
+        return false;
+    } else if (weight_ < other.weight_) {
+        return true;
+    }
+
+    if (sidx_ > other.sidx_) {
+        return false;
+    } else if (sidx_ < other.sidx_) {
+        return true;
+    }
+
+    return false;
+}

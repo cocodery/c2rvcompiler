@@ -1,9 +1,23 @@
 #include "3tle3wa/backend/rl/RLPlanner.hh"
 
+#include "3tle3wa/backend/rl/RLProgress.hh"
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 
-RLPlanner::RLPlanner(size_t regidx) : stkidx_(0), regidx_(regidx), param_stack_(0) {}
+RLPlanner::RLPlanner(size_t regidx)
+    : sinfo_map_(),
+      vr_map_(),
+      vr_storage_(),
+      stk_storage_(),
+      stkidx_(0),
+      regidx_(regidx),
+      param_stack_(0),
+      total_stack_size_(0),
+      belong_to_(nullptr),
+      real_reg_inval_(),
+      real_stk_inval_(),
+      real_stkinfo_(),
+      place_to_save() {}
 
 StackInfo *RLPlanner::Alloca(size_t len) {
     stkidx_ += 1;
@@ -84,3 +98,8 @@ void RLPlanner::Link(uint64_t income, uint64_t old) {
 }
 
 void RLPlanner::SetPstkSiz(size_t sps) { param_stack_ = std::max(param_stack_, sps); }
+
+void RLPlanner::RegisterOwner(RLProgress *rlp) { belong_to_ = rlp; }
+
+size_t RLPlanner::TotalStackSize() { return total_stack_size_; }
+

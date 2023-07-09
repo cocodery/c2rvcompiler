@@ -40,7 +40,16 @@ const VecVR UopBranch::GetOperands() const { return VecVR{cond_}; }
 
 VirtualRegister *UopBranch::GetResult() const { return nullptr; }
 
-const VecVR UopICmpBranch::GetOperands() const { return VecVR{lhs_, rhs_}; }
+const VecVR UopICmpBranch::GetOperands() const {
+    VecVR vec;
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
+    return vec;
+}
 
 VirtualRegister *UopICmpBranch::GetResult() const { return nullptr; }
 

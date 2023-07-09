@@ -8,9 +8,26 @@
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/riscv/spec.hh"
 
+struct VRElem {
+    VirtualRegister *vr_;
+
+    bool operator>(const VRElem &other) const { return *vr_ > *other.vr_; }
+    bool operator==(const VRElem &other) const { return *vr_ == *other.vr_; }
+    bool operator<(const VRElem &other) const { return *vr_ < *other.vr_; }
+};
+
+struct STKElem {
+    StackInfo *stk_;
+
+    bool operator>(const STKElem &other) const { return *stk_ > *other.stk_; }
+    bool operator==(const STKElem &other) const { return *stk_ == *other.stk_; }
+    bool operator<(const STKElem &other) const { return *stk_ < *other.stk_; }
+};
+
 void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen) {
-    std::priority_queue<VirtualRegister *> vrpq;
-    std::priority_queue<VirtualRegister *> spill;
+    std::priority_queue<VRElem> vrpq;
+    std::priority_queue<VRElem> spill;
+    std::priority_queue<VRElem> spill2;
 
     for (auto &&vr : vr_storage_) {
         if (vr->IsAssigned()) {
@@ -24,14 +41,14 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
             continue;
         }
         vr->CalcuWeight();
-        vrpq.push(vr.get());
+        vrpq.push(VRElem{.vr_ = vr.get()});
     }
 
     while (not vrpq.empty()) {
         size_t *agpr;
         size_t alen;
 
-        auto top = vrpq.top();
+        auto top = vrpq.top().vr_;
         vrpq.pop();
 
         if (top->FGPR()) {
@@ -50,7 +67,7 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
         }
 
         if (not success) {
-            spill.push(top);
+            spill.push(VRElem{.vr_ = top});
         }
     }
 
@@ -58,13 +75,11 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
     // for now, no split
     //
 
-    std::priority_queue<VirtualRegister *> spill2;
-
     while (not spill.empty()) {
-        auto top = spill.top();
+        auto top = spill.top().vr_;
         spill.pop();
 
-        spill2.push(top);
+        spill2.push(VRElem{.vr_ = top});
     }
 
     //
@@ -74,7 +89,7 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
     Log("spill %" PRIu64, spill2.size());
 
     while (not spill2.empty()) {
-        auto top = spill2.top();
+        auto top = spill2.top().vr_;
         spill2.pop();
 
         spillOn(top);
@@ -146,7 +161,7 @@ void RLPlanner::PlanStackSpace() {
 
     spoff += 8 * param_stack_;
 
-    std::priority_queue<StackInfo *> stkpq;
+    std::priority_queue<STKElem> stkpq;
     std::queue<StackInfo *> allocas;
 
     for (auto &&sinfo : stk_storage_) {
@@ -156,11 +171,11 @@ void RLPlanner::PlanStackSpace() {
         if (sinfo->IsParam()) {
             continue;
         }
-        stkpq.push(sinfo.get());
+        stkpq.push(STKElem{.stk_ = sinfo.get()});
     }
 
     while (not stkpq.empty()) {
-        auto top = stkpq.top();
+        auto top = stkpq.top().stk_;
         stkpq.pop();
 
         auto siz = top->GetSLen();

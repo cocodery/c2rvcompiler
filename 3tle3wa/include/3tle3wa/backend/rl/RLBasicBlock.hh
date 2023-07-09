@@ -44,12 +44,18 @@ class RLBasicBlock : public Serializable {
 
     size_t GetLabelIdx() const;
 
+    bool IsLiveOut(size_t vridx);
+
     void CalcuClear();
+    
     void SetCalcuParam(std::vector<VirtualRegister *> &params);
+    
     void CalcuInit();
+    
     bool CalcuIO(std::unordered_map<size_t, RLBasicBlock *> &lbmap);
 
     void IndexAllUops();
+
     void CalcuInterval();
 
     void VirtualSchedule();

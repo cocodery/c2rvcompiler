@@ -14,12 +14,14 @@ RLProgress::RLProgress(const std::string &name) : has_lib_call_(false), has_call
     fclose(fp);
 }
 
-void RLProgress::RegisterPlanner(std::unique_ptr<RLPlanner> &planner) { planner_ = std::move(planner); }
+void RLProgress::RegisterPlanner(std::unique_ptr<RLPlanner> &planner) {
+    planner_ = std::move(planner);
+    planner_->RegisterOwner(this);
+}
 
 void RLProgress::Push(std::unique_ptr<RLBasicBlock> &rlbb) { rlbbs_.push_back(std::move(rlbb)); }
 
 void RLProgress::SetParam(Variable *var, VREG_TYPE type) {
-
     extern size_t abi_arg_reg;
 
     if (type == VREG_TYPE::FLT) {
@@ -44,4 +46,6 @@ void RLProgress::SetParam(Variable *var, VREG_TYPE type) {
 
 void RLProgress::MeetLibCall() { has_lib_call_ = true; }
 
-void RLProgress ::MeetCallOther() { has_call_other_ = true; }
+void RLProgress::MeetCallOther() { has_call_other_ = true; }
+
+RLBasicBlock *RLProgress::FindBlkById(size_t lbidx) { return lbmap_.at(lbidx); }

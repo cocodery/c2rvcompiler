@@ -1,16 +1,17 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <map>
 
 #include "3tle3wa/backend/Interface.hh"
+#include "3tle3wa/backend/IntervalTree.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
 #include "3tle3wa/backend/rl/Indicater.hh"
-#include "3tle3wa/backend/IntervalTree.hh"
 
 class StackInfo;
 class AsmBasicBlock;
+class RLPlanner;
 
 class VirtualRegister : public Serializable, public Weightable {
     VREG_TYPE type_;
@@ -96,7 +97,13 @@ class VirtualRegister : public Serializable, public Weightable {
 
     size_t GetRRidWithSaving(AsmBasicBlock *abb);
 
-    void LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp = 0);
+    void LoadTo(size_t to, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan);
 
-    void StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp = 0);
+    void StoreFrom(size_t from, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan);
+
+    virtual bool operator>(const VirtualRegister &other) final;
+
+    virtual bool operator==(const VirtualRegister &other) final;
+
+    virtual bool operator<(const VirtualRegister &other) final;
 };

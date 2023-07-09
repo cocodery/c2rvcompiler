@@ -128,6 +128,13 @@ ll: $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
+.PHONY: rrv
+rrv:
+	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -march=rv64gc -g
+	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
+	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
+	$(ECHO) $$?
+
 .PHONY: rv
 rv:
 	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy

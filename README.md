@@ -3,26 +3,34 @@
 # 整体架构说明
 
 ```
-+---------+    +------------------------------+
-| sy file | -> | antlr4 pre genernated parser | ---+
-+---------+    +------------------------------+    |
-                                                   |
-                      +----------------------+     |
-                +---- | frontend gen llvm ir | <---+
-                |     +----------------------+
+          +-----------+
+          | sysy file |
+          +-----------+
+                |
                 v
-    +---------------------+
-    | backend distributer |
-    +---------------------+
-        |     |     |  
-        |     |     | <----- compile tasks allocated to multi-threads if parallel issued
-        |     |     |
-        |    ...   ...
-        |
-        v
+  +------------------------------+
+  | antlr4 pre genernated parser |
+  +------------------------------+
+                |
+                |
+                v
+      +----------------------+
+      | frontend gen llvm ir |
+      +----------------------+
+                |
+                v
+      +---------------------+
+      | backend distributer |
+      +---------------------+
+          |     |     |  
+          |     |     | <--- compile tasks allocated to multi-threads if parallel issued
+          |     |     |      serialize issue or parallel issue
+          |    ...   ...
+          |
+          v
   +-------------------+
-  | risc-lang ir      |  <!-- thats why some variable name use prefix rl_ -->
-  | just uop and vreg |
+  | risc-lang ir      |
+  | just Uop and VReg |  <-- schedule on ir, assign register, plan stack map
   +-------------------+
             |
             |
@@ -32,19 +40,18 @@
       |  riscv asm  |    +--------------+
       +-------------+           v
             |                   v
-            |                   |                       +--------------+
-            +-------------------+------------------ <<< | other thread |
-                                |                       +--------------+
+            |                   |                  +--------------+
+            +-------------------+------------- <<< | other thread |
+                                |                  +--------------+
+                                |
+                                | <--- do trick on generation
                                 |
                                 v
                 +---------------------------------+
-                | release other resources         |
-                | remain asm env obj              |
-                | for optimization and generation |
+                | asm optimization and generation |
                 +---------------------------------+
                                 |
-                                | <--- do some magic (i dont know what
-                                |      will i do before generation yet)
+                                | <--- schedule on asm and reduce redundant codes
                                 v
                           +----------+
                           | asm file |
@@ -67,10 +74,10 @@
   - 在这个情况下，每当要加载全局标签的时候，就可以参考记录，直接从寄存器里获取到地址
   - 以上只对重复加载有帮助，对于重复保存需要额外手段
 - [ ] fabs, fneg, fmax, fmin
+- [ ] 位运算优化
 - [ ] 以下为上一个后端实现的功能，目前需要提到中端优化
-  - [ ] 插入小程序
-    - 将 a = b * c 或者 a = b / c，如果 c 是 2 的幂次且为常数则换为函数如 a = f(b, c)
-    - 该优化难度很大，但是对相应的运算提升相当大
+  - [ ] 浮点数 2 的幂次乘除法转整数运算
+    - 流程比较长，详细见下方说明
   - [ ] 将常数加减乘除优化提前到后端 ir 阶段并使用链接方法优化（小小的黑魔法）
   - [ ] 全局符号加载后的寄存器多次复用，使用查询表和链接方法优化
   - [ ] 移除多余的 `load` `save`
@@ -82,40 +89,51 @@
 
 ## 后端
 
-- [x] 窥孔优化
-  <!-- - [x] 合并 `fmul` `fadd` `fsub`（XD 精度问题放弃） -->
-  - [x] 合并 `b` `icmp`
-<!-- - [x] 寄存器线性扫描分配策略
-  - [x] 资源虚拟化
-  - [x] 不会被使用的 arg 寄存器征用
-  - [x] 基于引用次数的贪心分配 -->
+- [ ] 窥孔优化
+  - [ ] 合并 `b` `icmp`
 - [x] 贪心寄存器分配算法
   - [ ] split
 - [ ] 指令调度 
   - [ ] 解决内存别名问题
 - [ ] 释放所有的寄存器，也即不再有特殊用处的寄存器
+- [ ] 常用栈上变量按靠近 fp 和 sp 方式分布和计算
+
+
+# 后端细节说明
+
+使用了不少自定义的数据结构，可能问题多多，在考虑修改的时候要纳入考虑。
+
+## Saving 状态
+
+当经过一个函数调用的时候，需要被 caller 保存的寄存器会被保存到栈上。当函数返回后，这些寄存器的值并不会马上被使用，而可能会直接开始下一次函数调用。那么此时这些寄存器是不需要被恢复的，故使用一个 Saving 位指示当前寄存器已经保存在栈上可以不用做取出再加载的操作。
+
+## Interval Manager
+
+活跃区间，使用二进制位表示是否在某个位置活跃。目前用该方法判断是否会产生冲突。
+
+该方法虽然想法非常好，但可能会造成非常大的存储浪费。
 
 # Makefile 说明
 
 > 注意，本项目的 Makefile 可能随时变动
 
-| target | 目的 | 参数和说明 |
-| --- | --- | --- |
-| `pyll` | 使用 `runtest.py` 测试 llvm ir 正确性 | 无 |
-| `pyasm` | 使用 `runtest.py` 测试 riscv asm 正确性 | 无 |
-| `release` | 编译出 release 版本的编译器，一般会定义 NDEBUG | 无 |
-| `debug` | 编译出 debug 版本的编译器，用于调试 | 无 |
-| `build` | 按照依赖编译编译器 | 无 |
-| `run` | 单测 | `DEMO` 选择测例，$(DEMO)*.sy；`SMODE` 单测模式，可选 `MODE` 里的内容； |
-| `ll` `rv` | 分别以生成 llvm ir 和 riscv asm 为目的进行单测，可用 `run` 的参数 | 无 |
-| `qemu-dbg` | 开启 qemu 调试，目前在端口 1234 | 无 |
-| `pys` | `runtest.py` 单独测试 asm | 无 |
-| `diff` | 对比 `runtest.py` 单独测试最终 res 和正确输出 | 无 |
-| `perf` | 测试编译用时情况 | 无 |
-| `clean*` | 各种清理 | 无 |
-| `format-all` | 用 clang-format 整理所有文件格式 | 无 |
-| `all` | 旧 shell 脚本测试 | 无 |
-| `cp` | 模拟测评机逻辑，测试是否能够编译 | 无 |
+| target       | 目的                                                              | 参数和说明                                                             |
+| ------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `pyll`       | 使用 `runtest.py` 测试 llvm ir 正确性                             | 无                                                                     |
+| `pyasm`      | 使用 `runtest.py` 测试 riscv asm 正确性                           | 无                                                                     |
+| `release`    | 编译出 release 版本的编译器，一般会定义 NDEBUG                    | 无                                                                     |
+| `debug`      | 编译出 debug 版本的编译器，用于调试                               | 无                                                                     |
+| `build`      | 按照依赖编译编译器                                                | 无                                                                     |
+| `run`        | 单测                                                              | `DEMO` 选择测例，$(DEMO)*.sy；`SMODE` 单测模式，可选 `MODE` 里的内容； |
+| `ll` `rv`    | 分别以生成 llvm ir 和 riscv asm 为目的进行单测，可用 `run` 的参数 | 无                                                                     |
+| `qemu-dbg`   | 开启 qemu 调试，目前在端口 1234                                   | 无                                                                     |
+| `pys`        | `runtest.py` 单独测试 asm                                         | 无                                                                     |
+| `diff`       | 对比 `runtest.py` 单独测试最终 res 和正确输出                     | 无                                                                     |
+| `perf`       | 测试编译用时情况                                                  | 无                                                                     |
+| `clean*`     | 各种清理                                                          | 无                                                                     |
+| `format-all` | 用 clang-format 整理所有文件格式                                  | 无                                                                     |
+| `all`        | 旧 shell 脚本测试                                                 | 无                                                                     |
+| `cp`         | 模拟测评机逻辑，测试是否能够编译                                  | 无                                                                     |
 
 # CMake VSCode Json Setting
 
@@ -143,3 +161,81 @@
 # Antlr 建议
 
 高于 4.12 版本，使用包管理器下载。
+
+# 浮点数 2 的幂次乘除法转整数运算
+
+注意，该优化可能会导致性能降低，本性能提升仅在 qemu 上测试过。
+
+C 语言程序如下，这里假设了第二个乘数或者除数是常量，且是 2 的幂次，也就是 `constant_2pow` 类型。
+
+注意，单纯的加减是不够的，还需要考虑到符号位等细节，所以需要不少的指令，一共大约 12 条指令才能完成核心部分。同时为了不会溢出，运算也需要保证，还要添加控制流防止溢出。
+
+但是，测例的输入都是有保证的，所以可以减少一点控制流开销。
+
+可能会困惑为什么要转换成多个整数操作。虽然这会占据整数流水线，但是对于一直等待迭代除法完成运算来看了，让整数流水线一直保持忙碌，浮点流水线完成比较方便的运算也是很有用的。
+
+``` c
+union flt {
+  struct {
+    unsigned mas: 23;
+    unsigned exp: 8;
+    unsigned sign: 1;
+  };
+  unsigned i;
+  float f;
+} cvt ;
+
+float __crvc_flt_sra(float a, constant_2pow b) {
+  union flt ai, bi, ci;
+  ai.f = a;
+  if (ai.i == 0) {
+    return 0;
+  }
+  bi.f = b;
+  ci.mas = ai.mas;
+  int m = bi.exp - 127;
+  int texp = ai.exp - m;
+  ci.exp = texp;
+  ci.sign = ai.sign ^ bi.sign;
+  return ci.f;
+}
+
+float __crvc_flt_sll(float a, constant_2pow b) {
+  union flt ai, bi, ci;
+  ai.f = a;
+  if (ai.i == 0) {
+    return 0;
+  }
+  bi.f = b;
+  ci.mas = ai.mas;
+  int m = bi.exp - 127;
+  int texp = ai.exp + m;
+  ci.exp = texp;
+  ci.sign = ai.sign ^ bi.sign;
+  return ci.f;
+}
+```
+
+# gdb cfi info insert
+
+``` 
+# define frame
+  .text
+.Ltext0:
+  .cfi_sections	.debug_frame
+
+# start proc
+  .cfi_startproc
+
+# after pc decrease imm
+  .cfi_def_cfa_offset imm
+
+# after ra restore
+  .cfi_restore 1
+
+# after pc restore
+  .cfi_def_cfa_offset 0
+
+# end proc
+  .cfi_endproc
+```

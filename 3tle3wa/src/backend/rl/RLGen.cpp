@@ -30,7 +30,6 @@ void RLGen::Register(CompilationUnit &comp_unit) {
             auto gvp = dynamic_cast<GlobalValue *>(value.get());
             Assert(gvp, "bad dynamic cast");
             registerGlobalValue(gvp, name);
-            continue;
         }
 
         if (value->IsConstant() and value->GetBaseType()->FloatType()) {
@@ -38,7 +37,6 @@ void RLGen::Register(CompilationUnit &comp_unit) {
             auto cvp = dynamic_cast<Constant *>(value.get());
             Assert(cvp, "bad dynamic cast");
             registerLocalConstant(cvp, lc_idx_alloc++);
-            continue;
         }
     }
 
@@ -127,11 +125,13 @@ void RLGen::registerNormalFunction(NormalFuncList &nflst) {
 void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
     auto &&cinfo = XConstValue(cvp->GetValue());
     Assert(cinfo.isflt_ and cinfo.width_ == 32, "not float local constant");
-    auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
-    CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v64_.u64_, idx);
-    // Assert(result.second, "insert local constant fail!");
-
-    asm_gen_->PushAsmLocalConstant(lcv);
+    if (lc_map_.find(cinfo.v32_.u32_) == lc_map_.end()) {
+        auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
+        lc_map_.emplace(cinfo.v32_.u32_, idx);
+        // CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
+        // Assert(result.second, "insert local constant fail!");
+        asm_gen_->PushAsmLocalConstant(lcv);
+    }
 }
 
 void RLGen::SerialGenerate() {

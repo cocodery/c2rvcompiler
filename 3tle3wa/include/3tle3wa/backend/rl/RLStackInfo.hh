@@ -40,4 +40,10 @@ class StackInfo : public Weightable {
     bool IsFromAlloca();
 
     int64_t GetOff() const;
+
+    virtual bool operator>(const StackInfo &other) final;
+
+    virtual bool operator==(const StackInfo &other) final;
+
+    virtual bool operator<(const StackInfo &other) final;
 };

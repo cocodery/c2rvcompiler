@@ -13,7 +13,7 @@ void Optimization::DoOptimization() {
 
         DCE::EliminateUselessCode(func);
 
-        SCCP::SCCP(func);
+        // SCCP::SCCP(func);
 
         GVN::DVNT(func);
 

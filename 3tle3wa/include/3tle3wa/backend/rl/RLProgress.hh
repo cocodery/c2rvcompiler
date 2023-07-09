@@ -2,8 +2,8 @@
 
 #include <list>
 #include <memory>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
@@ -19,7 +19,7 @@ class RLProgress : public Serializable {
     size_t label_len_;
 
     bool has_lib_call_;
-    bool has_call_other_; 
+    bool has_call_other_;
 
     std::vector<VirtualRegister *> params_;
 
@@ -61,4 +61,6 @@ class RLProgress : public Serializable {
     void DoAssignment();
 
     void DoToAsm(AsmProgress *apg);
+
+    RLBasicBlock *FindBlkById(size_t lbidx);
 };

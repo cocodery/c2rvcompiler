@@ -105,9 +105,13 @@ void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegiste
 }
 
 void RLPlanner::RecoverCall(AsmBasicBlock *abb) {
+    auto blk = belong_to_->FindBlkById(abb->Lbidx());
     for (auto &&reg : vr_storage_) {
         if (not reg->OnStk() and reg->IsSaving() and caller_save.find(reg->GetRRid()) != caller_save.end()) {
             reg->GetRRidWithSaving(abb);
+            if (not blk->IsLiveOut(reg->GetVRIdx())) {
+                abb->Pop();
+            }
         }
     }
 }
@@ -126,22 +130,22 @@ size_t VirtualRegister::GetRRidWithSaving(AsmBasicBlock *abb) {
     return real_regidx_;
 }
 
-void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
+void VirtualRegister::LoadTo(size_t to, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan) {
     if (not onstack_) {
         panic("not on stack");
     }
 
     Assert(sinfo_ != nullptr, "sinfo should not be nullptr");
-    auto off = sinfo_->GetOff();
+    int64_t soff = sinfo_->GetOff();
 
     if (param_) {
         switch (type_) {
             case VREG_TYPE::PTR: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::LD(to, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::LD(to, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
-                    auto load_imm = new riscv::LI(to, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to, soff);
                     auto gen_addr = new riscv::ADD(to, to, riscv::fp);
                     auto load_to = new riscv::LD(to, to, 0);
                     abb->Push(load_imm);
@@ -151,12 +155,12 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
             } break;
 
             case VREG_TYPE::FLT: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::FLW(to, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::FLW(to, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
                     Assert(to_tmp != riscv::zero, "set another tmp reg");
-                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to_tmp, soff);
                     auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
                     auto load_to = new riscv::FLW(to, to_tmp, 0);
                     abb->Push(load_imm);
@@ -166,11 +170,11 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
             } break;
 
             case VREG_TYPE::INT: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::LW(to, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::LW(to, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
-                    auto load_imm = new riscv::LI(to, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to, soff);
                     auto gen_addr = new riscv::ADD(to, to, riscv::fp);
                     auto load_to = new riscv::LW(to, to, 0);
                     abb->Push(load_imm);
@@ -185,10 +189,16 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
         return;
     }
 
+    int64_t off_sp = sinfo_->GetOff();
+    int64_t off_fp = plan->TotalStackSize() - off_sp;
+
     switch (type_) {
         case VREG_TYPE::PTR: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::LD(to, riscv::sp, off);
+            if (ImmWithin(12, off_sp)) {
+                auto load_to = new riscv::LD(to, riscv::sp, off_sp);
+                abb->Push(load_to);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto load_to = new riscv::LD(to, riscv::fp, -off_fp);
                 abb->Push(load_to);
             } else {
                 auto load_imm = new riscv::LI(to, sinfo_->GetOff());
@@ -201,8 +211,11 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
         } break;
 
         case VREG_TYPE::FLT: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::FLW(to, riscv::sp, off);
+            if (ImmWithin(12, off_sp)) {
+                auto load_to = new riscv::FLW(to, riscv::sp, off_sp);
+                abb->Push(load_to);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto load_to = new riscv::FLW(to, riscv::fp, -off_fp);
                 abb->Push(load_to);
             } else {
                 Assert(to_tmp != riscv::zero, "set another tmp reg");
@@ -216,8 +229,11 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
         } break;
 
         case VREG_TYPE::INT: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::LW(to, riscv::sp, off);
+            if (ImmWithin(12, off_sp)) {
+                auto load_to = new riscv::LW(to, riscv::sp, off_sp);
+                abb->Push(load_to);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto load_to = new riscv::LW(to, riscv::fp, -off_fp);
                 abb->Push(load_to);
             } else {
                 auto load_imm = new riscv::LI(to, sinfo_->GetOff());
@@ -234,23 +250,23 @@ void VirtualRegister::LoadTo(size_t to, AsmBasicBlock *abb, size_t to_tmp) {
     }
 }
 
-void VirtualRegister::StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp) {
+void VirtualRegister::StoreFrom(size_t from, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan) {
     if (not onstack_) {
         panic("not on stack");
     }
 
     Assert(sinfo_ != nullptr, "sinfo should not be nullptr");
-    auto off = sinfo_->GetOff();
+    int64_t soff = sinfo_->GetOff();
 
     if (param_) {
         switch (type_) {
             case VREG_TYPE::PTR: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::SD(from, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::SD(from, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
                     Assert(to_tmp != riscv::zero, "set another tmp reg");
-                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to_tmp, soff);
                     auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
                     auto load_to = new riscv::SD(from, to_tmp, 0);
                     abb->Push(load_imm);
@@ -260,12 +276,12 @@ void VirtualRegister::StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp) 
             } break;
 
             case VREG_TYPE::FLT: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::FSW(from, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::FSW(from, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
                     Assert(to_tmp != riscv::zero, "set another tmp reg");
-                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to_tmp, soff);
                     auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
                     auto load_to = new riscv::FSW(from, to_tmp, 0);
                     abb->Push(load_imm);
@@ -275,12 +291,12 @@ void VirtualRegister::StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp) 
             } break;
 
             case VREG_TYPE::INT: {
-                if (ImmWithin(12, off)) {
-                    auto load_to = new riscv::SW(from, riscv::fp, off);
+                if (ImmWithin(12, soff)) {
+                    auto load_to = new riscv::SW(from, riscv::fp, soff);
                     abb->Push(load_to);
                 } else {
                     Assert(to_tmp != riscv::zero, "set another tmp reg");
-                    auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                    auto load_imm = new riscv::LI(to_tmp, soff);
                     auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::fp);
                     auto load_to = new riscv::SW(from, to_tmp, 0);
                     abb->Push(load_imm);
@@ -294,49 +310,61 @@ void VirtualRegister::StoreFrom(size_t from, AsmBasicBlock *abb, size_t to_tmp) 
         }
     }
 
+    int64_t off_sp = sinfo_->GetOff();
+    int64_t off_fp = plan->TotalStackSize() - off_sp;
+
     switch (type_) {
         case VREG_TYPE::PTR: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::SD(from, riscv::sp, off);
-                abb->Push(load_to);
+            if (ImmWithin(12, off_sp)) {
+                auto store_from = new riscv::SD(from, riscv::sp, off_sp);
+                abb->Push(store_from);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto store_from = new riscv::SD(from, riscv::fp, -off_fp);
+                abb->Push(store_from);
             } else {
                 Assert(to_tmp != riscv::zero, "set another tmp reg");
-                auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                auto load_imm = new riscv::LI(to_tmp, off_sp);
                 auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::sp);
-                auto load_to = new riscv::SD(from, to_tmp, 0);
+                auto store_from = new riscv::SD(from, to_tmp, 0);
                 abb->Push(load_imm);
                 abb->Push(gen_addr);
-                abb->Push(load_to);
+                abb->Push(store_from);
             }
         } break;
 
         case VREG_TYPE::FLT: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::FSW(from, riscv::sp, off);
-                abb->Push(load_to);
+            if (ImmWithin(12, off_sp)) {
+                auto store_from = new riscv::FSW(from, riscv::sp, off_sp);
+                abb->Push(store_from);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto store_from = new riscv::FSW(from, riscv::fp, -off_fp);
+                abb->Push(store_from);
             } else {
                 Assert(to_tmp != riscv::zero, "set another tmp reg");
-                auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                auto load_imm = new riscv::LI(to_tmp, off_sp);
                 auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::sp);
-                auto load_to = new riscv::FSW(from, to_tmp, 0);
+                auto store_from = new riscv::FSW(from, to_tmp, 0);
                 abb->Push(load_imm);
                 abb->Push(gen_addr);
-                abb->Push(load_to);
+                abb->Push(store_from);
             }
         } break;
 
         case VREG_TYPE::INT: {
-            if (ImmWithin(12, off)) {
-                auto load_to = new riscv::SW(from, riscv::sp, off);
-                abb->Push(load_to);
+            if (ImmWithin(12, off_sp)) {
+                auto store_from = new riscv::SW(from, riscv::sp, off_sp);
+                abb->Push(store_from);
+            } else if (ImmWithin(12, -off_fp)) {
+                auto store_from = new riscv::SW(from, riscv::fp, -off_fp);
+                abb->Push(store_from);
             } else {
                 Assert(to_tmp != riscv::zero, "set another tmp reg");
-                auto load_imm = new riscv::LI(to_tmp, sinfo_->GetOff());
+                auto load_imm = new riscv::LI(to_tmp, off_sp);
                 auto gen_addr = new riscv::ADD(to_tmp, to_tmp, riscv::sp);
-                auto load_to = new riscv::SW(from, to_tmp, 0);
+                auto store_from = new riscv::SW(from, to_tmp, 0);
                 abb->Push(load_imm);
                 abb->Push(gen_addr);
-                abb->Push(load_to);
+                abb->Push(store_from);
             }
         } break;
 
@@ -351,9 +379,9 @@ void UopRet::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
     if (retval_ != nullptr) {
         if (retval_->OnStk()) {
             if (retval_->FGPR()) {
-                retval_->LoadTo(riscv::fa0, abb, riscv::a0);
+                retval_->LoadTo(riscv::fa0, riscv::a0, abb, plan);
             } else {
-                retval_->LoadTo(riscv::a0, abb);
+                retval_->LoadTo(riscv::a0, riscv::zero, abb, plan);
             }
         } else if (retval_->FGPR()) {
             if (retval_->GetRRidWithSaving(abb) != riscv::fa0) {
@@ -403,7 +431,7 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         if (ptype == VREG_TYPE::FLT) {
             if (fps < abi_arg_reg) {
                 if (param->OnStk()) {
-                    param->LoadTo(riscv::fa0 + fps, abb, riscv::t0);
+                    param->LoadTo(riscv::fa0 + fps, riscv::t0, abb, plan);
                 } else {
                     auto rrid = param->GetRRid();
                     if (param->IsSaving() or editted.find(rrid) != editted.end()) {
@@ -426,7 +454,7 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 fps += 1;
             } else {
                 if (param->OnStk()) {
-                    param->LoadTo(riscv::ft0, abb);
+                    param->LoadTo(riscv::ft0, riscv::zero, abb, plan);
                     auto set_param = new riscv::FSW(riscv::ft0, riscv::sp, sps * 8);
                     abb->Push(set_param);
                 } else {
@@ -449,7 +477,7 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         } else {
             if (ips < abi_arg_reg) {
                 if (param->OnStk()) {
-                    param->LoadTo(riscv::a0 + ips, abb);
+                    param->LoadTo(riscv::a0 + ips, riscv::zero, abb, plan);
                 } else {
                     auto rrid = param->GetRRid();
                     if (param->IsSaving() or editted.find(rrid) != editted.end()) {
@@ -479,7 +507,7 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 ips += 1;
             } else {
                 if (param->OnStk()) {
-                    param->LoadTo(riscv::t0, abb);
+                    param->LoadTo(riscv::t0, riscv::zero, abb, plan);
                     auto set_param = new riscv::SD(riscv::t0, riscv::sp, sps * 8);
                     abb->Push(set_param);
                 } else {
@@ -526,9 +554,9 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (retval_ != nullptr) {
         if (retval_->OnStk()) {
             if (retval_->GetType() == VREG_TYPE::FLT) {
-                retval_->StoreFrom(riscv::fa0, abb, riscv::t0);
+                retval_->StoreFrom(riscv::fa0, riscv::t0, abb, plan);
             } else {
-                retval_->StoreFrom(riscv::a0, abb, riscv::t0);
+                retval_->StoreFrom(riscv::a0, riscv::t0, abb, plan);
             }
         } else {
             if (retval_->GetType() == VREG_TYPE::FLT) {
@@ -555,7 +583,7 @@ void UopLui::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto lui = new riscv::LUI(riscv::t0, imm_up20_);
         abb->Push(lui);
 
-        dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
     } else {
         auto lui = new riscv::LUI(dst_->GetRRidWithSaving(abb), imm_up20_);
         abb->Push(lui);
@@ -569,14 +597,14 @@ void UopMv::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto fmvwx = new riscv::FMV_W_X(dst_->GetRRidWithSaving(abb), riscv::zero);
         abb->Push(fmvwx);
     } else if (src_->OnStk()) {
-        src_->LoadTo(riscv::t0, abb);
+        src_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         src = riscv::t0;
     } else {
         src = src_->GetRRidWithSaving(abb);
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(src, abb, riscv::t1);
+        dst_->StoreFrom(src, riscv::t1, abb, plan);
     } else if (src_ != nullptr) {
         auto mv = new riscv::MV(dst_->GetRRidWithSaving(abb), src);
         abb->Push(mv);
@@ -587,7 +615,7 @@ void UopCvtS2W::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
     if (src_->OnStk()) {
-        src_->LoadTo(riscv::ft0, abb, riscv::t0);
+        src_->LoadTo(riscv::ft0, riscv::t0, abb, plan);
         src = riscv::ft0;
     } else {
         src = src_->GetRRidWithSaving(abb);
@@ -596,7 +624,7 @@ void UopCvtS2W::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (dst_->OnStk()) {
         auto cvt = new riscv::FCVT_W_S(riscv::t0, src);
         abb->Push(cvt);
-        dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
     } else {
         auto cvt = new riscv::FCVT_W_S(dst_->GetRRidWithSaving(abb), src);
         abb->Push(cvt);
@@ -607,7 +635,7 @@ void UopCvtW2S::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
     if (src_->OnStk()) {
-        src_->LoadTo(riscv::t0, abb);
+        src_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         src = riscv::t0;
     } else {
         src = src_->GetRRidWithSaving(abb);
@@ -616,7 +644,7 @@ void UopCvtW2S::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (dst_->OnStk()) {
         auto cvt = new riscv::FCVT_S_W(riscv::ft0, src);
         abb->Push(cvt);
-        dst_->StoreFrom(riscv::ft0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::ft0, riscv::t1, abb, plan);
     } else {
         auto cvt = new riscv::FCVT_S_W(dst_->GetRRidWithSaving(abb), src);
         abb->Push(cvt);
@@ -629,7 +657,7 @@ void UopBranch::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t cond = 0;
 
     if (cond_->OnStk()) {
-        cond_->LoadTo(riscv::t0, abb);
+        cond_->LoadTo(riscv::t0, riscv::zero, abb, plan);
 
         cond = riscv::t0;
     } else {
@@ -661,7 +689,7 @@ void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 auto stkp_gen = new riscv::ADDI(riscv::t0, riscv::sp, off);
                 abb->Push(stkp_gen);
 
-                dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+                dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
             } else {
                 auto load_imm = new riscv::LI(riscv::t0, off);
                 auto stkp_gen = new riscv::ADD(riscv::t0, riscv::sp, riscv::t0);
@@ -669,7 +697,7 @@ void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 abb->Push(load_imm);
                 abb->Push(stkp_gen);
 
-                dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+                dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
             }
         } else {
             if (ImmWithin(12, off)) {
@@ -690,7 +718,7 @@ void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto stkp_gen = new riscv::LLA_LB(riscv::t0, src_.c_str());
         abb->Push(stkp_gen);
 
-        dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
     } else {
         auto stkp_gen = new riscv::LLA_LB(dst_->GetRRidWithSaving(abb), src_.c_str());
         abb->Push(stkp_gen);
@@ -701,7 +729,7 @@ void UopLoad::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t base = 0;
 
     if (base_->PtrOnStk()) {
-        base_->LoadTo(riscv::t0, abb);
+        base_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         base = riscv::t0;
     } else {
         base = base_->GetRRidWithSaving(abb);
@@ -711,7 +739,7 @@ void UopLoad::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto lw = new riscv::LW(riscv::t0, base, off_lo12_);
         abb->Push(lw);
 
-        dst_->StoreFrom(riscv::t0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
     } else {
         auto lw = new riscv::LW(dst_->GetRRidWithSaving(abb), base, off_lo12_);
         abb->Push(lw);
@@ -723,7 +751,7 @@ void UopStore::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
     if (base_->PtrOnStk()) {
-        base_->LoadTo(riscv::t0, abb);
+        base_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         base = riscv::t0;
     } else {
         base = base_->GetRRidWithSaving(abb);
@@ -732,7 +760,7 @@ void UopStore::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (src_ == nullptr) {
         src = riscv::zero;
     } else if (src_->OnStk()) {
-        src_->LoadTo(riscv::t1, abb);
+        src_->LoadTo(riscv::t1, riscv::zero, abb, plan);
         src = riscv::t1;
     } else {
         src = src_->GetRRidWithSaving(abb);
@@ -746,7 +774,7 @@ void UopFLoad::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t base = 0;
 
     if (base_->PtrOnStk()) {
-        base_->LoadTo(riscv::t0, abb);
+        base_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         base = riscv::t0;
     } else {
         base = base_->GetRRidWithSaving(abb);
@@ -756,7 +784,7 @@ void UopFLoad::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto lw = new riscv::FLW(riscv::ft0, base, off_lo12_);
         abb->Push(lw);
 
-        dst_->StoreFrom(riscv::ft0, abb, riscv::t1);
+        dst_->StoreFrom(riscv::ft0, riscv::t1, abb, plan);
     } else {
         auto lw = new riscv::FLW(dst_->GetRRidWithSaving(abb), base, off_lo12_);
         abb->Push(lw);
@@ -768,14 +796,14 @@ void UopFStore::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
     if (base_->PtrOnStk()) {
-        base_->LoadTo(riscv::t0, abb);
+        base_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         base = riscv::t0;
     } else {
         base = base_->GetRRidWithSaving(abb);
     }
 
     if (src_->OnStk()) {
-        src_->LoadTo(riscv::ft0, abb, riscv::t1);
+        src_->LoadTo(riscv::ft0, riscv::t1, abb, plan);
         src = riscv::ft0;
     } else {
         src = src_->GetRRidWithSaving(abb);
@@ -792,7 +820,7 @@ void UopICmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (lhs_ == nullptr) {
         lhs = riscv::zero;
     } else if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::t0, abb);
+        lhs_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
@@ -801,7 +829,7 @@ void UopICmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (rhs_ == nullptr) {
         rhs = riscv::zero;
     } else if (rhs_->OnStk()) {
-        rhs_->LoadTo(riscv::t1, abb);
+        rhs_->LoadTo(riscv::t1, riscv::zero, abb, plan);
         rhs = riscv::t1;
     } else {
         rhs = rhs_->GetRRidWithSaving(abb);
@@ -857,7 +885,7 @@ void UopICmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, abb);
+        dst_->StoreFrom(dst, riscv::t0, abb, plan);
     }
 }
 
@@ -869,7 +897,7 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         lhs = riscv::zero;
     }
     if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::ft0, abb, riscv::t0);
+        lhs_->LoadTo(riscv::ft0, riscv::t0, abb, plan);
         lhs = riscv::ft0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
@@ -879,7 +907,7 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         rhs = riscv::zero;
     }
     if (rhs_->OnStk()) {
-        rhs_->LoadTo(riscv::ft1, abb, riscv::t0);
+        rhs_->LoadTo(riscv::ft1, riscv::t1, abb, plan);
         rhs = riscv::ft1;
     } else {
         rhs = rhs_->GetRRidWithSaving(abb);
@@ -929,7 +957,7 @@ void UopFCmp::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, abb);
+        dst_->StoreFrom(dst, riscv::t0, abb, plan);
     }
 }
 
@@ -940,7 +968,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (lhs_ == nullptr) {
         lhs = riscv::zero;
     } else if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::t0, abb);
+        lhs_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
@@ -949,7 +977,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (rhs_ == nullptr) {
         rhs = riscv::zero;
     } else if (rhs_->OnStk()) {
-        rhs_->LoadTo(riscv::t1, abb);
+        rhs_->LoadTo(riscv::t1, riscv::zero, abb, plan);
         rhs = riscv::t1;
     } else {
         rhs = rhs_->GetRRidWithSaving(abb);
@@ -990,7 +1018,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         }
 
         if (dst_->OnStk()) {
-            dst_->StoreFrom(dst, abb);
+            dst_->StoreFrom(dst, riscv::t0, abb, plan);
         }
 
         return;
@@ -1040,7 +1068,7 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, abb);
+        dst_->StoreFrom(dst, riscv::t0, abb, plan);
     }
 }
 
@@ -1050,7 +1078,7 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     if (lhs_ == nullptr) {
         lhs = riscv::zero;
     } else if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::t0, abb);
+        lhs_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
@@ -1095,7 +1123,7 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         }
 
         if (dst_->OnStk()) {
-            dst_->StoreFrom(dst, abb);
+            dst_->StoreFrom(dst, riscv::t0, abb, plan);
         }
 
         return;
@@ -1131,7 +1159,7 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, abb);
+        dst_->StoreFrom(dst, riscv::t0, abb, plan);
     }
 }
 
@@ -1140,14 +1168,14 @@ void UopFBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t rhs = 0;
 
     if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::ft0, abb, riscv::t0);
+        lhs_->LoadTo(riscv::ft0, riscv::t0, abb, plan);
         lhs = riscv::ft0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
     if (rhs_->OnStk()) {
-        rhs_->LoadTo(riscv::ft1, abb, riscv::t0);
+        rhs_->LoadTo(riscv::ft1, riscv::t1, abb, plan);
         rhs = riscv::ft1;
     } else {
         rhs = rhs_->GetRRidWithSaving(abb);
@@ -1185,7 +1213,7 @@ void UopFBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        dst_->StoreFrom(dst, abb, riscv::t0);
+        dst_->StoreFrom(dst, riscv::t0, abb, plan);
     }
 }
 
@@ -1195,15 +1223,19 @@ void UopICmpBranch::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t lhs = 0;
     size_t rhs = 0;
 
-    if (lhs_->OnStk()) {
-        lhs_->LoadTo(riscv::t0, abb);
+    if (lhs_ == nullptr) {
+        lhs = riscv::zero;
+    } else if (lhs_->OnStk()) {
+        lhs_->LoadTo(riscv::t0, riscv::zero, abb, plan);
         lhs = riscv::t0;
     } else {
         lhs = lhs_->GetRRidWithSaving(abb);
     }
 
-    if (rhs_->OnStk()) {
-        rhs_->LoadTo(riscv::t1, abb);
+    if (rhs_ == nullptr) {
+        rhs = riscv::zero;
+    } else if (rhs_->OnStk()) {
+        rhs_->LoadTo(riscv::t1, riscv::zero, abb, plan);
         rhs = riscv::t1;
     } else {
         rhs = rhs_->GetRRidWithSaving(abb);
@@ -1226,7 +1258,7 @@ void UopICmpBranch::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
             abb->Push(bcmp);
         } break;
         case COMP_KIND::GTH: {
-            auto bcmp = new riscv::BGT(rhs, lhs, label.c_str());
+            auto bcmp = new riscv::BGT(lhs, rhs, label.c_str());
 
             abb->Push(bcmp);
         } break;
@@ -1236,7 +1268,7 @@ void UopICmpBranch::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
             abb->Push(bcmp);
         } break;
         case COMP_KIND::GEQ: {
-            auto bcmp = new riscv::BGE(rhs, lhs, label.c_str());
+            auto bcmp = new riscv::BGE(lhs, rhs, label.c_str());
 
             abb->Push(bcmp);
         } break;

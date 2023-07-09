@@ -17,489 +17,910 @@
 namespace riscv {
 
 Transaction LA_LB::ToTrx() {
-    return Transaction{
-        .resource_required_{}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction LLA_LB::ToTrx() {
-    return Transaction{
-        .resource_required_{}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction LW_LB::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction LD_LB::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction SW_LB::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
 Transaction SD_LB::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
 Transaction FLW_LB::ToTrx() {
-    return Transaction{.resource_required_{rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction FSW_LB::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
 Transaction MV::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction LI::ToTrx() {
-    return Transaction{
-        .resource_required_{}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction LUI::ToTrx() {
-    return Transaction{
-        .resource_required_{}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SEXT_W::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SEQZ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SNEZ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLTZ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SGTZ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLT::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLTI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLTIU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SGT::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLTU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SGTU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction FMV_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FABS_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FNEG_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction BEQZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BNEZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLEZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGEZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLTZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGTZ::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BEQ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BNE::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLT::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGE::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGT::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLE::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLTU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGTU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BLEU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction BGEU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction J::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction JAL::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction JR::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction JALR::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction RET::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction CALL::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction TAIL::ToTrx() {
-    return Transaction{.resource_required_{}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::JumpBranch}};
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::JumpBranch},
+                       .redundant_ = redundant};
 }
 
 Transaction LW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction LD::ToTrx() {
-    return Transaction{.resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction SW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
 Transaction SD::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
 Transaction ADDI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction XORI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction ORI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction ANDI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0b111111111111);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLLI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRLI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRAI::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction ADD::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SUB::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLL::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction XOR::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRL::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRA::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction OR::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction AND::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction ADDIW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLLIW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRLIW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRAIW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::IntegerOperation}};
+    bool redundant = (rd_ == rs_ and imm_ == 0);
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction ADDW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SUBW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SLLW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRLW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction SRAW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::IntegerOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::IntegerOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction MUL::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction DIV::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction DIVU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction REM::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction REMU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction MULW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction DIVW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction DIVWU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction REMW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction REMWU::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::MulDivRemOperation}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::MulDivRemOperation},
+                       .redundant_ = redundant};
 }
 
 Transaction FLW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{imm_}, .optype_{OpType::LoadData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{imm_},
+                       .optype_{OpType::LoadData},
+                       .redundant_ = redundant};
 }
 
 Transaction FSW::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{}, .other_info_{imm_}, .optype_{OpType::StoreData}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{},
+                       .other_info_{imm_},
+                       .optype_{OpType::StoreData},
+                       .redundant_ = redundant};
 }
 
-Transaction FMADD_S::ToTrx() { return Transaction{}; }
+Transaction FMADD_S::ToTrx() {
+    return Transaction{};
+}
 
-Transaction FMSUB_S::ToTrx() { return Transaction{}; }
+Transaction FMSUB_S::ToTrx() {
+    return Transaction{};
+}
 
-Transaction FNMADD_S::ToTrx() { return Transaction{}; }
+Transaction FNMADD_S::ToTrx() {
+    return Transaction{};
+}
 
-Transaction FNMSUB_S::ToTrx() { return Transaction{}; }
+Transaction FNMSUB_S::ToTrx() {
+    return Transaction{};
+}
 
 Transaction FADD_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FSUB_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FMUL_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FDIV_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FCVT_W_S::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FCVT_S_W::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FEQ::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FLT::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FLE::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_, rt_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_, rt_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FMV_W_X::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 Transaction FMV_X_W::ToTrx() {
-    return Transaction{
-        .resource_required_{rs_}, .resource_occupied_{rd_}, .other_info_{}, .optype_{OpType::FloatRelated}};
+    bool redundant = false;
+    return Transaction{.resource_required_{rs_},
+                       .resource_occupied_{rd_},
+                       .other_info_{},
+                       .optype_{OpType::FloatRelated},
+                       .redundant_ = redundant};
 }
 
 };  // namespace riscv
@@ -603,6 +1024,13 @@ class AbstractMachine {
      *       - 保证它是目前所有操作的后继，是后来所有操作的前驱
      */
     void Push(riscv::Instruction *inst, Transaction &&trx) {
+        // ignore redundant code
+        do /* ignore */ {
+            if (trx.redundant_) {
+                return;
+            }
+        } while (0);
+
         auto node = std::make_unique<AOVNode>();
         node->self_ = inst;
         node->trx_ = trx;
@@ -739,7 +1167,18 @@ class AbstractMachine {
 
                 if (prev_issued != nullptr) {
                     auto last_type = prev_issued->trx_.optype_;
-                    if (last_type == riscv::OpType::IntegerOperation or last_type != cur_type) {
+                    auto last_write = prev_issued->trx_.resource_occupied_;
+
+                    bool conflict = false;
+
+                    for (auto &&v : cur->trx_.resource_required_) {
+                        if (v == last_write) {
+                            conflict = true;
+                            break;
+                        }
+                    }
+
+                    if (not conflict and (last_type == riscv::OpType::IntegerOperation or last_type != cur_type)) {
                         if (choice == nullptr) {
                             choice = cur;
                         } else if (*cur > *choice) {

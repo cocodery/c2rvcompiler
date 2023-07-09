@@ -33,6 +33,8 @@ class AsmBasicBlock : public Serializable {
 
     void SetIsRet(bool on);
 
+    size_t Lbidx();
+
     bool IsRet();
 
     const char *FatherLabel() const;

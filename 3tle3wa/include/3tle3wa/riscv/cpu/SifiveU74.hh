@@ -21,4 +21,5 @@ struct Transaction {
     uint64_t resource_occupied_;
     std::vector<int64_t> other_info_;
     riscv::OpType optype_;
+    bool redundant_;
 };

@@ -118,20 +118,40 @@ void VirtualRegister::CallAt(size_t lbidx, size_t pos) { imgr_.CallAt(lbidx, pos
 
 void VirtualRegister::UseAt(size_t lbidx) { imgr_.Hit(lbidx); }
 
-void VirtualRegister::CalcuWeight() {
-    double standard = 100.0;
-
-    standard = imgr_.TotalHit() * standard / (1 + (imgr_.Num() - 1) * 25.0 + imgr_.TotalLiveSpan());
-
-    weight_ = standard;
-}
-
-double VirtualRegister::CalcuBlkWeight(size_t lbidx) {
-    double standard = 100.0;
-
-    standard = imgr_.BlkHit(lbidx) * standard / (1 + (imgr_.Num() - 1) * 25.0 + imgr_.BlkLiveSpan(lbidx));
-
-    return standard;
-}
-
 double VirtualRegister::NowWeight() { return weight_; }
+
+bool VirtualRegister::operator>(const VirtualRegister &other) {
+    if (weight_ > other.weight_) {
+        return true;
+    } else if (weight_ < other.weight_) {
+        return false;
+    }
+
+    if (vridx_ > other.vridx_) {
+        return true;
+    } else if (vridx_ < other.vridx_) {
+        return false;
+    }
+
+    return false;
+}
+
+bool VirtualRegister::operator==(const VirtualRegister &other) {
+    return weight_ == other.weight_ and vridx_ == other.vridx_;
+}
+
+bool VirtualRegister::operator<(const VirtualRegister &other) {
+    if (weight_ > other.weight_) {
+        return false;
+    } else if (weight_ < other.weight_) {
+        return true;
+    }
+
+    if (vridx_ > other.vridx_) {
+        return false;
+    } else if (vridx_ < other.vridx_) {
+        return true;
+    }
+
+    return false;
+}

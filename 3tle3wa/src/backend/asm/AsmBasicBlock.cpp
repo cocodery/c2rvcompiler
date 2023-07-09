@@ -19,6 +19,8 @@ void AsmBasicBlock::formatString(FILE *fp) {
 
 void AsmBasicBlock::SetIsRet(bool on) { is_ret_ = on; }
 
+size_t AsmBasicBlock::Lbidx() { return lbidx_; }
+
 bool AsmBasicBlock::IsRet() { return is_ret_; }
 
 size_t AsmBasicBlock::GetBlockIdx() { return lbidx_; }
