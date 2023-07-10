@@ -7,9 +7,9 @@
 #include <unordered_set>
 
 #include "3tle3wa/backend/Interface.hh"
+#include "3tle3wa/backend/IntervalTree.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
 #include "3tle3wa/backend/rl/Indicater.hh"
-#include "3tle3wa/backend/IntervalTree.hh"
 
 class VirtualRegister;
 class StackInfo;

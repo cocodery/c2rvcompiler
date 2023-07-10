@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
 
 #include "3tle3wa/backend/Interface.hh"
 
@@ -79,7 +79,7 @@ class InternalTranslation : public Serializable {
    public:
     InternalTranslation(const NormalFuncPtr &fptr, const std::unordered_map<uint32_t, size_t> &lc_map,
                         const std::unordered_map<size_t, AsmGlobalValue *> &gv_map);
-    
+
     void DoTranslation();
 
     void DoVSchedule();
@@ -100,16 +100,16 @@ class InternalTranslation : public Serializable {
 
     void Translate(ICmpInst *);
     void Translate(FCmpInst *);
-    
+
     void Translate(IBinaryInst *);
     void Translate(FBinaryInst *);
     void Translate(FNegInst *);
-    
+
     void Translate(AllocaInst *);
     void Translate(StoreInst *);
     void Translate(LoadInst *);
     void Translate(GetElementPtrInst *);
-    
+
     void Translate(SitoFpInst *);
     void Translate(FptoSiInst *);
     void Translate(ZextInst *);

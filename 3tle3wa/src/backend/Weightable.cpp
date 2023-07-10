@@ -7,4 +7,3 @@
 // bool Weightable::operator<(const Weightable &other) { return weight_ < other.weight_; }
 
 double Weightable::Weight() { return weight_; }
-

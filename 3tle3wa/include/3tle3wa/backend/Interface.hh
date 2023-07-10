@@ -29,20 +29,20 @@ class Serializable {
 };
 
 class Weightable {
-    protected:
-     double weight_{};
+   protected:
+    double weight_{};
 
-    public:
-     virtual double Weight() final;
+   public:
+    virtual double Weight() final;
 
     //  virtual bool operator>(const Weightable &other);
 
     //  virtual bool operator==(const Weightable &other);
-     
+
     //  virtual bool operator<(const Weightable &other);
 };
 
 class Translatable {
-    public:
-     virtual void TranslateTo(InternalTranslation &itx);
+   public:
+    virtual void TranslateTo(InternalTranslation &itx);
 };

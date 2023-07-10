@@ -3,8 +3,8 @@
 #include <list>
 #include <memory>
 #include <set>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
 
@@ -36,7 +36,7 @@ class RLBasicBlock : public Serializable {
     RLPlanner *planner_;
 
     void formatString(FILE *fp) final;
-    
+
    public:
     RLBasicBlock(CfgNodePtr &cfg, RLPlanner *planner);
 
@@ -47,13 +47,13 @@ class RLBasicBlock : public Serializable {
     bool IsLiveOut(size_t vridx);
 
     void CalcuClear();
-    
+
     void SetCalcuParam(std::vector<VirtualRegister *> &params);
 
     void SetLiveinParam(std::vector<VirtualRegister *> &params);
-    
+
     void CalcuInit();
-    
+
     bool CalcuIO(std::unordered_map<size_t, RLBasicBlock *> &lbmap);
 
     void IndexAllUops();

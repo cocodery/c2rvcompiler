@@ -48,9 +48,7 @@ bool StackInfo::operator>(const StackInfo &other) {
     return false;
 }
 
-bool StackInfo::operator==(const StackInfo &other) {
-    return weight_ == other.weight_ and sidx_ == other.sidx_;
-}
+bool StackInfo::operator==(const StackInfo &other) { return weight_ == other.weight_ and sidx_ == other.sidx_; }
 
 bool StackInfo::operator<(const StackInfo &other) {
     if (weight_ > other.weight_) {

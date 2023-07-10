@@ -12,7 +12,6 @@ class AsmLocalConstant;
 class AsmProgress;
 
 class AsmGen : public Serializable {
-
     // for storage
     std::list<std::unique_ptr<AsmGlobalValue>> gv_storage_;
     std::list<std::unique_ptr<AsmLocalConstant>> lc_storage_;

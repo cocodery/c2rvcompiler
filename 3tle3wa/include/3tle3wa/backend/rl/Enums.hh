@@ -43,16 +43,13 @@ enum class FBIN_KIND {
     ABS,
 };
 
-enum class PHI_KIND {
-    IMM,
-    REG
-};
+enum class PHI_KIND { IMM, REG };
 
 enum class OPERATION_KIND {
-    BRAJMP = 0, // branch and jump
-    INTOPT = 1, // common integer operation
-    CALLOP = 2, // call func
-    MDROPT = 3, // mul div rem operation
-    FLTOPT = 4, // float operation
-    ACCMEM = 5, // access memory
+    BRAJMP = 0,  // branch and jump
+    INTOPT = 1,  // common integer operation
+    CALLOP = 2,  // call func
+    MDROPT = 3,  // mul div rem operation
+    FLTOPT = 4,  // float operation
+    ACCMEM = 5,  // access memory
 };

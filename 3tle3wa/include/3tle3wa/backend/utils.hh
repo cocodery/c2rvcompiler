@@ -130,4 +130,3 @@ static inline ConstValueInfo XConstValue(const ConstPackage &cpk) {
 
     return cvalinfo;
 }
-

@@ -70,9 +70,6 @@ PYLL_TARGETS	:= $(addprefix $(PYLL)/,$(MODE))
 PYASM			:= pyasm
 PYASM_TARGETS	:= $(addprefix $(PYASM)/,$(MODE))
 
-PYFLT			:= float
-PYFLT_TARGETS	:= $(addprefix $(PYFLT)/,float)
-
 $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
@@ -82,17 +79,11 @@ $(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/% $(SYLIB_LL)
 $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
 
-$(PYFLT_TARGETS): $(PYFLT)/%:$(CURDIR)/test/%
-	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/test/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
-
 .PHONY: pyll
 pyll:  build $(PYLL_TARGETS)
 
 .PHONY: pyasm
 pyasm: build $(PYASM_TARGETS)
-
-.PHONY: pyflt
-pyflt: build $(PYFLT_TARGETS)
 
 release: $(ALL_SRC)
 	$(CMAKE) -S . -B $(BUILD_DIR)
@@ -259,3 +250,22 @@ all: build
 			fi
 		fi
 	done
+
+# for real board test
+
+OUTPUT_IN 		:= $(addsuffix .in,$(basename $(TEST_CASES)))
+OUTPUT_OUT  	:= $(addsuffix .out,$(basename $(TEST_CASES)))
+
+$(OUTPUT_ASM): %.s:%.sy
+	$(BINARY) -S -o $@ $<
+
+.ONESHELL:
+asmpk: $(OUTPUT_ASM)
+	mkdir -p $(BUILD_DIR)/starfive
+	mv $^ $(BUILD_DIR)/starfive/
+	cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
+	cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
+	cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))
+	cd $(BUILD_DIR)
+	tar -zcvf starry.tar.gz starfive
+	cp starry.tar.gz /mnt/d/code

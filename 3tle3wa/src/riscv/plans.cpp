@@ -230,5 +230,5 @@ void RLPlanner::PlanStackSpace() {
     }
 
     spoff += -idx;
-    total_stack_size_ = spoff;
+    total_stack_size_ = RoundUp(16, spoff);
 }

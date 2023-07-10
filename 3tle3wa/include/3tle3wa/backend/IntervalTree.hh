@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstddef>
-#include <memory>
-#include <vector>
 #include <cstring>
-#include <unordered_map>
 #include <list>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 class Interval {
     std::vector<size_t> intval_;
@@ -21,7 +21,7 @@ class Interval {
 
     // [begin, end)
     void Cover(size_t begin, size_t end);
-    
+
     void Uncover(size_t begin, size_t end);
 
     void UpdateBegin(size_t begin);

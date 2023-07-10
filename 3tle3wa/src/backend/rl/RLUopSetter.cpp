@@ -150,4 +150,3 @@ void UopICmpBranch::SetRhs(VirtualRegister *rhs) { rhs_ = rhs; }
 void UopICmpBranch::SetDstIdx(size_t dst_idx) { dst_idx_ = dst_idx; }
 
 void UopICmpBranch::SetKind(COMP_KIND kind) { kind_ = kind; }
-

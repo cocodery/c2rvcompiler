@@ -1,9 +1,10 @@
 #include "3tle3wa/ir/function/function.hh"
-#include "3tle3wa/utils/Logs.hh"
 
 #include <cstddef>
 #include <memory>
 #include <string>
+
+#include "3tle3wa/utils/Logs.hh"
 
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation

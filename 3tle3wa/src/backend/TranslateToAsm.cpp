@@ -29,7 +29,7 @@ void RLProgress::DoToAsm(AsmProgress *apg) {
 }
 
 void RLBasicBlock::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
-    for (auto &&uop: ops_) {
+    for (auto &&uop : ops_) {
         if (uop->GetUopIdx() == op_idx_) {
             plan->RecoverCall(abb);
         }

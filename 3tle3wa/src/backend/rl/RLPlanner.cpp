@@ -102,4 +102,3 @@ void RLPlanner::SetPstkSiz(size_t sps) { param_stack_ = std::max(param_stack_, s
 void RLPlanner::RegisterOwner(RLProgress *rlp) { belong_to_ = rlp; }
 
 size_t RLPlanner::TotalStackSize() { return total_stack_size_; }
-

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"

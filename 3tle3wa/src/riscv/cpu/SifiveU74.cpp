@@ -808,21 +808,13 @@ Transaction FSW::ToTrx() {
                        .redundant_ = redundant};
 }
 
-Transaction FMADD_S::ToTrx() {
-    return Transaction{};
-}
+Transaction FMADD_S::ToTrx() { return Transaction{}; }
 
-Transaction FMSUB_S::ToTrx() {
-    return Transaction{};
-}
+Transaction FMSUB_S::ToTrx() { return Transaction{}; }
 
-Transaction FNMADD_S::ToTrx() {
-    return Transaction{};
-}
+Transaction FNMADD_S::ToTrx() { return Transaction{}; }
 
-Transaction FNMSUB_S::ToTrx() {
-    return Transaction{};
-}
+Transaction FNMSUB_S::ToTrx() { return Transaction{}; }
 
 Transaction FADD_S::ToTrx() {
     bool redundant = false;

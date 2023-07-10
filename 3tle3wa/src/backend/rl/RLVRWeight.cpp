@@ -16,9 +16,7 @@ static double calcu(double hit, double blk, double live_span) {
     return result;
 }
 
-void VirtualRegister::CalcuWeight() {
-    weight_ = calcu(imgr_.TotalHit(), imgr_.Num(), imgr_.TotalLiveSpan());
-}
+void VirtualRegister::CalcuWeight() { weight_ = calcu(imgr_.TotalHit(), imgr_.Num(), imgr_.TotalLiveSpan()); }
 
 double VirtualRegister::CalcuBlkWeight(size_t lbidx) {
     return calcu(imgr_.BlkHit(lbidx), imgr_.Num(), imgr_.BlkLiveSpan(lbidx));

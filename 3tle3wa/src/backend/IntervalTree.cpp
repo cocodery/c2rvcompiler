@@ -131,7 +131,7 @@ size_t IntervalManager::Num() { return storage_.size(); }
 
 void IntervalManager::Hit(size_t lbidx) { return intvals_.at(lbidx)->Use(); }
 
-void IntervalManager::CallAt(size_t lbidx, size_t pos) { (void) lbidx, (void) pos; }
+void IntervalManager::CallAt(size_t lbidx, size_t pos) { (void)lbidx, (void)pos; }
 
 size_t IntervalManager::BlkHit(size_t lbidx) { return intvals_.at(lbidx)->UseTime(); }
 
