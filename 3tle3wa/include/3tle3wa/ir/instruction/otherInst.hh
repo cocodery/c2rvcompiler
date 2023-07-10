@@ -82,7 +82,7 @@ class PhiInst final : public Instruction {
 
     void SetOriginAlloca(AllocaInstPtr);
 
-    const AllocaInstPtr GetOriginAlloca() const;
+    AllocaInstPtr GetOriginAlloca();
 
     static void InsertPhiData(PhiInstPtr, BaseValuePtr, CfgNodePtr);
 
