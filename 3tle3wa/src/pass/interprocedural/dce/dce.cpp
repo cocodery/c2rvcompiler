@@ -72,7 +72,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         }
     }
 
-    [[maybe_unused]] auto FlodRedundantBranch = [&PhiParamBlock](const BaseValue *cond, const CfgNodePtr &node,
+    CRVC_UNUSE auto FlodRedundantBranch = [&PhiParamBlock](const BaseValue *cond, const CfgNodePtr &node,
                                                                  const CfgNodePtr &iftrue, const CfgNodePtr &iffalse) {
         bool changed = false;
         bool phi_iftrue = PhiParamBlock[iftrue.get()];
@@ -100,9 +100,9 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         return changed;
     };
 
-    [[maybe_unused]] auto RemoveEmptyBlock = [](const CfgNodePtr &i, const CfgNodePtr &j) {};
+    CRVC_UNUSE auto RemoveEmptyBlock = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
-    [[maybe_unused]] auto CombineBlocks = [&func](const CfgNodePtr &i, const CfgNodePtr &j) {
+    CRVC_UNUSE auto CombineBlocks = [&func](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {
         i->RemoveLastInst();
         auto &&i_inst_list = i->GetInstList();
         auto &&j_inst_list = j->GetInstList();
@@ -125,15 +125,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         RemoveNode(i);
     };
 
-    auto HoistBranch = [](CfgNodePtr i, CfgNodePtr j) {
-        auto &&j_branch_inst = std::static_pointer_cast<BranchInst>(j->GetLastInst());
-        auto &&i_branch_inst = BranchInst::CreatePtr(j_branch_inst->GetCondition(), j_branch_inst->GetTrueTarget(),
-                                                     j_branch_inst->GetFalseTarget(), i);
-        i->RemoveLastInst();
-        i->InsertInstBack(i_branch_inst);
-        i->GetSuccessors().remove(j);
-        j->GetPredcessors().remove(i);
-    };
+    CRVC_UNUSE auto HoistBranch = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
     auto OnePass = [&](CfgNodeList &post_order) {
         bool changed = false;

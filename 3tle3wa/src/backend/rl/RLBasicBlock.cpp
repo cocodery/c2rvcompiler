@@ -15,7 +15,7 @@ RLBasicBlock::RLBasicBlock(CfgNodePtr &cfg, RLPlanner *planner)
         dominators_.insert(domi->GetBlockIdx());
     }
 
-    auto &&pred_lst = cfg->GetPredcessors();
+    auto &&pred_lst = cfg->GetPredecessors();
     for (auto &&pred : pred_lst) {
         predecessors_.insert(pred->GetBlockIdx());
     }
