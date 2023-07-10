@@ -263,6 +263,7 @@ $(OUTPUT_ASM): %.s:%.sy
 asmpk: $(OUTPUT_ASM)
 	mkdir -p $(BUILD_DIR)/starfive
 	mv $^ $(BUILD_DIR)/starfive/
+	rm $^
 	cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
 	cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
 	cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))

@@ -44,6 +44,11 @@ const char *AsmProgress::Label() const { return label_; }
 void AsmProgress::formatString(FILE *fp) {
     fprintf(fp,
             "\t.text\n"
+
+            // since JH7110 just has a dtim for s7 monitor core
+            // .itim will do nothing
+            // "\t.section\t.itim,\"ax\",@progbits\n"
+
             "\t.align\t%" PRIu64
             "\n"
             "\t.global\t%s\n"
