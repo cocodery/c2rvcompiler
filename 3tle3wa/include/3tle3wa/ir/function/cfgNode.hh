@@ -7,15 +7,19 @@
 
 class CtrlFlowGraphNode;
 using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
-using CfgNodeList = std::list<CfgNodePtr>;
-using DominatorSet = std::set<CfgNodePtr>;
+
+typedef std::list<CfgNodePtr> CfgNodeList;
+
+typedef std::set<CfgNodePtr> Predecessor;
+typedef std::set<CfgNodePtr> Successor;
+typedef std::set<CfgNodePtr> DominatorSet;
 
 class CtrlFlowGraphNode final : public BasicBlock {
    private:
     bool dirty;
 
-    CfgNodeList predecessors;
-    CfgNodeList successors;
+    Predecessor predecessors;
+    Successor successors;
 
     DominatorSet dominator_set;
 
@@ -31,10 +35,12 @@ class CtrlFlowGraphNode final : public BasicBlock {
     bool GetDirty();
     void SetDirty(bool);
 
-    void AddPredcessor(CfgNodePtr);
+    void AddPredecessor(CfgNodePtr);
     void AddSuccessor(CfgNodePtr);
-    CfgNodeList &GetPredcessors();
-    CfgNodeList &GetSuccessors();
+    void RmvPredecessor(CfgNodePtr);
+    void RmvSuccessor(CfgNodePtr);
+    Predecessor &GetPredecessors();
+    Successor &GetSuccessors();
 
     void InsertDominator(CfgNodePtr);
     DominatorSet &GetDominatorSet();

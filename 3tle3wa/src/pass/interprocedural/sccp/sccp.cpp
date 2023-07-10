@@ -185,16 +185,76 @@ void SCCP::SCCP(NormalFuncPtr func) {
         }
     }
 
-    for (auto node : func->TopoSortFromEntry()) {
+    auto &&node_list = func->TopoSortFromEntry();
+
+    for (auto &&iter = node_list.begin(); iter != node_list.end();) {
+        auto node = (*iter);
+        if (ExcutedMap[node] == true) {
+            auto last_inst = node->GetLastInst();
+            if (last_inst->IsBranchInst()) {
+                auto &&br_inst = std::static_pointer_cast<BranchInst>(last_inst);
+                auto &&cond = GetLattice(br_inst->GetCondition());
+                auto &&iftrue = br_inst->GetTrueTarget();
+                auto &&iffalse = br_inst->GetFalseTarget();
+                assert(cond.IsConstant() || cond.IsVariable());
+
+                if (iftrue == iffalse) {
+                    node->RemoveLastInst();
+                    node->InsertInstBack(JumpInst::CreatePtr(iftrue, node));
+                } else if (cond.IsConstant()) {
+                    br_inst->GetCondition()->RemoveUser(br_inst);
+                    auto condition = std::get<bool>(std::static_pointer_cast<Constant>(cond.GetValue())->GetValue());
+                    if (condition) {
+                        node->RemoveLastInst();
+                        node->InsertInstBack(JumpInst::CreatePtr(iftrue, node));
+                        node->RmvSuccessor(iffalse);
+                        iffalse->RmvPredecessor(node);
+                    } else {
+                        node->RemoveLastInst();
+                        node->InsertInstBack(JumpInst::CreatePtr(iffalse, node));
+                        node->RmvSuccessor(iftrue);
+                        iftrue->RmvPredecessor(node);
+                    }
+                }
+            }
+            ++iter;
+        } else {
+            iter = node_list.erase(iter);
+        }
+    }
+
+    for (auto &&node : node_list) {
+        assert(ExcutedMap[node]);
         auto &&inst_list = node->GetInstList();
         for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
             auto inst = (*iter);
-            auto lattice = LatticeMap[inst->GetResult()];
+            auto result = inst->GetResult();
+            auto lattice = GetLattice(result);
             if (lattice.IsConstant()) {
-                ReplaceSRC(inst->GetResult(), lattice.GetValue());
+                ReplaceSRC(result, lattice.GetValue());
                 RemoveInst(inst);
                 iter = inst_list.erase(iter);
             } else {
+                assert(lattice.IsVariable());
+                if (inst->IsPhiInst()) {
+                    auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
+
+                    auto &&datalist_ref = phi_inst->GetRefList();
+                    for (auto &&it = datalist_ref.begin(); it != datalist_ref.end();) {
+                        auto [value, block] = (*it);
+                        if (ExcutedMap[block] == true) {
+                            ++it;
+                        } else {
+                            it = datalist_ref.erase(it);
+                        }
+                    }
+                    if (datalist_ref.size() == 1) {
+                        ReplaceSRC(result, datalist_ref.begin()->first);
+                        RemoveInst(inst);
+                        iter = inst_list.erase(iter);
+                        continue;
+                    }
+                }
                 ++iter;
             }
         }

@@ -7,21 +7,13 @@ void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
 
 CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr) { return std::make_shared<CtrlFlowGraphNode>(_attr); }
 
-void CtrlFlowGraphNode::AddPredcessor(CfgNodePtr predecessor) {
-    // avoid redundant same predcessor
-    if (std::find(predecessors.begin(), predecessors.end(), predecessor) == predecessors.end()) {
-        predecessors.push_back(predecessor);
-    }
-}
+void CtrlFlowGraphNode::AddPredecessor(CfgNodePtr predecessor) { predecessors.insert(predecessor); }
+void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.insert(successor); }
+void CtrlFlowGraphNode::RmvPredecessor(CfgNodePtr predecessor) { predecessors.erase(predecessor); }
+void CtrlFlowGraphNode::RmvSuccessor(CfgNodePtr successor) { successors.erase(successor); }
 
-void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) {
-    // avoid redundant same successor
-    if (std::find(successors.begin(), successors.end(), successor) == successors.end()) {
-        successors.push_back(successor);
-    }
-}
-CfgNodeList &CtrlFlowGraphNode::GetPredcessors() { return predecessors; }
-CfgNodeList &CtrlFlowGraphNode::GetSuccessors() { return successors; }
+Predecessor &CtrlFlowGraphNode::GetPredecessors() { return predecessors; }
+Successor &CtrlFlowGraphNode::GetSuccessors() { return successors; }
 
 void CtrlFlowGraphNode::InsertDominator(CfgNodePtr dominator) { dominator_set.insert(dominator); }
 DominatorSet &CtrlFlowGraphNode::GetDominatorSet() { return dominator_set; }
@@ -93,12 +85,10 @@ void RemoveNode(CfgNodePtr node) {
     auto &&inst_list = node->GetInstList();
     std::for_each(inst_list.begin(), inst_list.end(), RemoveInst);
     inst_list.clear();
-    auto &&predcessor = node->GetPredcessors();
+    auto &&predcessor = node->GetPredecessors();
     auto &&successor = node->GetSuccessors();
-    std::for_each(predcessor.begin(), predcessor.end(),
-                  [&node](const auto &pred) { pred->GetSuccessors().remove(node); });
-    std::for_each(successor.begin(), successor.end(),
-                  [&node](const auto &succ) { succ->GetPredcessors().remove(node); });
+    std::for_each(predcessor.begin(), predcessor.end(), [&node](const auto &pred) { pred->RmvSuccessor(node); });
+    std::for_each(successor.begin(), successor.end(), [&node](const auto &succ) { succ->RmvPredecessor(node); });
     predcessor.clear();
     successor.clear();
     node->GetDominatorSet().clear();

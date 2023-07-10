@@ -37,7 +37,7 @@ CfgNodeList NormalFunction::TopoSortFromEntry() {
 
     [[maybe_unused]] auto PredAllVisited = [&visit](CfgNodePtr succ) {
         if (succ->FindBlkAttr(LOOPBEGIN)) return true;
-        for (auto &&pred : succ->GetPredcessors()) {
+        for (auto &&pred : succ->GetPredecessors()) {
             if (pred->GetDominatorSet().size() == 0) continue;
             if (visit[pred] == false) return false;
         }
@@ -72,7 +72,7 @@ CfgNodeList NormalFunction::TopoSortFromExit() {
     std::function<void(CfgNodePtr)> DepthFirstSearch = [&](CfgNodePtr node) {
         visit[node] = true;
         postorder_node.push_back(node);
-        for (auto &&pred : node->GetPredcessors()) {
+        for (auto &&pred : node->GetPredecessors()) {
             if (!visit[pred]) {
                 DepthFirstSearch(pred);
             }
