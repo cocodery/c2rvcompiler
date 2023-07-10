@@ -16,7 +16,7 @@ class AsmBasicBlock;
 
 using CfgNodePtr = std::shared_ptr<CtrlFlowGraphNode>;
 
-class RLBasicBlock : public Serializable {
+class RLBasicBlock final : public Serializable {
     size_t lbidx_;
     size_t op_idx_;
 

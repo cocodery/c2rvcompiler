@@ -14,7 +14,7 @@ class VirtualRegister;
 class Variable;
 class AsmProgress;
 
-class RLProgress : public Serializable {
+class RLProgress final : public Serializable {
     char *label_;
     size_t label_len_;
 

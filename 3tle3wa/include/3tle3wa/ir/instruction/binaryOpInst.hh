@@ -14,13 +14,13 @@ class IBinaryInst final : public BinaryInstruction {
     IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~IBinaryInst() = default;
 
-    bool IsIBinaryInst() const;
+    bool IsIBinaryInst() const final override;
 
     static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -36,13 +36,13 @@ class FBinaryInst final : public BinaryInstruction {
     FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FBinaryInst() = default;
 
-    bool IsFBinaryInst() const;
+    bool IsFBinaryInst() const final override;
 
     static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -59,9 +59,9 @@ class FNegInst final : public UnaryInstruction {
 
     static VariablePtr DoFloatNeg(BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };

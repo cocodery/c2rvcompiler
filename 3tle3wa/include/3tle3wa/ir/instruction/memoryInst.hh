@@ -22,13 +22,13 @@ class AllocaInst final : public Instruction {
     const BaseTypePtr GetAllocaType() const;
     const VariablePtr GetAllocaAddr() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -52,13 +52,13 @@ class StoreInst final : public Instruction {
     const BaseValuePtr GetStoreAddr() const;
     BaseValuePtr GetStoreValue() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -75,9 +75,9 @@ class LoadInst final : public UnaryInstruction {
 
     static BaseValuePtr DoLoadValue(BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -103,13 +103,13 @@ class GetElementPtrInst final : public Instruction {
     BaseValuePtr GetBaseAddr() const;
     BaseValueList GetOffList() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };

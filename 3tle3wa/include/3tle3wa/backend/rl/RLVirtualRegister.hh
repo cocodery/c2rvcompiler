@@ -13,7 +13,7 @@ class StackInfo;
 class AsmBasicBlock;
 class RLPlanner;
 
-class VirtualRegister : public Serializable, public Weightable {
+class VirtualRegister final : public Serializable, public Weightable {
     VREG_TYPE type_;
 
     uint64_t vridx_;

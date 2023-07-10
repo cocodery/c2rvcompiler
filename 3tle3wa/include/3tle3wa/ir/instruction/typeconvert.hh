@@ -18,9 +18,9 @@ class SitoFpInst final : public UnaryInstruction {
 
     static VariablePtr DoSitoFp(BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -38,9 +38,9 @@ class FptoSiInst final : public UnaryInstruction {
 
     static VariablePtr DoFptoSi(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -58,9 +58,9 @@ class ZextInst final : public UnaryInstruction {
 
     static VariablePtr DoZeroExt(BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };

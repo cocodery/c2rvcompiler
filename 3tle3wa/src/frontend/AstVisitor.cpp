@@ -200,7 +200,7 @@ std::any AstVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValConte
     return ctx->constExp()->accept(this);
 }
 
-std::any AstVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext *ctx) {
+std::any AstVisitor::visitListConstInitVal(CRVC_UNUSE SysYParser::ListConstInitValContext *ctx) {
     assert(0);
     return nullptr;
 }
@@ -300,7 +300,7 @@ std::any AstVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext *ctx) {
     return init_value;
 }
 
-std::any AstVisitor::visitListInitval(SysYParser::ListInitvalContext *ctx) {
+std::any AstVisitor::visitListInitval(CRVC_UNUSE SysYParser::ListInitvalContext *ctx) {
     assert(0);
     return nullptr;
 }
@@ -442,7 +442,7 @@ std::any AstVisitor::visitAssignStmt(SysYParser::AssignStmtContext *ctx) {
     return nullptr;
 }
 
-std::any AstVisitor::visitAssignOp(SysYParser::AssignOpContext *ctx) {
+std::any AstVisitor::visitAssignOp(CRVC_UNUSE SysYParser::AssignOpContext *ctx) {
     assert(0);
     return nullptr;
 }
@@ -572,7 +572,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     return nullptr;
 }
 
-std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
+std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
     cur_block->AppendBlkAttr(CONTINUE);
@@ -580,7 +580,7 @@ std::any AstVisitor::visitContinueStmt(SysYParser::ContinueStmtContext *ctx) {
     return nullptr;
 }
 
-std::any AstVisitor::visitBreakStmt(SysYParser::BreakStmtContext *ctx) {
+std::any AstVisitor::visitBreakStmt(CRVC_UNUSE SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(break_inst);
     break_list.push_back(break_inst);

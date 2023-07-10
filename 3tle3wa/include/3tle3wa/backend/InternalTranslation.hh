@@ -7,6 +7,8 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
+struct ConstValueInfo;
+
 class NormalFunction;
 class CtrlFlowGraphNode;
 
@@ -16,7 +18,6 @@ class RLBasicBlock;
 class RLPlanner;
 class VirtualRegister;
 class AsmProgress;
-class ConstValueInfo;
 
 // control flow inst
 class ReturnInst;
@@ -50,7 +51,7 @@ class PhiInst;
 
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
 
-class InternalTranslation : public Serializable {
+class InternalTranslation final : public Serializable {
     const NormalFuncPtr &fptr_;
     const std::unordered_map<uint32_t, size_t> &lc_map_;
     const std::unordered_map<size_t, AsmGlobalValue *> &gv_map_;

@@ -5,7 +5,7 @@
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/riscv/spec.hh"
 
-class Transaction;
+struct Transaction;
 
 namespace riscv {
 

@@ -11,7 +11,7 @@
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list), tail_call(false) {}
+    : BaseFunction(_type, _name, _list) {}
 
 CfgNodePtr NormalFunction::CreateEntry() {
     entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL);

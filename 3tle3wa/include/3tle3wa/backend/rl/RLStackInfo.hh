@@ -5,7 +5,7 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
-class StackInfo : public Weightable {
+class StackInfo final : public Weightable {
     size_t sidx_;
 
     size_t stack_len_;

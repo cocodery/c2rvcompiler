@@ -73,7 +73,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     }
 
     CRVC_UNUSE auto FlodRedundantBranch = [&PhiParamBlock](const BaseValue *cond, const CfgNodePtr &node,
-                                                                 const CfgNodePtr &iftrue, const CfgNodePtr &iffalse) {
+                                                           const CfgNodePtr &iftrue, const CfgNodePtr &iffalse) {
         bool changed = false;
         bool phi_iftrue = PhiParamBlock[iftrue.get()];
         bool phi_iffalse = PhiParamBlock[iffalse.get()];

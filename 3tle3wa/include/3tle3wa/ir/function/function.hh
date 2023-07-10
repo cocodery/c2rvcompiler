@@ -25,8 +25,6 @@ class NormalFunction final : public BaseFunction {
     CfgNodePtr entry;
     CfgNodePtr exit;
 
-    bool tail_call;
-
     size_t var_idx;
     size_t blk_idx;
 

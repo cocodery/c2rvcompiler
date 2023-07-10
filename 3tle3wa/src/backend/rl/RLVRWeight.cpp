@@ -11,7 +11,7 @@ static constexpr double live_span_weight = 1.5;
 static double calcu(double hit, double blk, double live_span) {
     double result = initial;
     result += hit * hit_weight;
-    result /= blk_num_weight * (blk - 1) + live_span * live_span;
+    result /= blk_num_weight * (blk - 1) + live_span * live_span_weight;
 
     return result;
 }

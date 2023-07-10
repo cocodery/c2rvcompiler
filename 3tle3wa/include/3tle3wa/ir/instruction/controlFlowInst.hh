@@ -20,13 +20,13 @@ class ReturnInst final : public Instruction {
 
     BaseValuePtr GetRetValue() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -48,15 +48,15 @@ class JumpInst final : public Instruction {
 
     CfgNodePtr GetTarget();
 
-    void ReplaceTarget(CfgNodePtr, CfgNodePtr);
+    void ReplaceTarget(CfgNodePtr, CfgNodePtr) final override;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -83,15 +83,15 @@ class BranchInst final : public Instruction {
     CfgNodePtr GetTrueTarget();
     CfgNodePtr GetFalseTarget();
 
-    void ReplaceTarget(CfgNodePtr, CfgNodePtr);
+    void ReplaceTarget(CfgNodePtr, CfgNodePtr) final override;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };

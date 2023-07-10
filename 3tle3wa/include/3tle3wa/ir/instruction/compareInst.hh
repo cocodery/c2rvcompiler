@@ -14,13 +14,13 @@ class ICmpInst final : public BinaryInstruction {
     ICmpInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~ICmpInst() = default;
 
-    bool IsICmpInst() const;
+    bool IsICmpInst() const final override;
 
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -36,13 +36,13 @@ class FCmpInst final : public BinaryInstruction {
     FCmpInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FCmpInst() = default;
 
-    bool IsFCmpInst() const;
+    bool IsFCmpInst() const final override;
 
     static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };

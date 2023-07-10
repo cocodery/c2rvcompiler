@@ -34,13 +34,13 @@ class CallInst final : public Instruction {
     void SetTailCall(bool);
     bool GetTailCall() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -58,9 +58,9 @@ class BitCastInst final : public UnaryInstruction {
 
     static VariablePtr DoBitCast(BaseValuePtr, CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
@@ -93,15 +93,15 @@ class PhiInst final : public Instruction {
     std::list<std::pair<BaseValuePtr, CfgNodePtr>> &GetRefList();
     const std::list<std::pair<BaseValuePtr, CfgNodePtr>> &GetDataList() const;
 
-    void RemoveResParent();
+    void RemoveResParent() final override;
 
     BaseValuePtr FindInComingUse(CfgNodePtr);
 
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr);
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
-    const BaseValueList GetOprands() const;
+    const BaseValueList GetOprands() const final override;
 
-    std::string tollvmIR();
+    std::string tollvmIR() final override;
 
     void TranslateTo(InternalTranslation &itx) final override;
 };
