@@ -63,7 +63,7 @@ JumpInst::JumpInst(CfgNodePtr _dest, CfgNodePtr block) : Instruction(nullptr, Ju
     assert(block != nullptr);
     if (dest != nullptr) {
         parent->AddSuccessor(dest);
-        dest->AddPredcessor(parent);
+        dest->AddPredecessor(parent);
     }
 }
 
@@ -75,7 +75,7 @@ void JumpInst::SetTarget(CfgNodePtr _dest) {
     assert(dest == nullptr);
     dest = _dest;
     parent->AddSuccessor(dest);
-    dest->AddPredcessor(parent);
+    dest->AddPredecessor(parent);
 }
 
 CfgNodePtr JumpInst::GetTarget() { return dest; }
@@ -116,11 +116,11 @@ BranchInst::BranchInst(BaseValuePtr _cond, CfgNodePtr _br1, CfgNodePtr _br2, Cfg
     assert(parent != nullptr);
     if (iftrue != nullptr) {
         parent->AddSuccessor(iftrue);
-        iftrue->AddPredcessor(parent);
+        iftrue->AddPredecessor(parent);
     }
     if (iffalse != nullptr) {
         parent->AddSuccessor(iffalse);
-        iffalse->AddPredcessor(parent);
+        iffalse->AddPredecessor(parent);
     }
 }
 
@@ -134,14 +134,14 @@ void BranchInst::SetTrueTarget(CfgNodePtr _iftrue) {
     assert(iftrue == nullptr);
     iftrue = _iftrue;
     parent->AddSuccessor(iftrue);
-    iftrue->AddPredcessor(parent);
+    iftrue->AddPredecessor(parent);
 }
 
 void BranchInst::SetFalseTarget(CfgNodePtr _iffalse) {
     assert(iffalse == nullptr);
     iffalse = _iffalse;
     parent->AddSuccessor(iffalse);
-    iffalse->AddPredcessor(parent);
+    iffalse->AddPredecessor(parent);
 }
 
 BaseValuePtr BranchInst::GetCondition() { return cond; }
@@ -149,13 +149,16 @@ CfgNodePtr BranchInst::GetTrueTarget() { return iftrue; }
 CfgNodePtr BranchInst::GetFalseTarget() { return iffalse; }
 
 void BranchInst::ReplaceTarget(CfgNodePtr i, CfgNodePtr j) {
+    bool replace = false;
     if (iftrue == i) {
         iftrue = j;
-    } else if (iffalse == i) {
-        iffalse = j;
-    } else {
-        assert(false);
+        replace = true;
     }
+    if (iffalse == i) {
+        iffalse = j;
+        replace = true;
+    }
+    assert(replace);
 }
 
 void BranchInst::RemoveResParent() { return; }

@@ -10,4 +10,6 @@ namespace DCE {
 void EliminateUselessCode(NormalFuncPtr);
 void EliminateUselessControlFlow(NormalFuncPtr);
 void EliminateUnreachableCode(NormalFuncPtr);
+
+void DCE(NormalFuncPtr);
 }  // namespace DCE

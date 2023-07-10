@@ -157,7 +157,7 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
 
 void PhiInst::SetOriginAlloca(AllocaInstPtr alloca_inst) { origin_alloca = alloca_inst; }
 
-const AllocaInstPtr PhiInst::GetOriginAlloca() const { return origin_alloca; }
+AllocaInstPtr PhiInst::GetOriginAlloca() { return origin_alloca; }
 
 void PhiInst::InsertPhiData(PhiInstPtr inst, BaseValuePtr _value, CfgNodePtr block) {
     assert(inst->result->GetBaseType()->GetAttrType() == _value->GetBaseType()->GetAttrType() && _value->IsOprand());

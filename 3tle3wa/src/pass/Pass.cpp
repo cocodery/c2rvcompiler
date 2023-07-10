@@ -15,11 +15,13 @@ void Optimization::DoOptimization() {
 
         // SCCP::SCCP(func);
 
+        DCE::DCE(func);
+
         GVN::DVNT(func);
 
-        // DCE::EliminateUselessControlFlow(func);
-
         SSA::SSADestruction(func);
+
+        GVN::DVNT(func);
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());

@@ -5,7 +5,7 @@ void Dominance::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
     auto ComputeDominatorSet = [&entry, &allNodes] {
         auto &&IntersectPredecessorsDom = [&](CfgNodePtr node) {
             DominatorSet dom_set = node->GetDominatorSet();
-            auto &&predcessors = node->GetPredcessors();
+            auto &&predcessors = node->GetPredecessors();
             std::for_each(predcessors.begin(), predcessors.end(), [&dom_set](const auto &pred) {
                 DominatorSet temp = DominatorSet();  // To Collect Intersection
                 DominatorSet dom_set_pred = pred->GetDominatorSet();
@@ -55,8 +55,8 @@ void Dominance::ComputeDominanceInfo(CfgNodePtr entry, CfgNodeList allNodes) {
 void Dominance::ComputeDominanceFrontier(CfgNodeList allNodes) {
     std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) { node->GetDomFrontier().clear(); });
     std::for_each(allNodes.begin(), allNodes.end(), [](const auto &node) {
-        if (node->GetPredcessors().size() > 1) {
-            for (auto &&pred : node->GetPredcessors()) {
+        if (node->GetPredecessors().size() > 1) {
+            for (auto &&pred : node->GetPredecessors()) {
                 CfgNodePtr runner = pred;
                 while (runner != node->GetImmediateDominator()) {
                     runner->InsertDomFrontier(node);
