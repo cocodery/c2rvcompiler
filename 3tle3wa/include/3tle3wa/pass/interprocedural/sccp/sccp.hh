@@ -1,67 +1,51 @@
 #pragma once
 
-#include <list>
 #include <map>
+#include <queue>
 
 #include "3tle3wa/ir/IR.hh"
 
 namespace SCCP {
 
-struct LatticeAttr {
-    enum LatticeType {
-        Undefine,
-        Constant,
-        NotAConstant,
+struct Lattice {
+    enum State {
+        Undefine,  // Top
+        Constant,  // Constant
+        Variable,  // Bottom
     };
-
-    LatticeType type;
+    State state;
     BaseValuePtr value;
 
-    LatticeAttr();
-    LatticeAttr(LatticeType, BaseValuePtr);
+    Lattice();
+    Lattice(State, BaseValuePtr);
 
     inline bool IsUndefine() const;
     inline bool IsConstant() const;
-    inline bool IsNotAConstant() const;
+    inline bool IsVariable() const;
 
     inline BaseValuePtr GetValue() const;
 
-    bool operator==(const LatticeAttr &rhs);
-    bool operator!=(const LatticeAttr &rhs);
+    bool operator!=(const Lattice &rhs);
 };
 
-struct ExcutedStatus {
-    enum ExcutedType {
-        UnKnown,
-        False,
-        True,
-    };
+static Lattice Undefine(Lattice::Undefine, nullptr);
+static Lattice Variable(Lattice::Variable, nullptr);
 
-    ExcutedType excutable;
+inline Lattice CreateConstant(BaseValuePtr);
 
-    ExcutedStatus();
-    ExcutedStatus(ExcutedType);
+Lattice Meet(const Lattice &, const Lattice &);
 
-    inline bool IsUnKnown() const;
-    inline bool IsFalse() const;
-    inline bool IsTrue() const;
-};
+static std::queue<CfgNodePtr> CFGWorkList;
+static std::queue<InstPtr> SSAWorkList;
 
-inline LatticeAttr CreateConstant(BaseValuePtr);
-inline LatticeAttr CreateNotAConstant();
+static std::map<CfgNodePtr, bool> ExcutedMap;
+static std::map<BaseValuePtr, Lattice> LatticeMap;  // Constant may not in LatticeMap
 
-LatticeAttr Meet(const LatticeAttr &, const LatticeAttr &);
+Lattice GetLattice(BaseValuePtr);
+void SetLattice(BaseValuePtr, Lattice &);
 
-static std::list<CfgNodePtr> CFGWorkList;
-static std::list<InstPtr> SSAWorkList;
-
-static std::map<CfgNodePtr, ExcutedStatus> ExcutedMap;
-static std::map<BaseValuePtr, LatticeAttr> ValueMap;
-
-LatticeAttr GetLatticeAttr(BaseValuePtr);
-void SetLatticeAttr(BaseValuePtr, LatticeAttr);
-
-bool EvaluateOnInst(InstPtr);
+void EvaluateOnPhi(PhiInstPtr);
+void EvaluateOnAssign(InstPtr);
 
 void SCCP(NormalFuncPtr);
 

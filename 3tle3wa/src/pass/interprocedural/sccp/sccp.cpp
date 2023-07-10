@@ -2,198 +2,205 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
 
 #include "3tle3wa/ir/instruction/instruction.hh"
-#include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/instruction/opCode.hh"
+#include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/uninitvar.hh"
+#include "3tle3wa/ir/value/variable.hh"
 
-SCCP::LatticeAttr::LatticeAttr() : type(Undefine), value(nullptr) {}
-SCCP::LatticeAttr::LatticeAttr(LatticeType _type, BaseValuePtr _value) : type(_type), value(_value) {}
+SCCP::Lattice::Lattice() : state(Undefine), value(nullptr) {}
+SCCP::Lattice::Lattice(State _state, BaseValuePtr _value) : state(_state), value(_value) {}
 
-SCCP::LatticeAttr SCCP::CreateConstant(BaseValuePtr _value) { return LatticeAttr(LatticeAttr::Constant, _value); }
-SCCP::LatticeAttr SCCP::CreateNotAConstant() { return LatticeAttr(LatticeAttr::NotAConstant, nullptr); }
+SCCP::Lattice SCCP::CreateConstant(BaseValuePtr _value) { return Lattice(Lattice::Constant, _value); }
 
-bool SCCP::LatticeAttr::IsUndefine() const { return type == LatticeType::Undefine; }
-bool SCCP::LatticeAttr::IsConstant() const { return type == LatticeType::Constant; }
-bool SCCP::LatticeAttr::IsNotAConstant() const { return type == LatticeType::NotAConstant; }
+bool SCCP::Lattice::IsUndefine() const { return state == State::Undefine; }
+bool SCCP::Lattice::IsConstant() const { return state == State::Constant; }
+bool SCCP::Lattice::IsVariable() const { return state == State::Variable; }
 
-inline BaseValuePtr SCCP::LatticeAttr::GetValue() const {
-    assert(type == LatticeAttr::Constant);
+BaseValuePtr SCCP::Lattice::GetValue() const {
+    assert(state == Constant && value->IsConstant());
     return value;
 }
 
-bool SCCP::LatticeAttr::operator==(const LatticeAttr &rhs) { return (type == rhs.type) && (value == rhs.value); }
-bool SCCP::LatticeAttr::operator!=(const LatticeAttr &rhs) { return !(*this == rhs); }
+bool SCCP::Lattice::operator!=(const Lattice &rhs) { return (state != rhs.state) || (value != rhs.value); }
 
-SCCP::ExcutedStatus::ExcutedStatus() : excutable(UnKnown) {}
-SCCP::ExcutedStatus::ExcutedStatus(ExcutedType _type) : excutable(_type) {}
-
-bool SCCP::ExcutedStatus::IsUnKnown() const { return excutable == UnKnown; }
-bool SCCP::ExcutedStatus::IsFalse() const { return excutable == False; }
-bool SCCP::ExcutedStatus::IsTrue() const { return excutable == True; }
-
-SCCP::LatticeAttr SCCP::Meet(const LatticeAttr &lhs, const LatticeAttr &rhs) {
-    if (lhs.type == LatticeAttr::Undefine) return rhs;
-    if (rhs.type == LatticeAttr::Undefine) return lhs;
-    if (lhs.type == LatticeAttr::NotAConstant || rhs.type == LatticeAttr::NotAConstant) {
-        return SCCP::CreateNotAConstant();
+SCCP::Lattice SCCP::Meet(const Lattice &lhs, const Lattice &rhs) {
+    if (lhs.state == Lattice::Undefine) {
+        return rhs;
     }
-    assert(lhs.type == LatticeAttr::Constant && rhs.type == LatticeAttr::Constant);
-    if (lhs.value == rhs.value) return lhs;
-    return CreateNotAConstant();
+    if (rhs.state == Lattice::Undefine) {
+        return lhs;
+    }
+    if (lhs.state == Lattice::Variable || rhs.state == Lattice::Variable) {
+        return Variable;
+    }
+    assert(lhs.state == Lattice::Constant && rhs.state == Lattice::Constant);
+    return ((lhs.value == rhs.value) ? lhs : Variable);
 }
 
-SCCP::LatticeAttr SCCP::GetLatticeAttr(BaseValuePtr _value) {
-    if (_value == nullptr) {
-        return CreateNotAConstant();
-    } else if (_value->IsConstant()) {
-        return CreateConstant(_value);
+SCCP::Lattice SCCP::GetLattice(BaseValuePtr value) {
+    if (value == nullptr) {
+        return Variable;
+    } else if (value->IsConstant()) {
+        return CreateConstant(value);
     } else {
-        return ValueMap[_value];
+        return LatticeMap[value];
     }
 }
 
-void SCCP::SetLatticeAttr(BaseValuePtr _value, LatticeAttr _attr) {
-    if (ValueMap.find(_value) == ValueMap.end()) {  // first set
-        ValueMap.insert({_value, _attr});
-    } else {
-        auto &slot = ValueMap[_value];
-        if (slot != _attr) {
-            slot = _attr;
-            if (std::find(SSAWorkList.begin(), SSAWorkList.end(), _value->GetParent()) != SSAWorkList.end()) {
-                SSAWorkList.push_back(_value->GetParent());
-            }
+void SCCP::SetLattice(BaseValuePtr value, SCCP::Lattice &lattice) {
+    if (value == nullptr) return;
+    Lattice old = GetLattice(value);
+    if ((old.state != lattice.state) || (old.value != lattice.value)) {
+        LatticeMap[value] = lattice;
+
+        for (auto user : value->GetUserList()) {
+            SSAWorkList.push(user);
         }
     }
     return;
 }
 
-bool SCCP::EvaluateOnInst(InstPtr inst) {
-    bool ret = false;
-
-    if (inst->IsJumpInst()) {
-        auto jump_inst = std::static_pointer_cast<JumpInst>(inst);
-        CFGWorkList.push_back(jump_inst->GetTarget());
-    } else if (inst->IsBranchInst()) {
-        auto br_inst = std::static_pointer_cast<BranchInst>(inst);
-        auto cond = br_inst->GetCondition();
-        assert(cond->GetBaseType()->BoolType());
-
-        if (cond->IsConstant()) {
-            CFGWorkList.push_back(std::get<bool>(std::static_pointer_cast<Constant>(cond)->GetValue())
-                                      ? br_inst->GetTrueTarget()
-                                      : br_inst->GetFalseTarget());
-        } else {
-            CFGWorkList.push_back(br_inst->GetTrueTarget());
-            CFGWorkList.push_back(br_inst->GetFalseTarget());
-        }
-    } else if (inst->IsOneOprandInst()) {
-        auto _attr = CreateNotAConstant();
-        auto unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
-
-        auto [replacee, replacer] = unary_inst->DoFlod();
-
-        if (replacee != nullptr && replacee != nullptr) {  // replace successful
-            ret = true;
-            ReplaceSRC(replacee, replacer);
-            assert(replacer->IsConstant());  // only constant result on unary-inst floding
-        } else {
-            SetLatticeAttr(unary_inst->GetResult(), _attr);
-        }
-    } else if (inst->IsTwoOprandInst()) {
-        auto _attr = CreateNotAConstant();
-        auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-        assert(!GetLatticeAttr(bin_inst->GetLHS()).IsUndefine() && !GetLatticeAttr(bin_inst->GetRHS()).IsUndefine());
-
-        auto [replacee, replacer] = bin_inst->DoFlod();
-
-        if (replacee != nullptr && replacer != nullptr) {  // replace successful
-            ret = true;
-            ReplaceSRC(replacee, replacer);
-            // replacer have been set in ValueMap when it first travelled
-        } else {
-            SetLatticeAttr(bin_inst->GetResult(), _attr);
-        }
-    } else if (inst->IsPhiInst()) {
-        auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
-        LatticeAttr _attr;  // Undefine
-
-        auto &&ref_list = phi_inst->GetRefList();
-        for (auto &&iter = ref_list.begin(); iter != ref_list.end();) {
-            auto [_value, _node] = (*iter);
-
-            auto excutable = ExcutedMap[_node];
-            if (excutable.IsFalse()) {
-                iter = ref_list.erase(iter);
-            } else {
-                if (excutable.IsTrue()) {
-                    _attr = Meet(_attr, GetLatticeAttr(_value));
-                }
-                ++iter;
-            }
-        }
-        if (ref_list.size() == 1) {
-            ret = true;
-
-            BaseValuePtr replacee = phi_inst->GetResult();
-            BaseValuePtr replacer = ref_list.begin()->first;
-
-            ReplaceSRC(replacee, replacer);
-        } else {
-            _attr = CreateNotAConstant();
-            SetLatticeAttr(phi_inst->GetResult(), _attr);
-        }
-    } else {
-        auto result = inst->GetResult();
-        if (result != nullptr) {
-            if (result->IsConstant()) {
-                SetLatticeAttr(result, CreateConstant(result));
-            } else {
-                SetLatticeAttr(result, CreateNotAConstant());
-            }
+void SCCP::EvaluateOnPhi(PhiInstPtr inst) {
+    Lattice lattice = Undefine;
+    for (auto [value, block] : inst->GetDataList()) {
+        if (ExcutedMap[block]) {
+            lattice = Meet(lattice, GetLattice(value));
         }
     }
-    return ret;
+    SetLattice(inst->GetResult(), lattice);
+    return;
+}
+
+void SCCP::EvaluateOnAssign(InstPtr inst) {
+    if (inst->IsJumpInst()) {
+        // jump
+        auto jump_inst = std::static_pointer_cast<JumpInst>(inst);
+        CFGWorkList.push(jump_inst->GetTarget());
+    } else if (inst->IsBranchInst()) {
+        // branch
+        auto br_inst = std::static_pointer_cast<BranchInst>(inst);
+        auto cond = GetLattice(br_inst->GetCondition());
+
+        if (cond.IsConstant()) {
+            CFGWorkList.push(std::get<bool>(std::static_pointer_cast<Constant>(cond.GetValue())->GetValue())
+                                 ? br_inst->GetTrueTarget()
+                                 : br_inst->GetFalseTarget());
+        } else {
+            CFGWorkList.push(br_inst->GetTrueTarget());
+            CFGWorkList.push(br_inst->GetFalseTarget());
+        }
+    } else if (inst->IsPhiInst()) {
+        // phi
+        EvaluateOnPhi(std::static_pointer_cast<PhiInst>(inst));
+    } else {
+        auto result = inst->GetResult();
+        Lattice new_ = GetLattice(result);
+        if (inst->IsOneOprandInst()) {
+            // load, bitcast, sitofp, fptosi, zext, fneg
+            auto unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
+
+            auto opr_lattice = GetLattice(unary_inst->GetOprand());
+            if (opr_lattice.IsConstant()) {
+                new_ = CreateConstant(DoUnaryFlod(unary_inst->GetOpCode(), opr_lattice.GetValue()));
+            } else {
+                new_ = Variable;
+            }
+        } else if (inst->IsTwoOprandInst()) {
+            // add, sub, mul, div, rem, lshift, rshift
+            // lth, leq, gth, geq, equ, neq
+            auto binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+            auto opcode = binary_inst->GetOpCode();
+
+            auto lhs_lattice = GetLattice(binary_inst->GetLHS());
+            auto rhs_lattice = GetLattice(binary_inst->GetRHS());
+
+            auto lhs = lhs_lattice.IsConstant() ? lhs_lattice.GetValue() : binary_inst->GetLHS();
+            auto rhs = rhs_lattice.IsConstant() ? rhs_lattice.GetValue() : binary_inst->GetRHS();
+
+            auto replacer = DoBinaryFlod(opcode, lhs, rhs);
+
+            if (replacer == nullptr) {
+                new_ = Variable;
+            } else if (replacer->IsConstant()) {
+                new_ = CreateConstant(replacer);
+            } else if (replacer->IsVariable()) {
+                new_ = GetLattice(replacer);
+            } else {
+                assert(false);
+            }
+
+            // if (lhs_lattice.IsConstant() && rhs_lattice.IsConstant()) {
+            //     new_ = CreateConstant(
+            //         DoBinaryFlod(binary_inst->GetOpCode(), lhs_lattice.GetValue(), rhs_lattice.GetValue()));
+            // } else {
+            //     new_ = Variable;
+            // }
+        } else {
+            // ret, alloca, store, gep, call
+            if (result) {
+                new_ = Variable;
+            }
+        }
+
+        SetLattice(result, new_);
+    }
+    return;
 }
 
 void SCCP::SCCP(NormalFuncPtr func) {
     for (auto param : func->GetParamList()) {
-        ValueMap.insert({param, CreateNotAConstant()});
+        LatticeMap.insert({param, Variable});
     }
 
-    CFGWorkList.push_back(func->GetEntryNode());
+    CFGWorkList.push(func->GetEntryNode());
 
     while (!CFGWorkList.empty() || !SSAWorkList.empty()) {
         if (!CFGWorkList.empty()) {
-            auto node = CFGWorkList.back();
-            CFGWorkList.pop_back();
+            auto node = CFGWorkList.front();
+            CFGWorkList.pop();
 
-            if (!ExcutedMap[node].IsTrue()) {
-                ExcutedMap[node] = ExcutedStatus::True;
-
-                auto &&inst_list = node->GetInstList();
-                for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
-                    bool ret = EvaluateOnInst((*iter));
-                    if (ret) {
-                        iter = inst_list.erase(iter);
-                    } else {
-                        ++iter;
-                    }
+            for (auto inst : node->GetInstList()) {
+                if (inst->IsPhiInst()) {
+                    EvaluateOnPhi(std::static_pointer_cast<PhiInst>(inst));
                 }
             }
-        }
-        // TODO
-        // if (!SSAWorkList.empty()) {
-        //     assert(false);
-        //     auto inst = SSAWorkList.back();
-        //     SSAWorkList.pop_back();
 
-        //     if (ExcutedMap[inst->GetParent()].IsTrue()) {
-        //         EvaluateOnInst(inst);
-        //     }
-        // }
+            if (!ExcutedMap[node]) {
+                ExcutedMap[node] = true;
+                for (auto inst : node->GetInstList()) {
+                    EvaluateOnAssign(inst);
+                }
+            }
+        } else if (!SSAWorkList.empty()) {
+            auto inst = SSAWorkList.front();
+            SSAWorkList.pop();
+
+            if (ExcutedMap[inst->GetParent()]) {
+                EvaluateOnAssign(inst);
+            }
+        }
     }
 
-    ValueMap.clear();
+    for (auto node : func->TopoSortFromEntry()) {
+        auto &&inst_list = node->GetInstList();
+        for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
+            auto inst = (*iter);
+            auto lattice = LatticeMap[inst->GetResult()];
+            if (lattice.IsConstant()) {
+                ReplaceSRC(inst->GetResult(), lattice.GetValue());
+                RemoveInst(inst);
+                iter = inst_list.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    }
+
+    LatticeMap.clear();
     ExcutedMap.clear();
     return;
 }
