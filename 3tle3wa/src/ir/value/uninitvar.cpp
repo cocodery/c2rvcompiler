@@ -3,8 +3,7 @@
 UnInitVar::UnInitVar(BaseTypePtr _type) : BaseValue(_type) {
     // INT32 || FLOAT
     assert(base_type->IntType() || base_type->FloatType());
-    // MUTABLE, NOTPTR, GLOBAL
-    assert(base_type->IsMutable() && base_type->IsNotPtr() && base_type->IsGlobal());
+    assert(base_type->IsNotPtr() && base_type->IsGlobal());
 }
 
 bool UnInitVar::IsUnInitVar() const { return true; }
