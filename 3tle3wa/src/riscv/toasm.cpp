@@ -1354,4 +1354,4 @@ void UopICmpBranch::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 }
 
-void UopPhi::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {}
+// void UopPhi::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {}
