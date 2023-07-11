@@ -270,3 +270,4 @@ asmpk: $(OUTPUT_ASM)
 	cd $(BUILD_DIR)
 	tar -zcvf starry.tar.gz starfive
 	cp starry.tar.gz /mnt/d/code
+	rm -rf starfive

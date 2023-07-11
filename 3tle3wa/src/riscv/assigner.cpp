@@ -24,35 +24,35 @@ size_t abi_arg_reg = 8;
 size_t i_gpr_callee_first[] = {
     riscv::s1, riscv::s2,  riscv::s3,  riscv::s4, riscv::s5, riscv::s6, riscv::s7, riscv::s8,
     riscv::s9, riscv::s10, riscv::s11, riscv::t2, riscv::t3, riscv::t4, riscv::t5, riscv::t6,
-    riscv::a5, riscv::a6,  riscv::a7,  riscv::a0, riscv::a1, riscv::a2, riscv::a3, riscv::a4,
+    riscv::a7, riscv::a6,  riscv::a5,  riscv::a4, riscv::a3, riscv::a2, riscv::a1, riscv::a0,
 };
 
 constexpr size_t i_gpr_callee_first_len = sizeof(i_gpr_callee_first) / sizeof(*i_gpr_callee_first);
 
 size_t f_gpr_callee_first[] = {
-    riscv::fs0,  riscv::fs1, riscv::fs2,  riscv::fs3,  riscv::fs4, riscv::fs5, riscv::fs6, riscv::fs7,
-    riscv::fs8,  riscv::fs9, riscv::fs10, riscv::fs11, riscv::fa5, riscv::fa6, riscv::fa7, riscv::ft2,
-    riscv::ft3,  riscv::ft4, riscv::ft5,  riscv::ft6,  riscv::ft7, riscv::ft8, riscv::ft9, riscv::ft10,
-    riscv::ft11, riscv::fa0, riscv::fa1,  riscv::fa2,  riscv::fa3, riscv::fa4,
+    riscv::fs0, riscv::fs1, riscv::fs2,  riscv::fs3,  riscv::fs4,  riscv::fs5,  riscv::fs6, riscv::fs7,
+    riscv::fs8, riscv::fs9, riscv::fs10, riscv::fs11, riscv::ft2,  riscv::ft3,  riscv::ft4, riscv::ft5,
+    riscv::ft6, riscv::ft7, riscv::ft8,  riscv::ft9,  riscv::ft10, riscv::ft11, riscv::fa7, riscv::fa6,
+    riscv::fa5, riscv::fa4, riscv::fa3,  riscv::fa2,  riscv::fa1,  riscv::fa0,
 };
 
 constexpr size_t f_gpr_callee_first_len = sizeof(f_gpr_callee_first) / sizeof(*f_gpr_callee_first);
 
 // if no much call
 
-size_t i_gpr_caller_first[] = {
-    riscv::t2, riscv::t3,  riscv::t4,  riscv::t5, riscv::t6, riscv::a5, riscv::a6, riscv::a7,
-    riscv::s1, riscv::s2,  riscv::s3,  riscv::s4, riscv::s5, riscv::s6, riscv::s7, riscv::s8,
-    riscv::s9, riscv::s10, riscv::s11, riscv::a0, riscv::a1, riscv::a2, riscv::a3, riscv::a4,
-};
+size_t i_gpr_caller_first[] = {riscv::t2, riscv::t3, riscv::t4, riscv::t5, riscv::t6,  riscv::a7,
+                               riscv::a6, riscv::a5, riscv::a4, riscv::a3, riscv::a2,  riscv::a1,
+                               riscv::a0, riscv::s1, riscv::s2, riscv::s3, riscv::s4,  riscv::s5,
+                               riscv::s6, riscv::s7, riscv::s8, riscv::s9, riscv::s10, riscv::s11};
 
 constexpr size_t i_gpr_caller_first_len = sizeof(i_gpr_caller_first) / sizeof(*i_gpr_caller_first);
 
 size_t f_gpr_caller_first[] = {
-    riscv::ft2,  riscv::ft3,  riscv::ft4, riscv::ft5, riscv::ft6, riscv::ft7, riscv::ft8, riscv::ft9,
-    riscv::ft10, riscv::ft11, riscv::fa5, riscv::fa6, riscv::fa7, riscv::fs0, riscv::fs1, riscv::fs2,
-    riscv::fs3,  riscv::fs4,  riscv::fs5, riscv::fs6, riscv::fs7, riscv::fs8, riscv::fs9, riscv::fs10,
-    riscv::fs11, riscv::fa0,  riscv::fa1, riscv::fa2, riscv::fa3, riscv::fa4,
+    riscv::ft2,  riscv::ft3,  riscv::ft4, riscv::ft5, riscv::ft6,  riscv::ft7,  riscv::ft8, riscv::ft9,
+    riscv::ft10, riscv::ft11, riscv::fa7, riscv::fa6, riscv::fa5,  riscv::fa4,  riscv::fa3, riscv::fa2,
+    riscv::fa1,  riscv::fa0,  riscv::fs0, riscv::fs1, riscv::fs2,  riscv::fs3,  riscv::fs4, riscv::fs5,
+    riscv::fs6,  riscv::fs7,  riscv::fs8, riscv::fs9, riscv::fs10, riscv::fs11,
+
 };
 
 std::unordered_set<size_t> caller_save{

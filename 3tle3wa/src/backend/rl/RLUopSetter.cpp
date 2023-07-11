@@ -2,11 +2,19 @@
 #include <unordered_set>
 
 #include "3tle3wa/backend/rl/RLUop.hh"
+#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
 
-void UopRet::SetRetVal(VirtualRegister *retval) { retval_ = retval; }
+void UopRet::SetRetVal(VirtualRegister *retval) {
+    retval_ = retval;
+    retval_->SetRetval(true);
+    retval_->SetThisRet(true);
+}
 
-void UopCall::SetRetVal(VirtualRegister *retval) { retval_ = retval; }
+void UopCall::SetRetVal(VirtualRegister *retval) {
+    retval_ = retval;
+    retval_->SetRetval(true);
+}
 
 void UopCall::SetCallee(std::string &callee) { callee_ = callee; }
 
@@ -23,11 +31,7 @@ void UopCall::PushLiver(VirtualRegister *liver) { living_regs_.insert(liver); }
 void UopLui::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
 void UopLui::SetImm(uint32_t imm) {
-    uint32_t msk = 0xFFF;
-    if ((msk & imm) != 0) {
-        panic("illegel immediate <%" PRIx32 ">", imm);
-    }
-    imm_up20_ = imm >> 12;
+    imm_up20_ = imm;
 }
 
 void UopMv::SetDst(VirtualRegister *dst) { dst_ = dst; }

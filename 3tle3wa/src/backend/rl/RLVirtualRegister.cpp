@@ -13,6 +13,8 @@ VirtualRegister::VirtualRegister(VREG_TYPE type, uint64_t vridx)
       param_regidx_(0),
       assigned_(false),
       param_(false),
+      retval_(false),
+      this_ret_(false),
       imgr_(),
       saving_(false),
       save_off_(0) {}
@@ -31,6 +33,10 @@ void VirtualRegister::SetParam(size_t pos) {
     param_regidx_ = pos;
 }
 
+void VirtualRegister::SetRetval(bool on) { retval_ = on; }
+
+void VirtualRegister::SetThisRet(bool on) { this_ret_ = on; }
+
 void VirtualRegister::SetSaving(int64_t off) {
     save_off_ = off;
     saving_ = true;
@@ -43,6 +49,10 @@ bool VirtualRegister::IsSaving() { return saving_; }
 bool VirtualRegister::IsAssigned() { return assigned_; }
 
 bool VirtualRegister::IsParam() { return param_; }
+
+bool VirtualRegister::IsRetval() { return retval_; }
+
+bool VirtualRegister::IsThisRet() { return this_ret_; }
 
 bool VirtualRegister::OnStk() { return onstack_; }
 

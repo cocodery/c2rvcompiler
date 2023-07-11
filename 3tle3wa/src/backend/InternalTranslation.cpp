@@ -70,9 +70,11 @@ void InternalTranslation::DoTranslation() {
         cur_cfgit = nxt_cfgit++;
     }
 
-    if (not icmp_map.empty()) {
-        panic("ill formed");
+    if (curstat_.meetcall) {
+        rlps_->MeetCall();
     }
+
+    Assert(icmp_map.empty(), "ill formed");
 }
 
 std::unique_ptr<AsmProgress> &InternalTranslation::ExportAPG() { return apg_; }

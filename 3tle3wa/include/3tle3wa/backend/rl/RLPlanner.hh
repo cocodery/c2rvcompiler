@@ -76,7 +76,7 @@ class RLPlanner : public Serializable {
 
     void BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegister *> &living_regs);
 
-    void RecoverCall(AsmBasicBlock *abb);
+    void RecoverCall(AsmBasicBlock *abb, const std::vector<VirtualRegister *> &after_this);
 
     void RegisterOwner(RLProgress *rlp);
 

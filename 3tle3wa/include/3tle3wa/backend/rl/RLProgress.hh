@@ -18,6 +18,7 @@ class RLProgress final : public Serializable {
     char *label_;
     size_t label_len_;
 
+    bool has_call_;
     bool has_lib_call_;
     bool has_call_other_;
 
@@ -50,9 +51,13 @@ class RLProgress final : public Serializable {
 
     void SetParam(Variable *var, VREG_TYPE type);
 
+    void MeetCall();
+
     void MeetLibCall();
 
     void MeetCallOther();
+
+    bool HasCallFunc();
 
     void VirtualSchedule();
 

@@ -25,6 +25,8 @@ enum class IBIN_KIND {
     REM = OP_REM,
     SLL = OP_LSHIFT,
     SRA = OP_RSHIFT,
+    MULHS,
+    SRL,
     XOR,
     AND,
     OR,

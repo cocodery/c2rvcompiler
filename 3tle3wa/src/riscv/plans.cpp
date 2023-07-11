@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "3tle3wa/backend/rl/RLPlanner.hh"
+#include "3tle3wa/backend/rl/RLProgress.hh"
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
@@ -41,6 +42,28 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
             }
             continue;
         }
+
+        // experimental
+        bool success = false;
+
+        if (vr->IsParam() and not vr->OnStk()) {
+            if (vr->FGPR()) {
+                success = tryUse(vr.get(), riscv::fa0 + vr->GetPPos());
+            } else {
+                success = tryUse(vr.get(), riscv::a0 + vr->GetPPos());
+            }
+        } else if (vr->IsRetval() and not vr->OnStk()) {
+            if (vr->FGPR()) {
+                success = tryUse(vr.get(), riscv::fa0);
+            } else {
+                success = tryUse(vr.get(), riscv::a0);
+            }
+        }
+
+        if (success) {
+            continue;
+        }
+
         vr->CalcuWeight();
         vrpq.push(VRElem{.vr_ = vr.get()});
     }
@@ -224,9 +247,19 @@ void RLPlanner::PlanStackSpace() {
     int64_t idx = 0;
     idx -= 16;
 
+    extern std::unordered_set<size_t> caller_save;
+
     for (auto &&[rridx, imgr] : real_reg_inval_) {
+        if (caller_save.find(rridx) != caller_save.end() and not belong_to_->HasCallFunc()) {
+            continue;
+        }
         idx -= 8;
         place_to_save[rridx] = idx;
+    }
+
+    if (idx == -16 and spoff == 0 and not belong_to_->HasCallFunc()) {
+        total_stack_size_ = 0;
+        return;
     }
 
     spoff += -idx;

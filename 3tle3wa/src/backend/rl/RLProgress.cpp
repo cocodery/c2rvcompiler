@@ -7,7 +7,7 @@
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/ir/IR.hh"
 
-RLProgress::RLProgress(const std::string &name) : has_lib_call_(false), has_call_other_(false) {
+RLProgress::RLProgress(const std::string &name) :has_call_(false), has_lib_call_(false), has_call_other_(false) {
     FILE *fp = open_memstream(&label_, &label_len_);
     fprintf(fp, "%s", name.c_str());
     fflush(fp);
@@ -44,8 +44,12 @@ void RLProgress::SetParam(Variable *var, VREG_TYPE type) {
     sps_ += 1;
 }
 
+void RLProgress::MeetCall() { has_call_ = true; }
+
 void RLProgress::MeetLibCall() { has_lib_call_ = true; }
 
 void RLProgress::MeetCallOther() { has_call_other_ = true; }
+
+bool RLProgress::HasCallFunc() { return has_call_; }
 
 RLBasicBlock *RLProgress::FindBlkById(size_t lbidx) { return lbmap_.at(lbidx); }

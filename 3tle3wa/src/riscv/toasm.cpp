@@ -26,6 +26,10 @@ extern std::unordered_set<size_t> caller_save;
 extern std::unordered_set<size_t> callee_save;
 
 void RLPlanner::Init(AsmBasicBlock *abb) {
+    if (total_stack_size_ == 0) {
+        return;
+    }
+
     auto save_ra = new riscv::SD(riscv::ra, riscv::sp, -8);
     auto save_fp = new riscv::SD(riscv::fp, riscv::sp, -16);
     auto update_fp = new riscv::MV(riscv::fp, riscv::sp);
@@ -58,6 +62,10 @@ void RLPlanner::Init(AsmBasicBlock *abb) {
 }
 
 void RLPlanner::Recover(AsmBasicBlock *abb) {
+    if (total_stack_size_ == 0) {
+        return;
+    }
+
     for (auto &&[rridx, off] : place_to_save) {
         if (callee_save.find(rridx) != callee_save.end()) {
             if (rridx >= 32) {
@@ -104,13 +112,25 @@ void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegiste
     }
 }
 
-void RLPlanner::RecoverCall(AsmBasicBlock *abb) {
+void RLPlanner::RecoverCall(AsmBasicBlock *abb, const std::vector<VirtualRegister *> &after_this) {
     auto blk = belong_to_->FindBlkById(abb->Lbidx());
     for (auto &&reg : vr_storage_) {
-        if (not reg->OnStk() and reg->IsSaving() and caller_save.find(reg->GetRRid()) != caller_save.end()) {
-            reg->GetRRidWithSaving(abb);
-            if (not blk->IsLiveOut(reg->GetVRIdx())) {
-                abb->Pop();
+        if (not reg->OnStk()) {
+            auto rrid = reg->GetRRid();
+
+            if (reg->IsSaving() and caller_save.find(rrid) != caller_save.end()) {
+                reg->GetRRidWithSaving(abb);
+                auto cancelable = not blk->IsLiveOut(reg->GetVRIdx()) and not reg->IsThisRet();
+
+                for (auto &&v : after_this) {
+                    if (v == reg.get()) {
+                        cancelable = false;
+                    }
+                }
+
+                if (cancelable) {
+                    abb->Pop();
+                }
             }
         }
     }
@@ -385,11 +405,11 @@ void UopRet::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
             }
         } else if (retval_->FGPR()) {
             if (retval_->GetRRidWithSaving(abb) != riscv::fa0) {
-                auto set_retval = new riscv::FMV_S(riscv::fa0, retval_->GetRRidWithSaving(abb));
+                auto set_retval = new riscv::FMV_S(riscv::fa0, retval_->GetRRid());
                 abb->Push(set_retval);
             }
         } else if (retval_->GetRRidWithSaving(abb) != riscv::a0) {
-            auto set_retval = new riscv::MV(riscv::a0, retval_->GetRRidWithSaving(abb));
+            auto set_retval = new riscv::MV(riscv::a0, retval_->GetRRid());
             abb->Push(set_retval);
         }
     }
@@ -546,6 +566,7 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         auto label = ".L." + std::string(abb->FatherLabel()) + ".b" + std::to_string(lbidx);
         auto callfunc = new riscv::J(label.c_str());
         abb->Push(callfunc);
+        return;
     } else {
         auto callfunc = new riscv::JAL(callee_.c_str());
         abb->Push(callfunc);
@@ -1022,6 +1043,10 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                 auto ibin = new riscv::SRA(dst, lhs, rhs);
                 abb->Push(ibin);
             } break;
+            case IBIN_KIND::SRL: {
+                auto ibin = new riscv::SRL(dst, lhs, rhs);
+                abb->Push(ibin);
+            } break;
             default:
                 panic("ptr op not support this");
         }
@@ -1074,6 +1099,21 @@ void UopIBin::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
             auto ibin = new riscv::SRAW(dst, lhs, rhs);
             abb->Push(ibin);
         } break;
+        case IBIN_KIND::SRL: {
+            auto ibin = new riscv::SRLW(dst, lhs, rhs);
+            abb->Push(ibin);
+        } break;
+        case IBIN_KIND::MULHS: {
+            auto lhs_sext = new riscv::SEXT_W(lhs, lhs);
+            auto rhs_sext = new riscv::SEXT_W(rhs, rhs);
+            auto mul = new riscv::MUL(lhs, lhs, rhs);
+            auto sra = new riscv::SRAI(dst, lhs, 32);
+
+            abb->Push(lhs_sext);
+            abb->Push(rhs_sext);
+            abb->Push(mul);
+            abb->Push(sra);
+        } break;
     }
 
     if (dst_->OnStk()) {
@@ -1113,6 +1153,10 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
             } break;
             case IBIN_KIND::SRA: {
                 auto ibini = new riscv::SRAI(dst, lhs, imm_lo12_);
+                abb->Push(ibini);
+            } break;
+            case IBIN_KIND::SRL: {
+                auto ibini = new riscv::SRLI(dst, lhs, imm_lo12_);
                 abb->Push(ibini);
             } break;
             case IBIN_KIND::OR: {
@@ -1161,6 +1205,10 @@ void UopIBinImm::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         } break;
         case IBIN_KIND::SRA: {
             auto ibini = new riscv::SRAIW(dst, lhs, imm_lo12_);
+            abb->Push(ibini);
+        } break;
+        case IBIN_KIND::SRL: {
+            auto ibini = new riscv::SRLIW(dst, lhs, imm_lo12_);
             abb->Push(ibini);
         } break;
         default:

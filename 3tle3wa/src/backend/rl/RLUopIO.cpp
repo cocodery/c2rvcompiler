@@ -90,6 +90,13 @@ void UopICmpBranch::formatString(FILE *fp) {
             fprintf(fp, "ge");
             break;
     }
+    if (lhs_ == nullptr) {
+        fprintf(fp, "\tzero, %s, .b%" PRIu64 "\n", rhs_->CString(), dst_idx_);
+        return;
+    } else if (rhs_ == nullptr) {
+        fprintf(fp, "\t%s, zero, .b%" PRIu64 "\n", lhs_->CString(), dst_idx_);
+        return;
+    }
     fprintf(fp, "\t%s, %s, .b%" PRIu64 "\n", lhs_->CString(), rhs_->CString(), dst_idx_);
 }
 
@@ -220,6 +227,9 @@ void UopIBin::formatString(FILE *fp) {
         case IBIN_KIND::SRA:
             fprintf(fp, "sra");
             break;
+        case IBIN_KIND::SRL:
+            fprintf(fp, "srl");
+            break;
     }
     fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }
@@ -247,6 +257,12 @@ void UopIBinImm::formatString(FILE *fp) {
             break;
         case IBIN_KIND::SRA:
             fprintf(fp, "sra");
+            break;
+        case IBIN_KIND::SRL:
+            fprintf(fp, "srl");
+            break;
+        case IBIN_KIND::MULHS:
+            fprintf(fp, "mulhs");
             break;
         default:
             panic("unexpected");

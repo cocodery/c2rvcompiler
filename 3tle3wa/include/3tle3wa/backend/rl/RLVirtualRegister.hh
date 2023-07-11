@@ -28,6 +28,8 @@ class VirtualRegister final : public Serializable, public Weightable {
 
     bool assigned_;
     bool param_;
+    bool retval_;
+    bool this_ret_;
 
     IntervalManager imgr_;
 
@@ -43,6 +45,10 @@ class VirtualRegister final : public Serializable, public Weightable {
 
     void SetParam(size_t pos);
 
+    void SetRetval(bool on);
+
+    void SetThisRet(bool on);
+
     void SetRRidx(size_t rridx);
 
     void SetSaving(int64_t off);
@@ -54,6 +60,10 @@ class VirtualRegister final : public Serializable, public Weightable {
     bool IsAssigned();
 
     bool IsParam();
+
+    bool IsRetval();
+
+    bool IsThisRet();
 
     bool OnStk();
 

@@ -165,7 +165,7 @@ void RLBasicBlock::CalcuInterval() {
         Assert(calli, "bad dynamic cast");
         for (auto &&vr : scope_vr) {
             auto intval = vr->Imgr().AskInterval(lbidx_);
-            if (intval != nullptr && (*intval)[uop->GetUopIdx()]) {
+            if (intval != nullptr && (*intval)[uop->GetUopIdx()] && (*intval)[uop->GetUopIdx() - 1]) {
                 calli->PushLiver(vr);
             }
         }
