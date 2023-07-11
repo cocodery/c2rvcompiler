@@ -1,5 +1,15 @@
 #include "3tle3wa/ir/valueHeader.hh"
 
+#include <cstdint>
+#include <memory>
+
+#include "3tle3wa/backend/asm/glb_value.hh"
+#include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/constarray.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
+#include "3tle3wa/ir/value/type/listType.hh"
+#include "3tle3wa/ir/value/uninitvar.hh"
+
 BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePtr block) {
     assert(oprand->IsOprand());
     if (op == OP_ADD) return oprand;
@@ -170,6 +180,23 @@ BaseValuePtr Value::FixValue(const ATTR_TYPE type, BaseValuePtr value) {
         BaseValuePtr init_value = global_value->GetInitValue();
         assert(init_value->IsConstant() || init_value->IsConstArray() || init_value->IsUnInitVar());
         global_value->SetInitValue(FixValue(type, init_value));
+
+        if (init_value->IsConstArray()) {
+            auto const_arr = std::static_pointer_cast<ConstArray>(init_value);
+            bool all_zero = true;
+            auto zero = (type == INT32) ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                        : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
+            for (auto constant : const_arr->GetConstArr()) {
+                if (constant != zero) {
+                    all_zero = false;
+                    break;
+                }
+            }
+            if (all_zero) {
+                global_value->SetInitValue(UnInitVar::CreatePtr(init_value->GetBaseType()));
+            }
+        }
+
         return value;
     } else {
         // for Variable or UnInitVar
