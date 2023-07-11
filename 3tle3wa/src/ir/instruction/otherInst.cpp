@@ -24,7 +24,9 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
     VariablePtr _ret =
         (_type->VoidType()) ? nullptr : Variable::CreatePtr(_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(_type, _ret, _func, _list, block);
-    if (_ret != nullptr) _ret->SetParent(inst);
+    if (_ret != nullptr) {
+        _ret->SetParent(inst);
+    }
     std::for_each(_list.begin(), _list.end(), [&inst](const auto &param) { param->InsertUser(inst); });
     block->InsertInstBack(inst);
     return _ret;
@@ -155,7 +157,12 @@ PhiInstPtr PhiInst::CreatePtr(BaseTypePtr _type, CfgNodePtr block) {
     return inst;
 }
 
-void PhiInst::SetOriginAlloca(AllocaInstPtr alloca_inst) { origin_alloca = alloca_inst; }
+void PhiInst::SetOriginAlloca(AllocaInstPtr alloca_inst) {
+    origin_alloca = alloca_inst;
+    // when this alloca is stored
+    // no inst use its result
+    origin_alloca->GetResult()->GetUserList().clear();
+}
 
 AllocaInstPtr PhiInst::GetOriginAlloca() { return origin_alloca; }
 

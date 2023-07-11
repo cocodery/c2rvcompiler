@@ -21,15 +21,13 @@ bool BaseValue::IsGlobalValue() const { return false; }
 bool BaseValue::IsUnInitVar() const { return false; }
 bool BaseValue::IsVariable() const { return false; }
 
-InstList &BaseValue::GetUserList() { return use_list; }
+UserList &BaseValue::GetUserList() { return user_list; }
 
 void BaseValue::InsertUser(InstPtr inst) {
     if (IsConstant()) return;
-    if (std::find(use_list.begin(), use_list.end(), inst) == use_list.end()) {
-        use_list.push_back(inst);
-    }
+    user_list.insert(inst);
 }
 
-void BaseValue::RemoveUser(InstPtr inst) { use_list.remove(inst); }
+void BaseValue::RemoveUser(InstPtr inst) { user_list.erase(inst); }
 
 size_t BaseValue::guidx() const { return glb_uniq_idx_; }

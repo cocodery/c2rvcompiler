@@ -74,7 +74,7 @@ bool GVN::IsPhiOprandSame(InstPtr inst) {
 void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
     if (auto oprand = inst->FindInComingUse(node)) {
         if (auto vn = GetVN(oprand)) {
-            inst->ReplaceSRC(oprand, vn);
+            ReplaceSRC(oprand, vn);
         }
     }
 }
@@ -116,7 +116,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
             auto &&oprand = (*it);
             if (auto vn = GetVN(oprand); vn != nullptr && map[oprand] == nullptr && vn != oprand) {
                 map[oprand] = vn;
-                assert(inst->ReplaceSRC(oprand, vn));
+                ReplaceSRC(oprand, vn);
             }
         }
         if (auto replacer = inst->DoFlod(); replacer != nullptr) {
