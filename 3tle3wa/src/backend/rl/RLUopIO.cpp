@@ -230,6 +230,9 @@ void UopIBin::formatString(FILE *fp) {
         case IBIN_KIND::SRL:
             fprintf(fp, "srl");
             break;
+        case IBIN_KIND::MULHS:
+            fprintf(fp, "mulhs");
+            break;
     }
     fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }
