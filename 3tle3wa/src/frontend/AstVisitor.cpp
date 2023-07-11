@@ -642,7 +642,7 @@ std::any AstVisitor::visitLVal(SysYParser::LValContext *ctx) {
             offset = Value::BinaryOperate(OP_ADD, offset, cur_off, cur_block);
         }
         ptr_or_not = last_ptr_or_not;
-        BaseValueList off_list = type_addr->IsScalar() ? BaseValueList() : BaseValueList(1, zero_int32);
+        OffsetList off_list = type_addr->IsScalar() ? OffsetList() : OffsetList(1, zero_int32);
         off_list.push_back(offset);
         BaseTypePtr base_type =
             type_addr->IsScalar() ? std::static_pointer_cast<BaseType>(type_addr->IntType() ? type_int_L : type_float_L)
@@ -992,7 +992,7 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
     ConstantPtr zero = (_type == INT32) ? zero_int32 : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
     ArrDims dim_size = list_type->GetDimSize();
 
-    BaseValueList off_list = BaseValueList(2, zero_int32);
+    OffsetList off_list = OffsetList(2, zero_int32);
     BaseValuePtr start_addr = GetElementPtrInst::DoGetPointer(list_type, base_addr, off_list, cur_block);
     BaseValuePtr i8_addr = BitCastInst::DoBitCast(start_addr, cur_block);
 
@@ -1020,8 +1020,7 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
             size_t cnt = 0;
             for (auto &&child : node->initVal()) {
                 if (auto &&scalar_node = dynamic_cast<SysYParser::ScalarInitValContext *>(child)) {
-                    BaseValueList off_list =
-                        BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
+                    OffsetList off_list = OffsetList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
                     ConstantPtr offset = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(idx_offset));
                     off_list.push_back(offset);
                     BaseValuePtr value = std::any_cast<BaseValuePtr>(scalar_node->exp()->accept(this));

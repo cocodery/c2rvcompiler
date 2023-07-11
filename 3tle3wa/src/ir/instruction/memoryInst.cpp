@@ -75,7 +75,7 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     if (addr_type->IsGlobal()) {
         addr = GetElementPtrInst::DoGetPointer(
             addr_type->IntType() ? type_int_L : type_float_L, addr,
-            BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
+            OffsetList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
     }
     // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
@@ -148,7 +148,7 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     if (addr_type->IsGlobal()) {
         addr = GetElementPtrInst::DoGetPointer(
             addr_type->IntType() ? type_int_L : type_float_L, addr,
-            BaseValueList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
+            OffsetList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
     }
 
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
@@ -188,7 +188,7 @@ std::string LoadInst::tollvmIR() {
 //                     GetElementPtrInst Implementation
 //===-----------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
+GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
                                      CfgNodePtr block)
     : Instruction(_ptr, Gep, block), store_type(_type), base_addr(_addr), offset_list(_off) {
     assert(result->GetBaseType()->GetAttrType() == store_type->GetAttrType());
@@ -204,13 +204,12 @@ GetElementPtrInst::GetElementPtrInst(VariablePtr _ptr, BaseTypePtr _type, BaseVa
     }
 }
 
-GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
+GepInstPtr GetElementPtrInst::CreatePtr(VariablePtr _ptr, BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off,
                                         CfgNodePtr block) {
     return std::make_shared<GetElementPtrInst>(_ptr, _type, _addr, _off, block);
 }
 
-VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, BaseValueList _off,
-                                            CfgNodePtr block) {
+VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _addr, OffsetList _off, CfgNodePtr block) {
     // only have INT32-array or FLOAT-array
     VariablePtr _ptr = Variable::CreatePtr(_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
     auto &&inst = CreatePtr(_ptr, _type, _addr, _off, block);
@@ -223,7 +222,7 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
 
 BaseTypePtr GetElementPtrInst::GetStoreType() const { return store_type; }
 BaseValuePtr GetElementPtrInst::GetBaseAddr() const { return base_addr; }
-BaseValueList GetElementPtrInst::GetOffList() const { return offset_list; }
+const OffsetList &GetElementPtrInst::GetOffList() const { return offset_list; }
 
 void GetElementPtrInst::RemoveResParent() { result->SetParent(nullptr); }
 

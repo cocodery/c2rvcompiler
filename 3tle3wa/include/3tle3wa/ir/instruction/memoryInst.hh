@@ -85,23 +85,25 @@ class LoadInst final : public UnaryInstruction {
 class GetElementPtrInst;
 using GepInstPtr = std::shared_ptr<GetElementPtrInst>;
 
+typedef std::list<BaseValuePtr> OffsetList;
+
 class GetElementPtrInst final : public Instruction {
    private:
     BaseTypePtr store_type;
     BaseValuePtr base_addr;
-    BaseValueList offset_list;
+    OffsetList offset_list;
 
-    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
+    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
    public:
-    GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
+    GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
     ~GetElementPtrInst() = default;
 
-    static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, BaseValueList, CfgNodePtr);
+    static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
     BaseTypePtr GetStoreType() const;
     BaseValuePtr GetBaseAddr() const;
-    BaseValueList GetOffList() const;
+    const OffsetList &GetOffList() const;
 
     void RemoveResParent() final override;
 

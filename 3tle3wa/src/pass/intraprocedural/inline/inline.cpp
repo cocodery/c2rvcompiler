@@ -45,7 +45,7 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         //                                       parent);
     } else if (inst_->IsGepInst()) {
         auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
-        BaseValueList off_list;
+        OffsetList off_list;
         for (auto &&off : gep_inst_->GetOffList()) {
             off_list.push_back(value_map[off]);
         }
