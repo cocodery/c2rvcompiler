@@ -8,31 +8,60 @@
 
 namespace GVN {
 
-struct VNExpr {
+struct BinVNExpr {
     OpCode opcode;
     BaseValuePtr lhs;
     BaseValuePtr rhs;
 
-    bool operator==(const VNExpr &) const;
+    bool operator==(const BinVNExpr &) const;
 };
 
-struct VNExprHasher {
-    size_t operator()(const VNExpr &) const;
+struct BinVNExprHasher {
+    size_t operator()(const BinVNExpr &) const;
 };
 
-using VNTable = std::unordered_map<VNExpr, BaseValuePtr, VNExprHasher>;
+typedef std::unordered_map<BinVNExpr, BaseValuePtr, BinVNExprHasher> BinVNTable;
+
+struct GepVNExpr {
+    size_t off_size;
+    BaseValue *base_addr;
+    BaseValue *last_off;
+
+    bool operator==(const GepVNExpr &) const;
+};
+
+struct GepVNExprHasher {
+    size_t operator()(const GepVNExpr &) const;
+};
+
+typedef std::unordered_map<GepVNExpr, BaseValuePtr, GepVNExprHasher> GepVNTable;
+
+struct LoadVNExpr {
+    BaseValue *load_addr;
+
+    bool operator==(const LoadVNExpr &) const;
+};
+
+struct LoadVNExprHasher {
+    size_t operator()(const LoadVNExpr &) const;
+};
+
+typedef std::unordered_map<LoadVNExpr, BaseValuePtr, LoadVNExprHasher> LoadVNTable;
 
 struct VNScope {
-    VNTable map;
+    BinVNTable bin_map;    // GVN
+    GepVNTable gep_map;    // GVN
+    LoadVNTable load_map;  // LVN
+
     VNScope *outer;
 
     VNScope(VNScope *);
 
-    BaseValuePtr Get(BinaryInstPtr);
-    void Set(BinaryInstPtr);
+    BaseValuePtr Get(InstPtr);
+    void Set(InstPtr);
 };
 
-using ValueNumber = std::unordered_map<BaseValuePtr, BaseValuePtr>;
+typedef std::unordered_map<BaseValuePtr, BaseValuePtr> ValueNumber;
 
 static ValueNumber VN;
 

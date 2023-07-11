@@ -1,8 +1,6 @@
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 
-#include "3tle3wa/ir/instruction/instruction.hh"
-
-bool GVN::VNExpr::operator==(const VNExpr &e) const {
+bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
     if (opcode != e.opcode) {
         return false;
     }
@@ -10,7 +8,7 @@ bool GVN::VNExpr::operator==(const VNExpr &e) const {
            (IsCommutative(opcode) && Value::ValueCompare(lhs, e.rhs) && Value::ValueCompare(rhs, e.lhs));
 }
 
-size_t GVN::VNExprHasher::operator()(const VNExpr &e) const {
+size_t GVN::BinVNExprHasher::operator()(const BinVNExpr &e) const {
     auto l = reinterpret_cast<uint64_t>(e.lhs.get());
     auto r = reinterpret_cast<uint64_t>(e.rhs.get());
     auto p = (l >> __builtin_ctzll(l)) * (r >> __builtin_ctzll(r));
@@ -18,21 +16,71 @@ size_t GVN::VNExprHasher::operator()(const VNExpr &e) const {
     return p >> o | p << (64 - o);
 }
 
+bool GVN::GepVNExpr::operator==(const GepVNExpr &e) const {
+    if (off_size != e.off_size) {
+        return false;
+    }
+    return (base_addr == e.base_addr) && (last_off == e.last_off);
+}
+
+size_t GVN::GepVNExprHasher::operator()(const GepVNExpr &e) const {
+    return ((std::hash<void *>()(e.base_addr) >> e.off_size) & (std::hash<void *>()(e.last_off) << e.off_size));
+}
+
+bool GVN::LoadVNExpr::operator==(const LoadVNExpr &e) const { return (load_addr == e.load_addr); }
+
+size_t GVN::LoadVNExprHasher::operator()(const LoadVNExpr &e) const { return (std::hash<void *>()(e.load_addr)); }
+
 GVN::VNScope::VNScope(VNScope *outer) : outer(outer) {}
 
-BaseValuePtr GVN::VNScope::Get(BinaryInstPtr inst) {
-    VNExpr expr{inst->GetOpCode(), inst->GetLHS(), inst->GetRHS()};
-    for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
-        if (iter->map.count(expr)) {
-            return iter->map[expr];
+BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
+    if (inst->IsBranchInst()) {
+        auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+
+        BinVNExpr expr{bin_inst->GetOpCode(), bin_inst->GetLHS(), bin_inst->GetRHS()};
+        for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
+            if (iter->bin_map.count(expr)) {
+                return iter->bin_map[expr];
+            }
+        }
+    } else if (inst->IsGepInst()) {
+        auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
+        auto off_list = gep_inst->GetOffList();
+        GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
+        for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
+            if (iter->gep_map.count(expr)) {
+                return iter->gep_map[expr];
+            }
         }
     }
+    // else if (inst->IsLoadInst()) {
+    //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
+    //     LoadVNExpr expr{load_inst->GetOprand().get()};
+    //     for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
+    //         if (iter->load_map.count(expr)) {
+    //             return iter->load_map[expr];
+    //         }
+    //     }
+    // }
     return nullptr;
 }
 
-void GVN::VNScope::Set(BinaryInstPtr inst) {
-    VNExpr expr{inst->GetOpCode(), inst->GetLHS(), inst->GetRHS()};
-    map[expr] = inst->GetResult();
+void GVN::VNScope::Set(InstPtr inst) {
+    if (inst->IsBranchInst()) {
+        auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+        BinVNExpr expr{inst->GetOpCode(), bin_inst->GetLHS(), bin_inst->GetRHS()};
+        bin_map[expr] = inst->GetResult();
+    } else if (inst->IsGepInst()) {
+        auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
+        auto off_list = gep_inst->GetOffList();
+        GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
+        gep_map[expr] = inst->GetResult();
+    }
+    // else if (inst->IsLoadInst()) {
+    //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
+    //     LoadVNExpr expr{load_inst->GetOprand().get()};
+    //     load_map[expr] = inst->GetResult();
+    // }
 }
 
 BaseValuePtr GVN::GetVN(BaseValuePtr v) { return VN[v]; }
@@ -140,7 +188,36 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 VN[result] = result;
                 Scope.Set(bin_inst);
             }
+        } else if (inst->IsGepInst()) {
+            auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
+            auto result = gep_inst->GetResult();
+
+            if (auto res = Scope.Get(gep_inst)) {
+                VN[result] = res;
+
+                RemoveInst(inst);
+                iter = inst_list.erase(iter);
+                continue;
+            } else {
+                VN[result] = result;
+                Scope.Set(gep_inst);
+            }
         }
+        // else if (inst->IsLoadInst()) {
+        //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
+        //     auto result = load_inst->GetResult();
+
+        //     if (auto res = Scope.Get(load_inst)) {
+        //         VN[result] = res;
+
+        //         RemoveInst(inst);
+        //         iter = inst_list.erase(iter);
+        //         continue;
+        //     } else {
+        //         VN[result] = result;
+        //         Scope.Set(load_inst);
+        //     }
+        // }
         ++iter;
     }
     for (auto succ : node->GetSuccessors()) {
