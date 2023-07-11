@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "3tle3wa/backend/asm/glb_value.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/constarray.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
