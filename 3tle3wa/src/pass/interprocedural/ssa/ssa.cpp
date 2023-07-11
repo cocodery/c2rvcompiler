@@ -171,6 +171,7 @@ void SSA::SSADestruction(NormalFuncPtr func) {
             auto inst = (*iter);
             if (inst->IsPhiInst()) {
                 auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                auto result = phi_inst->GetResult();
 
                 auto alloca_inst = phi_inst->GetOriginAlloca();
                 if (allocaMap[alloca_inst] == false) {
@@ -180,26 +181,25 @@ void SSA::SSADestruction(NormalFuncPtr func) {
                 }
 
                 auto addr = alloca_inst->GetAllocaAddr();
+
                 auto datalist = phi_inst->GetDataList();
                 for (auto [value, block] : datalist) {
                     auto &&store_inst = StoreInst::CreatePtr(addr, value, block);
                     addr->InsertUser(store_inst);
                     value->InsertUser(store_inst);
-                    store_inst->SetParent(block);
 
                     auto &&block_inst_list = block->GetInstList();
                     block_inst_list.insert(--block_inst_list.end(), store_inst);
                 }
 
-                auto result = phi_inst->GetResult();
-                auto load_inst = LoadInst::CreatePtr(result, addr, node);
-                result->InsertUser(load_inst);
-                addr->InsertUser(load_inst);
-                load_inst->SetParent(node);
-                inst_list.insert(iter, load_inst);
-
                 RemoveInst(phi_inst);
+
                 iter = inst_list.erase(iter);
+
+                auto load_inst = LoadInst::CreatePtr(result, addr, node);
+                result->SetParent(load_inst);
+                addr->InsertUser(load_inst);
+                inst_list.insert(iter, load_inst);
                 continue;
             }
             ++iter;

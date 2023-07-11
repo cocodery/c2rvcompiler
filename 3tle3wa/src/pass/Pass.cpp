@@ -21,7 +21,7 @@ void Optimization::DoOptimization() {
 
         SSA::SSADestruction(func);
 
-        GVN::DVNT(func);
+        DCE::DCE(func);
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());

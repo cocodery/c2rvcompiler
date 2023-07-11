@@ -1,6 +1,9 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 
+#include <cassert>
+
 #include "3tle3wa/ir/instruction/opCode.hh"
+#include "3tle3wa/ir/value/use.hh"
 
 //===-----------------------------------------------------------===//
 //                     Instruction Implementation
@@ -187,12 +190,16 @@ BaseValuePtr DoBinaryFlod(OpCode opcode, BaseValuePtr lhs, BaseValuePtr rhs) {
 //===-----------------------------------------------------------===//
 
 void ReplaceSRC(BaseValuePtr replacee, BaseValuePtr replacer) {
-    auto &&use_list = replacee->GetUserList();
-    std::for_each(use_list.begin(), use_list.end(), [&replacee, &replacer](const auto &inst) {
-        if (inst->ReplaceSRC(replacee, replacer)) {
-            replacer->InsertUser(inst);
-        }
-    });
+    if (replacee == replacer) return;
+    UserList del_list;
+    for (auto user : replacee->GetUserList()) {
+        assert(user->ReplaceSRC(replacee, replacer));
+        replacer->InsertUser(user);
+        del_list.insert(user);
+    }
+    for (auto del : del_list) {
+        replacee->RemoveUser(del);
+    }
     // after replace use-count of `replacee` will be automatically deleted
 }
 
