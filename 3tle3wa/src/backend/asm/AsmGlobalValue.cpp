@@ -33,17 +33,17 @@ const char *AsmGlobalValue::Label() const { return label_; }
 
 void AsmGlobalValue::formatString(FILE *fp) {
     if (uninit_) {
-        if (data_len_ <= 8) {
-            fprintf(fp, "\t.section\t.sbss\n");
-        } else {
+        // if (data_len_ <= 8) {
+        //     fprintf(fp, "\t.section\t.sbss\n");
+        // } else {
             fprintf(fp, "\t.bss\n");
-        }
+        // }
     } else {
-        if (data_len_ <= 8) {
-            fprintf(fp, "\t.section\t.sdata\n");
-        } else {
+        // if (data_len_ <= 8) {
+        //     fprintf(fp, "\t.section\t.sdata\n");
+        // } else {
             fprintf(fp, "\t.data\n");
-        }
+        // }
     }
 
     fprintf(fp,

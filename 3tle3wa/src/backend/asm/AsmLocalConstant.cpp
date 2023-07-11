@@ -11,7 +11,8 @@ AsmLocalConstant::~AsmLocalConstant() {}
 void AsmLocalConstant::formatString(FILE *fp) {
     fprintf(fp,
             // section
-            "\t.section\t.srodata\n"
+            // "\t.section\t.srodata\n"
+            "\t.section\t.rodata\n"
 
             // declare global
             "\t.global\t.LC%" PRIu64
