@@ -434,26 +434,26 @@ class UopICmpBranch : public InternalUop<UopICmpBranch> {
 
 // for phi operation
 
-struct PhiOperand {
-    PHI_KIND kind;
-    size_t data;
-    size_t lbidx;
-};
+// struct PhiOperand {
+//     PHI_KIND kind;
+//     size_t data;
+//     size_t lbidx;
+// };
 
-class UopPhi : public InternalUop<UopPhi> {
-    std::vector<PhiOperand> operands_;
+// class UopPhi : public InternalUop<UopPhi> {
+//     std::vector<PhiOperand> operands_;
 
-    VirtualRegister *dst_{nullptr};
+//     VirtualRegister *dst_{nullptr};
 
-    void formatString(FILE *fp) final;
+//     void formatString(FILE *fp) final;
 
-   public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+//    public:
+//     const std::vector<VirtualRegister *> GetOperands() const;
+//     VirtualRegister *GetResult() const;
 
-    void PushOperand(PhiOperand &operand);
-    void SetDst(size_t dst_idx);
+//     void PushOperand(PhiOperand &operand);
+//     void SetDst(size_t dst_idx);
 
-    OPERATION_KIND GetOpKind() const { return OPERATION_KIND::INTOPT; };
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
-};
+//     OPERATION_KIND GetOpKind() const { return OPERATION_KIND::INTOPT; };
+//     void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
+// };
