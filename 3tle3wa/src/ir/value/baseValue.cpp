@@ -7,7 +7,7 @@ BaseValue::BaseValue(BaseTypePtr _type) : base_type(_type), glb_uniq_idx_(uniqui
     assert(!base_type->VoidType());
 }
 
-BaseTypePtr BaseValue::GetBaseType() { return this->base_type; }
+BaseTypePtr BaseValue::GetBaseType() const { return this->base_type; }
 
 bool BaseValue::IsOprand() {
     return (!base_type->VoidType() && base_type->IsNotPtr() && base_type->IsScalar()) && (IsConstant() || IsVariable());

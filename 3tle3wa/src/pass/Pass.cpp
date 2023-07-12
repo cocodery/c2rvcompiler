@@ -17,7 +17,7 @@ void Optimization::DoOptimization() {
         DCE::EliminateUnreachableCode(func);
         DCE::DCE(func);
 
-        GVN::DVNT(func);
+        GVN::DVNT(func, comp_unit.getGlbTable());
 
         SSA::SSADestruction(func);
 

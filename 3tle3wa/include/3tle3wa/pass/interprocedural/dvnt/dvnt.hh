@@ -10,8 +10,8 @@ namespace GVN {
 
 struct BinVNExpr {
     OpCode opcode;
-    BaseValuePtr lhs;
-    BaseValuePtr rhs;
+    BaseValue *lhs;
+    BaseValue *rhs;
 
     bool operator==(const BinVNExpr &) const;
 };
@@ -75,5 +75,5 @@ bool IsPhiOprandSame(InstPtr);
 void AdjustPhiInst(CfgNodePtr, PhiInstPtr);
 
 void DoDVNT(CfgNodePtr, VNScope *);
-void DVNT(NormalFuncPtr);
+void DVNT(NormalFuncPtr, SymbolTable &);
 }  // namespace GVN

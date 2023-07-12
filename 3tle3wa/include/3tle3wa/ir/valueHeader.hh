@@ -20,7 +20,7 @@ BaseValuePtr BinaryOperate(const OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr)
 
 BaseValuePtr ScalarTypeConvert(ATTR_TYPE, BaseValuePtr, CfgNodePtr);
 
-bool ValueCompare(const BaseValuePtr, const BaseValuePtr);
+bool ValueCompare(const BaseValue *, const BaseValue *);
 
 BaseValuePtr FixValue(const ATTR_TYPE, BaseValuePtr);
 

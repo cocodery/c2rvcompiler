@@ -9,8 +9,8 @@ bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
 }
 
 size_t GVN::BinVNExprHasher::operator()(const BinVNExpr &e) const {
-    auto l = reinterpret_cast<uint64_t>(e.lhs.get());
-    auto r = reinterpret_cast<uint64_t>(e.rhs.get());
+    auto l = reinterpret_cast<uint64_t>(e.lhs);
+    auto r = reinterpret_cast<uint64_t>(e.rhs);
     auto p = (l >> __builtin_ctzll(l)) * (r >> __builtin_ctzll(r));
     auto o = e.opcode;
     return p >> o | p << (64 - o);
@@ -34,56 +34,62 @@ size_t GVN::LoadVNExprHasher::operator()(const LoadVNExpr &e) const { return (st
 GVN::VNScope::VNScope(VNScope *outer) : outer(outer) {}
 
 BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
-    if (inst->IsBranchInst()) {
-        auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+    if (inst->IsTwoOprandInst()) {
+        auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
 
-        BinVNExpr expr{bin_inst->GetOpCode(), bin_inst->GetLHS(), bin_inst->GetRHS()};
+        BinVNExpr expr{bin_inst->GetOpCode(), bin_inst->GetLHS().get(), bin_inst->GetRHS().get()};
         for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
             if (iter->bin_map.count(expr)) {
                 return iter->bin_map[expr];
             }
         }
     } else if (inst->IsGepInst()) {
-        auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
-        auto off_list = gep_inst->GetOffList();
+        auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
+        auto &&off_list = gep_inst->GetOffList();
         GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
         for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
             if (iter->gep_map.count(expr)) {
                 return iter->gep_map[expr];
             }
         }
+    } else if (inst->IsLoadInst()) {
+        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        auto &&load_addr = load_inst->GetOprand();
+
+        LoadVNExpr expr{load_addr.get()};
+        if (this->load_map.count(expr)) {
+            return this->load_map[expr];
+        }
     }
-    // else if (inst->IsLoadInst()) {
-    //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
-    //     LoadVNExpr expr{load_inst->GetOprand().get()};
-    //     for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
-    //         if (iter->load_map.count(expr)) {
-    //             return iter->load_map[expr];
-    //         }
-    //     }
-    // }
     return nullptr;
 }
 
 void GVN::VNScope::Set(InstPtr inst) {
-    if (inst->IsBranchInst()) {
+    if (inst->IsTwoOprandInst()) {
         auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-        BinVNExpr expr{inst->GetOpCode(), bin_inst->GetLHS(), bin_inst->GetRHS()};
+        BinVNExpr expr{inst->GetOpCode(), bin_inst->GetLHS().get(), bin_inst->GetRHS().get()};
         bin_map[expr] = inst->GetResult();
     } else if (inst->IsGepInst()) {
         auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
         auto off_list = gep_inst->GetOffList();
         GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
         gep_map[expr] = inst->GetResult();
+    } else {
+        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        auto &&load_addr = load_inst->GetOprand();
+        LoadVNExpr expr{load_addr.get()};
+        load_map[expr] = inst->GetResult();
     }
-    // else if (inst->IsLoadInst()) {
-    //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
-    //     LoadVNExpr expr{load_inst->GetOprand().get()};
-    //     load_map[expr] = inst->GetResult();
-    // }
 }
 
-BaseValuePtr GVN::GetVN(BaseValuePtr v) { return VN[v]; }
+BaseValuePtr GVN::GetVN(BaseValuePtr v) {
+    if (VN[v] == nullptr) {
+        VN[v] = v;
+        return v;
+    } else {
+        return VN[v];
+    }
+}
 
 bool GVN::IsMeaingLess(InstPtr inst) {
     // all inputs have same value-number
@@ -92,11 +98,11 @@ bool GVN::IsMeaingLess(InstPtr inst) {
     if (oprands.size() < 2) {
         return true;
     }
-    auto BeginVN = GetVN((*oprands.begin()));
+    auto BeginVN = GetVN((*oprands.begin())).get();
     if (BeginVN == nullptr) return false;
     // TODO: need to fix
     return std::all_of(oprands.begin(), oprands.end(),
-                       [&](auto &i) -> bool { return Value::ValueCompare(BeginVN, GetVN(i)); });
+                       [&](auto &i) -> bool { return Value::ValueCompare(BeginVN, GetVN(i).get()); });
 }
 
 bool GVN::IsRedundant(CfgNodePtr node, InstPtr inst) {
@@ -115,8 +121,9 @@ bool GVN::IsRedundant(CfgNodePtr node, InstPtr inst) {
 bool GVN::IsPhiOprandSame(InstPtr inst) {
     assert(inst->IsPhiInst());
     auto &&oprands = inst->GetOprands();
-    auto begin = (*oprands.begin());
-    return std::all_of(oprands.begin(), oprands.end(), [&](auto &i) -> bool { return Value::ValueCompare(begin, i); });
+    auto begin = (*oprands.begin()).get();
+    return std::all_of(oprands.begin(), oprands.end(),
+                       [&](auto &i) -> bool { return Value::ValueCompare(begin, i.get()); });
 }
 
 void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
@@ -156,29 +163,32 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
     }
 
     for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
-        auto inst = (*iter);
+        auto &&inst = (*iter);
 
-        auto oprands = inst->GetOprands();
-        std::unordered_map<BaseValuePtr, BaseValuePtr> map;
-        for (auto &&it = oprands.begin(); it != oprands.end(); ++it) {
-            auto &&oprand = (*it);
-            if (auto vn = GetVN(oprand); vn != nullptr && map[oprand] == nullptr && vn != oprand) {
-                map[oprand] = vn;
-                ReplaceSRC(oprand, vn);
+        auto &&oprands = inst->GetOprands();
+        std::map<BaseValue *, bool> visit;
+        for (auto &&oprand : oprands) {
+            auto &&vn_oprand = GetVN(oprand);
+            assert(vn_oprand);
+            if (vn_oprand != oprand && visit[oprand.get()] == false) {
+                assert(inst->ReplaceSRC(oprand, vn_oprand));
+                oprand->RemoveUser(inst);
+                vn_oprand->InsertUser(inst);
+                visit[oprand.get()] = true;
             }
         }
-        if (auto replacer = inst->DoFlod(); replacer != nullptr) {
+
+        if (auto &&replacer = inst->DoFlod(); replacer != nullptr) {
             ReplaceSRC(inst->GetResult(), replacer);
 
             RemoveInst(inst);
             iter = inst_list.erase(iter);
             continue;
         }
-        if (inst->IsTwoOprandInst()) {
-            auto bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-            auto result = bin_inst->GetResult();
 
-            if (auto res = Scope.Get(bin_inst)) {
+        auto &&result = inst->GetResult();
+        if (inst->IsTwoOprandInst() || inst->IsGepInst()) {  // || inst->IsLoadInst()) {
+            if (auto &&res = Scope.Get(inst)) {
                 VN[result] = res;
 
                 RemoveInst(inst);
@@ -186,38 +196,23 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 continue;
             } else {
                 VN[result] = result;
-                Scope.Set(bin_inst);
+                Scope.Set(inst);
             }
-        } else if (inst->IsGepInst()) {
-            auto gep_inst = std::static_pointer_cast<GetElementPtrInst>(inst);
-            auto result = gep_inst->GetResult();
+        } else if (inst->IsStoreInst()) {
+            auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
+            auto &&store_addr = store_inst->GetStoreAddr();
+            auto &&store_value = store_inst->GetStoreValue();
+            LoadVNExpr load_expr{store_addr.get()};
 
-            if (auto res = Scope.Get(gep_inst)) {
-                VN[result] = res;
-
-                RemoveInst(inst);
-                iter = inst_list.erase(iter);
-                continue;
-            } else {
+            Scope.load_map[load_expr] = store_value;
+        } else {
+            if (result != nullptr) {
                 VN[result] = result;
-                Scope.Set(gep_inst);
+            }
+            if (inst->IsCallInst()) {
+                Scope.load_map.clear();
             }
         }
-        // else if (inst->IsLoadInst()) {
-        //     auto load_inst = std::static_pointer_cast<LoadInst>(inst);
-        //     auto result = load_inst->GetResult();
-
-        //     if (auto res = Scope.Get(load_inst)) {
-        //         VN[result] = res;
-
-        //         RemoveInst(inst);
-        //         iter = inst_list.erase(iter);
-        //         continue;
-        //     } else {
-        //         VN[result] = result;
-        //         Scope.Set(load_inst);
-        //     }
-        // }
         ++iter;
     }
     for (auto succ : node->GetSuccessors()) {
@@ -233,11 +228,21 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
     }
 }
 
-void GVN::DVNT(NormalFuncPtr func) {
+void GVN::DVNT(NormalFuncPtr func, SymbolTable &glb_table) {
     assert(VN.empty());
-    for (auto param : func->GetParamList()) {
+    // map glbal value's VN to itself
+    for (auto &&[_, value] : glb_table.GetNameValueMap()) {
+        VN[value] = value;
+    }
+    // map constant's VN to itself
+    for (auto &&[_, constant] : ConstantAllocator::GetConstantAllocator()) {
+        VN[constant] = constant;
+    }
+    // map parameter's VN to itself
+    for (auto &&param : func->GetParamList()) {
         VN[param] = param;
     }
+
     DoDVNT(func->GetEntryNode(), nullptr);
     VN.clear();
 }

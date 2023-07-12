@@ -27,7 +27,7 @@ class BaseValue : public Use {
     BaseValue(BaseTypePtr);
     ~BaseValue() = default;
 
-    BaseTypePtr GetBaseType();
+    BaseTypePtr GetBaseType() const;
 
     bool IsOprand();
 
