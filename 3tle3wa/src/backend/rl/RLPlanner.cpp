@@ -17,7 +17,8 @@ RLPlanner::RLPlanner(size_t regidx)
       real_reg_inval_(),
       real_stk_inval_(),
       real_stkinfo_(),
-      place_to_save() {}
+      place_to_save_(),
+      savings_() {}
 
 StackInfo *RLPlanner::Alloca(size_t len) {
     stkidx_ += 1;

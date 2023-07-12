@@ -254,7 +254,7 @@ void RLPlanner::PlanStackSpace() {
             continue;
         }
         idx -= 8;
-        place_to_save[rridx] = idx;
+        place_to_save_[rridx] = idx;
     }
 
     if (idx == -16 and spoff == 0 and not belong_to_->HasCallFunc()) {

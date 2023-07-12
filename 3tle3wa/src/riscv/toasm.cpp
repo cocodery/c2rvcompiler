@@ -48,7 +48,7 @@ void RLPlanner::Init(AsmBasicBlock *abb) {
         abb->Push(make_stack);
     }
 
-    for (auto &&[rridx, off] : place_to_save) {
+    for (auto &&[rridx, off] : place_to_save_) {
         if (callee_save.find(rridx) != callee_save.end()) {
             if (rridx >= 32) {
                 auto save_reg = new riscv::FSW(rridx, riscv::fp, off);
@@ -66,7 +66,7 @@ void RLPlanner::Recover(AsmBasicBlock *abb) {
         return;
     }
 
-    for (auto &&[rridx, off] : place_to_save) {
+    for (auto &&[rridx, off] : place_to_save_) {
         if (callee_save.find(rridx) != callee_save.end()) {
             if (rridx >= 32) {
                 auto recover_reg = new riscv::FLW(rridx, riscv::fp, off);
@@ -99,7 +99,7 @@ void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegiste
     for (auto &&reg : living_regs) {
         if (not reg->OnStk() and not reg->IsSaving() and caller_save.find(reg->GetRRid()) != caller_save.end()) {
             auto rridx = reg->GetRRid();
-            auto off = place_to_save.at(rridx);
+            auto off = place_to_save_.at(rridx);
             if (reg->GetType() == VREG_TYPE::FLT) {
                 auto store = new riscv::FSW(rridx, riscv::fp, off);
                 abb->Push(store);
@@ -108,13 +108,16 @@ void RLPlanner::BeforeCall(AsmBasicBlock *abb, std::unordered_set<VirtualRegiste
                 abb->Push(store);
             }
             reg->SetSaving(off);
+            savings_.push(reg);
         }
     }
 }
 
 void RLPlanner::RecoverCall(AsmBasicBlock *abb, const std::vector<VirtualRegister *> &after_this) {
     auto blk = belong_to_->FindBlkById(abb->Lbidx());
-    for (auto &&reg : vr_storage_) {
+    while (not savings_.empty()) {
+        auto reg = savings_.front();
+        savings_.pop();
         if (not reg->OnStk()) {
             auto rrid = reg->GetRRid();
 
@@ -123,7 +126,7 @@ void RLPlanner::RecoverCall(AsmBasicBlock *abb, const std::vector<VirtualRegiste
                 auto cancelable = not blk->IsLiveOut(reg->GetVRIdx()) and not reg->IsThisRet();
 
                 for (auto &&v : after_this) {
-                    if (v == reg.get()) {
+                    if (v == reg) {
                         cancelable = false;
                     }
                 }
