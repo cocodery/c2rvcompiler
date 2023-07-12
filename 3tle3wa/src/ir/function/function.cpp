@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 //===-----------------------------------------------------------===//
 //                     NormalFunction Implementation

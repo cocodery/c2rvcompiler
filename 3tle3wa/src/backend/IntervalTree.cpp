@@ -1,6 +1,6 @@
 #include "3tle3wa/backend/IntervalTree.hh"
 
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 Interval::Interval(size_t len) : intval_(len / 64 + 1, 0) { len_ = len; }
 

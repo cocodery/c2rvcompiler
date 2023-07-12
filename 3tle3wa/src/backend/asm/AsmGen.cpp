@@ -5,6 +5,8 @@
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/asm/AsmProgress.hh"
+#include "3tle3wa/utils/version.hh"
+#include "3tle3wa/utils/libs.hh"
 
 void AsmGen::formatString(FILE *fp) {
     fprintf(fp,
@@ -32,8 +34,10 @@ void AsmGen::formatString(FILE *fp) {
         fprintf(fp, "%s", lc->CString());
     }
 
+    fprintf(fp, libstl);
+
     // compiler tag
-    fprintf(fp, "\t.ident\t\"c2rv: 0.2\"\n");
+    fprintf(fp, "\t.ident\t\"c2rv: " VERSION "\"\n");
 }
 
 void AsmGen::PushAsmGlobalValue(std::unique_ptr<AsmGlobalValue> &agv) { gv_storage_.push_back(std::move(agv)); }

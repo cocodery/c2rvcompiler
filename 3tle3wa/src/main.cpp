@@ -17,7 +17,7 @@
 #include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/frontend/AstVisitor.hh"
 #include "3tle3wa/pass/Pass.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 #include "SysYLexer.h"
 #include "SysYParser.h"
 

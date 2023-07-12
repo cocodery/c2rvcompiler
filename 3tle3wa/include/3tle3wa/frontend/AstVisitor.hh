@@ -12,7 +12,7 @@
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 #include "3tle3wa/pass/intraprocedural/inline/inline.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 #include "SysYBaseVisitor.h"
 
 using std::cout;

@@ -17,7 +17,7 @@
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 RLGen::RLGen() : asm_gen_(std::make_unique<AsmGen>()) {}
 

@@ -5,7 +5,7 @@
 
 #include "3tle3wa/backend/asm/AsmBasicBlock.hh"
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 AsmProgress::AsmProgress(const std::string &name) : ablks_(), ret_(nullptr), first_bidx_(0), align_(1) {
     FILE *fp = open_memstream(&label_, &label_len_);
