@@ -1,6 +1,13 @@
-/*
-# STL: Small Thread Library by 3tle3wa
+/**
+ * @name Small Thread Library
+ * @brief a thread lib for automatic parallelization
+ * @author 3tle3wa
+ * 
+ * @attention please follow the license
+*/
 
+
+/*
 # from syscall.h
 
 .equ __NR_exit, 93
