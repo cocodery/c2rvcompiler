@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "3tle3wa/backend/InternalTranslation.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
@@ -549,6 +551,9 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(not cinfo.isflt_, "unexpected");
 
+        // if div/rem is too slow
+        // change if log2(imm) <= 36 - (additional operation)
+
         if (ImmWithin(12, cinfo.v32_.u32_)) {
             switch (opcode) {
                 case OP_MUL:
@@ -751,7 +756,7 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
 
         vrrhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
 
-        if (opcode == OP_DIV) {
+        if (opcode == OP_DIV and std::log(cinfo.v32_.i32_) <= 28) {
             auto magic = Magika(cinfo.v32_.i32_);
             ConstValueInfo cvi;
             cvi.width_ = 32;
@@ -821,6 +826,97 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
             op4->SetDst(dst);
             op4->SetKind(IBIN_KIND::ADD);
             curstat_.cur_blk->Push(op4);
+
+            return;
+        } else if (opcode == OP_REM and std::log(cinfo.v32_.i32_) <= 25) {
+            auto magic = Magika(cinfo.v32_.i32_);
+            ConstValueInfo cvi;
+            cvi.width_ = 32;
+            cvi.v32_.i32_ = magic.magic_number;
+
+            li(vrrhs, cvi);
+
+            auto upper32 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+
+            auto op0 = new UopIBin;
+            op0->SetLhs(vrrhs);
+            op0->SetRhs(vrlhs);
+            op0->SetDst(upper32);
+            op0->SetKind(IBIN_KIND::MULHS);
+            curstat_.cur_blk->Push(op0);
+
+            auto inter1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            if (cinfo.v32_.i32_ > 0 and magic.magic_number < 0) {
+                auto op1 = new UopIBin;
+                op1->SetLhs(upper32);
+                op1->SetRhs(vrlhs);
+                op1->SetDst(inter1);
+                op1->SetKind(IBIN_KIND::ADD);
+                curstat_.cur_blk->Push(op1);
+
+            } else if (cinfo.v32_.i32_ < 0 and magic.magic_number > 0) {
+                auto op1 = new UopIBin;
+                op1->SetLhs(upper32);
+                op1->SetRhs(vrlhs);
+                op1->SetDst(inter1);
+                op1->SetKind(IBIN_KIND::SUB);
+                curstat_.cur_blk->Push(op1);
+            } else {
+                auto op1 = new UopMv;
+                op1->SetSrc(upper32);
+                op1->SetDst(inter1);
+                curstat_.cur_blk->Push(op1);
+            }
+
+            auto inter2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            if (magic.shift_amount > 0) {
+                auto op2 = new UopIBinImm;
+                op2->SetImm(magic.shift_amount);
+                op2->SetLhs(inter1);
+                op2->SetDst(inter2);
+                op2->SetKind(IBIN_KIND::SRA);
+                curstat_.cur_blk->Push(op2);
+            } else {
+                auto op2 = new UopMv;
+                op2->SetSrc(inter1);
+                op2->SetDst(inter2);
+                curstat_.cur_blk->Push(op2);
+            }
+
+            auto sgn = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto op3 = new UopIBinImm;
+            op3->SetImm(31);
+            op3->SetLhs(inter2);
+            op3->SetDst(sgn);
+            op3->SetKind(IBIN_KIND::SRL);
+            curstat_.cur_blk->Push(op3);
+
+            auto q = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto op4 = new UopIBin;
+            op4->SetLhs(sgn);
+            op4->SetRhs(inter2);
+            op4->SetDst(q);
+            op4->SetKind(IBIN_KIND::ADD);
+            curstat_.cur_blk->Push(op4);
+
+            auto t = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto d = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            li(d, cinfo);
+
+            auto op5 = new UopIBin;
+            op5->SetLhs(q);
+            op5->SetRhs(d);
+            op5->SetDst(t);
+            op5->SetKind(IBIN_KIND::MUL);
+            curstat_.cur_blk->Push(op5);
+
+            auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+            auto op6 = new UopIBin;
+            op6->SetLhs(vrlhs);
+            op6->SetRhs(t);
+            op6->SetDst(dst);
+            op6->SetKind(IBIN_KIND::SUB);
+            curstat_.cur_blk->Push(op6);
 
             return;
         } else {

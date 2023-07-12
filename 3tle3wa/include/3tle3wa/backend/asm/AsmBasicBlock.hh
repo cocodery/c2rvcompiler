@@ -22,6 +22,18 @@ class AsmBasicBlock : public Serializable {
 
     void formatString(FILE *fp) final;
 
+    // ----- removes -----
+
+    void rmNeedless();
+    
+    void rmNeedlessStore();
+
+    // ----- combines -----
+
+    void combineInstruction();
+
+    void combineAddLS();
+
    public:
     AsmBasicBlock(size_t lbidx, AsmProgress *father);
 
@@ -44,4 +56,6 @@ class AsmBasicBlock : public Serializable {
     size_t GetBlockIdx();
 
     void ArchSchedule();
+
+    void Peepholes();
 };
