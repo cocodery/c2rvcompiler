@@ -60,7 +60,8 @@ class InternalTranslation final : public Serializable {
 
     std::unique_ptr<AsmProgress> apg_;
 
-    std::unordered_set<ICmpInst *> icmp_map;
+    std::unordered_map<size_t, ICmpInst *> icmp_map;
+    std::unordered_map<size_t, std::pair<size_t, size_t>> gep_map;
 
     struct IT_STAT {
         CtrlFlowGraphNode *cur_cfg;

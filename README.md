@@ -95,6 +95,7 @@
     - [ ] load 后不使用直接 store
     - [x] 空操作
     - [x] 获取 0 的操作换成 zero 寄存器
+    - [x] 寄存器 + 偏移量寻址
 - [ ] 贪心寄存器分配算法
   - [x] 按照权重选取寄存器
   - [ ] split 操作
@@ -415,26 +416,14 @@ exit:
   retval = maybe param1 or sth
 ```
 
-# gdb cfi info insert
+# 基于局部的 split 想法
 
-``` 
-# define frame
-  .text
-.Ltext0:
-  .cfi_sections	.debug_frame
+目前的活跃区间管理类是基于基本块记录信息的。同时，已经分离出了单独基本块的权重计算。
 
-# start proc
-  .cfi_startproc
+当权重计算更加成熟以后，比如将循环分析完成后，就可以以基本块为单位进行寄存器抢占。该抢占依然是基于权重计算。
 
-# after pc decrease imm
-  .cfi_def_cfa_offset imm
+# 线程库思路
 
-# after ra restore
-  .cfi_restore 1
+学习上届技巧，以学习以 fork 的思路进行多线程处理。fork 的开销比较巨大，所以我们学习并选择共享虚拟页表和栈。
 
-# after pc restore
-  .cfi_def_cfa_offset 0
-
-# end proc
-  .cfi_endproc
-```
+在做并行处理的同学应当设计一些是否可以被 spill 的标识用于保证进程间不会因为共享同一个函数栈而产生竞争。这里建议，认为继承的栈中，共享部分作为只读资源，不共享的栈部分，比如数组的不同范围相关寄存器是可以 spill 的。但是一些共享的变量不可以 spill，否则会竞争。

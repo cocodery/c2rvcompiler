@@ -36,13 +36,13 @@ void AsmGlobalValue::formatString(FILE *fp) {
         // if (data_len_ <= 8) {
         //     fprintf(fp, "\t.section\t.sbss\n");
         // } else {
-            fprintf(fp, "\t.bss\n");
+        fprintf(fp, "\t.bss\n");
         // }
     } else {
         // if (data_len_ <= 8) {
         //     fprintf(fp, "\t.section\t.sdata\n");
         // } else {
-            fprintf(fp, "\t.data\n");
+        fprintf(fp, "\t.data\n");
         // }
     }
 

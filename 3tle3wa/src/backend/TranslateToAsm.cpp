@@ -26,6 +26,8 @@ void RLProgress::DoToAsm(AsmProgress *apg) {
         rlbb->ToAsm(abb.get(), planner_.get());
         apg->Push(abb, abb->IsRet());
     }
+
+    apg->DoOptimization();
 }
 
 void RLBasicBlock::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {

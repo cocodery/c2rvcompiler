@@ -5,6 +5,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <queue>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/IntervalTree.hh"
@@ -16,7 +17,7 @@ class StackInfo;
 class AsmBasicBlock;
 class RLProgress;
 
-class RLPlanner : public Serializable {
+class RLPlanner final : public Serializable {
     std::unordered_map<uint64_t, StackInfo *> sinfo_map_;
     std::unordered_map<uint64_t, VirtualRegister *> vr_map_;
 
@@ -37,7 +38,9 @@ class RLPlanner : public Serializable {
 
     std::vector<StackInfo *> real_stkinfo_;
 
-    std::unordered_map<size_t, int64_t> place_to_save;
+    std::unordered_map<size_t, int64_t> place_to_save_;
+
+    std::queue<VirtualRegister *> savings_;
 
     void formatString(FILE *fp) final;
 
@@ -47,8 +50,6 @@ class RLPlanner : public Serializable {
 
    public:
     RLPlanner(size_t regidx);
-
-    virtual ~RLPlanner() = default;
 
     StackInfo *Alloca(size_t len);
 

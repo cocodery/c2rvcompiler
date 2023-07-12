@@ -42,4 +42,6 @@ class AsmProgress : public Serializable {
     const char *Label() const;
 
     void ArchSchedule();
+
+    void DoOptimization();
 };

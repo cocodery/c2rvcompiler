@@ -143,7 +143,7 @@ static constexpr MaS Magika(int d) {
     const unsigned two31 = 0x8000'0000;
     MaS magic{.magic_number = 0, .shift_amount = 0};
 
-    ad = std::abs(d);
+    ad = d > 0 ? d : -d;
     t = two31 + ((unsigned)d >> 31);
     anc = t - 1 - t % ad;
     p = 31;
