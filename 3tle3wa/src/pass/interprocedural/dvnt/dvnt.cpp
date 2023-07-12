@@ -187,7 +187,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         }
 
         auto &&result = inst->GetResult();
-        if (inst->IsTwoOprandInst() || inst->IsGepInst()) {  // || inst->IsLoadInst()) {
+        if (inst->IsTwoOprandInst() || inst->IsGepInst() || inst->IsLoadInst()) {
             if (auto &&res = Scope.Get(inst)) {
                 VN[result] = res;
 
