@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/IntervalTree.hh"

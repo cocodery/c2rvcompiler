@@ -36,12 +36,16 @@ class VirtualRegister final : public Serializable, public Weightable {
     bool saving_;
     int64_t save_off_;
 
+    bool can_spill_;
+
     void formatString(FILE *fp) final;
 
    public:
     VirtualRegister(VREG_TYPE type, uint64_t vridx);
 
     void SetOnStack(bool on);
+
+    void SetCanSpill(bool on);
 
     void SetParam(size_t pos);
 
@@ -64,6 +68,8 @@ class VirtualRegister final : public Serializable, public Weightable {
     bool IsRetval();
 
     bool IsThisRet();
+
+    bool CanSpill();
 
     bool OnStk();
 

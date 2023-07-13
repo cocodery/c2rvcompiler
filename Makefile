@@ -44,7 +44,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional # performance final_performance # 
+MODE 			?= performance final_performance #  functional hidden_functional # performance final_performance # 
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -119,16 +119,16 @@ ll: $(SYLIB_LL)
 	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
 	$(ECHO) $$?
 
-.PHONY: rrv
-rrv:
+.PHONY: rv
+rv:
+	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
 	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -march=rv64gc -g
 	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
 	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
 	$(ECHO) $$?
 
-.PHONY: rv
-rv:
-	$(BINARY) -S -o $(SINGLE_TEST).s -d $(SINGLE_TEST).ir.s $(SINGLE_TEST).sy
+.PHONY: rrv
+rrv:
 	$(RVCC_linux) -o $(SINGLE_TEST).out $(SINGLE_TEST).s $(SYLIB_C) -static -march=rv64gc -g
 	$(RVOD_linux) -D $(SINGLE_TEST).out > $(SINGLE_TEST).dump
 	$(SIM_CMD) $(SINGLE_TEST).out $(REDINP)
@@ -140,7 +140,7 @@ qemu-dbg:
 
 .PHONY: rvgdb
 rvgdb:
-	$(RVGDB_linux) -q $(SINGLE_TEST).out
+	$(RVGDB_linux) -q $(SINGLE_TEST).out -x cmd.gdb
 
 .PHONY: pys
 pys:

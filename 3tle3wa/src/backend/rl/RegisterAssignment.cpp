@@ -34,18 +34,17 @@ void RLProgress::computeLivenessInfomation() {
 
         if (pridx == 0) {
             bb->SetCalcuParam(params_);
+            pridx += 1;
         }
 
         bb->CalcuInit();
-
-        pridx += 1;
     }
 
     bool changed = false;
     do {
         changed = false;
         for (auto &&rit = rlbbs_.rbegin(); rit != rlbbs_.rend(); ++rit) {
-            changed = (*rit)->CalcuIO(lbmap_) || changed;
+            changed = (*rit)->CalcuIO(lbmap_) or changed;
         }
     } while (changed);
 
@@ -165,7 +164,7 @@ void RLBasicBlock::CalcuInterval() {
         Assert(calli, "bad dynamic cast");
         for (auto &&vr : scope_vr) {
             auto intval = vr->Imgr().AskInterval(lbidx_);
-            if (intval != nullptr && (*intval)[uop->GetUopIdx()] && (*intval)[uop->GetUopIdx() - 1]) {
+            if (intval != nullptr and (*intval)[uop->GetUopIdx()] and (*intval)[uop->GetUopIdx() - 1]) {
                 calli->PushLiver(vr);
             }
         }

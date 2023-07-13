@@ -1,4 +1,4 @@
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 uint64_t compile_start_time__ = 0;
 

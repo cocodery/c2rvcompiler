@@ -7,7 +7,7 @@
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/ir/IR.hh"
 
-RLProgress::RLProgress(const std::string &name) :has_call_(false), has_lib_call_(false), has_call_other_(false) {
+RLProgress::RLProgress(const std::string &name) : has_call_(false), has_lib_call_(false), has_call_other_(false) {
     FILE *fp = open_memstream(&label_, &label_len_);
     fprintf(fp, "%s", name.c_str());
     fflush(fp);

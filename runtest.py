@@ -55,6 +55,7 @@ def build_run(args, exts, cc_arg, simcc_arg):
         cmd = [args.cc, args.sylib, name, '-o', runname]
         for a in cc_arg:
             cmd.append(a)
+        # print(" ".join(cmd))
 
         with open(logname, 'a') as logfile:
             resp = subprocess.run(cmd, stdout=logfile)
@@ -154,6 +155,6 @@ if __name__ == '__main__':
             'run': 'elf'
         }
 
-        cc_arg = ['-static']
+        cc_arg = ['-static', '-march=rv64gc']
 
         build_run(args, exts, cc_arg, '-o')

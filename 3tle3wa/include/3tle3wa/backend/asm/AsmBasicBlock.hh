@@ -25,7 +25,7 @@ class AsmBasicBlock : public Serializable {
     // ----- removes -----
 
     void rmNeedless();
-    
+
     void rmNeedlessStore();
 
     // ----- combines -----

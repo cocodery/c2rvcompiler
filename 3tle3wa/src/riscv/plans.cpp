@@ -43,6 +43,30 @@ void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size
             continue;
         }
 
+        if (not vr->CanSpill()) {
+            auto must_in_rreg = vr.get();
+            bool success = false;
+            if (must_in_rreg->FGPR()) {
+                for (size_t i = 0; i < fgprlen; ++i) {
+                    if (success = tryUse(must_in_rreg, fgpr[i]); success) {
+                        break;
+                    }
+                }
+            } else {
+                for (size_t i = 0; i < igprlen; ++i) {
+                    if (success = tryUse(must_in_rreg, igpr[i]); success) {
+                        break;
+                    }
+                }
+            }
+
+            if (not success) {
+                panic("can't give %%Reg_%" PRIu64 " a real regid", must_in_rreg->GetVRIdx());
+            }
+
+            continue;
+        }
+
         // experimental
         bool success = false;
 
@@ -133,7 +157,7 @@ bool RLPlanner::tryUse(VirtualRegister *vr, size_t rridx) {
         imgr = fnd->second.get();
     }
 
-    if (vr->Imgr() && *imgr) {
+    if (vr->Imgr() and *imgr) {
         return false;
     }
 
@@ -148,7 +172,7 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
 
     for (size_t i = 0; i < real_stk_inval_.size(); ++i) {
         auto &&imgr = real_stk_inval_[i];
-        if ((real_stkinfo_[i]->GetSLen() != vr->GetSize()) or (vr->Imgr() && *imgr)) {
+        if ((real_stkinfo_[i]->GetSLen() != vr->GetSize()) or (vr->Imgr() and *imgr)) {
             continue;
         }
 

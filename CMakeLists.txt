@@ -36,7 +36,7 @@ add_compile_options(-std=c++17)
 
 # 用于调试
 add_compile_options(-g)
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -Winvalid-constexpr)
 
 # 包含头文件
 include_directories(

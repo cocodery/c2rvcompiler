@@ -11,7 +11,7 @@
 #include "3tle3wa/backend/rl/RLUop.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/ir/IR.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 void InternalTranslation::DoTranslateToAsm() { rlps_->DoToAsm(apg_.get()); }
 

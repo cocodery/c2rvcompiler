@@ -17,7 +17,7 @@
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/riscv/asm.hh"
 #include "3tle3wa/riscv/spec.hh"
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 // t0, t1, ft0, ft1 are reserved for loading problems
 

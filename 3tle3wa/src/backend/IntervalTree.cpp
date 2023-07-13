@@ -1,6 +1,6 @@
 #include "3tle3wa/backend/IntervalTree.hh"
 
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 Interval::Interval(size_t len) : intval_(len / 64 + 1, 0) { len_ = len; }
 
@@ -156,7 +156,7 @@ size_t IntervalManager::TotalLiveSpan() {
 bool IntervalManager::operator&&(IntervalManager &other) {
     for (auto &&[lbidx, intval] : intvals_) {
         auto ointval = other.AskInterval(lbidx);
-        if (ointval != nullptr && (*ointval && *intval)) {
+        if (ointval != nullptr and (*ointval and *intval)) {
             return true;
         }
     }

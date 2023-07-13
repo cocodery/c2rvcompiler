@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-#include "3tle3wa/utils/Logs.hh"
+#include "3tle3wa/utils/logs.hh"
 
 class InternalTranslation;
 

@@ -172,7 +172,7 @@ static constexpr MaS Magika(int d) {
 
     magic.magic_number = q2 + 1;
     if (d < 0) {
-        magic.magic_number = - magic.magic_number;
+        magic.magic_number = -magic.magic_number;
     }
 
     magic.shift_amount = p - 32;
