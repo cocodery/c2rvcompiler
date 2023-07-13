@@ -7,7 +7,7 @@ void LiveInterval::CallThis(size_t pos) {
     CallVec |= (1ul << pos);
 }
 
-bool LiveInterval::operator()(size_t point) const { return point >= Begin && point < End; }
+bool LiveInterval::operator()(size_t point) const { return point >= Begin and point < End; }
 
 bool LiveInterval::operator^(const LiveInterval &other) const {
     if (other.Begin > End or other.End <= Begin) {

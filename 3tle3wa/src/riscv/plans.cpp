@@ -133,7 +133,7 @@ bool RLPlanner::tryUse(VirtualRegister *vr, size_t rridx) {
         imgr = fnd->second.get();
     }
 
-    if (vr->Imgr() && *imgr) {
+    if (vr->Imgr() and *imgr) {
         return false;
     }
 
@@ -148,7 +148,7 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
 
     for (size_t i = 0; i < real_stk_inval_.size(); ++i) {
         auto &&imgr = real_stk_inval_[i];
-        if ((real_stkinfo_[i]->GetSLen() != vr->GetSize()) or (vr->Imgr() && *imgr)) {
+        if ((real_stkinfo_[i]->GetSLen() != vr->GetSize()) or (vr->Imgr() and *imgr)) {
             continue;
         }
 

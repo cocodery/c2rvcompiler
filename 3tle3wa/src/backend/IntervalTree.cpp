@@ -156,7 +156,7 @@ size_t IntervalManager::TotalLiveSpan() {
 bool IntervalManager::operator&&(IntervalManager &other) {
     for (auto &&[lbidx, intval] : intvals_) {
         auto ointval = other.AskInterval(lbidx);
-        if (ointval != nullptr && (*ointval && *intval)) {
+        if (ointval != nullptr and (*ointval and *intval)) {
             return true;
         }
     }
