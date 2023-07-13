@@ -5,8 +5,8 @@
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/asm/AsmProgress.hh"
-#include "3tle3wa/utils/version.hh"
 #include "3tle3wa/utils/libs.hh"
+#include "3tle3wa/utils/version.hh"
 
 void AsmGen::formatString(FILE *fp) {
     fprintf(fp,

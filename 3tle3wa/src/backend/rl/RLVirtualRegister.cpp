@@ -17,9 +17,12 @@ VirtualRegister::VirtualRegister(VREG_TYPE type, uint64_t vridx)
       this_ret_(false),
       imgr_(),
       saving_(false),
-      save_off_(0) {}
+      save_off_(0),
+      can_spill_(true) {}
 
 void VirtualRegister::SetOnStack(bool on) { onstack_ = on; }
+
+void VirtualRegister::SetCanSpill(bool on) { can_spill_ = on; }
 
 void VirtualRegister::SetRRidx(size_t rridx) {
     real_regidx_ = rridx;
@@ -53,6 +56,8 @@ bool VirtualRegister::IsParam() { return param_; }
 bool VirtualRegister::IsRetval() { return retval_; }
 
 bool VirtualRegister::IsThisRet() { return this_ret_; }
+
+bool VirtualRegister::CanSpill() { return can_spill_; }
 
 bool VirtualRegister::OnStk() { return onstack_; }
 

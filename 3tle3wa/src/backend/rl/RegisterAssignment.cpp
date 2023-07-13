@@ -34,11 +34,10 @@ void RLProgress::computeLivenessInfomation() {
 
         if (pridx == 0) {
             bb->SetCalcuParam(params_);
+            pridx += 1;
         }
 
         bb->CalcuInit();
-
-        pridx += 1;
     }
 
     bool changed = false;
