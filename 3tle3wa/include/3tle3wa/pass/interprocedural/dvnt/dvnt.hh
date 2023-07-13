@@ -5,6 +5,8 @@
 #include <unordered_map>
 
 #include "3tle3wa/ir/IR.hh"
+#include "3tle3wa/ir/instruction/opCode.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
 
 namespace GVN {
 
@@ -48,10 +50,24 @@ struct LoadVNExprHasher {
 
 typedef std::unordered_map<LoadVNExpr, BaseValuePtr, LoadVNExprHasher> LoadVNTable;
 
+struct UnaryVNExpr {
+    OpCode opcode;
+    BaseValue *oprand;
+
+    bool operator==(const UnaryVNExpr &) const;
+};
+
+struct UnaryVNExprHasher {
+    size_t operator()(const UnaryVNExpr &) const;
+};
+
+typedef std::unordered_map<UnaryVNExpr, BaseValuePtr, UnaryVNExprHasher> UnaryVNTable;
+
 struct VNScope {
-    BinVNTable bin_map;    // GVN
-    GepVNTable gep_map;    // GVN
-    LoadVNTable load_map;  // LVN
+    BinVNTable bin_map;      // GVN
+    GepVNTable gep_map;      // GVN
+    LoadVNTable load_map;    // LVN
+    UnaryVNTable unary_map;  // GVN
 
     VNScope *outer;
 

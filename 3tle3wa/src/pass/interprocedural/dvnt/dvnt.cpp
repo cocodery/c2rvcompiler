@@ -1,5 +1,11 @@
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 
+#include <cassert>
+#include <memory>
+
+#include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/opCode.hh"
+
 bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
     if (opcode != e.opcode) {
         return false;
@@ -31,6 +37,12 @@ bool GVN::LoadVNExpr::operator==(const LoadVNExpr &e) const { return (load_addr 
 
 size_t GVN::LoadVNExprHasher::operator()(const LoadVNExpr &e) const { return (std::hash<void *>()(e.load_addr)); }
 
+bool GVN::UnaryVNExpr::operator==(const UnaryVNExpr &e) const { return (opcode == e.opcode) && (oprand == e.oprand); }
+
+size_t GVN::UnaryVNExprHasher::operator()(const UnaryVNExpr &e) const {
+    return (std::hash<void *>()(e.oprand + e.opcode));
+}
+
 GVN::VNScope::VNScope(VNScope *outer) : outer(outer) {}
 
 BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
@@ -60,6 +72,15 @@ BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
         if (this->load_map.count(expr)) {
             return this->load_map[expr];
         }
+    } else if (inst->IsOneOprandInst()) {
+        auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
+
+        UnaryVNExpr expr{unary_inst->GetOpCode(), unary_inst->GetOprand().get()};
+        for (auto &&iter = this; iter != nullptr; iter = iter->outer) {
+            if (iter->unary_map.count(expr)) {
+                return iter->unary_map[expr];
+            }
+        }
     }
     return nullptr;
 }
@@ -74,11 +95,17 @@ void GVN::VNScope::Set(InstPtr inst) {
         auto off_list = gep_inst->GetOffList();
         GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
         gep_map[expr] = inst->GetResult();
-    } else {
+    } else if (inst->IsLoadInst()) {
         auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
         auto &&load_addr = load_inst->GetOprand();
         LoadVNExpr expr{load_addr.get()};
         load_map[expr] = inst->GetResult();
+    } else if (inst->IsOneOprandInst()) {
+        auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
+        UnaryVNExpr expr{unary_inst->GetOpCode(), unary_inst->GetOprand().get()};
+        unary_map[expr] = inst->GetResult();
+    } else {
+        assert(false);
     }
 }
 
@@ -187,7 +214,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         }
 
         auto &&result = inst->GetResult();
-        if (inst->IsTwoOprandInst() || inst->IsGepInst() || inst->IsLoadInst()) {
+        if (inst->IsTwoOprandInst() || inst->IsGepInst() || inst->IsLoadInst() || inst->IsOneOprandInst()) {
             if (auto &&res = Scope.Get(inst)) {
                 VN[result] = res;
 
