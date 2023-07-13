@@ -10,113 +10,119 @@
 /*
 # from syscall.h
 
-.equ __NR_exit, 93
-.equ __NR_waitid, 95
-.equ __NR_clone, 220
-.equ __NR_sched_setaffinity, 122
+.equ	__NR_exit, 93
+.equ	__NR_waitid, 95
+.equ	__NR_clone, 220
+.equ	__NR_sched_setaffinity, 122
 
 # from signal.h
 
-.equ SIGCHLD, 17
+.equ	SIGCHLD, 17
 
 # from sched.h
 
-.equ CLONE_VM, 0x00000100
+.equ	CLONE_VM, 0x00000100
 
 # from waitflags.h
 
-.equ WEXITED, 4
+.equ	WEXITED, 4
 
-.equ P_ALL, 0
+.equ	P_ALL, 0
 
 # from stdlib
 
-.equ    EXIT_FAILURE, 1
-.equ    EXIT_SUCCESS, 0
+.equ	EXIT_FAILURE, 1
+.equ	EXIT_SUCCESS, 0
 
-        .data
-        .align  4
-        .type   .LC.lock, @object
-        .size   .LC.lock, 4
-.LC.lock:
-        .zero   4
-
-        .text
-        .align 1
-        .globl __crvc_fork
-        .type __crvc_fork, @function
-        .global __crvc_fork
-__crvc_fork:
-        li      a7, __NR_clone
-        mv      a6, zero
-        mv      a4, zero
-        mv      a3, zero
-        mv      a2, zero
-        mv      a1, sp
-        li      a0, SIGCHLD | CLONE_VM
-        ecall
-        ret
-        .size   __crvc_fork, .-__crvc_fork
-
-        .text
-        .align 1
-        .globl __crvc_join
-        .type __crvc_join, @function
-        .global __crvc_join
-__crvc_join:
-        fence   rw, rw
-        fence.i
-        addi    sp, sp, -16
-        beqz    a0, .exit
-        li      a7, __NR_waitid
-        li      a3, WEXITED
-        mv      a2, zero
-        mv      a1, zero
-        li      a0, P_ALL
-        ecall
-        addi    sp, sp, 16
-        ret
-.exit:
-        li      a7, __NR_exit
-        li      a0, EXIT_SUCCESS
-        ecall
-        .size   __crvc_join, .-__crvc_join
-
-        .text
-        .align 1
-        .globl __crvc_spinlock_lock
-        .type __crvc_spinlock_lock, @function
-        .global __crvc_spinlock_lock
-__crvc_spinlock_lock:
-        lla     t0, .LC.lock
-        li      t1, 1
-.trylock:
-        lw      t2, 0(t0)
-        bnez    t2, .trylock
-        amoswap.w.aq    t2, t1, 0(t0)
-        bnez    t2, .trylock
-        ret
-        .size   __crvc_spinlock_lock, .-__crvc_spinlock_lock
-        
-        .text
-        .align 1
-        .globl __crvc_spinlock_unlock
-        .type __crvc_spinlock_unlock, @function
-        .global __crvc_spinlock_unlock
-__crvc_spinlock_unlock:
-        lla     t0, .LC.lock
-        amoswap.w.rl    zero, zero, 0(t0)
-        ret
-        .size   __crvc_spinlock_unlock, .-__crvc_spinlock_unlock
-*/
-
-const char *libstl = R"(# experimental
 	.data
 	.align	4
 	.type	.LC.lock, @object
 	.size	.LC.lock, 4
 .LC.lock:
 	.zero	4
+
+	.text
+	.align	1
+	.globl	__crvc_fork
+	.type	__crvc_fork, @function
+	.global	__crvc_fork
+__crvc_fork:
+	li	a7, __NR_clone
+	mv	a6, zero
+	mv	a4, zero
+	mv	a3, zero
+	mv	a2, zero
+	mv	a1, sp
+	li	a0, SIGCHLD | CLONE_VM
+	ecall
+	ret
+	.size	__crvc_fork, .-__crvc_fork
+
+	.text
+	.align	1
+	.globl	__crvc_waitid
+	.type	__crvc_waitid, @function
+	.global	__crvc_waitid
+__crvc_waitid:
+	fence	rw, rw
+	fence.i
+	addi	sp, sp, -16
+	li	a7, __NR_waitid
+	li	a3, WEXITED
+	mv	a2, zero
+	mv	a1, zero
+	li	a0, P_ALL
+	ecall
+	addi	sp, sp, 16
+	ret
+	.size	__crvc_waitid, .-__crvc_waitid
+
+	.text
+	.align	1
+	.globl	__crvc_exit
+	.type	__crvc_exit, @function
+	.global	__crvc_exit
+__crvc_exit:
+	li	a7, __NR_exit
+	li	a0, EXIT_SUCCESS
+	ecall
+	.size	__crvc_exit, .-__crvc_exit
+
+	.text
+	.align	1
+	.globl	__crvc_spinlock_lock
+	.type	__crvc_spinlock_lock, @function
+	.global	__crvc_spinlock_lock
+__crvc_spinlock_lock:
+	lla	t0, .LC.lock
+	li	t1, 1
+.trylock:
+	lw	t2, 0(t0)
+	bnez	t2, .trylock
+	amoswap.w.aq	t2, t1, 0(t0)
+	bnez	t2, .trylock
+	ret
+	.size	__crvc_spinlock_lock, .-__crvc_spinlock_lock
+	
+	.text
+	.align	1
+	.globl	__crvc_spinlock_unlock
+	.type	__crvc_spinlock_unlock, @function
+	.global	__crvc_spinlock_unlock
+__crvc_spinlock_unlock:
+	lla	t0, .LC.lock
+	amoswap.w.rl	zero, zero, 0(t0)
+	ret
+	.size	__crvc_spinlock_unlock, .-__crvc_spinlock_unlock
+*/
+
+const char *libstl = R"(# experimental
+	.data
+	.align	4
+	.type	.LC.lock, @object
+	.size	.LC.lock, 64
+.LC.lock:
+	.zero	64
 	.text
 	.align	1
 	.globl	__crvc_fork
@@ -135,13 +141,12 @@ __crvc_fork:
 	.size	__crvc_fork, .-__crvc_fork
 	.text
 	.align	1
-	.globl	__crvc_join
-	.type	__crvc_join, @function
-	.global	__crvc_join
-__crvc_join:
+	.globl	__crvc_waitid
+	.type	__crvc_waitid, @function
+	.global	__crvc_waitid
+__crvc_waitid:
 	fence	rw, rw
 	addi	sp, sp, -16
-	beqz	a0, .exit
 	li	a7, 95
 	li	a3, 4
 	mv	a2, zero
@@ -150,11 +155,17 @@ __crvc_join:
 	ecall
 	addi	sp, sp, 16
 	ret
-.exit:
+	.size	__crvc_waitid, .-__crvc_waitid
+	.text
+	.align	1
+	.globl	__crvc_exit
+	.type	__crvc_exit, @function
+	.global	__crvc_exit
+__crvc_exit:
 	li	a7, 93
 	li	a0, 0
 	ecall
-	.size	__crvc_join, .-__crvc_join
+	.size	__crvc_exit, .-__crvc_exit
 	.text
 	.align	1
 	.globl	__crvc_spinlock_lock
