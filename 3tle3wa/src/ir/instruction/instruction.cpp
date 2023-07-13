@@ -1,6 +1,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 
 #include <cassert>
+#include <type_traits>
 
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/use.hh"
@@ -70,8 +71,25 @@ BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr 
                                      CfgNodePtr node)
     : Instruction(_res, _op, node), lhs(_lhs), rhs(_rhs) {}
 
+void BinaryInstruction::SetLHS(BaseValuePtr _lhs) { lhs = _lhs; }
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
+void BinaryInstruction::SetRHS(BaseValuePtr _rhs) { rhs = _rhs; }
 BaseValuePtr BinaryInstruction::GetRHS() const { return rhs; }
+
+void BinaryInstruction::SwapOprand() {
+    if (IsCommutative(opcode)) {
+        if (lhs->IsConstant()) {
+            std::swap(lhs, rhs);
+        } else if (lhs->IsVariable() && rhs->IsVariable()) {
+            auto l = reinterpret_cast<uint64_t>(lhs.get());
+            auto r = reinterpret_cast<uint64_t>(rhs.get());
+            if (l > r) {
+                std::swap(lhs, rhs);
+            }
+        }
+    }
+    return;
+}
 
 bool BinaryInstruction::IsIBinaryInst() const { return false; }
 bool BinaryInstruction::IsFBinaryInst() const { return false; }

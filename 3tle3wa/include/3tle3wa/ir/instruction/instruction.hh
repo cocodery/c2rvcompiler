@@ -109,8 +109,12 @@ class BinaryInstruction : public Instruction {
     BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BinaryInstruction() = default;
 
+    void SetLHS(BaseValuePtr);
     BaseValuePtr GetLHS() const;
+    void SetRHS(BaseValuePtr);
     BaseValuePtr GetRHS() const;
+
+    void SwapOprand();
 
     virtual bool IsIBinaryInst() const;
     virtual bool IsFBinaryInst() const;
