@@ -1,5 +1,7 @@
 #include "3tle3wa/pass/interprocedural/instcomb/instcomb.hh"
 
+#include <fcntl.h>
+
 #include <cassert>
 #include <cstddef>
 #include <memory>
@@ -77,39 +79,57 @@ void InstComb::InstCombine(NormalFuncPtr func) {
                 auto &&bin_lhs_rhs = bin_lhs_inst->GetRHS();
                 assert(bin_lhs == bin_lhs_inst->GetResult());
 
+                if (!((OP_ADD <= bin_opcode && bin_opcode <= OP_DIV) &&
+                      (OP_ADD <= bin_lhs_opcode && bin_lhs_opcode <= OP_DIV))) {
+                    continue;
+                }
+                assert((bin_inst->IsIBinaryInst() && bin_lhs_inst->IsIBinaryInst()) ||
+                       (bin_inst->IsFBinaryInst() && bin_lhs_inst->IsFBinaryInst()));
+
                 auto lhs_bin_type = GetBinType(bin_lhs_lhs.get(), bin_lhs_rhs.get());
                 if (lhs_bin_type == LVRC) {
                     auto &&bin_lhs_rhs_constant = std::static_pointer_cast<Constant>(bin_lhs_rhs);
 
-                    if ((bin_opcode == OP_ADD || bin_opcode == OP_SUB) &&
-                        (bin_lhs_opcode == OP_ADD || bin_lhs_opcode == OP_SUB)) {
+                    ConstType value;
+                    bool combine = true;
+                    bool iop = (bin_inst->IsIBinaryInst() && bin_lhs_inst->IsIBinaryInst());
+
+                    std::visit(
+                        [&value, &combine, &iop, op1 = bin_opcode, op2 = bin_lhs_opcode](auto &&lhs, auto &&rhs) {
+                            using type_l = std::decay_t<decltype(lhs)>;
+                            using type_r = std::decay_t<decltype(rhs)>;
+                            assert((std::is_same_v<type_l, type_r>));
+
+                            if ((op1 == OP_ADD && op2 == OP_ADD) || (op1 == OP_SUB && op2 == OP_SUB)) {
+                                value = lhs + rhs;
+                            } else if ((op1 == OP_ADD && op2 == OP_SUB) || (op1 == OP_SUB && op2 == OP_ADD)) {
+                                value = lhs - rhs;
+                            } else if (op1 == OP_MUL && op2 == OP_MUL) {
+                                value = lhs * rhs;
+                            } else if (op1 == OP_MUL && op2 == OP_DIV) {
+                                if (iop) {
+                                    combine = false;
+                                } else {
+                                    value = lhs / rhs;
+                                }
+                            } else if (op1 == OP_DIV && op2 == OP_MUL) {
+                                if (rhs < lhs) {
+                                    combine = false;
+                                } else {
+                                    value = rhs / lhs;
+                                }
+                            } else if (op1 == OP_DIV && op2 == OP_DIV) {
+                                value = lhs * rhs;
+                            } else {
+                                combine = false;
+                            }
+                        },
+                        bin_rhs_constant->GetValue(), bin_lhs_rhs_constant->GetValue());
+
+                    if (combine) {
+                        auto constant = ConstantAllocator::FindConstantPtr(value);
                         bin_lhs_lhs->RemoveUser(bin_lhs_inst);
                         bin_lhs_lhs->InsertUser(bin_inst);
-
-                        ConstType value;
-                        std::visit(
-                            [&value, op1 = bin_opcode, op2 = bin_lhs_opcode](auto &&lhs, auto &&rhs) {
-                                using type_l = std::decay_t<decltype(lhs)>;
-                                using type_r = std::decay_t<decltype(rhs)>;
-                                assert((std::is_same_v<type_l, type_r>));
-
-                                if (op1 == OP_ADD) {
-                                    if (op2 == OP_ADD) {
-                                        value = lhs + rhs;
-                                    } else {
-                                        value = lhs - rhs;
-                                    }
-                                } else {
-                                    if (op2 == OP_ADD) {
-                                        value = lhs - rhs;
-                                    } else {
-                                        value = lhs + rhs;
-                                    }
-                                }
-                            },
-                            bin_rhs_constant->GetValue(), bin_lhs_rhs_constant->GetValue());
-                        auto constant = ConstantAllocator::FindConstantPtr(value);
-
                         bin_inst->SetLHS(bin_lhs_lhs);
                         bin_inst->SetRHS(constant);
                     }
