@@ -71,6 +71,8 @@ BinaryInstruction::BinaryInstruction(VariablePtr _res, OpCode _op, BaseValuePtr 
                                      CfgNodePtr node)
     : Instruction(_res, _op, node), lhs(_lhs), rhs(_rhs) {}
 
+void BinaryInstruction::SetOpCode(OpCode _opcode) { opcode = _opcode; }
+
 void BinaryInstruction::SetLHS(BaseValuePtr _lhs) { lhs = _lhs; }
 BaseValuePtr BinaryInstruction::GetLHS() const { return lhs; }
 void BinaryInstruction::SetRHS(BaseValuePtr _rhs) { rhs = _rhs; }

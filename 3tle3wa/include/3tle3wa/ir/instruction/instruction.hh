@@ -109,6 +109,8 @@ class BinaryInstruction : public Instruction {
     BinaryInstruction(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~BinaryInstruction() = default;
 
+    void SetOpCode(OpCode);
+
     void SetLHS(BaseValuePtr);
     BaseValuePtr GetLHS() const;
     void SetRHS(BaseValuePtr);
