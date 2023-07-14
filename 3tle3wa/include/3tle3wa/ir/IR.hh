@@ -28,5 +28,7 @@ class CompilationUnit {
     BaseFuncPtr GetFunction(std::string &);
     void InsertFunction(NormalFuncPtr);
 
+    void InsertConstantToGlbTable();
+
     void generatellvmIR(std::string irile);
 };

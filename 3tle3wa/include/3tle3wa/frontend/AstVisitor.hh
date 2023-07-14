@@ -199,6 +199,4 @@ class AstVisitor : public SysYBaseVisitor {
     SymbolTable *InitParamList(CfgNodePtr, SymbolTable *, std::vector<std::string>);
 
     void ParseLocalListInit(SysYParser::ListInitvalContext *, ListTypePtr, BaseValuePtr);
-
-    void InsertConstantToGlbTable();
 };

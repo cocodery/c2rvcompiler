@@ -106,6 +106,8 @@ int main(int argc, char *argv[]) {
     Optimization optimizer(comp_unit);
     optimizer.DoOptimization();
 
+    comp_unit.InsertConstantToGlbTable();
+
     if (irfile) {
         comp_unit.generatellvmIR(irfile);
     }

@@ -127,7 +127,6 @@ std::any AstVisitor::visitCompilationUnit(SysYParser::CompilationUnitContext *ct
         }
         ++iter;
     }
-    InsertConstantToGlbTable();
     return have_main_func;
 }
 
@@ -1047,23 +1046,5 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
         };
     /* size_t init_size =  */
     function(ctx, list_type->GetArrDims(), 0, 0);
-    return;
-}
-
-void AstVisitor::InsertConstantToGlbTable() {
-    auto glb_table = comp_unit.getGlbTable().GetNameValueMap();
-    std::map<Constant *, bool> ConstantMap;
-    for (auto [name, value] : glb_table) {
-        if (value->IsConstant()) {
-            ConstantMap[std::static_pointer_cast<Constant>(value).get()] = true;
-        }
-    }
-    for (auto [type, constant] : ConstantAllocator::GetConstantAllocator()) {
-        if (ConstantMap[constant.get()] == false && constant->GetBaseType()->FloatType() &&
-            std::get<float>(constant->GetValue()) != static_cast<float>(0)) {
-            std::string name = "Float_" + constant->tollvmIR();
-            comp_unit.InsertSymbol(name, constant);
-        }
-    }
     return;
 }

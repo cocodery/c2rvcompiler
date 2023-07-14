@@ -12,6 +12,23 @@ BaseFuncPtr CompilationUnit::GetFunction(std::string &name) { return this->func_
 
 void CompilationUnit::InsertFunction(NormalFuncPtr func_ptr) { func_talbe.InsertFunction(func_ptr); }
 
+void CompilationUnit::InsertConstantToGlbTable() {
+    std::map<Constant *, bool> ConstantMap;
+    for (auto [name, value] : glb_table.GetNameValueMap()) {
+        if (value->IsConstant()) {
+            ConstantMap[std::static_pointer_cast<Constant>(value).get()] = true;
+        }
+    }
+    for (auto [type, constant] : ConstantAllocator::GetConstantAllocator()) {
+        if (ConstantMap[constant.get()] == false && constant->GetBaseType()->FloatType() &&
+            std::get<float>(constant->GetValue()) != static_cast<float>(0)) {
+            std::string name = "Float_" + constant->tollvmIR();
+            InsertSymbol(name, constant);
+        }
+    }
+    return;
+}
+
 void CompilationUnit::generatellvmIR(std::string irfile) {
     std::ofstream llir;
     llir.open(irfile, std::ios_base::out);
