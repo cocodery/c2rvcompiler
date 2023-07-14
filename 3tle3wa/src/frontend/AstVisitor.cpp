@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 
+#include "3tle3wa/ir/function/loop.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
 
@@ -79,6 +80,8 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
 
     in_loop = false;
     out_loop_block = nullptr;
+
+    cur_loop = nullptr;
 
     ret_addr = nullptr;
     ret_block = nullptr;
@@ -322,6 +325,8 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 
+    cur_loop = &function->loops;
+
     cur_block = cur_func->CreateEntry();
 
     ret_addr =
@@ -354,6 +359,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     out_loop_block = nullptr;
     ret_addr = nullptr;
     ret_block = nullptr;
+    cur_loop = nullptr;
     cur_block = nullptr;
     cur_func = nullptr;
     callee_func = nullptr;
@@ -516,6 +522,13 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     }
     in_loop = true;
 
+    Loop *last_loop = cur_loop;
+    Loop *loop = new Loop(cur_loop);
+    cur_loop->sub_loops.push_back(loop);
+    cur_loop = loop;
+
+    cur_loop->before_loop = cur_block.get();
+
     CfgNodePtr block_before_cond = cur_block;                          // block-before-enter-while-condition
     CfgNodePtr cond_block_begin = cur_func->CreateCfgNode(LOOPBEGIN);  // first-block-of-loop-condition
 
@@ -531,7 +544,9 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     lAnd_list = BranchInstList();
 
     cur_block = cond_block_begin;
+    cur_loop->cond_begin = cur_block.get();
     BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
+    cur_loop->cond_end = cur_block.get();
     CfgNodePtr cond_block_end = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
@@ -546,6 +561,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     loop_end->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, loop_end));
 
     CfgNodePtr loop_exit = cur_func->CreateCfgNode(LOOPOUT);  // exit-block-of-loop
+    cur_loop->loop_exit = loop_exit.get();
 
     cond_block_end->InsertInstBack(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
 
@@ -565,6 +581,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
     target_continue = last_target_continue;
     cur_table = last_table;
+    cur_loop = last_loop;
     cur_block = loop_exit;
     in_loop = last_in_loop;
 
