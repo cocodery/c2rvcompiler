@@ -11,6 +11,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/utils/logs.hh"
 
 InstComb::BinType InstComb::GetBinType(const BaseValue *lhs, const BaseValue *rhs) {
     if (lhs->IsVariable() && rhs->IsVariable()) {  // bin_inst = variable OP variable
@@ -137,7 +138,7 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             } else if (bin_type == LCRV && rhs_inst && rhs_inst->IsTwoOprandInst() && rhs_inst->GetParent() == node) {
                 // bin_inst = constant OP variable
                 auto &&bin_rhs_inst = std::static_pointer_cast<BinaryInstruction>(rhs_inst);
-                auto bin_rhs_opcode = bin_rhs_inst->GetOpCode();
+                CRVC_UNUSE auto bin_rhs_opcode = bin_rhs_inst->GetOpCode();
                 auto &&bin_rhs_lhs = bin_rhs_inst->GetLHS();
                 auto &&bin_rhs_rhs = bin_rhs_inst->GetRHS();
             } else if (bin_type == LCRC) {
