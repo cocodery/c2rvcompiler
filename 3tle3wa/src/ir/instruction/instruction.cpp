@@ -1,9 +1,11 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 
 #include <cassert>
+#include <cstdint>
 #include <type_traits>
 
 #include "3tle3wa/ir/instruction/opCode.hh"
+#include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/use.hh"
 
 //===-----------------------------------------------------------===//
@@ -148,6 +150,32 @@ BaseValuePtr DoUnaryFlod(OpCode opcode, BaseValuePtr oprand) {
 
 BaseValuePtr DoBinaryFlod(OpCode opcode, BaseValuePtr lhs, BaseValuePtr rhs) {
     BaseValuePtr replacer = nullptr;
+    if (lhs == rhs) {
+        if (opcode == OP_SUB) {
+            if (lhs->GetBaseType()->IntType()) {
+                return ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
+            } else if (rhs->GetBaseType()->FloatType()) {
+                return ConstantAllocator::FindConstantPtr(static_cast<float>(0));
+            } else {
+                assert(false);
+            }
+        } else if (opcode == OP_DIV) {
+            if (lhs->GetBaseType()->IntType()) {
+                return ConstantAllocator::FindConstantPtr(static_cast<int32_t>(1));
+            } else if (rhs->GetBaseType()->FloatType()) {
+                return ConstantAllocator::FindConstantPtr(static_cast<float>(1));
+            } else {
+                assert(false);
+            }
+        } else if (opcode == OP_REM) {
+            if (lhs->GetBaseType()->IntType()) {
+                return ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
+            } else {
+                assert(false);
+            }
+        }
+    }
+
     if (lhs->IsConstant() && rhs->IsConstant()) {
         replacer = ExprFlod::BinaryOperate(opcode, std::static_pointer_cast<Constant>(lhs),
                                            std::static_pointer_cast<Constant>(rhs));
