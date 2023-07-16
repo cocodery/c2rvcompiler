@@ -617,6 +617,10 @@ void UopLui::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 void UopMv::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     size_t src = 0;
 
+    if (dst_ == nullptr) {
+        return;
+    }
+
     if (src_ == nullptr) {
         if (dst_->GetType() == VREG_TYPE::FLT) {
             auto fmvwx = new riscv::FMV_W_X(dst_->GetRRidWithSaving(abb), riscv::zero);

@@ -61,6 +61,10 @@ void InternalTranslation::DoTranslation() {
         curstat_.cur_blk = rlbb.get();
         curstat_.meettail = false;
 
+        if (nxt_cfgit == topo.end()) {
+            curstat_.nxt_cfg = nullptr;
+        }
+
         for (auto &inst : (*cur_cfgit)->GetInstList()) {
             inst->TranslateTo(*this);
         }

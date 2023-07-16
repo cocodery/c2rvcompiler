@@ -3,12 +3,17 @@ BUILD_DIR 		:= build
 BINARY 			:= $(BUILD_DIR)/$(TOPNAME)
 SINGLE_TEST		:= main
 
+
 # base dev
 CMAKE 			:= cmake
+NINJA			:= ninja
 GDB 			:= gdb
 DIFF 			:= diff
 ECHO			:= echo
 TMP				:= /tmp
+
+CMAKE_GEN		:= $(NINJA)
+CMAKE_GARG		:= -G Ninja
 
 
 # llvm toolchain
@@ -35,6 +40,7 @@ SIM_CMD			:= $(QEMU)
 PY				:= python
 PYTEST			:= runtest.py
 
+
 # make build dir
 $(shell mkdir -p $(BUILD_DIR))
 
@@ -44,7 +50,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?=  functional hidden_functional # performance final_performance # 
+MODE 			?= functional hidden_functional # performance final_performance # 
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -86,14 +92,14 @@ pyll:  build $(PYLL_TARGETS)
 pyasm: build $(PYASM_TARGETS)
 
 release: $(ALL_SRC)
-	$(CMAKE) -S . -B $(BUILD_DIR)
-	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
+	$(CMAKE) -S . -B $(BUILD_DIR) $(CMAKE_GARG)
+	$(CMAKE_GEN) -C $(BUILD_DIR) -j$(NPROC)
 
 CMAKE_BUILD_ENV	:= -DCMAKE_C_COMPILER:FILEPATH=$(CLANG) -DCMAKE_CXX_COMPILER:FILEPATH=$(CLANGXX)
 
 debug: $(ALL_SRC)
-	$(CMAKE) -DCMAKE_BUILD_TYPE="Debug" $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR)
-	$(MAKE) -C $(BUILD_DIR) -j$(NPROC) -s
+	$(CMAKE) -DCMAKE_BUILD_TYPE="Debug" $(CMAKE_BUILD_ENV) -S . -B $(BUILD_DIR) $(CMAKE_GARG)
+	$(CMAKE_GEN) -C $(BUILD_DIR) -j$(NPROC)
 
 .PHONY: build
 build: release

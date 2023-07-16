@@ -47,6 +47,10 @@ void UopMv::formatString(FILE *fp) {
         fprintf(fp, "\tfmv.w.x\t%s, zero\n", dst_->CString());
         return;
     }
+    if (dst_ == nullptr) {
+        fprintf(fp, "\tnop\n");
+        return;
+    }
     fprintf(fp, "\tmv\t%s, %s\n", dst_->CString(), src_->CString());
 }
 

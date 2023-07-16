@@ -137,9 +137,15 @@ void InternalTranslation::Translate(ReturnInst *ll) {
 }
 
 void InternalTranslation::Translate(JumpInst *ll) {
-    auto uop = new UopJump;
-
     auto tgid = ll->GetTarget()->GetBlockIdx();
+
+    if (curstat_.nxt_cfg and curstat_.nxt_cfg->GetBlockIdx() == tgid) {
+        auto nop = new UopMv;
+        curstat_.cur_blk->Push(nop);
+        return;
+    }
+
+    auto uop = new UopJump;
 
     uop->SetDstIdx(tgid);
 
