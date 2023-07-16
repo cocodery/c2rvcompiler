@@ -42,7 +42,6 @@
 
         .text
         .align	1
-        .globl	__crvc_fork
         .type	__crvc_fork, @function
         .global	__crvc_fork
 __crvc_fork:
@@ -59,7 +58,6 @@ __crvc_fork:
 
         .text
         .align	1
-        .globl	__crvc_waitid
         .type	__crvc_waitid, @function
         .global	__crvc_waitid
 __crvc_waitid:
@@ -75,7 +73,6 @@ __crvc_waitid:
 
         .text
         .align	1
-        .globl	__crvc_exit
         .type	__crvc_exit, @function
         .global	__crvc_exit
 __crvc_exit:
@@ -86,7 +83,6 @@ __crvc_exit:
 
         .text
         .align	1
-        .globl	__crvc_spinlock_lock
         .type	__crvc_spinlock_lock, @function
         .global	__crvc_spinlock_lock
 __crvc_spinlock_lock:
@@ -102,7 +98,6 @@ __crvc_spinlock_lock:
 
         .text
         .align	1
-        .globl	__crvc_spinlock_unlock
         .type	__crvc_spinlock_unlock, @function
         .global	__crvc_spinlock_unlock
 __crvc_spinlock_unlock:
@@ -113,7 +108,6 @@ __crvc_spinlock_unlock:
 */
 
 const char *libstl = R"(# experimental
-# experimental
 	.data
 	.align	4
 	.type	.LC.lock, @object
@@ -122,7 +116,6 @@ const char *libstl = R"(# experimental
 	.zero	4
 	.text
 	.align	1
-	.globl	__crvc_fork
 	.type	__crvc_fork, @function
 	.global	__crvc_fork
 __crvc_fork:
@@ -138,7 +131,6 @@ __crvc_fork:
 	.size	__crvc_fork, .-__crvc_fork
 	.text
 	.align	1
-	.globl	__crvc_waitid
 	.type	__crvc_waitid, @function
 	.global	__crvc_waitid
 __crvc_waitid:
@@ -153,7 +145,6 @@ __crvc_waitid:
 	.size	__crvc_waitid, .-__crvc_waitid
 	.text
 	.align	1
-	.globl	__crvc_exit
 	.type	__crvc_exit, @function
 	.global	__crvc_exit
 __crvc_exit:
@@ -163,7 +154,6 @@ __crvc_exit:
 	.size	__crvc_exit, .-__crvc_exit
 	.text
 	.align	1
-	.globl	__crvc_spinlock_lock
 	.type	__crvc_spinlock_lock, @function
 	.global	__crvc_spinlock_lock
 __crvc_spinlock_lock:
@@ -178,7 +168,6 @@ __crvc_spinlock_lock:
 	.size	__crvc_spinlock_lock, .-__crvc_spinlock_lock
 	.text
 	.align	1
-	.globl	__crvc_spinlock_unlock
 	.type	__crvc_spinlock_unlock, @function
 	.global	__crvc_spinlock_unlock
 __crvc_spinlock_unlock:

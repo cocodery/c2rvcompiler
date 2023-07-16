@@ -34,7 +34,7 @@ void AsmGen::formatString(FILE *fp) {
         fprintf(fp, "%s", lc->CString());
     }
 
-    fprintf(fp, "%s", libstl);
+    fprintf(fp, "%s", libfstl);
 
     // compiler tag
     fprintf(fp, "\t.ident\t\"c2rv: " VERSION "\"\n");

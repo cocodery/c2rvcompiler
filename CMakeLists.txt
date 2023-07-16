@@ -36,9 +36,11 @@ add_compile_options(-O2)
 
 # 用于调试
 add_compile_options(-g)
-add_compile_options(-Wall -Wextra -fsanitize=address)
+add_compile_options(-Wall -Wextra)
 
-add_link_options(-fsanitize=address)
+# 用于内存检测
+# add_compile_options(-fsanitize=address)
+# add_link_options(-fsanitize=address)
 
 # 包含头文件
 include_directories(
