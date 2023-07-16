@@ -12,7 +12,11 @@ class Interval {
 
     size_t len_;
 
-    size_t use_ = 0;
+    size_t use_;
+
+    bool def_;
+
+    size_t loopt_;
 
    public:
     Interval(size_t len);
@@ -29,6 +33,10 @@ class Interval {
     void UpdateEnd(size_t begin, size_t end);
 
     void Use();
+
+    void Def();
+
+    void LoopT(size_t lt);
 
     size_t UseTime();
 

@@ -26,7 +26,7 @@ struct STKElem {
     bool operator<(const STKElem &other) const { return *stk_ < *other.stk_; }
 };
 
-void RLPlanner::PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen) {
+void RLPlanner::PlanRegistersGreedy(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen) {
     std::priority_queue<VRElem> vrpq;
     std::priority_queue<VRElem> spill;
     std::priority_queue<VRElem> spill2;
@@ -202,6 +202,11 @@ void RLPlanner::spillOn(VirtualRegister *vr) {
 
         *bptr |= vr->Imgr();
     }
+}
+
+void RLPlanner::PlanRegistersBlockBased(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen) {
+    // block based
+    CRVC_UNUSED_PARAM(igpr, igprlen, fgpr, fgprlen);
 }
 
 void RLPlanner::PlanStackSpace() {

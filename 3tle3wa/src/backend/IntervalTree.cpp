@@ -2,7 +2,7 @@
 
 #include "3tle3wa/utils/logs.hh"
 
-Interval::Interval(size_t len) : intval_(len / 64 + 1, 0) { len_ = len; }
+Interval::Interval(size_t len) : intval_(len / 64 + 1, 0), len_(len), use_(0), def_(false), loopt_(1) {}
 
 size_t Interval::MaxLen() { return len_; }
 
@@ -71,7 +71,11 @@ void Interval::UpdateBegin(size_t begin) { Uncover(0, begin); }
 
 void Interval::Use() { use_ += 1; }
 
-size_t Interval::UseTime() { return use_; }
+void Interval::Def() { def_ = true; }
+
+void Interval::LoopT(size_t t) { loopt_ += t; }
+
+size_t Interval::UseTime() { return use_ * loopt_; }
 
 size_t Interval::LiveSpan() {
     size_t span = 0;

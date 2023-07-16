@@ -191,6 +191,8 @@ class UopLla : public InternalUop<UopLla> {
 
     std::string src_{};
 
+    size_t off_{};
+
     void formatString(FILE *fp) final;
 
    public:
@@ -199,6 +201,7 @@ class UopLla : public InternalUop<UopLla> {
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(std::string &src);
+    void SetOff(size_t off);
 
     OPERATION_KIND GetOpKind() const;
     void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);

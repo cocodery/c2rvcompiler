@@ -1,14 +1,7 @@
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
 
-AsmGlobalValue::AsmGlobalValue(const std::string &name, size_t len, bool uninit, size_t reserve) {
-    on_heap_ = false;
-
-    data_len_ = len;
-
-    uninit_ = uninit;
-
-    align_ = 4;
-
+AsmGlobalValue::AsmGlobalValue(const std::string &name, size_t len, bool uninit, size_t reserve)
+    : label_(nullptr), label_len_(0), values_(), on_heap_(false), data_len_(len), uninit_(uninit), align_(4) {
     values_.reserve(reserve);
 
     FILE *fp = open_memstream(&label_, &label_len_);

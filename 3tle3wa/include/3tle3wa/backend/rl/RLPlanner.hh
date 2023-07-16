@@ -65,7 +65,9 @@ class RLPlanner final : public Serializable {
 
     void Link(uint64_t income, uint64_t old);
 
-    void PlanRegisters(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen);
+    void PlanRegistersGreedy(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen);
+
+    void PlanRegistersBlockBased(size_t igpr[], size_t igprlen, size_t fgpr[], size_t fgprlen);
 
     void PlanStackSpace();
 

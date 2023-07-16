@@ -753,13 +753,25 @@ void UopLla::ToAsm(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     }
 
     if (dst_->OnStk()) {
-        auto stkp_gen = new riscv::LLA_LB(riscv::t0, src_.c_str());
-        abb->Push(stkp_gen);
+        if (off_ == 0) {
+            auto stkp_gen = new riscv::LLA_LB(riscv::t0, src_.c_str());
+            abb->Push(stkp_gen);
 
-        dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
+            dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
+        } else {
+            auto stkp_gen = new riscv::LLA_LB_OFF(riscv::t0, src_.c_str(), off_);
+            abb->Push(stkp_gen);
+
+            dst_->StoreFrom(riscv::t0, riscv::t1, abb, plan);
+        }
     } else {
-        auto stkp_gen = new riscv::LLA_LB(dst_->GetRRidWithSaving(abb), src_.c_str());
-        abb->Push(stkp_gen);
+        if (off_ == 0) {
+            auto stkp_gen = new riscv::LLA_LB(dst_->GetRRidWithSaving(abb), src_.c_str());
+            abb->Push(stkp_gen);
+        } else {
+            auto stkp_gen = new riscv::LLA_LB_OFF(dst_->GetRRidWithSaving(abb), src_.c_str(), off_);
+            abb->Push(stkp_gen);
+        }
     }
 }
 

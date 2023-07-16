@@ -39,6 +39,11 @@ LLA_LB::LLA_LB(uint64_t rd, const char *sym) : Instruction(rd) {
     GENINST("lla" TAB "%s" COMMA "%s", gpr[rd], sym);
 }
 
+LLA_LB_OFF::LLA_LB_OFF(uint64_t rd, const char *sym, uint64_t off) : Instruction(rd, riscv::zero, riscv::zero, off) {
+    // avoid format
+    GENINST("lla" TAB "%s" COMMA "%s" "+" "%" PRIu64, gpr[rd], sym, off);
+}
+
 LW_LB::LW_LB(uint64_t rd, const char *sym) : Instruction(rd) {
     // avoid format
     GENINST("lw" TAB "%s" COMMA "%s", gpr[rd], sym);
