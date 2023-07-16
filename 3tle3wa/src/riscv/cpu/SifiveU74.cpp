@@ -34,6 +34,15 @@ Transaction LLA_LB::ToTrx() {
                        .redundant_ = redundant};
 }
 
+Transaction LLA_LB_OFF::ToTrx() {
+    bool redundant = false;
+    return Transaction{.resource_required_{},
+                       .resource_occupied_ = rd_,
+                       .other_info_{imm_},
+                       .optype_ = OpType::IntegerOperation,
+                       .redundant_ = redundant};
+}
+
 Transaction LW_LB::ToTrx() {
     bool redundant = false;
     return Transaction{.resource_required_{},

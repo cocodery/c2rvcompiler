@@ -40,6 +40,7 @@ class Instruction : public AsmInstruction {
 
 RVINST(LA_LB, uint64_t rd, const char *sym);
 RVINST(LLA_LB, uint64_t rd, const char *sym);
+RVINST(LLA_LB_OFF, uint64_t rd, const char *sym, uint64_t off);
 
 RVINST(LW_LB, uint64_t rd, const char *sym);
 RVINST(LD_LB, uint64_t rd, const char *sym);

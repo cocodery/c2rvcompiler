@@ -56,6 +56,8 @@ void UopLla::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
 void UopLla::SetSrc(std::string &src) { src_ = src; }
 
+void UopLla::SetOff(size_t off) { off_ = off; }
+
 void UopLoad::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
 void UopLoad::SetBase(VirtualRegister *base) { base_ = base; }

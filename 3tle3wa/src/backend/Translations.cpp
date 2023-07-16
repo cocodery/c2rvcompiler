@@ -1133,7 +1133,7 @@ void InternalTranslation::Translate(BitCastInst *ll) {
         return;
     }
 
-    rsvr = curstat_.planner->GetVReg(var->GetVariableIdx());
+    rsvr = curstat_.planner->GetVReg(varidx);
     if (res->GetBaseType()->IsPointer()) {
         nwvr = curstat_.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
     } else {
@@ -1366,38 +1366,40 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
             imm = cinfo.v64_.u64_;
         }
 
-        if (ImmWithin(12, imm)) {
-            immoff = true;
+        if (not base->IsGlobalValue()) {
+            if (ImmWithin(12, imm)) {
+                immoff = true;
 
-            bool gain = true;
+                bool gain = true;
 
-            for (auto &&use : res->GetUserList()) {
-                switch (use->GetOpCode()) {
-                    case BitCast:
-                    case Load:
-                    case Store:
+                for (auto &&use : res->GetUserList()) {
+                    switch (use->GetOpCode()) {
+                        case BitCast:
+                        case Load:
+                        case Store:
+                            break;
+                        default:
+                            gain = false;
+                            break;
+                    }
+                    if (not gain) {
                         break;
-                    default:
-                        gain = false;
-                        break;
+                    }
                 }
-                if (not gain) {
-                    break;
+
+                if (base->IsVariable() and gain) {
+                    auto addr = dynamic_cast<Variable *>(base.get());
+                    Assert(addr, "bad dynamic cast");
+
+                    auto vridx = res->GetVariableIdx();
+                    gep_map[vridx] = std::make_pair(addr->GetVariableIdx(), (size_t)imm);
+                    return;
                 }
+            } else {
+                off = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+
+                li(off, cinfo);
             }
-
-            if (base->IsVariable() and gain) {
-                auto addr = dynamic_cast<Variable *>(base.get());
-                Assert(addr, "bad dynamic cast");
-
-                auto vridx = res->GetVariableIdx();
-                gep_map[vridx] = std::make_pair(addr->GetVariableIdx(), (size_t)imm);
-                return;
-            }
-        } else {
-            off = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-
-            li(off, cinfo);
         }
     } else {
         panic("unexpected");
@@ -1411,32 +1413,30 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
 
         auto gvidx = gv->GetGlobalValueIdx();
 
-        auto glb_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-        auto glb_name = std::string(gv_map_.at(gvidx)->Label());
-        auto uop_lla = new UopLla;
-        uop_lla->SetSrc(glb_name);
-        uop_lla->SetDst(glb_addr);
-
-        curstat_.cur_blk->Push(uop_lla);
-
-        if (immoff) {
-            auto uop_add = new UopIBinImm;
-            uop_add->SetLhs(glb_addr);
-            uop_add->SetImm(imm);
-            uop_add->SetDst(resvr);
-            uop_add->SetKind(IBIN_KIND::ADD);
-
-            curstat_.cur_blk->Push(uop_add);
+        if (off == nullptr) {
+            auto glb_name = std::string(gv_map_.at(gvidx)->Label());
+            auto uop_lla = new UopLla;
+            uop_lla->SetSrc(glb_name);
+            uop_lla->SetOff(imm);
+            uop_lla->SetDst(resvr);
+            curstat_.cur_blk->Push(uop_lla);
         } else {
+            auto glb_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+            auto glb_name = std::string(gv_map_.at(gvidx)->Label());
+            auto uop_lla = new UopLla;
+            uop_lla->SetSrc(glb_name);
+            uop_lla->SetDst(glb_addr);
+            uop_lla->SetOff(0);
+
             auto uop_add = new UopIBin;
             uop_add->SetLhs(glb_addr);
             uop_add->SetRhs(off);
             uop_add->SetDst(resvr);
             uop_add->SetKind(IBIN_KIND::ADD);
 
+            curstat_.cur_blk->Push(uop_lla);
             curstat_.cur_blk->Push(uop_add);
         }
-
     } else if (base->IsVariable()) {
         auto addr = dynamic_cast<Variable *>(base.get());
         Assert(addr, "bad dynamic cast");

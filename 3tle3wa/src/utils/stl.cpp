@@ -47,7 +47,7 @@
         .global	__crvc_fork
 __crvc_fork:
         li	a7, __NR_clone
-        mv	a6, zero
+        mv	a5, zero
         mv	a4, zero
         mv	a3, zero
         mv	a2, zero
@@ -63,16 +63,13 @@ __crvc_fork:
         .type	__crvc_waitid, @function
         .global	__crvc_waitid
 __crvc_waitid:
-        fence	rw, rw
-        fence.i
-        addi	sp, sp, -16
         li	a7, __NR_waitid
+        mv	a4, zero
         li	a3, WEXITED
         mv	a2, zero
         mv	a1, zero
         li	a0, P_ALL
         ecall
-        addi	sp, sp, 16
         ret
         .size	__crvc_waitid, .-__crvc_waitid
 
@@ -116,6 +113,7 @@ __crvc_spinlock_unlock:
 */
 
 const char *libstl = R"(# experimental
+# experimental
 	.data
 	.align	4
 	.type	.LC.lock, @object
@@ -129,7 +127,7 @@ const char *libstl = R"(# experimental
 	.global	__crvc_fork
 __crvc_fork:
 	li	a7, 220
-	mv	a6, zero
+	mv	a5, zero
 	mv	a4, zero
 	mv	a3, zero
 	mv	a2, zero
@@ -144,15 +142,13 @@ __crvc_fork:
 	.type	__crvc_waitid, @function
 	.global	__crvc_waitid
 __crvc_waitid:
-	fence	rw, rw
-	addi	sp, sp, -16
 	li	a7, 95
+	mv	a4, zero
 	li	a3, 4
 	mv	a2, zero
 	mv	a1, zero
 	li	a0, 0
 	ecall
-	addi	sp, sp, 16
 	ret
 	.size	__crvc_waitid, .-__crvc_waitid
 	.text

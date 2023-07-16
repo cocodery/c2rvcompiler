@@ -46,3 +46,14 @@ extern uint64_t compile_start_time__;
 #define Assert(expr, fmt, ...)
 
 #endif
+
+template <typename T>
+void CRVC_UNUSED_PARAM(T front) {
+    (void)front;
+}
+
+template <typename T, typename... Args>
+void CRVC_UNUSED_PARAM(T front, Args&&... args) {
+    (void)front;
+    CRVC_UNUSED_PARAM(args...);
+}

@@ -85,9 +85,9 @@ void UopCall::BroadCastCall(size_t lbidx) {
 
 void RLProgress::rvAssigner() {
     if (has_call_other_ or has_lib_call_) {
-        planner_->PlanRegisters(i_gpr_callee_first, i_gpr_callee_first_len, f_gpr_callee_first, f_gpr_callee_first_len);
+        planner_->PlanRegistersGreedy(i_gpr_callee_first, i_gpr_callee_first_len, f_gpr_callee_first, f_gpr_callee_first_len);
     } else {
-        planner_->PlanRegisters(i_gpr_caller_first, i_gpr_caller_first_len, f_gpr_caller_first, f_gpr_caller_first_len);
+        planner_->PlanRegistersGreedy(i_gpr_caller_first, i_gpr_caller_first_len, f_gpr_caller_first, f_gpr_caller_first_len);
     }
 
     planner_->PlanStackSpace();
