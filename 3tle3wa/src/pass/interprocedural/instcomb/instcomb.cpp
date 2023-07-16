@@ -12,6 +12,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
 #include "3tle3wa/utils/logs.hh"
 
 InstComb::BinType InstComb::GetBinType(const BaseValue *lhs, const BaseValue *rhs) {
@@ -51,6 +52,11 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             // process binary-inst
             auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
             auto bin_opcode = bin_inst->GetOpCode();
+
+            if (!(OP_ADD <= bin_opcode && bin_opcode <= OP_DIV)) {
+                continue;
+            }
+
             auto &&bin_lhs = bin_inst->GetLHS();
             auto &&bin_rhs = bin_inst->GetRHS();
 
@@ -62,14 +68,99 @@ void InstComb::InstCombine(NormalFuncPtr func) {
                 continue;
             }
 
+            bool iop = bin_inst->IsIBinaryInst();
             auto bin_type = GetBinType(bin_lhs.get(), bin_rhs.get());
+
             if (bin_type == LVRV) {
                 // bin_inst = variable OP variable
-                if (lhs_inst && rhs_inst) {
-                } else if (lhs_inst) {
-                } else if (rhs_inst) {
-                } else {
-                    assert(false);
+                if (lhs_inst && lhs_inst->IsTwoOprandInst() && lhs_inst->GetParent() == node) {
+                    auto &&bin_lhs_inst = std::static_pointer_cast<BinaryInstruction>(lhs_inst);
+                    auto bin_lhs_opcode = bin_lhs_inst->GetOpCode();
+
+                    if (!(OP_ADD <= bin_lhs_opcode && bin_lhs_opcode <= OP_DIV)) {
+                        continue;
+                    }
+
+                    auto &&bin_lhs_lhs = bin_lhs_inst->GetLHS();
+                    auto &&bin_lhs_rhs = bin_lhs_inst->GetRHS();
+
+                    assert(bin_lhs == bin_lhs_inst->GetResult());
+                    assert((bin_inst->IsIBinaryInst() && bin_lhs_inst->IsIBinaryInst()) ||
+                           (bin_inst->IsFBinaryInst() && bin_lhs_inst->IsFBinaryInst()));
+
+                    auto lhs_bin_type = GetBinType(bin_lhs_lhs.get(), bin_lhs_rhs.get());
+
+                    if (rhs_inst && rhs_inst->IsTwoOprandInst() && rhs_inst->GetParent() == node) {
+                        auto &&bin_rhs_inst = std::static_pointer_cast<BinaryInstruction>(rhs_inst);
+                        auto bin_rhs_opcode = bin_rhs_inst->GetOpCode();
+
+                        if (!(OP_ADD <= bin_rhs_opcode && bin_rhs_opcode <= OP_DIV)) {
+                            continue;
+                        }
+
+                        auto &&bin_rhs_lhs = bin_rhs_inst->GetLHS();
+                        auto &&bin_rhs_rhs = bin_rhs_inst->GetRHS();
+
+                        assert(bin_rhs == bin_rhs_inst->GetResult());
+                        assert((bin_inst->IsIBinaryInst() && bin_rhs_inst->IsIBinaryInst()) ||
+                               (bin_inst->IsFBinaryInst() && bin_rhs_inst->IsFBinaryInst()));
+
+                        auto rhs_bin_type = GetBinType(bin_rhs_lhs.get(), bin_rhs_rhs.get());
+
+                        bool combine1 = (bin_lhs_lhs == bin_lhs_rhs) && (bin_lhs_lhs == bin_rhs);
+                        bool combine2 = (bin_lhs == bin_rhs_lhs) && (bin_rhs_lhs == bin_rhs_rhs);
+
+                        if (combine1 || combine2) {
+                            bin_lhs->RemoveUser(bin_inst);
+                            bin_rhs->RemoveUser(bin_inst);
+                            if (combine1) {
+                                if (bin_opcode == OP_ADD && bin_lhs_opcode == OP_ADD) {
+                                    bin_inst->SetOpCode(OP_MUL);
+                                    bin_inst->SetLHS(bin_rhs);
+                                    bin_rhs->InsertUser(bin_inst);
+                                    bin_inst->SetRHS(iop ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(3))
+                                                         : ConstantAllocator::FindConstantPtr(static_cast<float>(3)));
+                                } else if (bin_opcode == OP_ADD && bin_lhs_opcode == OP_SUB) {
+                                } else if (bin_opcode == OP_SUB && bin_lhs_opcode == OP_ADD) {
+                                } else if (bin_opcode == OP_SUB && bin_lhs_opcode == OP_SUB) {
+                                }
+                            } else {
+                                if (bin_opcode == OP_ADD && bin_rhs_opcode == OP_ADD) {
+                                    bin_inst->SetOpCode(OP_MUL);
+                                    bin_inst->SetLHS(bin_lhs);
+                                    bin_lhs->InsertUser(bin_inst);
+                                    bin_inst->SetRHS(iop ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(3))
+                                                         : ConstantAllocator::FindConstantPtr(static_cast<float>(3)));
+                                } else if (bin_opcode == OP_ADD && bin_rhs_opcode == OP_SUB) {
+                                } else if (bin_opcode == OP_SUB && bin_rhs_opcode == OP_ADD) {
+                                } else if (bin_opcode == OP_SUB && bin_rhs_opcode == OP_SUB) {
+                                }
+                            }
+                            continue;
+                        }
+
+                        CRVC_UNUSE bool combine3 = (lhs_bin_type == LVRC) && (bin_lhs_lhs == bin_rhs);
+                        bool combine4 = (rhs_bin_type == LVRC) && (bin_rhs_lhs == bin_lhs);
+                        if (combine4) {
+                            if (bin_opcode == OP_ADD && bin_rhs_opcode == OP_MUL) {
+                                bin_inst->SetOpCode(OP_MUL);
+                                bin_rhs->RemoveUser(bin_inst);
+
+                                auto &&bin_rhs_rhs_constant = std::static_pointer_cast<Constant>(bin_rhs_rhs);
+
+                                auto &&constant = iop ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(
+                                                            std::get<int32_t>(bin_rhs_rhs_constant->GetValue()) + 1))
+                                                      : ConstantAllocator::FindConstantPtr(static_cast<float>(
+                                                            std::get<float>(bin_rhs_rhs_constant->GetValue()) + 1));
+
+                                bin_inst->SetRHS(constant);
+
+                                continue;
+                            }
+                        }
+                    } else if (rhs_inst == nullptr) {
+                    }
+                } else if (rhs_inst && rhs_inst->IsTwoOprandInst() && rhs_inst->GetParent() == node) {
                 }
             } else if (bin_type == LVRC && lhs_inst && lhs_inst->IsTwoOprandInst() && lhs_inst->GetParent() == node) {
                 // bin_inst = variable OP constant
@@ -77,18 +168,18 @@ void InstComb::InstCombine(NormalFuncPtr func) {
 
                 auto &&bin_lhs_inst = std::static_pointer_cast<BinaryInstruction>(lhs_inst);
                 auto bin_lhs_opcode = bin_lhs_inst->GetOpCode();
-                auto &&bin_lhs_lhs = bin_lhs_inst->GetLHS();
-                auto &&bin_lhs_rhs = bin_lhs_inst->GetRHS();
-                assert(bin_lhs == bin_lhs_inst->GetResult());
 
-                if (!((OP_ADD <= bin_opcode && bin_opcode <= OP_DIV) &&
-                      (OP_ADD <= bin_lhs_opcode && bin_lhs_opcode <= OP_DIV))) {
+                if (!(OP_ADD <= bin_lhs_opcode && bin_lhs_opcode <= OP_DIV)) {
                     continue;
                 }
+
+                auto &&bin_lhs_lhs = bin_lhs_inst->GetLHS();
+                auto &&bin_lhs_rhs = bin_lhs_inst->GetRHS();
+
+                assert(bin_lhs == bin_lhs_inst->GetResult());
                 assert((bin_inst->IsIBinaryInst() && bin_lhs_inst->IsIBinaryInst()) ||
                        (bin_inst->IsFBinaryInst() && bin_lhs_inst->IsFBinaryInst()));
 
-                bool iop = (bin_inst->IsIBinaryInst() && bin_lhs_inst->IsIBinaryInst());
                 auto lhs_bin_type = GetBinType(bin_lhs_lhs.get(), bin_lhs_rhs.get());
                 if (lhs_bin_type == LVRC) {
                     auto &&bin_lhs_rhs_constant = std::static_pointer_cast<Constant>(bin_lhs_rhs);
@@ -208,18 +299,18 @@ void InstComb::InstCombine(NormalFuncPtr func) {
 
                 auto &&bin_rhs_inst = std::static_pointer_cast<BinaryInstruction>(rhs_inst);
                 auto bin_rhs_opcode = bin_rhs_inst->GetOpCode();
-                auto &&bin_rhs_lhs = bin_rhs_inst->GetLHS();
-                auto &&bin_rhs_rhs = bin_rhs_inst->GetRHS();
-                assert(bin_rhs == bin_rhs_inst->GetResult());
 
-                if (!((OP_ADD <= bin_opcode && bin_opcode <= OP_DIV) &&
-                      (OP_ADD <= bin_rhs_opcode && bin_rhs_opcode <= OP_DIV))) {
+                if (!(OP_ADD <= bin_rhs_opcode && bin_rhs_opcode <= OP_DIV)) {
                     continue;
                 }
+
+                auto &&bin_rhs_lhs = bin_rhs_inst->GetLHS();
+                auto &&bin_rhs_rhs = bin_rhs_inst->GetRHS();
+
+                assert(bin_rhs == bin_rhs_inst->GetResult());
                 assert((bin_inst->IsIBinaryInst() && bin_rhs_inst->IsIBinaryInst()) ||
                        (bin_inst->IsFBinaryInst() && bin_rhs_inst->IsFBinaryInst()));
 
-                bool iop = (bin_inst->IsIBinaryInst() && bin_rhs_inst->IsIBinaryInst());
                 auto rhs_bin_type = GetBinType(bin_rhs_lhs.get(), bin_rhs_rhs.get());
                 if (rhs_bin_type == LVRC) {
                     auto &&bin_rhs_rhs_constant = std::static_pointer_cast<Constant>(bin_rhs_rhs);
@@ -334,4 +425,5 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             }
         }
     }
+    return;
 }
