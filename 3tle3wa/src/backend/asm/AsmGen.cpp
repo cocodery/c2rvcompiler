@@ -21,7 +21,6 @@ void AsmGen::formatString(FILE *fp) {
 
             // stack aligned
             "\t.attribute stack_align, 16\n");
-
     for (auto &&gv : gv_storage_) {
         fprintf(fp, "%s", gv->CString());
     }
@@ -30,6 +29,10 @@ void AsmGen::formatString(FILE *fp) {
         fprintf(fp, "%s", pg->CString());
     }
 
+    if (not lc_storage_.empty()) {
+        fprintf(fp,
+                "\t.section\t.srodata.cst4, \"aM\", @progbits, 4\n");
+    }
     for (auto &&lc : lc_storage_) {
         fprintf(fp, "%s", lc->CString());
     }

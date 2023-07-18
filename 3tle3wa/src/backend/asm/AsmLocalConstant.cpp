@@ -6,14 +6,6 @@ AsmLocalConstant::~AsmLocalConstant() {}
 
 void AsmLocalConstant::formatString(FILE *fp) {
     fprintf(fp,
-            // section
-            // "\t.section\t.srodata\n"
-            "\t.section\t.rodata\n"
-
-            // declare global
-            "\t.global\t.LC%" PRIu64
-            "\n"
-
             // alignment
             "\t.align\t%" PRIu64
             "\n"
@@ -31,5 +23,5 @@ void AsmLocalConstant::formatString(FILE *fp) {
             ":\n"
 
             "\t.word\t%" PRIu32 "\n",
-            idx_, align_, idx_, idx_, data_len_, idx_, values_);
+            align_, idx_, idx_, data_len_, idx_, values_);
 }

@@ -6,59 +6,12 @@
  * @attention please follow the license
  */
 
-const char *libfstl = R"(# experimental
-	.data
-	.align	4
-	.type	.LC.tnum, @object
-	.size	.LC.tnum, 4
-.LC.tnum:
-	.zero	4
-	.text
-	.align	1
-	.type	__crvc_fork, @function
-	.global	__crvc_fork
-__crvc_fork:
-	lla	t0, .LC.tnum
-	li	t1, 1
-	amoadd.w.aqrl	zero, t1, 0(t0)
-	li	a7, 220
-	mv	a5, zero
-	mv	a4, zero
-	mv	a3, zero
-	mv	a2, zero
-	mv	a1, sp
-	li	a0, 256
-	ecall
-	ret
-	.size	__crvc_fork, .-__crvc_fork
-	.text
-	.align	1
-	.type	__crvc_exit, @function
-	.global	__crvc_exit
-__crvc_exit:
-	lla	t0, .LC.tnum
-	li	t1, -1
-	amoadd.w.aqrl	zero, t1, 0(t0)
-	li	a7, 93
-	li	a0, 0
-	ecall
-	.size	__crvc_exit, .-__crvc_exit
-	.text
-	.align	1
-	.type	__crvc_pass, @function
-	.global	__crvc_pass
-__crvc_pass:
-	lla	t0, .LC.tnum
-.trypass:
-	li	a7, 158
-	ecall
-	lw	t1, 0(t0)
-	bnez	t1, .trypass
-	ret
-	.size	__crvc_pass, .-__crvc_pass
-)";
-
-const char *libfstl2 = R"(# experimental
+const char *libfstl = R"(
+	.equ	SYS_exit, 93
+	.equ	SYS_sched_yield, 158
+	.equ	SYS_clone, 220
+	.equ	CLONE_VM, 0x00000100
+	.equ	EXIT_SUCCESS, 0
 	.data
 	.align	4
 	.type	.LC.tcreated, @object
@@ -73,46 +26,85 @@ const char *libfstl2 = R"(# experimental
 	.zero	4
 	.text
 	.align	1
+	.globl	__crvc_fork
 	.type	__crvc_fork, @function
 	.global	__crvc_fork
 __crvc_fork:
 	lw	a0, .LC.tcreated
 	addi	a0, a0, 1
 	sw	a0, .LC.tcreated, a1
-	li	a7, 220
+	li	a7, SYS_clone
 	mv	a5, zero
 	mv	a4, zero
 	mv	a3, zero
 	mv	a2, zero
 	mv	a1, sp
-	li	a0, 256
+	li	a0, CLONE_VM
 	ecall
 	ret
 	.size	__crvc_fork, .-__crvc_fork
 	.text
 	.align	1
+	.globl	__crvc_exit
 	.type	__crvc_exit, @function
 	.global	__crvc_exit
 __crvc_exit:
 	lla	a0, .LC.texited
 	li	a1, 1
 	amoadd.w.aqrl	zero, a1, 0(a0)
-	li	a7, 93
-	li	a0, 0
+	li	a7, SYS_exit
+	li	a0, EXIT_SUCCESS
 	ecall
 	.size	__crvc_exit, .-__crvc_exit
 	.text
 	.align	1
+	.globl	__crvc_pass
 	.type	__crvc_pass, @function
 	.global	__crvc_pass
 __crvc_pass:
 	ld	a1, .LC.tcreated
 	lla	a2, .LC.texited
 .trypass:
-	li	a7, 158
+	li	a7, SYS_sched_yield
 	ecall
 	amoor.w.aqrl	a3, zero, 0(a2)
 	bne	a3, a1, .trypass
 	ret
 	.size	__crvc_pass, .-__crvc_pass
+	.data
+	.align	4
+	.type	.LC.lock, @object
+	.size	.LC.lock, 4
+.LC.lock:
+	.zero	4
+	.text
+	.align	1
+	.type	__crvc_spinlock_lock, @function
+	.global	__crvc_spinlock_lock
+__crvc_spinlock_lock:
+	lla	a0, .LC.lock
+	li	a1, 1
+	lw	a2, 0(a0)
+	bnez	a2, .trylock
+	amoswap.w.aq	a2, a1, 0(a0)
+	bnez	a2, .trylock
+	ret
+.trylock:
+	li	a7, SYS_sched_yield
+	ecall
+	lw	a2, 0(a0)
+	bnez	a2, .trylock
+	amoswap.w.aq	a2, a1, 0(a0)
+	bnez	a2, .trylock
+	ret
+	.size	__crvc_spinlock_lock, .-__crvc_spinlock_lock
+	.text
+	.align	1
+	.type	__crvc_spinlock_unlock, @function
+	.global	__crvc_spinlock_unlock
+__crvc_spinlock_unlock:
+	lla	a0, .LC.lock
+	amoswap.w.rl	zero, zero, 0(a0)
+	ret
+	.size	__crvc_spinlock_unlock, .-__crvc_spinlock_unlock
 )";
