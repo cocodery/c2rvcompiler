@@ -1,5 +1,6 @@
 #include "3tle3wa/frontend/AstVisitor.hh"
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -81,6 +82,7 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
     in_loop = false;
     out_loop_block = nullptr;
 
+    loop_depth = 0;
     cur_loop = nullptr;
 
     ret_addr = nullptr;
@@ -326,6 +328,8 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_func = function;
 
     cur_loop = &function->loops;
+    assert(loop_depth == 0);
+    cur_loop->loop_depth = loop_depth++;
 
     cur_block = cur_func->CreateEntry();
 
@@ -359,6 +363,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     out_loop_block = nullptr;
     ret_addr = nullptr;
     ret_block = nullptr;
+    loop_depth = 0;
     cur_loop = nullptr;
     cur_block = nullptr;
     cur_func = nullptr;
@@ -523,7 +528,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     in_loop = true;
 
     Loop *last_loop = cur_loop;
-    Loop *loop = new Loop(cur_loop);
+    Loop *loop = new Loop(cur_loop, nullptr, nullptr, nullptr, loop_depth++);
     cur_loop->sub_loops.push_back(loop);
     cur_loop = loop;
 
@@ -581,6 +586,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
     target_continue = last_target_continue;
     cur_table = last_table;
+    loop_depth -= 1;
     cur_loop = last_loop;
     cur_block = loop_exit;
     in_loop = last_in_loop;

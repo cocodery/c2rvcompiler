@@ -29,6 +29,7 @@ class AstVisitor : public SysYBaseVisitor {
     bool in_loop;
     CfgNodePtr out_loop_block;
 
+    loop_depth_t loop_depth;
     Loop *cur_loop;
 
     VariablePtr ret_addr;
