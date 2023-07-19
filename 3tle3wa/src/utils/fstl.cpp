@@ -82,20 +82,20 @@ __crvc_pass:
 	.type	__crvc_spinlock_lock, @function
 	.global	__crvc_spinlock_lock
 __crvc_spinlock_lock:
-	lla	a0, .LC.lock
-	li	a1, 1
-	lw	a2, 0(a0)
-	bnez	a2, .trylock
-	amoswap.w.aq	a2, a1, 0(a0)
-	bnez	a2, .trylock
+	lla	a1, .LC.lock
+	li	a2, 1
+	lw	a3, 0(a1)
+	bnez	a3, .trylock
+	amoswap.w.aq	a3, a2, 0(a1)
+	bnez	a3, .trylock
 	ret
 .trylock:
 	li	a7, SYS_sched_yield
 	ecall
-	lw	a2, 0(a0)
-	bnez	a2, .trylock
-	amoswap.w.aq	a2, a1, 0(a0)
-	bnez	a2, .trylock
+	lw	a3, 0(a1)
+	bnez	a3, .trylock
+	amoswap.w.aq	a3, a2, 0(a1)
+	bnez	a3, .trylock
 	ret
 	.size	__crvc_spinlock_lock, .-__crvc_spinlock_lock
 	.text
