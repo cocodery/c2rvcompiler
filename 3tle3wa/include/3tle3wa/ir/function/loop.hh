@@ -7,26 +7,30 @@
 
 #include "3tle3wa/ir/function/cfgNode.hh"
 
-typedef std::list<CtrlFlowGraphNode *> LoopBlks;
+typedef std::list<CtrlFlowGraphNode *> LoopBlocks;
 
 typedef int32_t loop_depth_t;
 
 struct Loop {
     Loop *parent;
+    loop_depth_t loop_depth;
 
     CtrlFlowGraphNode *before_loop;
 
     CtrlFlowGraphNode *cond_begin;
     CtrlFlowGraphNode *cond_end;
-    CtrlFlowGraphNode *loop_exit;
 
-    loop_depth_t loop_depth;
+    CtrlFlowGraphNode *body_begin;
+    CtrlFlowGraphNode *body_end;
+
+    CtrlFlowGraphNode *loop_exit;
 
     std::list<Loop *> sub_loops;
 
-    Loop(Loop *parent = nullptr, CtrlFlowGraphNode *begin = nullptr, CtrlFlowGraphNode *end = nullptr,
-         CtrlFlowGraphNode *exit = nullptr, loop_depth_t _depth = 0)
-        : parent(parent), cond_begin(begin), cond_end(end), loop_exit(exit), loop_depth(_depth) {}
+    Loop(Loop *parent = nullptr, loop_depth_t _depth = 0) : parent(parent), loop_depth(_depth) {}
+
+    LoopBlocks GetCondBodyBlks();
+    LoopBlocks GetLoopBodyBlks();
 };
 
 void PrintLoop(Loop &);

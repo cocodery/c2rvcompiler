@@ -528,7 +528,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     in_loop = true;
 
     Loop *last_loop = cur_loop;
-    Loop *loop = new Loop(cur_loop, nullptr, nullptr, nullptr, loop_depth++);
+    Loop *loop = new Loop(cur_loop, loop_depth++);
     cur_loop->sub_loops.push_back(loop);
     cur_loop = loop;
 
@@ -558,9 +558,11 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     cur_table = NewLocalTable(last_table);
     CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
+    cur_loop->body_begin = loop_begin.get();
     ctx->stmt()->accept(this);
     block_before_cond->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
     CfgNodePtr loop_end = cur_block;
+    cur_loop->body_end = loop_end.get();
     loop_end->AppendBlkAttr(LOOPEND);
 
     loop_end->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, loop_end));
