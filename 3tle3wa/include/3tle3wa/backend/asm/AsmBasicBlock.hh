@@ -26,7 +26,7 @@ class AsmBasicBlock : public Serializable {
 
     void rmNeedless();
 
-    void rmNeedlessStore();
+    void rmNeedlessLS();
 
     // ----- combines -----
 

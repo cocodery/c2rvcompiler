@@ -19,7 +19,7 @@ void AsmBasicBlock::Peepholes() {
 
 void AsmBasicBlock::rmNeedless() {
     //
-    rmNeedlessStore();
+    rmNeedlessLS();
 }
 
 void AsmBasicBlock::combineInstruction() {

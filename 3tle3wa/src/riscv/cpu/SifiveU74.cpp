@@ -470,7 +470,7 @@ Transaction LD::ToTrx() {
     bool redundant = false;
     return Transaction{.resource_required_{rs_},
                        .resource_occupied_ = rd_,
-                       .other_info_{},
+                       .other_info_{imm_},
                        .optype_ = OpType::LoadData,
                        .redundant_ = redundant};
 }
@@ -479,7 +479,7 @@ Transaction SW::ToTrx() {
     bool redundant = false;
     return Transaction{.resource_required_{rs_, rt_},
                        .resource_occupied_{},
-                       .other_info_{},
+                       .other_info_{imm_},
                        .optype_ = OpType::StoreData,
                        .redundant_ = redundant};
 }
@@ -488,7 +488,7 @@ Transaction SD::ToTrx() {
     bool redundant = false;
     return Transaction{.resource_required_{rs_, rt_},
                        .resource_occupied_{},
-                       .other_info_{},
+                       .other_info_{imm_},
                        .optype_ = OpType::StoreData,
                        .redundant_ = redundant};
 }

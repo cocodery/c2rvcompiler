@@ -261,19 +261,29 @@ all: build
 
 OUTPUT_IN 		:= $(addsuffix .in,$(basename $(TEST_CASES)))
 OUTPUT_OUT  	:= $(addsuffix .out,$(basename $(TEST_CASES)))
+OUTPUT_ASM_O2	:= $(OUTPUT_ASM)
 
 $(OUTPUT_ASM): %.s:%.sy
 	$(BINARY) -S -o $@ $<
+
+# .ONESHELL:
+# $(OUTPUT_ASM_O2): %.s:%.sy
+# 	cat $< \
+# 	| sed -e 's/^\s*const\s*[a-z]*\s*\([a-zA-Z_]*\)\s*=\s*\([0-9]*\)\s*;$$/#define \1 \2/g' \
+# 	| sed -e 's/starttime()/_sysy_starttime(__LINE__)/g' \
+# 	| sed -e 's/stoptime()/_sysy_stoptime(__LINE__)/g' \
+# 	 > $(TMP)/main.c
+# 	$(RVCC_linux) -O2 -S -o $@ $(TMP)/main.c
 
 .ONESHELL:
 asmpk: $(OUTPUT_ASM)
 	mkdir -p $(BUILD_DIR)/starfive
 	mv $^ $(BUILD_DIR)/starfive/
 	rm $^
-	cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
-	cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
-	cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))
-	cd $(BUILD_DIR)
-	tar -zcvf starry.tar.gz starfive
-	cp starry.tar.gz /mnt/d/code
-	rm -rf starfive
+# cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
+# cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
+# cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))
+# cd $(BUILD_DIR)
+# tar -zcvf starry.tar.gz starfive
+# cp starry.tar.gz /mnt/d/code
+# rm -rf starfive

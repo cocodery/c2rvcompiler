@@ -13,7 +13,7 @@
 #include "3tle3wa/riscv/cpu/SifiveU74.hh"
 #include "3tle3wa/riscv/spec.hh"
 
-void AsmBasicBlock::rmNeedlessStore() {
+void AsmBasicBlock::rmNeedlessLS() {
     // for now only focus on inst pair
 
     auto nxt_it = insts_.begin();
@@ -31,48 +31,74 @@ void AsmBasicBlock::rmNeedlessStore() {
             continue;
         }
 
-        Transaction *load_trx = nullptr;
-        Transaction *store_trx = nullptr;
-
         auto &&ctrx = rv_cur->ToTrx();
-        auto &&ntrx = rv_cur->ToTrx();
+        auto &&ntrx = rv_nxt->ToTrx();
 
-        if (ctrx.optype_ == riscv::OpType::LoadData) {
-            load_trx = &ctrx;
-        } else if (ctrx.optype_ == riscv::OpType::StoreData) {
-            store_trx = &ctrx;
-        }
+        bool redundant = false;
 
-        if (ntrx.optype_ == riscv::OpType::LoadData) {
-            load_trx = &ntrx;
-        } else if (ntrx.optype_ == riscv::OpType::StoreData) {
-            store_trx = &ntrx;
-        }
-
-        if (load_trx == nullptr or store_trx == nullptr) {
-            cur_it = nxt_it++;
-            continue;
-        }
-
-        auto ls_redundant = [](Transaction &load, Transaction &store) -> bool {
-            if (load.resource_occupied_ == store.resource_required_.at(0)) {
-                if (load.other_info_.at(0) == store.other_info_.at(0)) {
-                    if (load.resource_required_.at(0) == store.resource_required_.at(1)) {
-                        return true;
-                    }
-                }
+        if (auto c = dynamic_cast<riscv::LD *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::LD *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::SD *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(1);
             }
-            return false;
-        };
+        } else if (auto c = dynamic_cast<riscv::SD *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::LD *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::SD *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(1);
+            }
+        } else if (auto c = dynamic_cast<riscv::LW *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::LW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::SW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(1);
+            }
+        } else if (auto c = dynamic_cast<riscv::SW *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::LW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::SW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(1);
+            }
+        } else if (auto c = dynamic_cast<riscv::FLW *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::FLW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::FSW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_occupied_ == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(1);
+            }
+        } else if (auto c = dynamic_cast<riscv::FSW *>(rv_cur); c != nullptr) {
+            if (auto n = dynamic_cast<riscv::FLW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_occupied_ and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(0);
+            } else if (auto n = dynamic_cast<riscv::FSW *>(rv_nxt); n != nullptr) {
+                redundant = ctrx.other_info_.at(0) == ntrx.other_info_.at(0) and
+                            ctrx.resource_required_.at(0) == ntrx.resource_required_.at(0) and
+                            ctrx.resource_required_.at(1) == ntrx.resource_required_.at(1);
+            }
+        }
 
-        auto cond = (dynamic_cast<riscv::LD *>(rv_cur) != nullptr and dynamic_cast<riscv::SD *>(rv_nxt) != nullptr) or
-                    (dynamic_cast<riscv::SD *>(rv_cur) != nullptr and dynamic_cast<riscv::LD *>(rv_nxt) != nullptr) or
-                    (dynamic_cast<riscv::LW *>(rv_cur) != nullptr and dynamic_cast<riscv::SW *>(rv_nxt) != nullptr) or
-                    (dynamic_cast<riscv::SW *>(rv_cur) != nullptr and dynamic_cast<riscv::LW *>(rv_nxt) != nullptr) or
-                    (dynamic_cast<riscv::FLW *>(rv_cur) != nullptr and dynamic_cast<riscv::FSW *>(rv_nxt) != nullptr) or
-                    (dynamic_cast<riscv::FSW *>(rv_cur) != nullptr and dynamic_cast<riscv::FLW *>(rv_nxt) != nullptr);
-
-        if (cond and ls_redundant(*load_trx, *store_trx)) {
+        if (redundant) {
             nxt_it = insts_.erase(nxt_it);
             continue;
         }
