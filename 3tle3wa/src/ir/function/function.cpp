@@ -14,18 +14,18 @@ NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamLis
     : BaseFunction(_type, _name, _list) {}
 
 CfgNodePtr NormalFunction::CreateEntry() {
-    entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL);
+    entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL, this);
     return entry;
 }
 
 bool NormalFunction::IsLibFunction() const { return false; }
 
 CfgNodePtr NormalFunction::CreateExit() {
-    exit = CtrlFlowGraphNode::CreatePtr(EXIT | NORMAL);
+    exit = CtrlFlowGraphNode::CreatePtr(EXIT | NORMAL, this);
     return exit;
 }
 
-CfgNodePtr NormalFunction::CreateCfgNode(BlockAttr _attr) { return CtrlFlowGraphNode::CreatePtr(_attr); }
+CfgNodePtr NormalFunction::CreateCfgNode(BlockAttr _attr) { return CtrlFlowGraphNode::CreatePtr(_attr, this); }
 
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }

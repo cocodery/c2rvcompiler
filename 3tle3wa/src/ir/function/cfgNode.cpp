@@ -1,11 +1,13 @@
 #include "3tle3wa/ir/function/cfgNode.hh"
 
-CtrlFlowGraphNode::CtrlFlowGraphNode(BlockAttr _attr) : BasicBlock(_attr) {}
+CtrlFlowGraphNode::CtrlFlowGraphNode(BlockAttr _attr, BaseFunction *_parent) : BasicBlock(_attr, _parent) {}
 
 bool CtrlFlowGraphNode::GetDirty() { return dirty; }
 void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
 
-CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr) { return std::make_shared<CtrlFlowGraphNode>(_attr); }
+CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr, BaseFunction *_parent) {
+    return std::make_shared<CtrlFlowGraphNode>(_attr, _parent);
+}
 
 void CtrlFlowGraphNode::AddPredecessor(CfgNodePtr predecessor) { predecessors.insert(predecessor); }
 void CtrlFlowGraphNode::AddSuccessor(CfgNodePtr successor) { successors.insert(successor); }

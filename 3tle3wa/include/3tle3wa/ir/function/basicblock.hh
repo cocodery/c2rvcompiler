@@ -12,6 +12,8 @@ using BlockPtr = std::shared_ptr<BasicBlock>;
 
 using BlockAttr = size_t;
 
+class BaseFunction;
+
 constexpr const BlockAttr NORMAL = (1ul << 0x0000);
 constexpr const BlockAttr ENTRY = (1ul << 0x0001);
 constexpr const BlockAttr LOOPBEGIN = (1ul << 0x0002);
@@ -31,10 +33,12 @@ class BasicBlock {
 
     BlockAttr block_attr;
 
+    BaseFunction *parent;
+
     static size_t blk_idx;
 
    public:
-    BasicBlock(BlockAttr);
+    BasicBlock(BlockAttr, BaseFunction *);
     ~BasicBlock() = default;
 
     size_t GetBlockIdx();
@@ -54,6 +58,8 @@ class BasicBlock {
     void AppendBlkAttr(BlockAttr);
     void ClearSpecAttr(BlockAttr);
     BlockAttr GetBlockAttr() const;
+
+    BaseFunction *GetParent();
 
     static void ResetBlkIdx();
     static size_t GetBlkIdx();

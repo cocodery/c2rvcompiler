@@ -14,6 +14,8 @@ typedef std::set<CfgNodePtr> Predecessor;
 typedef std::set<CfgNodePtr> Successor;
 typedef std::set<CfgNodePtr> DominatorSet;
 
+class BaseFunction;
+
 class CtrlFlowGraphNode final : public BasicBlock {
    private:
     bool dirty;
@@ -29,7 +31,7 @@ class CtrlFlowGraphNode final : public BasicBlock {
     DominatorSet dominance_frontier;
 
    public:
-    CtrlFlowGraphNode(BlockAttr);
+    CtrlFlowGraphNode(BlockAttr, BaseFunction *);
     ~CtrlFlowGraphNode() = default;
 
     bool GetDirty();
@@ -55,7 +57,7 @@ class CtrlFlowGraphNode final : public BasicBlock {
     void InsertDomFrontier(CfgNodePtr);
     DominatorSet &GetDomFrontier();
 
-    static CfgNodePtr CreatePtr(BlockAttr);
+    static CfgNodePtr CreatePtr(BlockAttr, BaseFunction *);
 
     std::string tollvmIR();
 };
