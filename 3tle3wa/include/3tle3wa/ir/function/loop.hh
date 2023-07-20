@@ -31,6 +31,8 @@ struct Loop {
 
     LoopBlocks GetCondBodyBlks();
     LoopBlocks GetLoopBodyBlks();
+
+    LoopBlocks GetEntireLoop();
 };
 
 void PrintLoop(Loop &);
