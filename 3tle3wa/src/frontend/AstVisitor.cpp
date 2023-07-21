@@ -774,6 +774,10 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
                     glb_value->RemoveDefiner(callee_func.get());
                     glb_value->InsertDefiner(cur_func.get());
                 }
+                if (glb_value->IsUsedBy(callee_func.get())) {
+                    glb_value->RemoveUser(callee_func.get());
+                    glb_value->InsertUser(cur_func.get());
+                }
             }
         }
     } else {

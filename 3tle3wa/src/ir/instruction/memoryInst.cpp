@@ -165,7 +165,7 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     if (auto [glb_addr, is_glb] = AddrFromGlobal(addr.get()); is_glb) {
         auto global_value = static_cast<GlobalValue *>(glb_addr);
 
-        global_value->SetBeUsed();
+        global_value->InsertUser(block->GetParent());
     }
 
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);

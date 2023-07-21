@@ -14,7 +14,7 @@ class GlobalValue final : public BaseValue {
     size_t idx;
     BaseValuePtr init_value;
 
-    bool be_used;
+    std::set<BaseFunction *> used_in;
     std::set<BaseFunction *> define_in;
 
     static size_t glb_idx;
@@ -28,15 +28,16 @@ class GlobalValue final : public BaseValue {
 
     bool IsGlobalValue() const;
 
-    void SetBeUsed();
-    bool GetBeUsed() const;
+    void InsertUser(BaseFunction *);
+    void RemoveUser(BaseFunction *);
+    bool IsBeenUsed() const;
+    bool IsUsedBy(BaseFunction *);
+    const std::set<BaseFunction *> &GetUsedIn() const;
 
     void InsertDefiner(BaseFunction *);
     void RemoveDefiner(BaseFunction *);
-
     bool IsBeenDefined() const;
     bool IsDefinedBy(BaseFunction *) const;
-
     const std::set<BaseFunction *> &GetDefineIn() const;
 
     static GlobalValuePtr CreatePtr(BaseTypePtr, BaseValuePtr);
