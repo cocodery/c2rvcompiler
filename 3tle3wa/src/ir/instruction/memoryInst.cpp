@@ -162,6 +162,12 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
             OffsetList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
     }
 
+    if (auto [glb_addr, is_glb] = AddrFromGlobal(addr.get()); is_glb) {
+        auto global_value = static_cast<GlobalValue *>(glb_addr);
+
+        global_value->SetBeUsed();
+    }
+
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
     auto &&inst = CreatePtr(value, addr, block);
     value->SetParent(inst);
