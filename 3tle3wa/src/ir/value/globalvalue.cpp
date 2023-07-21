@@ -19,6 +19,14 @@ BaseValuePtr GlobalValue::GetInitValue() const { return this->init_value; }
 
 bool GlobalValue::IsGlobalValue() const { return true; }
 
+void GlobalValue::InsertDefiner(BaseFunction *func) { define_in.insert(func); }
+void GlobalValue::RemoveDefiner(BaseFunction *func) { define_in.erase(func); }
+
+bool GlobalValue::IsBeenDefined() const { return define_in.size() == 0; }
+bool GlobalValue::IsDefinedBy(BaseFunction *func) const { return define_in.find(func) != define_in.end(); }
+
+const std::set<BaseFunction *> &GlobalValue::GetDefineIn() const { return define_in; }
+
 size_t GlobalValue::GetGlobalValueIdx() const { return idx; }
 
 GlobalValuePtr GlobalValue::CreatePtr(BaseTypePtr _type, BaseValuePtr _value) {

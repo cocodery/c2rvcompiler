@@ -13,10 +13,12 @@ void BaseFunction::SetSideEffect(bool _bool) { side_effect = _bool; }
 bool BaseFunction::GetRecursive() const { return recursive; }
 void BaseFunction::SetRecursive(bool _bool) { recursive = _bool; }
 
-void BaseFunction::InsertCallWho(BaseFuncPtr func) { call_who.insert(func); }
+void BaseFunction::InsertCallWho(BaseFunction *func) { call_who.insert(func); }
+void BaseFunction::RemoveCallWho(BaseFunction *func) { call_who.erase(func); }
 CallerFunction &BaseFunction::GetCallWho() { return call_who; }
 
-void BaseFunction::InsertWhoCall(BaseFuncPtr func) { who_call.insert(func); }
+void BaseFunction::InsertWhoCall(BaseFunction *func) { who_call.insert(func); }
+void BaseFunction::RemoveWhoCall(BaseFunction *func) { who_call.erase(func); }
 CalleeFunction &BaseFunction::GetWhoCall() { return who_call; }
 
 bool BaseFunction::IsBeUsed() const { return (who_call.size() > 0) || (func_name == "main"); }

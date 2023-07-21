@@ -7,8 +7,8 @@
 class BaseFunction;
 using BaseFuncPtr = std::shared_ptr<BaseFunction>;
 
-typedef std::set<BaseFuncPtr> CallerFunction;
-typedef std::set<BaseFuncPtr> CalleeFunction;
+typedef std::set<BaseFunction *> CallerFunction;
+typedef std::set<BaseFunction *> CalleeFunction;
 
 class BaseFunction {
    protected:
@@ -34,10 +34,12 @@ class BaseFunction {
     bool GetRecursive() const;
     void SetRecursive(bool);
 
-    void InsertCallWho(BaseFuncPtr);
+    void InsertCallWho(BaseFunction *);
+    void RemoveCallWho(BaseFunction *);
     CallerFunction &GetCallWho();
 
-    void InsertWhoCall(BaseFuncPtr);
+    void InsertWhoCall(BaseFunction *);
+    void RemoveWhoCall(BaseFunction *);
     CalleeFunction &GetWhoCall();
 
     bool IsBeUsed() const;

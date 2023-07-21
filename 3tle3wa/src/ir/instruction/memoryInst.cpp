@@ -1,9 +1,14 @@
 #include "3tle3wa/ir/instruction/memoryInst.hh"
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <utility>
 
+#include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/scalarType.hh"
 
 //===-----------------------------------------------------------===//
@@ -76,6 +81,12 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
         addr = GetElementPtrInst::DoGetPointer(
             addr_type->IntType() ? type_int_L : type_float_L, addr,
             OffsetList(1, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))), block);
+    }
+
+    if (auto [glb_addr, is_glb] = AddrFromGlobal(addr.get()); is_glb) {
+        auto global_value = static_cast<GlobalValue *>(glb_addr);
+
+        global_value->InsertDefiner(block->GetParent());
     }
     // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
@@ -267,3 +278,24 @@ std::string GetElementPtrInst::tollvmIR() {
     }
     return ss.str();
 }
+
+//===-----------------------------------------------------------===//
+//                     AddrFromGlobal Implementation
+//===-----------------------------------------------------------===//
+
+std::pair<BaseValue *, bool> AddrFromGlobal(BaseValue *addr) {
+    std::pair<BaseValue *, bool> ret = {nullptr, false};
+    if (addr->IsGlobalValue()) {
+        ret = {addr, true};
+    }
+    if (Instruction *inst = addr->GetParent().get()) {
+        if (inst->IsGepInst()) {
+            GetElementPtrInst *gep_inst = static_cast<GetElementPtrInst *>(inst);
+            BaseValue *base_addr = gep_inst->GetBaseAddr().get();
+            if (base_addr->IsGlobalValue()) {
+                ret = {base_addr, true};
+            }
+        }
+    }
+    return ret;
+};

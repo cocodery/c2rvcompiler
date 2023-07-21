@@ -6,8 +6,10 @@
 #include <string>
 #include <tuple>
 
+#include "3tle3wa/ir/function/basefunc.hh"
 #include "3tle3wa/ir/function/loop.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
 
 namespace {
@@ -764,10 +766,20 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block, in_loop, out_loop_block);
         call_ret_value = ret_value;
         cur_block = ret_block;
+
+        for (auto [_, value] : comp_unit.getGlbTable().GetNameValueMap()) {
+            if (value->IsGlobalValue()) {
+                auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
+                if (glb_value->IsDefinedBy(callee_func.get())) {
+                    glb_value->RemoveDefiner(callee_func.get());
+                    glb_value->InsertDefiner(cur_func.get());
+                }
+            }
+        }
     } else {
         call_ret_value = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
-        cur_func->InsertCallWho(callee_func);
-        callee_func->InsertWhoCall(cur_func);
+        cur_func->InsertCallWho(callee_func.get());
+        callee_func->InsertWhoCall(cur_func.get());
     }
 
     callee_func = last_callee_func;
@@ -1022,8 +1034,8 @@ void AstVisitor::ParseLocalListInit(SysYParser::ListInitvalContext *ctx, ListTyp
 
     std::string memset = "llvm.memset.p0i8.i64";
     BaseFuncPtr callee = comp_unit.GetFunction(memset);
-    cur_func->InsertCallWho(callee);
-    callee->InsertWhoCall(cur_func);
+    cur_func->InsertCallWho(callee.get());
+    callee->InsertWhoCall(cur_func.get());
 
     ParamList param_list = ParamList();
     param_list.push_back(i8_addr);
