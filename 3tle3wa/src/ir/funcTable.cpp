@@ -41,7 +41,7 @@ FunctionTable::FunctionTable() {
     // 10 - _sysy_starttime
     // 11 - _sysy_stoptime
     // 12 - llvm.memset.p0i8.i64
-    LibFuncPtr lib_func[13];
+    LibFuncPtr lib_func[18];
     lib_func[0] = SYSYLibFunction::CreatePtr(ret_type[1], "getint", param_list[0]);
     lib_func[1] = SYSYLibFunction::CreatePtr(ret_type[1], "getch", param_list[0]);
     lib_func[2] = SYSYLibFunction::CreatePtr(ret_type[2], "getfloat", param_list[0]);
@@ -55,7 +55,13 @@ FunctionTable::FunctionTable() {
     lib_func[10] = SYSYLibFunction::CreatePtr(ret_type[0], "_sysy_starttime", param_list[1]);
     lib_func[11] = SYSYLibFunction::CreatePtr(ret_type[0], "_sysy_stoptime", param_list[1]);
 
-    lib_func[12] = LLVMLibFunction::CreatePtr("memset", 3, ret_type[0], "llvm.memset.p0i8.i64", param_list[7]);
+    lib_func[12] = SYSYLibFunction::CreatePtr(ret_type[1], "__crvc_fork", param_list[0]);
+    lib_func[13] = SYSYLibFunction::CreatePtr(ret_type[1], "__crvc_waitid", param_list[0]);
+    lib_func[14] = SYSYLibFunction::CreatePtr(ret_type[0], "__crvc_exit", param_list[0]);
+    lib_func[15] = SYSYLibFunction::CreatePtr(ret_type[0], "__crvc_spinlock_lock", param_list[0]);
+    lib_func[16] = SYSYLibFunction::CreatePtr(ret_type[0], "__crvc_spinlock_unlock", param_list[0]);
+
+    lib_func[17] = LLVMLibFunction::CreatePtr("memset", 3, ret_type[0], "llvm.memset.p0i8.i64", param_list[7]);
 
     for (auto &&func_ptr : lib_func) {
         libraryFuncTable.push_back(func_ptr);
