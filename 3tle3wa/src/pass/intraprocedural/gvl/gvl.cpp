@@ -6,6 +6,8 @@
 #include <memory>
 #include <queue>
 
+#include "3tle3wa/ir/function/basicblock.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/function.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/memoryInst.hh"
@@ -19,108 +21,118 @@
 void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
     auto &&glb_table = comp_unit.getGlbTable().GetNameValueMap();
 
-    // remove useless global-value
-    // for (auto &&iter = glb_table.begin(); iter != glb_table.end();) {
-    //     auto [_, value] = (*iter);
+    std::map<CtrlFlowGraphNode *, InstList> del_lists;
 
-    //     if (value->IsGlobalValue()) {
-    //         auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
-
-    //         if (glb_value->IsBeenUsed() == false) {
-    //             iter = glb_table.erase(iter);
-    //             continue;
-    //         }
-    //     }
-    //     ++iter;
-    // }
-
-    // localization global-value
     for (auto &&iter = glb_table.begin(); iter != glb_table.end();) {
         auto &&[_, value] = (*iter);
 
-        if (value->IsGlobalValue()) {
-            auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
+        // only scalar glb-value need localization
+        if (!(value->IsGlobalValue() && value->GetBaseType()->IsScalar())) {
+            ++iter;
+            continue;
+        }
 
-            auto &&define_in = glb_value->GetDefineIn();
-            auto &&used_in = glb_value->GetUsedIn();
+        auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
+        auto &&glbv_type = glb_value->GetBaseType();
 
-            if (define_in.size() == 0 && used_in.size() != 0) {  // only initilize no more assign
-                auto &&init_value = glb_value->GetInitValue();
-                auto &&base_type = init_value->GetBaseType();
-                if (base_type->IsScalar() && (init_value->IsConstant() || init_value->IsUnInitVar())) {
-                    bool int_type = base_type->IntType();
+        auto &&define_in = glb_value->GetDefineIn();
+        auto &&used_in = glb_value->GetUsedIn();
 
-                    if (init_value->IsUnInitVar()) {
-                        init_value = int_type ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
-                                              : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
-                    }
-
-                    for (auto &&gep : glb_value->GetUserList()) {
-                        assert(gep->IsGepInst());
-                        if (gep->IsGepInst()) {
-                            for (auto &&load : gep->GetResult()->GetUserList()) {
-                                assert(load->IsLoadInst());
-                                ReplaceSRC(load->GetResult(), init_value);
-                            }
-                        }
-                    }
-
-                    iter = glb_table.erase(iter);
-                    continue;
-                }
-
-            } else if (define_in.size() == 1 && used_in.size() == 1) {
-                auto &&define_func = (*define_in.begin());
-                auto &&used_func = (*used_in.begin());
-                assert(!define_func->IsLibFunction() && !used_func->IsLibFunction());
-
-                // only defined and used in main can be localization
-                if (define_func == used_func && define_func->GetFuncName() == "main") {
-                    auto &&normal_func = static_cast<NormalFunction *>(define_func);
-
-                    BaseTypePtr &&base_type = glb_value->GetBaseType();
-                    if (base_type->IsArray() == false) {
-                        Variable::SetVarIdx(normal_func->GetVarIdx());
-                        BasicBlock::SetBlkIdx(normal_func->GetBlkIdx());
-
-                        bool int_type = base_type->IntType();
-                        auto &&entry = normal_func->GetEntryNode();
-
-                        auto &&type_stored = int_type ? type_int_L : type_float_L;
-                        auto &&type_alloca = int_type ? type_int_ptr_L : type_float_ptr_L;
-
-                        VariablePtr address = Variable::CreatePtr(type_alloca, nullptr);
-                        auto &&alloca_inst = AllocaInst::CreatePtr(type_stored, address, entry);
-                        address->SetParent(alloca_inst);
-
-                        auto &&init_value = glb_value->GetInitValue();
-                        if (init_value->IsUnInitVar()) {
-                            init_value = int_type ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
-                                                  : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
-                        }
-
-                        auto &&store_inst = StoreInst::CreatePtr(address, init_value, entry);
-
-                        entry->InsertInstFront(store_inst);
-                        entry->InsertInstFront(alloca_inst);
-
-                        ReplaceSRC(glb_value, address);
-
-                        for (auto &&inst : address->GetUserList()) {
-                            if (inst->IsGepInst()) {
-                                ReplaceSRC(inst->GetResult(), address);
-                            }
-                        }
-
-                        normal_func->SetVarIdx(Variable::GetVarIdx());
-                        normal_func->SetBlkIdx(BasicBlock::GetBlkIdx());
-
-                        iter = glb_table.erase(iter);
-                        continue;
+        if (used_in.size() == 0) {        // glb-value nerver be loaded
+            if (define_in.size() != 0) {  // remove redundant store
+                for (auto &&gep : glb_value->GetUserList()) {
+                    assert(gep->IsGepInst());
+                    del_lists[gep->GetParent().get()].push_back(gep);
+                    for (auto &&store : gep->GetResult()->GetUserList()) {
+                        assert(store->IsStoreInst());
+                        del_lists[store->GetParent().get()].push_back(store);
                     }
                 }
+            }
+
+            iter = glb_table.erase(iter);
+            continue;
+        } else if (define_in.size() == 0 && used_in.size() != 0) {  // only initilize no more assign
+            auto init_value = glb_value->GetInitValue();
+            assert(init_value->IsConstant() || init_value->IsUnInitVar());
+
+            if (init_value->IsConstant() || init_value->IsUnInitVar()) {
+                if (init_value->IsUnInitVar()) {
+                    init_value = glbv_type->IntType() ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                                      : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
+                }
+
+                for (auto &&gep : glb_value->GetUserList()) {
+                    assert(gep->IsGepInst());
+                    del_lists[gep->GetParent().get()].push_back(gep);
+                    if (gep->IsGepInst()) {
+                        for (auto &&load : gep->GetResult()->GetUserList()) {
+                            assert(load->IsLoadInst());
+                            del_lists[load->GetParent().get()].push_back(load);
+                            ReplaceSRC(load->GetResult(), init_value);
+                        }
+                    }
+                }
+
+                iter = glb_table.erase(iter);
+                continue;
+            }
+        } else if (define_in.size() == 1 && used_in.size() == 1) {
+            auto &&define_func = (*define_in.begin());
+            auto &&used_func = (*used_in.begin());
+            assert(!define_func->IsLibFunction() && !used_func->IsLibFunction());
+
+            // only defined and used in main can be localization
+            if (define_func == used_func && define_func->GetFuncName() == "main") {
+                auto &&normal_func = static_cast<NormalFunction *>(define_func);
+
+                Variable::SetVarIdx(normal_func->GetVarIdx());
+                BasicBlock::SetBlkIdx(normal_func->GetBlkIdx());
+
+                bool int_type = glbv_type->IntType();
+                auto &&entry = normal_func->GetEntryNode();
+
+                auto &&type_stored = int_type ? type_int_L : type_float_L;
+                auto &&type_alloca = int_type ? type_int_ptr_L : type_float_ptr_L;
+
+                VariablePtr address = Variable::CreatePtr(type_alloca, nullptr);
+                auto &&alloca_inst = AllocaInst::CreatePtr(type_stored, address, entry);
+                address->SetParent(alloca_inst);
+
+                auto init_value = glb_value->GetInitValue();
+                if (init_value->IsUnInitVar()) {
+                    init_value = int_type ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                          : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
+                }
+
+                auto &&store_inst = StoreInst::CreatePtr(address, init_value, entry);
+
+                entry->InsertInstFront(store_inst);
+                entry->InsertInstFront(alloca_inst);
+
+                for (auto &&gep : glb_value->GetUserList()) {
+                    assert(gep->IsGepInst());
+                    del_lists[gep->GetParent().get()].push_back(gep);
+                    ReplaceSRC(gep->GetResult(), address);
+                }
+
+                normal_func->SetVarIdx(Variable::GetVarIdx());
+                normal_func->SetBlkIdx(BasicBlock::GetBlkIdx());
+
+                iter = glb_table.erase(iter);
+                continue;
             }
         }
         ++iter;
     }
+
+    for (auto &&[node, del_list] : del_lists) {
+        auto &&inst_list = node->GetInstList();
+        for (auto &&inst : del_list) {
+            assert(std::find(inst_list.begin(), inst_list.end(), inst) != inst_list.end());
+            RemoveInst(inst);
+            inst_list.remove(inst);
+        }
+    }
+    return;
 }
