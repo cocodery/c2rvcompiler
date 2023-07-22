@@ -285,7 +285,7 @@ void InstComb::InstCombine(NormalFuncPtr func) {
                             bin_inst->SetLHS(bin_lhs_rhs);
                             bin_inst->SetRHS(constant);
                         } else if (combine == 2 || combine == 4) {
-                            bin_inst->SetOpCode(combine == 3 ? OP_SUB : OP_DIV);
+                            bin_inst->SetOpCode(combine == 2 ? OP_SUB : OP_DIV);
                             bin_inst->SetLHS(constant);
                             bin_inst->SetRHS(bin_lhs_rhs);
                         } else {

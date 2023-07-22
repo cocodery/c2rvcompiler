@@ -3,6 +3,8 @@
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
 void Optimization::DoOptimization() {
+    GVL::GlbValueLocalization(comp_unit);
+
     for (auto &&func : comp_unit.GetNormalFuncTable()) {
         Variable::SetVarIdx(func->GetVarIdx());
         BasicBlock::SetBlkIdx(func->GetBlkIdx());
