@@ -44,7 +44,31 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
             auto &&define_in = glb_value->GetDefineIn();
             auto &&used_in = glb_value->GetUsedIn();
 
-            if (define_in.size() == 0) {  // only initilize no more assign
+            if (define_in.size() == 0 && used_in.size() != 0) {  // only initilize no more assign
+                auto &&init_value = glb_value->GetInitValue();
+                auto &&base_type = init_value->GetBaseType();
+                if (base_type->IsScalar() && (init_value->IsConstant() || init_value->IsUnInitVar())) {
+                    bool int_type = base_type->IntType();
+
+                    if (init_value->IsUnInitVar()) {
+                        init_value = int_type ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                              : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
+                    }
+
+                    for (auto &&gep : glb_value->GetUserList()) {
+                        assert(gep->IsGepInst());
+                        if (gep->IsGepInst()) {
+                            for (auto &&load : gep->GetResult()->GetUserList()) {
+                                assert(load->IsLoadInst());
+                                ReplaceSRC(load->GetResult(), init_value);
+                            }
+                        }
+                    }
+
+                    iter = glb_table.erase(iter);
+                    continue;
+                }
+
             } else if (define_in.size() == 1 && used_in.size() == 1) {
                 auto &&define_func = (*define_in.begin());
                 auto &&used_func = (*used_in.begin());
@@ -54,7 +78,7 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
                 if (define_func == used_func && define_func->GetFuncName() == "main") {
                     auto &&normal_func = static_cast<NormalFunction *>(define_func);
 
-                    BaseTypePtr base_type = glb_value->GetBaseType();
+                    BaseTypePtr &&base_type = glb_value->GetBaseType();
                     if (base_type->IsArray() == false) {
                         Variable::SetVarIdx(normal_func->GetVarIdx());
                         BasicBlock::SetBlkIdx(normal_func->GetBlkIdx());
