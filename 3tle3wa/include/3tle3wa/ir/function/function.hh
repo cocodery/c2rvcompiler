@@ -30,7 +30,7 @@ class NormalFunction final : public BaseFunction {
     size_t blk_idx;
 
    public:
-    Loop loops;
+    Loop *loops;
 
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;

@@ -11,7 +11,11 @@ typedef std::list<CtrlFlowGraphNode *> LoopBlocks;
 
 typedef int32_t loop_depth_t;
 
+class NormalFunction;
+
 struct Loop {
+    NormalFunction *func_parent;
+
     Loop *parent;
     loop_depth_t loop_depth;
 
@@ -27,7 +31,16 @@ struct Loop {
 
     std::list<Loop *> sub_loops;
 
-    Loop(Loop *parent = nullptr, loop_depth_t _depth = 0) : parent(parent), loop_depth(_depth) {}
+    Loop(NormalFunction *_func_parent, Loop *_parent = nullptr, loop_depth_t _depth = 0)
+        : func_parent(_func_parent),
+          parent(_parent),
+          loop_depth(_depth),
+          before_loop(nullptr),
+          cond_begin(nullptr),
+          cond_end(nullptr),
+          body_begin(nullptr),
+          body_end(nullptr),
+          loop_exit(nullptr) {}
 
     LoopBlocks GetCondBodyBlks();
     LoopBlocks GetLoopBodyBlks();

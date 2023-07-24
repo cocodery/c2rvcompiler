@@ -329,9 +329,9 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 
-    cur_loop = &function->loops;
-    assert(loop_depth == 0);
-    cur_loop->loop_depth = loop_depth++;
+    assert(loop_depth == 0 && cur_loop == nullptr);
+    function->loops = new Loop(function.get(), nullptr, loop_depth++);
+    cur_loop = function->loops;
 
     cur_block = cur_func->CreateEntry();
 
@@ -530,7 +530,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     in_loop = true;
 
     Loop *last_loop = cur_loop;
-    Loop *loop = new Loop(cur_loop, loop_depth++);
+    Loop *loop = new Loop(cur_func.get(), cur_loop, loop_depth++);
     cur_loop->sub_loops.push_back(loop);
     cur_loop = loop;
 
