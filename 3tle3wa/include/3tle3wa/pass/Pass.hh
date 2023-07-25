@@ -5,6 +5,7 @@
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 #include "3tle3wa/pass/interprocedural/instcomb/instcomb.hh"
+#include "3tle3wa/pass/interprocedural/loop/loopInvariant.hh"
 #include "3tle3wa/pass/interprocedural/sccp/sccp.hh"
 #include "3tle3wa/pass/interprocedural/ssa/ssa.hh"
 #include "3tle3wa/pass/intraprocedural/gvl/gvl.hh"

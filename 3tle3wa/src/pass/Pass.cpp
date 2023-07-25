@@ -9,6 +9,8 @@ void Optimization::DoOptimization() {
         Variable::SetVarIdx(func->GetVarIdx());
         BasicBlock::SetBlkIdx(func->GetBlkIdx());
 
+        LoopInvariant::LoopInvariant(func);
+
         Dominance::DominanceAnalysis(func);
 
         SSA::SSAConstruction(func);
