@@ -60,10 +60,6 @@ class RLBasicBlock final : public Serializable {
 
     void CalcuInterval();
 
-    void VirtualSchedule();
-
-    void NoSchedule();
-
     void operator+=(RLBasicBlock &income);
 
     void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);

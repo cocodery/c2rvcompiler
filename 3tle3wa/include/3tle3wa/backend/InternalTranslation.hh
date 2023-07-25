@@ -84,10 +84,6 @@ class InternalTranslation final : public Serializable {
 
     void DoTranslation();
 
-    void DoVSchedule();
-
-    void NoSchedule();
-
     void DoAssignment();
 
     void DoRSchedule();

@@ -137,7 +137,6 @@ void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
 void RLGen::SerialGenerate() {
     for (auto &&task : translation_tasks_) {
         task->DoTranslation();
-        task->NoSchedule();
         task->DoAssignment();
         task->DoTranslateToAsm();
         task->DoRSchedule();
@@ -151,7 +150,6 @@ void RLGen::ParallelGenerate() {
     for (auto &&task : translation_tasks_) {
         auto trd = std::make_unique<std::thread>([&task]() {
             task->DoTranslation();
-            task->NoSchedule();
             task->DoAssignment();
             task->DoTranslateToAsm();
             task->DoRSchedule();

@@ -59,10 +59,6 @@ class RLProgress final : public Serializable {
 
     bool HasCallFunc();
 
-    void VirtualSchedule();
-
-    void NoSchedule();
-
     void DoAssignment();
 
     void DoToAsm(AsmProgress *apg);

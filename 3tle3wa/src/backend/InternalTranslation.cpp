@@ -82,3 +82,5 @@ void InternalTranslation::DoTranslation() {
 }
 
 std::unique_ptr<AsmProgress> &InternalTranslation::ExportAPG() { return apg_; }
+
+void InternalTranslation::DoRSchedule() { apg_->ArchSchedule(); }
