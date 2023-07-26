@@ -1,7 +1,7 @@
 #include "3tle3wa/pass/interprocedural/loop/loopInvariant.hh"
 
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
-    PrintLoop(*(func->loops));
+    // PrintLoop(*(func->loops));
 
     InvariantMotion(func->loops);
 }
@@ -46,6 +46,8 @@ InvariantsInBlocks LoopInvariant::FindInvariant(Loop *loop) {
 
     std::set<BaseValuePtr> defined_in_loop;
     std::set<InstPtr> instructions;
+    std::unordered_map<BaseValuePtr, bool> isGeped;
+    std::set<BaseValuePtr> gepedValue;
     InvariantsInBlocks invariants;
 
     for (auto &&blk : loop_blks) {
@@ -53,6 +55,11 @@ InvariantsInBlocks LoopInvariant::FindInvariant(Loop *loop) {
             if (inst->IsStoreInst()) {
                 auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
                 defined_in_loop.insert(binary_inst->GetLHS());
+            } else if (inst->IsGepInst()) {
+                std::cout << inst->tollvmIR() << std::endl;
+                isGeped[inst->GetResult()] = true;
+                gepedValue.insert(inst->GetResult());
+                defined_in_loop.insert(inst->GetResult());
             } else if (inst->GetResult()) {
                 defined_in_loop.insert(inst->GetResult());
             }
@@ -82,12 +89,17 @@ InvariantsInBlocks LoopInvariant::FindInvariant(Loop *loop) {
                     if (defined_in_loop.find(lhs) == defined_in_loop.end()) {
                         continue;
                     }
+                    if (isGeped[lhs] == true && gepedValue.find(lhs) != gepedValue.end()) {
+                        continue;
+                    }
 
                     if (defined_in_loop.find(rhs) != defined_in_loop.end()) {
                         invariant_check = false;
                     }
 
-                } else {
+                }
+
+                else {
                     if (defined_in_loop.find(inst->GetResult()) == defined_in_loop.end()) {
                         continue;
                     }

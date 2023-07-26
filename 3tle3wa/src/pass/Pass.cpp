@@ -9,13 +9,13 @@ void Optimization::DoOptimization() {
         Variable::SetVarIdx(func->GetVarIdx());
         BasicBlock::SetBlkIdx(func->GetBlkIdx());
 
-        LoopInvariant::LoopInvariant(func);
-
         Dominance::DominanceAnalysis(func);
 
         SSA::SSAConstruction(func);
 
         DCE::EliminateUselessCode(func);
+
+        LoopInvariant::LoopInvariant(func);
 
         SCCP::SCCP(func);
         DCE::EliminateUnreachableCode(func);
