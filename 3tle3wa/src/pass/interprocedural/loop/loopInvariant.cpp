@@ -56,7 +56,6 @@ InvariantsInBlocks LoopInvariant::FindInvariant(Loop *loop) {
                 auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
                 defined_in_loop.insert(binary_inst->GetLHS());
             } else if (inst->IsGepInst()) {
-                std::cout << inst->tollvmIR() << std::endl;
                 isGeped[inst->GetResult()] = true;
                 gepedValue.insert(inst->GetResult());
                 defined_in_loop.insert(inst->GetResult());
