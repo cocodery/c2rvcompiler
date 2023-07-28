@@ -1,16 +1,22 @@
 #pragma once
 
 #include <algorithm>
+#include <list>
 #include <utility>
 
 #include "3tle3wa/ir/IR.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/loop.hh"
-
-using InvariantsInBlocks = std::vector<std::pair<CtrlFlowGraphNode *, std::set<InstPtr>>>;
+#include "3tle3wa/ir/value/use.hh"
 
 namespace LoopInvariant {
+
+typedef std::list<InstPtr> Invariants;
+
+static std::map<CtrlFlowGraphNode *, bool> visit;
+static std::unordered_map<Instruction *, bool> is_variant;
+
 void LoopInvariant(NormalFuncPtr);
 void InvariantMotion(Loop *);
-bool IsInSubloop(Loop *, CtrlFlowGraphNode *);
-InvariantsInBlocks FindInvariant(Loop *);
+Invariants FindInvariant(Loop *);
 }  // namespace LoopInvariant

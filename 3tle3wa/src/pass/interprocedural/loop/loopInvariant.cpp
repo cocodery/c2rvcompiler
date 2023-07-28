@@ -1,9 +1,23 @@
 #include "3tle3wa/pass/interprocedural/loop/loopInvariant.hh"
 
+#include <cassert>
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <queue>
+#include <unordered_map>
+
+#include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/loop.hh"
+#include "3tle3wa/ir/value/use.hh"
+
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
     // PrintLoop(*(func->loops));
+    assert(visit.size() == 0 && is_variant.size() == 0);
 
     InvariantMotion(func->loops);
+    visit.clear();
+    is_variant.clear();
 }
 
 void LoopInvariant::InvariantMotion(Loop *loop) {
@@ -11,136 +25,65 @@ void LoopInvariant::InvariantMotion(Loop *loop) {
         InvariantMotion(sub_loop);
     }
     if (loop->before_loop) {
-        InvariantsInBlocks invariablesInBlocks = FindInvariant(loop);
-        for (auto &&blkAndInvariants : invariablesInBlocks) {
-            auto &&nowBlk = blkAndInvariants.first;
-            auto &&newBlk = loop->before_loop;
-            for (auto &&invariant : blkAndInvariants.second) {
-                nowBlk->RemoveInst(invariant);
-                auto &&instList = newBlk->GetInstList();
-                auto &&end = instList.end();
-                std::advance(end, -1);
-                instList.insert(end, invariant);
-                invariant->SetParent(std::make_shared<CtrlFlowGraphNode>(*newBlk));
-            }
+        Invariants invariants = FindInvariant(loop);
+
+        auto &&target_node = loop->before_loop;
+        for (auto &&inst : invariants) {
+            auto &&source_node = inst->GetParent();
+
+            source_node->RemoveInst(inst);
+
+            auto &&inst_list = target_node->GetInstList();
+            auto &&end = inst_list.end();
+            std::advance(end, -1);
+            inst_list.insert(end, inst);
+
+            inst->SetParent(std::make_shared<CtrlFlowGraphNode>(*target_node));
         }
     }
 }
 
-bool LoopInvariant::IsInSubloop(Loop *loop, CtrlFlowGraphNode *cfgNode) {
-    for (auto &&sub_loop : loop->sub_loops) {
-        auto &&blkInst = sub_loop->GetLoopBodyBlks();
-        if (std::find(blkInst.begin(), blkInst.end(), cfgNode) != blkInst.end()) {
-            return true;
-        }
-    }
-    auto &&myBlkList = loop->GetEntireLoop();
-    if (std::find(myBlkList.begin(), myBlkList.end(), cfgNode) == myBlkList.end()) {
-        throw "Fail to find the block in this loop";
-    }
-    return false;
-}
+LoopInvariant::Invariants LoopInvariant::FindInvariant(Loop *loop) {
+    Invariants invariants;
 
-InvariantsInBlocks LoopInvariant::FindInvariant(Loop *loop) {
-    LoopBlocks &&loop_blks = loop->GetEntireLoop();
+    LoopBlocks &&entire_loop = loop->GetEntireLoop();
 
-    std::set<BaseValuePtr> defined_in_loop;
-    std::set<InstPtr> instructions;
-    std::unordered_map<BaseValuePtr, bool> isGeped;
-    std::set<BaseValuePtr> gepedValue;
-    InvariantsInBlocks invariants;
+    std::queue<Instruction *> variant;
 
-    for (auto &&blk : loop_blks) {
-        for (auto &&inst : blk->GetInstList()) {
-            if (inst->IsStoreInst()) {
-                auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-                defined_in_loop.insert(binary_inst->GetLHS());
-            } else if (inst->IsGepInst()) {
-                isGeped[inst->GetResult()] = true;
-                gepedValue.insert(inst->GetResult());
-                defined_in_loop.insert(inst->GetResult());
-            } else if (inst->GetResult()) {
-                defined_in_loop.insert(inst->GetResult());
+    for (auto &&node : entire_loop) {
+        if (visit[node] == false) {
+            auto &&inst_list = node->GetInstList();
+
+            for (auto &&inst : inst_list) {
+                if (inst->IsPhiInst() || inst->IsCallInst() || inst->IsJumpInst() || inst->IsBranchInst() ||
+                    inst->IsLoadInst()) {
+                    variant.push(inst.get());       // assume phi, call, jump, branch, load are variant
+                    is_variant[inst.get()] = true;  // tag as invariant
+                } else {
+                    invariants.push_back(inst);  // assume other inst are invariant temporarily
+                }
             }
+            visit[node] = true;  // tag node in `loop` is visited
         }
     }
 
-    bool change = false;
-    do {
-        change = false;
-        for (auto &&blk : loop_blks) {
-            instructions.clear();
-            if (IsInSubloop(loop, blk)) {
-                continue;
-            }
-            for (auto &&inst : blk->GetInstList()) {
-                bool invariant_check = true;
-                if (inst->IsCallInst() || inst->IsJumpInst() || inst->IsReturnInst() || inst->IsBranchInst() ||
-                    inst->IsPhiInst() || inst->IsGepInst()) {
-                    continue;
+    while (!variant.empty()) {
+        auto &&inst = variant.front();
+        variant.pop();
+        auto &&result = inst->GetResult();
+
+        if (result != nullptr) {  // exclude inst without result
+            for (auto &&user : result->GetUserList()) {
+                // if user is defined in loop and is not tagged as invariant
+                if (visit[user->GetParent().get()] && !is_variant[user.get()]) {
+                    invariants.remove(user);  // remove from invariant list
+
+                    variant.push(user.get());       // push into queue to iterate
+                    is_variant[user.get()] = true;  // tag as invariant
                 }
-                if (inst->IsStoreInst()) {
-                    auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-
-                    auto &&lhs = binary_inst->GetLHS();
-                    auto &&rhs = binary_inst->GetRHS();
-
-                    if (defined_in_loop.find(lhs) == defined_in_loop.end()) {
-                        continue;
-                    }
-                    if (isGeped[lhs] == true && gepedValue.find(lhs) != gepedValue.end()) {
-                        continue;
-                    }
-
-                    if (defined_in_loop.find(rhs) != defined_in_loop.end()) {
-                        invariant_check = false;
-                    }
-
-                }
-
-                else {
-                    if (defined_in_loop.find(inst->GetResult()) == defined_in_loop.end()) {
-                        continue;
-                    }
-                    if (inst->IsOneOprandInst()) {
-                        auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
-
-                        auto &&oprand = unary_inst->GetOprand();
-                        if (defined_in_loop.find(oprand) != defined_in_loop.end()) {
-                            invariant_check = false;
-                        }
-
-                    } else if (inst->IsTwoOprandInst()) {
-                        auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-
-                        auto &&lhs = binary_inst->GetLHS();
-                        auto &&rhs = binary_inst->GetRHS();
-
-                        if (defined_in_loop.find(lhs) != defined_in_loop.end() ||
-                            defined_in_loop.find(rhs) != defined_in_loop.end()) {
-                            invariant_check = false;
-                        }
-                    }
-                }
-
-                if (invariant_check) {
-                    if (inst->IsStoreInst()) {
-                        auto &&binary_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-
-                        auto &&lhs = binary_inst->GetLHS();
-                        defined_in_loop.erase(lhs);
-                        instructions.insert(inst);
-                    } else {
-                        defined_in_loop.erase(inst->GetResult());
-                        instructions.insert(inst);
-                    }
-                    change = true;
-                }
-            }
-            if (!instructions.empty()) {
-                invariants.push_back({blk, instructions});
             }
         }
-    } while (change);
+    }
+
     return invariants;
 }
