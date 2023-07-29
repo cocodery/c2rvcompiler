@@ -15,6 +15,8 @@ void Optimization::DoOptimization() {
 
         DCE::EliminateUselessCode(func);
 
+        GVN::DVNT(func, comp_unit.getGlbTable());
+
         LoopInvariant::LoopInvariant(func);
 
         SCCP::SCCP(func);
