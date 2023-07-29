@@ -330,7 +330,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     cur_func = function;
 
     assert(loop_depth == 0 && cur_loop == nullptr);
-    function->loops = new Loop(function.get(), nullptr, loop_depth++);
+    function->loops = new Loop(function, nullptr, loop_depth++);
     cur_loop = function->loops;
 
     cur_block = cur_func->CreateEntry();
@@ -530,11 +530,11 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     in_loop = true;
 
     Loop *last_loop = cur_loop;
-    Loop *loop = new Loop(cur_func.get(), cur_loop, loop_depth++);
+    Loop *loop = new Loop(cur_func, cur_loop, loop_depth++);
     cur_loop->sub_loops.push_back(loop);
     cur_loop = loop;
 
-    cur_loop->before_loop = cur_block.get();
+    cur_loop->before_loop = cur_block;
 
     CfgNodePtr block_before_cond = cur_block;                          // block-before-enter-while-condition
     CfgNodePtr cond_block_begin = cur_func->CreateCfgNode(LOOPBEGIN);  // first-block-of-loop-condition
@@ -551,26 +551,26 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     lAnd_list = BranchInstList();
 
     cur_block = cond_block_begin;
-    cur_loop->cond_begin = cur_block.get();
+    cur_loop->cond_begin = cur_block;
     BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
-    cur_loop->cond_end = cur_block.get();
+    cur_loop->cond_end = cur_block;
     CfgNodePtr cond_block_end = cur_block;  // last-condition block
 
     SymbolTable *last_table = cur_table;
     cur_table = NewLocalTable(last_table);
     CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
     cur_block = loop_begin;
-    cur_loop->body_begin = loop_begin.get();
+    cur_loop->body_begin = loop_begin;
     ctx->stmt()->accept(this);
     block_before_cond->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
     CfgNodePtr loop_end = cur_block;
-    cur_loop->body_end = loop_end.get();
+    cur_loop->body_end = loop_end;
     loop_end->AppendBlkAttr(LOOPEND);
 
     loop_end->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, loop_end));
 
     CfgNodePtr loop_exit = cur_func->CreateCfgNode(LOOPOUT);  // exit-block-of-loop
-    cur_loop->loop_exit = loop_exit.get();
+    cur_loop->loop_exit = loop_exit;
 
     cond_block_end->InsertInstBack(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
 

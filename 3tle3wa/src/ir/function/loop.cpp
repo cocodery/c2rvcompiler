@@ -17,26 +17,26 @@ LoopBlocks Loop::GetCondBodyBlks() {
     //     return loop_cond_blks;
     // }
 
-    std::queue<CtrlFlowGraphNode *> queue;
+    std::queue<CfgNodePtr> queue;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
     queue.push(cond_begin);
     while (!queue.empty()) {
         auto node = queue.front();
         queue.pop();
-        if (!visit[node]) {
-            visit[node] = true;
+        if (!visit[node.get()]) {
+            visit[node.get()] = true;
             loop_cond_blks.push_back(node);
 
             Instruction *last_inst = node->GetLastInst().get();
             if (last_inst->IsBranchInst()) {
                 BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
-                CtrlFlowGraphNode *lhs = br_inst->GetTrueTarget().get();
-                CtrlFlowGraphNode *rhs = br_inst->GetFalseTarget().get();
+                auto &&lhs = br_inst->GetTrueTarget();
+                auto &&rhs = br_inst->GetFalseTarget();
 
-                if (lhs != body_begin && lhs != loop_exit && !visit[lhs]) {
+                if (lhs != body_begin && lhs != loop_exit && !visit[lhs.get()]) {
                     queue.push(lhs);
                 }
-                if (rhs != body_begin && rhs != loop_exit && !visit[rhs]) {
+                if (rhs != body_begin && rhs != loop_exit && !visit[rhs.get()]) {
                     queue.push(rhs);
                 }
             }
@@ -48,8 +48,8 @@ LoopBlocks Loop::GetCondBodyBlks() {
 LoopBlocks Loop::GetLoopBodyBlks() {
     LoopBlocks loop_body_blks;
 
-    std::stack<CtrlFlowGraphNode *> stack;
-    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
+    std::stack<CfgNodePtr> stack;
+    std::unordered_map<CfgNodePtr, bool> visit;
     stack.push(body_begin);
     while (!stack.empty()) {
         auto node = stack.top();
@@ -61,8 +61,8 @@ LoopBlocks Loop::GetLoopBodyBlks() {
             Instruction *last_inst = node->GetLastInst().get();
             if (last_inst->IsBranchInst()) {
                 BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
-                CtrlFlowGraphNode *lhs = br_inst->GetTrueTarget().get();
-                CtrlFlowGraphNode *rhs = br_inst->GetFalseTarget().get();
+                auto &&lhs = br_inst->GetTrueTarget();
+                auto &&rhs = br_inst->GetFalseTarget();
 
                 if (rhs != cond_begin && rhs != loop_exit && !visit[rhs]) {
                     stack.push(rhs);
@@ -72,7 +72,7 @@ LoopBlocks Loop::GetLoopBodyBlks() {
                 }
             } else if (last_inst->IsJumpInst()) {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
-                CtrlFlowGraphNode *target = jump_inst->GetTarget().get();
+                auto &&target = jump_inst->GetTarget();
 
                 if (target != cond_begin && target != loop_exit && !visit[target]) {
                     stack.push(target);

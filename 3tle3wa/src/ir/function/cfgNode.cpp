@@ -49,29 +49,29 @@ std::string CtrlFlowGraphNode::tollvmIR() {
     }
     ss << '\n';
 
-    ss << "\t; DominatorSet: ";
-    for (auto &&node : dominator_set) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominatorSet: ";
+    // for (auto &&node : dominator_set) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
-    ss << "\t; ImmediateDominator: ";
-    if (immediate_dominator != nullptr) {
-        ss << immediate_dominator->idx;
-    }
-    ss << '\n';
+    // ss << "\t; ImmediateDominator: ";
+    // if (immediate_dominator != nullptr) {
+    //     ss << immediate_dominator->idx;
+    // }
+    // ss << '\n';
 
-    ss << "\t; DominateChildren: ";
-    for (auto &&node : dominate_children) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominateChildren: ";
+    // for (auto &&node : dominate_children) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
-    ss << "\t; DominanceFrontier: ";
-    for (auto &&node : dominance_frontier) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominanceFrontier: ";
+    // for (auto &&node : dominance_frontier) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
     for (auto &&inst : inst_list) {
         ss << '\t' << inst->tollvmIR() << endl;
