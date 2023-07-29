@@ -12,7 +12,7 @@
 
 #include "3tle3wa/ir/function/basefunc.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
-#include "3tle3wa/ir/function/loop.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/type/listType.hh"
 #include "3tle3wa/ir/value/type/scalarType.hh"

@@ -9,12 +9,12 @@
 #include <unordered_map>
 
 #include "3tle3wa/ir/function/cfgNode.hh"
-#include "3tle3wa/ir/function/loop.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/use.hh"
 
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
-    PrintLoop(*(func->loops));
+    // PrintLoop(*(func->loops));
     assert(visit.size() == 0 && is_variant.size() == 0);
 
     InvariantMotion(func->loops);

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "3tle3wa/ir/IR.hh"
-#include "3tle3wa/ir/function/loop.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 #include "3tle3wa/pass/intraprocedural/inline/inline.hh"
