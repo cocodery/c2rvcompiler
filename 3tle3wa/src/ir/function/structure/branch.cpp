@@ -8,8 +8,8 @@
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-BranchBlocks Branch::GetCondBodyBlks() {
-    BranchBlocks branch_cond_blks;
+CfgNodeList Branch_::GetCondBodyBlks() {
+    CfgNodeList branch_cond_blks;
 
     std::queue<CfgNodePtr> queue;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
@@ -39,8 +39,8 @@ BranchBlocks Branch::GetCondBodyBlks() {
     return branch_cond_blks;
 }
 
-BranchBlocks Branch::GetIftrueBlks() {
-    BranchBlocks branch_true_blks;
+CfgNodeList Branch_::GetIftrueBlks() {
+    CfgNodeList branch_true_blks;
 
     std::stack<CfgNodePtr> stack;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
@@ -77,8 +77,8 @@ BranchBlocks Branch::GetIftrueBlks() {
     return branch_true_blks;
 }
 
-BranchBlocks Branch::GetIffalseBlks() {
-    BranchBlocks branch_false_blks;
+CfgNodeList Branch_::GetIffalseBlks() {
+    CfgNodeList branch_false_blks;
 
     std::stack<CfgNodePtr> stack;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
@@ -113,4 +113,15 @@ BranchBlocks Branch::GetIffalseBlks() {
         }
     }
     return branch_false_blks;
+}
+
+CfgNodeList Branch_::GetEntireStructure() {
+    auto &&branch_blks = GetCondBodyBlks();
+    auto &&iftrue_blks = GetIftrueBlks();
+    auto &&iffalse_blks = GetIffalseBlks();
+
+    branch_blks.insert(branch_blks.end(), iftrue_blks.begin(), iftrue_blks.end());
+    branch_blks.insert(branch_blks.end(), iffalse_blks.begin(), iffalse_blks.end());
+
+    return branch_blks;
 }

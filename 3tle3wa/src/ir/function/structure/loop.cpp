@@ -1,5 +1,6 @@
 #include "3tle3wa/ir/function/structure/loop.hh"
 
+#include <cstddef>
 #include <memory>
 #include <queue>
 #include <sstream>
@@ -7,15 +8,12 @@
 #include <unordered_map>
 
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-LoopBlocks Loop::GetCondBodyBlks() {
-    LoopBlocks loop_cond_blks;
-    // if (cond_begin == cond_end) {
-    //     loop_cond_blks.push_back(cond_begin);
-    //     return loop_cond_blks;
-    // }
+CfgNodeList Loop::GetCondBodyBlks() {
+    CfgNodeList loop_cond_blks;
 
     std::queue<CfgNodePtr> queue;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
@@ -45,8 +43,8 @@ LoopBlocks Loop::GetCondBodyBlks() {
     return loop_cond_blks;
 }
 
-LoopBlocks Loop::GetLoopBodyBlks() {
-    LoopBlocks loop_body_blks;
+CfgNodeList Loop::GetLoopBodyBlks() {
+    CfgNodeList loop_body_blks;
 
     std::stack<CfgNodePtr> stack;
     std::unordered_map<CfgNodePtr, bool> visit;
@@ -84,7 +82,7 @@ LoopBlocks Loop::GetLoopBodyBlks() {
     return loop_body_blks;
 }
 
-LoopBlocks Loop::GetEntireLoop() {
+CfgNodeList Loop::GetEntireStructure() {
     auto &&loop_blks = GetCondBodyBlks();
     auto &&loop_body = GetLoopBodyBlks();
 
@@ -93,43 +91,43 @@ LoopBlocks Loop::GetEntireLoop() {
     return loop_blks;
 }
 
-void PrintLoop(Loop &loop) {
-    auto &&PrintTab = [](loop_depth_t depth) {
+void Loop::PrintStructure() {
+    auto &&PrintTab = [](depth_t depth) {
         std::stringstream ss;
-        for (int idx = 0; idx < depth; ++idx) {
+        for (size_t idx = 0; idx < depth; ++idx) {
             ss << "\t";
         }
         return ss.str();
     };
 
-    if (loop.before_loop) {
-        cout << PrintTab(loop.loop_depth) << "\b\bLoop_" << loop.loop_depth << endl;
-        cout << PrintTab(loop.loop_depth) << "Before-Loop: Block_" << loop.before_loop->GetBlockIdx() << endl;
-        cout << PrintTab(loop.loop_depth) << "Cond-Begin : Block_" << loop.cond_begin->GetBlockIdx() << endl;
-        cout << PrintTab(loop.loop_depth) << "Cond-End   : Block_" << loop.cond_end->GetBlockIdx() << endl;
-        cout << PrintTab(loop.loop_depth) << "Body-Begin : Block_" << loop.body_begin->GetBlockIdx() << endl;
-        cout << PrintTab(loop.loop_depth) << "Body-End   : Block_" << loop.body_end->GetBlockIdx() << endl;
-        cout << PrintTab(loop.loop_depth) << "Loop-Exit  : Block_" << loop.loop_exit->GetBlockIdx() << endl;
+    if (before_blk) {
+        cout << PrintTab(depth) << "\b\bLoop_" << depth << endl;
+        cout << PrintTab(depth) << "Before-Loop: Block_" << before_blk->GetBlockIdx() << endl;
+        cout << PrintTab(depth) << "Cond-Begin : Block_" << cond_begin->GetBlockIdx() << endl;
+        cout << PrintTab(depth) << "Cond-End   : Block_" << cond_end->GetBlockIdx() << endl;
+        cout << PrintTab(depth) << "Body-Begin : Block_" << body_begin->GetBlockIdx() << endl;
+        cout << PrintTab(depth) << "Body-End   : Block_" << body_end->GetBlockIdx() << endl;
+        cout << PrintTab(depth) << "Loop-Exit  : Block_" << loop_exit->GetBlockIdx() << endl;
 
-        cout << PrintTab(loop.loop_depth) << "  Conditions  :";
-        for (auto cond : loop.GetCondBodyBlks()) {
+        cout << PrintTab(depth) << "  Conditions  :";
+        for (auto cond : GetCondBodyBlks()) {
             cout << " Block_" << cond->GetBlockIdx();
         }
         cout << endl;
 
-        cout << PrintTab(loop.loop_depth) << "  Loop-Bodys  :";
-        for (auto body : loop.GetLoopBodyBlks()) {
+        cout << PrintTab(depth) << "  Loop-Bodys  :";
+        for (auto body : GetLoopBodyBlks()) {
             cout << " Block_" << body->GetBlockIdx();
         }
         cout << endl;
 
-        cout << PrintTab(loop.loop_depth) << "  Loop-Blocks :";
-        for (auto body : loop.GetEntireLoop()) {
+        cout << PrintTab(depth) << "  Loop-Blocks :";
+        for (auto body : GetEntireStructure()) {
             cout << " Block_" << body->GetBlockIdx();
         }
         cout << endl;
     }
-    for (auto &&sub_loop : loop.sub_loops) {
-        PrintLoop(*sub_loop);
+    for (auto &&sub_structure : sub_structures) {
+        sub_structure->PrintStructure();
     }
 }
