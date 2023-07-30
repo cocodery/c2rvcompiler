@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstring>
 #include <list>
 #include <memory>
 
@@ -10,35 +12,64 @@ class BasicBlock;
 using InstList = std::list<InstPtr>;
 using BlockPtr = std::shared_ptr<BasicBlock>;
 
-using BlockAttr = size_t;
-
 class BaseFunction;
 
-constexpr const BlockAttr NORMAL = (1ul << 0x0000);
-constexpr const BlockAttr ENTRY = (1ul << 0x0001);
-constexpr const BlockAttr LOOPBEGIN = (1ul << 0x0002);
-constexpr const BlockAttr LOOPEND = (1ul << 0x0003);
-constexpr const BlockAttr LOOPOUT = (1ul << 0x0004);
-constexpr const BlockAttr BREAK = (1ul << 0x0005);
-constexpr const BlockAttr CONTINUE = (1ul << 0x0006);
-constexpr const BlockAttr GORETURN = (1ul << 0x0007);
-constexpr const BlockAttr EXIT = (1ul << 0x0008);
+struct BlkAttr {
+    typedef size_t BlkType;
+    static const BlkType Normal = (1ul << 0x0000);
+    static const BlkType Entry = (1ul << 0x0001);
+    static const BlkType Exit = (1ul << 0x0002);
 
-std::string AttrToStr(BlockAttr);
+    static const BlkType LoopTag = (1ul << 0x000e);
+    static const BlkType BranchTag = (1ul << 0x000f);
+
+    BlkType blk_type;
+
+    bool before_blk;
+
+    bool cond_begin;
+    bool cond_end;
+
+    bool body_begin;
+    bool body_end;
+
+    bool iftrue_begin;
+    bool iftrue_end;
+
+    bool iffalse_begin;
+    bool iffalse_end;
+
+    bool structure_out;
+
+    BlkAttr(BlkType _type = Normal)
+        : blk_type(_type),
+          before_blk(false),
+          cond_begin(false),
+          cond_end(false),
+          body_begin(false),
+          body_end(false),
+          iftrue_begin(false),
+          iftrue_end(false),
+          iffalse_begin(false),
+          iffalse_end(false),
+          structure_out(false) {}
+
+    bool CheckBlkType(BlkType _blk_type) { return ((blk_type & _blk_type) != 0); }
+};
 
 class BasicBlock {
    protected:
     size_t idx;
     InstList inst_list;
 
-    BlockAttr block_attr;
-
     BaseFunction *parent;
 
     static size_t blk_idx;
 
    public:
-    BasicBlock(BlockAttr, BaseFunction *);
+    BlkAttr blk_attr;
+
+    BasicBlock(BaseFunction *, BlkAttr::BlkType blk_tpye = BlkAttr::Normal);
     ~BasicBlock() = default;
 
     size_t GetBlockIdx();
@@ -54,16 +85,14 @@ class BasicBlock {
     void InsertInstFront(InstPtr);
     void RemoveInst(InstPtr);
 
-    bool FindBlkAttr(BlockAttr);
-    void AppendBlkAttr(BlockAttr);
-    void ClearSpecAttr(BlockAttr);
-    BlockAttr GetBlockAttr() const;
-
     BaseFunction *GetParent();
 
     static void ResetBlkIdx();
     static size_t GetBlkIdx();
     static void SetBlkIdx(size_t);
+
+    void AppBlkType(BlkAttr::BlkType blk_type) { blk_attr.blk_type |= blk_type; }
+    void ClrBlkType(BlkAttr::BlkType blk_type) { blk_attr.blk_type &= (~blk_type); }
 
     virtual std::string tollvmIR() = 0;
 };
