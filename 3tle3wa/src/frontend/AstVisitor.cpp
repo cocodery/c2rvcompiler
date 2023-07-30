@@ -7,7 +7,12 @@
 #include <tuple>
 
 #include "3tle3wa/ir/function/basefunc.hh"
+#include "3tle3wa/ir/function/basicblock.hh"
+#include "3tle3wa/ir/function/structure/branch.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
+#include "3tle3wa/ir/function/structure/structure.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
@@ -83,9 +88,6 @@ AstVisitor::AstVisitor(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {
 
     in_loop = false;
     out_loop_block = nullptr;
-
-    loop_depth = 0;
-    cur_loop = nullptr;
 
     ret_addr = nullptr;
     ret_block = nullptr;
@@ -329,10 +331,6 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 
-    assert(loop_depth == 0 && cur_loop == nullptr);
-    function->loops = new Loop(function, nullptr, loop_depth++);
-    cur_loop = function->loops;
-
     cur_block = cur_func->CreateEntry();
 
     ret_addr =
@@ -365,8 +363,6 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
     out_loop_block = nullptr;
     ret_addr = nullptr;
     ret_block = nullptr;
-    loop_depth = 0;
-    cur_loop = nullptr;
     cur_block = nullptr;
     cur_func = nullptr;
     callee_func = nullptr;
@@ -475,72 +471,87 @@ std::any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
 }
 
 std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
+    CfgNodePtr before_blk = cur_block;  // block-before-enter-branch
+    cur_block->blk_attr.before_blk = true;
+    cur_block->AppBlkType(BlkAttr::BranchTag);
+
+    CfgNodePtr cond_begin = cur_func->CreateCfgNode();  // first-block-of-branch-condition
+    cond_begin->blk_attr.cond_begin = true;
+
+    before_blk->InsertInstBack(JumpInst::CreatePtr(cond_begin, before_blk));
+
     BranchInstList last_lOr_list = lOr_list;
     BranchInstList last_lAnd_list = lAnd_list;
     lOr_list = BranchInstList();
     lAnd_list = BranchInstList();
+
+    cur_block = cond_begin;
     BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
 
-    CfgNodePtr last_block = cur_block;  // last-condition block
+    CfgNodePtr cond_end = cur_block;  // last-condition block
+    cur_block->blk_attr.cond_end = true;
 
     SymbolTable *last_table = cur_table;
     SymbolTable *table_true = NewLocalTable(last_table);
     SymbolTable *table_false = NewLocalTable(last_table);
 
-    CfgNodePtr branch_true = cur_func->CreateCfgNode();  // first-block-of-true-branch
-    cur_table = table_true;
-    cur_block = branch_true;
-    ctx->stmt(0)->accept(this);
-    CfgNodePtr true_end = cur_block;  // last-block-of-true-branch
+    CfgNodePtr iftrue_begin = cur_func->CreateCfgNode();  // first-block-of-true-branch
+    iftrue_begin->blk_attr.iftrue_begin = true;
 
-    CfgNodePtr branch_false = cur_func->CreateCfgNode();  // first-block-of-false-branch
+    cur_table = table_true;
+    cur_block = iftrue_begin;
+    ctx->stmt(0)->accept(this);
+
+    CfgNodePtr iftrue_end = cur_block;  // last-block-of-true-branch
+    iftrue_end->blk_attr.iftrue_end = true;
+
+    CfgNodePtr iffalse_begin = cur_func->CreateCfgNode();  // first-block-of-false-branch
+    iffalse_begin->blk_attr.iffalse_begin = true;
+
     cur_table = table_false;
-    cur_block = branch_false;
-    if (ctx->Else() != nullptr) {
-        ctx->stmt(1)->accept(this);
-    }
-    CfgNodePtr false_end = cur_block;  // last-block-of-false-branch
+    cur_block = iffalse_begin;
+    if (ctx->Else() != nullptr) ctx->stmt(1)->accept(this);
+
+    CfgNodePtr iffalse_end = cur_block;  // last-block-of-false-branch
+    iffalse_end->blk_attr.iffalse_end = true;
 
     for (auto &&lAnd_inst : lAnd_list) {
-        lAnd_inst->SetFalseTarget(branch_false);
+        lAnd_inst->SetFalseTarget(iffalse_begin);
     }
     for (auto &&lOr_inst : lOr_list) {
-        lOr_inst->SetTrueTarget(branch_true);
+        lOr_inst->SetTrueTarget(iftrue_begin);
     }
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
 
-    last_block->InsertInstBack(BranchInst::CreatePtr(cond, branch_true, branch_false, last_block));
+    cond_end->InsertInstBack(BranchInst::CreatePtr(cond, iftrue_begin, iffalse_begin, cond_end));
 
-    CfgNodePtr branch_out = cur_func->CreateCfgNode();  // after-branch
+    CfgNodePtr structure_out = cur_func->CreateCfgNode();  // after-branch
+    structure_out->blk_attr.structure_out = true;
+
     cur_table = last_table;
-    cur_block = branch_out;
+    cur_block = structure_out;
 
-    true_end->InsertInstBack(JumpInst::CreatePtr(branch_out, true_end));
-    false_end->InsertInstBack(JumpInst::CreatePtr(branch_out, false_end));
+    iftrue_end->InsertInstBack(JumpInst::CreatePtr(structure_out, iftrue_end));
+    iffalse_end->InsertInstBack(JumpInst::CreatePtr(structure_out, iffalse_end));
 
     return nullptr;
 }
 
 std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     bool last_in_loop = in_loop;
-    if (last_in_loop == false) {
-        out_loop_block = cur_block;
-    }
+    if (last_in_loop == false) out_loop_block = cur_block;
     in_loop = true;
 
-    Loop *last_loop = cur_loop;
-    Loop *loop = new Loop(cur_func, cur_loop, loop_depth++);
-    cur_loop->sub_loops.push_back(loop);
-    cur_loop = loop;
+    CfgNodePtr before_blk = cur_block;  // block-before-enter-while-condition
+    cur_block->blk_attr.before_blk = true;
+    cur_block->AppBlkType(BlkAttr::LoopTag);
 
-    cur_loop->before_loop = cur_block;
-
-    CfgNodePtr block_before_cond = cur_block;                          // block-before-enter-while-condition
-    CfgNodePtr cond_block_begin = cur_func->CreateCfgNode(LOOPBEGIN);  // first-block-of-loop-condition
+    CfgNodePtr cond_begin = cur_func->CreateCfgNode();  // first-block-of-loop-condition
+    cond_begin->blk_attr.cond_begin = true;
 
     CfgNodePtr last_target_continue = target_continue;
-    target_continue = cond_block_begin;
+    target_continue = cond_begin;
 
     BreakInstList last_break_list = break_list;
     break_list = BreakInstList();
@@ -550,49 +561,51 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     lOr_list = BranchInstList();
     lAnd_list = BranchInstList();
 
-    cur_block = cond_block_begin;
-    cur_loop->cond_begin = cur_block;
+    cur_block = cond_begin;
     BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
-    cur_loop->cond_end = cur_block;
-    CfgNodePtr cond_block_end = cur_block;  // last-condition block
+
+    CfgNodePtr cond_end = cur_block;  // last-condition block
+    cur_block->blk_attr.cond_end = true;
 
     SymbolTable *last_table = cur_table;
     cur_table = NewLocalTable(last_table);
-    CfgNodePtr loop_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
-    cur_block = loop_begin;
-    cur_loop->body_begin = loop_begin;
+
+    CfgNodePtr body_begin = cur_func->CreateCfgNode();  // first-block-of-loop-body
+    body_begin->blk_attr.body_begin = true;
+
+    cur_block = body_begin;
     ctx->stmt()->accept(this);
-    block_before_cond->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, block_before_cond));
-    CfgNodePtr loop_end = cur_block;
-    cur_loop->body_end = loop_end;
-    loop_end->AppendBlkAttr(LOOPEND);
 
-    loop_end->InsertInstBack(JumpInst::CreatePtr(cond_block_begin, loop_end));
+    // after alloca in phi move out of loop, insert `before-blk jump to cond-begin`
+    before_blk->InsertInstBack(JumpInst::CreatePtr(cond_begin, before_blk));
 
-    CfgNodePtr loop_exit = cur_func->CreateCfgNode(LOOPOUT);  // exit-block-of-loop
-    cur_loop->loop_exit = loop_exit;
+    CfgNodePtr body_end = cur_block;
+    body_end->blk_attr.body_end = true;
 
-    cond_block_end->InsertInstBack(BranchInst::CreatePtr(cond, loop_begin, loop_exit, cond_block_end));
+    body_end->InsertInstBack(JumpInst::CreatePtr(cond_begin, body_end));
+
+    CfgNodePtr structure_out = cur_func->CreateCfgNode();  // exit-block-of-loop
+    structure_out->blk_attr.structure_out = true;
+
+    cond_end->InsertInstBack(BranchInst::CreatePtr(cond, body_begin, structure_out, cond_end));
 
     for (auto &&break_inst : break_list) {
-        break_inst->SetTarget(loop_exit);
+        break_inst->SetTarget(structure_out);
     }
     break_list = last_break_list;
 
     for (auto &&lAnd_inst : lAnd_list) {
-        lAnd_inst->SetFalseTarget(loop_exit);
+        lAnd_inst->SetFalseTarget(structure_out);
     }
     for (auto &&lOr_inst : lOr_list) {
-        lOr_inst->SetTrueTarget(loop_begin);
+        lOr_inst->SetTrueTarget(body_begin);
     }
     lAnd_list = last_lAnd_list;
     lOr_list = last_lOr_list;
 
     target_continue = last_target_continue;
     cur_table = last_table;
-    loop_depth -= 1;
-    cur_loop = last_loop;
-    cur_block = loop_exit;
+    cur_block = structure_out;
     in_loop = last_in_loop;
 
     return nullptr;
@@ -601,7 +614,6 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
-    cur_block->AppendBlkAttr(CONTINUE);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
@@ -610,7 +622,6 @@ std::any AstVisitor::visitBreakStmt(CRVC_UNUSE SysYParser::BreakStmtContext *ctx
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(break_inst);
     break_list.push_back(break_inst);
-    cur_block->AppendBlkAttr(BREAK);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
@@ -633,7 +644,6 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(ret_inst);
     return_list.push_back(ret_inst);
-    cur_block->AppendBlkAttr(GORETURN);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
@@ -760,7 +770,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     if (callee_name == cur_func->GetFuncName()) cur_func->SetRecursive(true);
 
     // only user-defined, non-recursive function can be inline
-    if (!callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
+    if (false && !callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
         auto &&[ret_value, ret_block] =
             Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block, in_loop, out_loop_block);
