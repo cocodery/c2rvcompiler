@@ -16,6 +16,7 @@
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
+#include "3tle3wa/utils/logs.hh"
 
 namespace {
 
@@ -771,6 +772,10 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
 
     // only user-defined, non-recursive function can be inline
     if (false && !callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
+        auto &&block_inline = cur_func->CreateCfgNode();
+        cur_block->InsertInstBack(JumpInst::CreatePtr(block_inline, cur_block));
+        cur_block = block_inline;
+
         auto &&[ret_value, ret_block] =
             Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block, in_loop, out_loop_block);
