@@ -1,12 +1,15 @@
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
+#include <algorithm>
+#include <cassert>
 #include <memory>
 
+#include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 
 void DCE::EliminateUselessCode(NormalFuncPtr func) {
-    auto allNodes = func->TopoSortFromEntry();
+    auto allNodes = func->GetSequentialNodes();
 
     std::set<InstPtr> visitSet;
     std::queue<InstPtr> WorkList;
@@ -59,7 +62,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     // it cannot be a phi parameter
     std::map<CtrlFlowGraphNode *, bool> PhiParamBlock;
     std::map<CfgNodePtr, CfgNodePtr> NodeMap;
-    for (auto node : func->TopoSortFromEntry()) {
+    for (auto node : func->GetSequentialNodes()) {
         NodeMap[node] = node;
 
         for (auto inst : node->GetInstList()) {
@@ -103,26 +106,26 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     CRVC_UNUSE auto RemoveEmptyBlock = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
     CRVC_UNUSE auto CombineBlocks = [&func](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {
-        i->RemoveLastInst();
-        auto &&i_inst_list = i->GetInstList();
-        auto &&j_inst_list = j->GetInstList();
-        for_each(i_inst_list.begin(), i_inst_list.end(), [&j](const auto &inst) { inst->SetParent(j); });
-        i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
-        j_inst_list = std::move(i_inst_list);
+        // i->RemoveLastInst();
+        // auto &&i_inst_list = i->GetInstList();
+        // auto &&j_inst_list = j->GetInstList();
+        // for_each(i_inst_list.begin(), i_inst_list.end(), [&j](const auto &inst) { inst->SetParent(j); });
+        // i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
+        // j_inst_list = std::move(i_inst_list);
 
-        j->AppendBlkAttr(i->GetBlockAttr());
+        // j->AppendBlkAttr(i->GetBlockAttr());
 
-        if (j->FindBlkAttr(ENTRY)) {
-            func->SetEntryNode(j);
-        }
+        // if (j->FindBlkAttr(ENTRY)) {
+        //     func->SetEntryNode(j);
+        // }
 
-        // ReplacePredSucc(i, j);
-        for (auto &&pred : i->GetPredecessors()) {
-            pred->AddSuccessor(j);
-            j->AddPredecessor(pred);
-            pred->GetLastInst()->ReplaceTarget(i, j);
-        }
-        RemoveNode(i);
+        // // ReplacePredSucc(i, j);
+        // for (auto &&pred : i->GetPredecessors()) {
+        //     pred->AddSuccessor(j);
+        //     j->AddPredecessor(pred);
+        //     pred->GetLastInst()->ReplaceTarget(i, j);
+        // }
+        // RemoveNode(i);
     };
 
     CRVC_UNUSE auto HoistBranch = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
@@ -156,13 +159,13 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                     // case 2, remove empty block
 
                     // case 3, combine i and j
-                    if (j->GetPredecessors().size() == 1) {
-                        CombineBlocks(i, j);
-                        NodeMap[i] = j;
-                        changed = true;
-                        iter = post_order.erase(iter);
-                        continue;
-                    }
+                    // if (j->GetPredecessors().size() == 1) {
+                    //     CombineBlocks(i, j);
+                    //     NodeMap[i] = j;
+                    //     changed = true;
+                    //     iter = post_order.erase(iter);
+                    //     continue;
+                    // }
                     // case 4, hoist a branch
                 }
             }
@@ -172,12 +175,12 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     };
 
     while (true) {
-        auto &&post_order = func->TopoSortFromExit();
+        auto &&post_order = func->GetReverseSeqNodes();
         if (!OnePass(post_order)) break;
     }
 
     // modify origin-alloca parent which been merged
-    for (auto &&node : func->TopoSortFromEntry()) {
+    for (auto &&node : func->GetSequentialNodes()) {
         for (auto &&inst : node->GetInstList()) {
             if (inst->IsPhiInst()) {
                 auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
@@ -192,35 +195,48 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
 }
 
 void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
-    auto exit = func->GetExitNode();
-    auto allNodes = func->TopoSortFromEntry();
-    // Solve the control flow graph from exit
-    // Identify the unreachable nodes in the control flow
-    std::queue<CfgNodePtr> nodeQueue;
-    std::unordered_map<CfgNodePtr, bool> visitMap;
-    std::set<CfgNodePtr> delNodeSet;
-    nodeQueue.push(exit);
-    while (!nodeQueue.empty()) {
-        auto &&front = nodeQueue.front();
-        nodeQueue.pop();
-        if (visitMap[front] == false) {
-            visitMap[front] = true;
-            for (auto &&node : front->GetPredecessors()) {
-                nodeQueue.push(node);
-                if (std::find(allNodes.begin(), allNodes.end(), node) == allNodes.end()) {
-                    delNodeSet.insert(node);
+    std::queue<CfgNodePtr> queue;
+    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
+
+    CfgNodeList allNodes;
+    queue.push(func->GetEntryNode());
+    while (!queue.empty()) {
+        auto &&front = queue.front();
+        queue.pop();
+        if (!visit[front.get()]) {
+            visit[front.get()] = true;
+            allNodes.push_back(front);
+            for (auto &&node : front->GetSuccessors()) {
+                queue.push(node);
+            }
+        }
+    }
+    assert(queue.empty());
+    visit.clear();
+
+    CfgNodeList delNodes;
+    queue.push(func->GetExitNode());
+    while (!queue.empty()) {
+        auto &&front = queue.front();
+        queue.pop();
+        if (!visit[front.get()]) {
+            visit[front.get()] = true;
+            for (auto &&pred : front->GetPredecessors()) {
+                queue.push(pred);
+                if (std::find(allNodes.begin(), allNodes.end(), pred) == allNodes.end()) {
+                    delNodes.push_back(pred);
                 }
             }
         }
     }
-    assert(nodeQueue.empty());
+    assert(queue.empty());
 
     // remove dead-node
-    std::for_each(delNodeSet.begin(), delNodeSet.end(), RemoveNode);
+    std::for_each(delNodes.begin(), delNodes.end(), RemoveNode);
 }
 
 void DCE::DCE(NormalFuncPtr func) {
     EliminateUselessCode(func);
-    EliminateUselessControlFlow(func);
+    // EliminateUselessControlFlow(func);
     EliminateUnreachableCode(func);
 }

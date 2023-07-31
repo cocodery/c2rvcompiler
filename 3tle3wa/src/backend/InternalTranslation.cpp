@@ -47,7 +47,7 @@ void InternalTranslation::DoTranslation() {
         }
     }
 
-    auto &&topo = fptr_->TopoSortFromEntry();
+    auto &&topo = fptr_->GetSequentialNodes();
     auto &&nxt_cfgit = topo.begin();
     auto &&cur_cfgit = nxt_cfgit++;
 

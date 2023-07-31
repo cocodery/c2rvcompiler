@@ -185,7 +185,7 @@ void SCCP::SCCP(NormalFuncPtr func) {
         }
     }
 
-    auto &&node_list = func->TopoSortFromEntry();
+    auto &&node_list = func->GetSequentialNodes();
 
     for (auto &&iter = node_list.begin(); iter != node_list.end();) {
         auto node = (*iter);

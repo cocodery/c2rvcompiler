@@ -6,6 +6,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
 SSA::RenameData::RenameData(CfgNodePtr _node, CfgNodePtr _pred, ValueVector _v)
     : node(_node), pred(_pred), valuelist(_v) {}
@@ -16,7 +17,7 @@ SSA::RenameDatePtr SSA::RenameData::CreatePtr(CfgNodePtr _node, CfgNodePtr _pred
 
 void SSA::SSAConstruction(NormalFuncPtr func) {
     auto entry = func->GetEntryNode();
-    auto allNodes = func->TopoSortFromEntry();
+    auto allNodes = func->GetSequentialNodes();
 
     std::vector<std::set<CfgNodePtr>> defBlocks;
     std::list<AllocaInstPtr> allocaInsts;
@@ -159,10 +160,13 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
 
     InsertPhiFunction();
     VariableRename();
+
+    // remove redundant phi-inst
+    DCE::EliminateUselessCode(func);
 }
 
 void SSA::SSADestruction(NormalFuncPtr func) {
-    auto &&allNodes = func->TopoSortFromEntry();
+    auto &&allNodes = func->GetSequentialNodes();
     std::unordered_map<AllocaInstPtr, bool> allocaMap;
 
     for (auto node : allNodes) {

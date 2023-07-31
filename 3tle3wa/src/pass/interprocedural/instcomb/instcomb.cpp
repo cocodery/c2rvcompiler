@@ -13,7 +13,7 @@
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
-#include "3tle3wa/utils/logs.hh"
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
 InstComb::BinType InstComb::GetBinType(const BaseValue *lhs, const BaseValue *rhs) {
     if (lhs->IsVariable() && rhs->IsVariable()) {  // bin_inst = variable OP variable
@@ -29,7 +29,7 @@ InstComb::BinType InstComb::GetBinType(const BaseValue *lhs, const BaseValue *rh
 }
 
 void InstComb::InstCombine(NormalFuncPtr func) {
-    auto &&all_ndoes = func->TopoSortFromEntry();
+    auto &&all_ndoes = func->GetSequentialNodes();
 
     // move constant or low-addr oprand to rhs
     for (auto &&node : all_ndoes) {
@@ -46,16 +46,14 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             auto &&inst = (*iter);
 
             // only combine binary-inst
-            if (inst->IsTwoOprandInst() == false) {
-                continue;
-            }
+            if (inst->IsTwoOprandInst() == false) continue;
+
             // process binary-inst
             auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
             auto bin_opcode = bin_inst->GetOpCode();
 
-            if (!(OP_ADD <= bin_opcode && bin_opcode <= OP_DIV)) {
-                continue;
-            }
+            // Add, Sub, Mul, Div
+            if (!(OP_ADD <= bin_opcode && bin_opcode <= OP_DIV)) continue;
 
             auto &&bin_lhs = bin_inst->GetLHS();
             auto &&bin_rhs = bin_inst->GetRHS();
@@ -63,10 +61,8 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             auto &&lhs_inst = bin_lhs->GetParent();
             auto &&rhs_inst = bin_rhs->GetParent();
 
-            // both lhs and rhs come from constant or parameter
-            if (lhs_inst == nullptr && rhs_inst == nullptr) {
-                continue;
-            }
+            // both lhs and rhs come from constant or parameter, cannot do combine
+            if (lhs_inst == nullptr && rhs_inst == nullptr) continue;
 
             bool iop = bin_inst->IsIBinaryInst();
             auto bin_type = GetBinType(bin_lhs.get(), bin_rhs.get());
@@ -425,5 +421,6 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             }
         }
     }
+    DCE::EliminateUselessCode(func);
     return;
 }

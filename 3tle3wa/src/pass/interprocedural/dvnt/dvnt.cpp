@@ -156,7 +156,7 @@ bool GVN::IsPhiOprandSame(InstPtr inst) {
 void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
     if (auto oprand = inst->FindInComingUse(node)) {
         if (auto vn = GetVN(oprand)) {
-            ReplaceSRC(oprand, vn);
+            inst->ReplaceSRC(oprand, vn);
         }
     }
 }

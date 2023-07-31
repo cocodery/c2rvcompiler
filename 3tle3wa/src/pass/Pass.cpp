@@ -13,21 +13,17 @@ void Optimization::DoOptimization() {
 
         SSA::SSAConstruction(func);
 
-        DCE::EliminateUselessCode(func);
-
         GVN::DVNT(func, comp_unit.getGlbTable());
 
-        LoopInvariant::LoopInvariant(func);
+        // LoopInvariant::LoopInvariant(func);
 
-        SCCP::SCCP(func);
-        DCE::EliminateUnreachableCode(func);
-        DCE::DCE(func);
+        // SCCP::SCCP(func);
+        // DCE::EliminateUnreachableCode(func);
+        // DCE::DCE(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
         InstComb::InstCombine(func);
-
-        DCE::EliminateUselessCode(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
