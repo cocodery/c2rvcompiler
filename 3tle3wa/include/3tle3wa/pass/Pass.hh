@@ -8,6 +8,7 @@
 #include "3tle3wa/pass/interprocedural/sccp/sccp.hh"
 #include "3tle3wa/pass/interprocedural/ssa/ssa.hh"
 #include "3tle3wa/pass/intraprocedural/gvl/gvl.hh"
+#include "3tle3wa/pass/interprocedural/thb/thb.h"
 
 class Optimization {
    private:

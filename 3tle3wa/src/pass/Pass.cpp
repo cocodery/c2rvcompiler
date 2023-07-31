@@ -1,5 +1,6 @@
 #include "3tle3wa/pass/Pass.hh"
 
+
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
 void Optimization::DoOptimization() {
@@ -19,6 +20,7 @@ void Optimization::DoOptimization() {
         DCE::EliminateUnreachableCode(func);
         DCE::DCE(func);
 
+        // THB::THB(func);
         GVN::DVNT(func, comp_unit.getGlbTable());
 
         InstComb::InstCombine(func);
@@ -30,6 +32,7 @@ void Optimization::DoOptimization() {
         SSA::SSADestruction(func);
 
         DCE::DCE(func);
+
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());
