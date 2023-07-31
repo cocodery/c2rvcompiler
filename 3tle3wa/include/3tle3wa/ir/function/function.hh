@@ -7,12 +7,16 @@
 #include <memory>
 #include <queue>
 #include <set>
+#include <stack>
 #include <string>
 #include <vector>
 
 #include "3tle3wa/ir/function/basefunc.hh"
+#include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
+#include "3tle3wa/ir/function/structure/structure.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/type/listType.hh"
 #include "3tle3wa/ir/value/type/scalarType.hh"
@@ -30,7 +34,7 @@ class NormalFunction final : public BaseFunction {
     size_t blk_idx;
 
    public:
-    Loop *loops;
+    Structure *structure;
 
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
@@ -39,7 +43,7 @@ class NormalFunction final : public BaseFunction {
 
     CfgNodePtr CreateEntry();
     CfgNodePtr CreateExit();
-    CfgNodePtr CreateCfgNode(BlockAttr _attr = NORMAL);
+    CfgNodePtr CreateCfgNode(BlkAttr::BlkType blk_type = BlkAttr::Normal);
 
     CfgNodePtr GetEntryNode();
     CfgNodePtr GetExitNode();
@@ -47,8 +51,12 @@ class NormalFunction final : public BaseFunction {
     void SetEntryNode(CfgNodePtr);
     void SetExitNode(CfgNodePtr);
 
-    CfgNodeList TopoSortFromEntry();
-    CfgNodeList TopoSortFromExit();
+    void GetCondBlks(CfgNodePtr &, std::stack<CfgNodePtr> &, CfgNodeList &,
+                     std::unordered_map<CtrlFlowGraphNode *, bool> &);
+    void GetBodyBlks(CfgNodePtr &, CfgNodeList &, std::unordered_map<CtrlFlowGraphNode *, bool> &);
+
+    CfgNodeList GetSequentialNodes();
+    CfgNodeList GetReverseSeqNodes();
 
     void SetVarIdx(size_t);
     size_t GetVarIdx();

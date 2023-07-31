@@ -1,9 +1,19 @@
 #include "3tle3wa/ir/function/function.hh"
 
+#include <cassert>
 #include <cstddef>
+#include <iterator>
 #include <memory>
+#include <queue>
+#include <stack>
 #include <string>
+#include <unordered_map>
 
+#include "3tle3wa/ir/function/basicblock.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
 #include "3tle3wa/utils/logs.hh"
 
 //===-----------------------------------------------------------===//
@@ -11,21 +21,23 @@
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list), loops(nullptr) {}
-
-CfgNodePtr NormalFunction::CreateEntry() {
-    entry = CtrlFlowGraphNode::CreatePtr(ENTRY | NORMAL, this);
-    return entry;
-}
+    : BaseFunction(_type, _name, _list), structure(nullptr) {}
 
 bool NormalFunction::IsLibFunction() const { return false; }
 
+CfgNodePtr NormalFunction::CreateEntry() {
+    entry = CtrlFlowGraphNode::CreatePtr(this, BlkAttr::Entry | BlkAttr::Normal);
+    return entry;
+}
+
 CfgNodePtr NormalFunction::CreateExit() {
-    exit = CtrlFlowGraphNode::CreatePtr(EXIT | NORMAL, this);
+    exit = CtrlFlowGraphNode::CreatePtr(this, BlkAttr::Exit | BlkAttr::Normal);
     return exit;
 }
 
-CfgNodePtr NormalFunction::CreateCfgNode(BlockAttr _attr) { return CtrlFlowGraphNode::CreatePtr(_attr, this); }
+CfgNodePtr NormalFunction::CreateCfgNode(BlkAttr::BlkType blk_type) {
+    return CtrlFlowGraphNode::CreatePtr(this, blk_type);
+}
 
 CfgNodePtr NormalFunction::GetEntryNode() { return entry; }
 CfgNodePtr NormalFunction::GetExitNode() { return exit; }
@@ -33,55 +45,127 @@ CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
 
-CfgNodeList NormalFunction::TopoSortFromEntry() {
-    std::unordered_map<CfgNodePtr, bool> visit;
-    CfgNodeList preorder_node = CfgNodeList();
+void NormalFunction::GetCondBlks(CfgNodePtr &node, std::stack<CfgNodePtr> &parent, CfgNodeList &list,
+                                 std::unordered_map<CtrlFlowGraphNode *, bool> &visit) {
+    assert(node->blk_attr.cond_begin);  // node must be cond-begin
+    std::stack<CfgNodePtr> stack;
+    stack.push(node);
 
-    CRVC_UNUSE auto PredAllVisited = [&visit](CfgNodePtr succ) {
-        if (succ->FindBlkAttr(LOOPBEGIN)) return true;
-        for (auto &&pred : succ->GetPredecessors()) {
-            if (pred->GetDominatorSet().size() == 0) continue;
-            if (visit[pred] == false) return false;
-        }
-        return true;
-    };
+    while (!stack.empty()) {
+        auto &&top = stack.top();
+        stack.pop();
 
-    std::function<void(CfgNodePtr)> DepthFirstSearch = [&](CfgNodePtr node) {
-        visit[node] = true;
-        preorder_node.push_back(node);
-        for (auto &&succ : node->GetSuccessors()) {
-            if (!visit[succ]) {
-                DepthFirstSearch(succ);
+        if (!visit[top.get()]) {
+            visit[top.get()] = true;
+            list.push_back(top);
+
+            Instruction *last_inst = top->GetLastInst().get();
+            if (last_inst->IsBranchInst()) {
+                BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
+                auto &&lhs = br_inst->GetTrueTarget();
+                auto &&rhs = br_inst->GetFalseTarget();
+
+                auto &&lhs_attr = lhs->blk_attr;
+                auto &&rhs_attr = rhs->blk_attr;
+
+                if (!rhs_attr.iftrue_begin && !rhs_attr.iffalse_begin && !rhs_attr.body_begin &&
+                    !rhs_attr.structure_out) {
+                    stack.push(rhs);
+                }
+                if (!lhs_attr.iftrue_begin && !lhs_attr.iffalse_begin && !lhs_attr.body_begin &&
+                    !lhs_attr.structure_out) {
+                    stack.push(lhs);
+                }
+                // last branch of cond
+                if ((lhs_attr.iftrue_begin && rhs_attr.iffalse_begin) ||
+                    (lhs_attr.body_begin && rhs_attr.structure_out)) {
+                    parent.push(rhs);
+                    parent.push(lhs);
+                }
+            } else {
+                assert(false);
             }
         }
-    };
-    DepthFirstSearch(entry);
-    return preorder_node;
+    }
+    return;
 }
 
-CfgNodeList NormalFunction::TopoSortFromExit() {
-    std::unordered_map<CfgNodePtr, bool> visit;
-    CfgNodeList postorder_node = CfgNodeList();
+void NormalFunction::GetBodyBlks(CfgNodePtr &node, CfgNodeList &list,
+                                 std::unordered_map<CtrlFlowGraphNode *, bool> &visit) {
+    std::stack<CfgNodePtr> stack;
+    stack.push(node);
 
-    CRVC_UNUSE auto SuccAllVisited = [&visit](CfgNodePtr pred) {
-        if (pred->GetBlockAttr() == LOOPBEGIN) return true;
-        for (auto &&succ : pred->GetSuccessors()) {
-            if (visit[succ] == false) return false;
-        }
-        return true;
-    };
-
-    std::function<void(CfgNodePtr)> DepthFirstSearch = [&](CfgNodePtr node) {
-        visit[node] = true;
-        postorder_node.push_back(node);
+    auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) -> bool {
+        bool ret = true;
         for (auto &&pred : node->GetPredecessors()) {
-            if (!visit[pred]) {
-                DepthFirstSearch(pred);
+            if (pred->GetPredecessors().size() == 0) continue;
+            if (!visit[pred.get()]) {
+                ret = false;
             }
         }
+        return ret;
     };
-    DepthFirstSearch(exit);
-    return postorder_node;
+
+    while (!stack.empty()) {
+        auto &&top = stack.top();
+        stack.pop();
+
+        if (!visit[top.get()] && ChkAllPredVisit(top.get()) && !top->blk_attr.CheckBlkType(BlkAttr::Exit)) {
+            visit[top.get()] = true;
+            list.push_back(top);
+
+            Instruction *last_inst = top->GetLastInst().get();
+            if (last_inst->IsBranchInst()) {
+                BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
+                auto &&lhs = br_inst->GetTrueTarget();
+                auto &&rhs = br_inst->GetFalseTarget();
+
+                auto &&lhs_attr = lhs->blk_attr;
+                auto &&rhs_attr = rhs->blk_attr;
+
+                if (!rhs_attr.cond_begin && !rhs_attr.structure_out && !rhs_attr.iftrue_begin &&
+                    !rhs_attr.iffalse_begin) {
+                    stack.push(rhs);
+                }
+                if (!lhs_attr.cond_begin && !lhs_attr.structure_out && !lhs_attr.iftrue_begin &&
+                    !lhs_attr.iffalse_begin) {
+                    stack.push(lhs);
+                }
+            } else if (last_inst->IsJumpInst()) {
+                JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
+                auto &&target = jump_inst->GetTarget();
+
+                auto &&target_attr = target->blk_attr;
+
+                if (!target_attr.cond_begin && !target_attr.structure_out) {
+                    stack.push(target);
+                } else if (target_attr.cond_begin) {
+                    GetCondBlks(target, stack, list, visit);
+                } else if (target_attr.structure_out &&
+                           (top->blk_attr.body_end || top->blk_attr.iftrue_end || top->blk_attr.iffalse_end)) {
+                    stack.push(target);
+                }
+            }
+        }
+    }
+    return;
+}
+
+CfgNodeList NormalFunction::GetSequentialNodes() {
+    CfgNodeList list;
+    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
+
+    GetBodyBlks(entry, list, visit);
+    list.push_back(exit);
+
+    return list;
+}
+
+CfgNodeList NormalFunction::GetReverseSeqNodes() {
+    CfgNodeList list = GetSequentialNodes();
+    list.reverse();
+
+    return list;
 }
 
 void NormalFunction::SetVarIdx(size_t _var_idx) { var_idx = _var_idx; }
@@ -109,7 +193,7 @@ std::string NormalFunction::tollvmIR() {
 
     ss << ") {" << endl;
 
-    for (auto &&node : TopoSortFromEntry()) {
+    for (auto &&node : GetSequentialNodes()) {
         ss << node->tollvmIR() << endl;
     }
 
