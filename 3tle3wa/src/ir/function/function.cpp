@@ -96,14 +96,14 @@ void NormalFunction::GetBodyBlks(CfgNodePtr &node, CfgNodeList &list,
     stack.push(node);
 
     auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) -> bool {
-        bool ret = true;
+        if (node->blk_attr.CheckBlkType(BlkAttr::Entry)) return true;
+        assert(node->GetPredecessors().size() > 0);
         for (auto &&pred : node->GetPredecessors()) {
-            if (pred->GetPredecessors().size() == 0) continue;
             if (!visit[pred.get()]) {
-                ret = false;
+                return false;
             }
         }
-        return ret;
+        return true;
     };
 
     while (!stack.empty()) {
