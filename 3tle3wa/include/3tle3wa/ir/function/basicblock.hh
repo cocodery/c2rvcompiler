@@ -4,6 +4,7 @@
 #include <cstring>
 #include <list>
 #include <memory>
+#include <sstream>
 
 #include "3tle3wa/ir/instruction/instruction.hh"
 
@@ -55,6 +56,17 @@ struct BlkAttr {
           structure_out(false) {}
 
     bool CheckBlkType(BlkType _blk_type) { return ((blk_type & _blk_type) != 0); }
+
+    std::string to_str() {
+        std::stringstream ss;
+        if (CheckBlkType(BlkAttr::Entry)) ss << "Entry ";
+        if (CheckBlkType(BlkAttr::Normal)) ss << "Normal ";
+        if (CheckBlkType(BlkAttr::Exit)) ss << "Exit ";
+        ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin << ' ' << body_end << ' '
+           << iftrue_begin << ' ' << iftrue_end << ' ' << iffalse_begin << ' ' << iffalse_end << ' ' << structure_out
+           << " ]";
+        return ss.str();
+    }
 };
 
 class BasicBlock {
