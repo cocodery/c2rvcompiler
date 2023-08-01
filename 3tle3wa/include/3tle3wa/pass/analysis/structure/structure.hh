@@ -4,5 +4,6 @@
 
 namespace StructureAnalysis {
 
-void StructureAnalysis(NormalFuncPtr &);
+void LoopAnalysis(NormalFuncPtr &);
+void BranchAnalysis(NormalFuncPtr &);
 }  // namespace StructureAnalysis
