@@ -472,49 +472,34 @@ std::any AstVisitor::visitBlockStmt(SysYParser::BlockStmtContext *ctx) {
 }
 
 std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
-    CfgNodePtr before_blk = cur_block;  // block-before-enter-branch
-    cur_block->blk_attr.before_blk = true;
-    cur_block->AppBlkType(BlkAttr::BranchTag);
-
-    CfgNodePtr cond_begin = cur_func->CreateCfgNode();  // first-block-of-branch-condition
-    cond_begin->blk_attr.cond_begin = true;
-
-    before_blk->InsertInstBack(JumpInst::CreatePtr(cond_begin, before_blk));
-
     BranchInstList last_lOr_list = lOr_list;
     BranchInstList last_lAnd_list = lAnd_list;
     lOr_list = BranchInstList();
     lAnd_list = BranchInstList();
 
-    cur_block = cond_begin;
     BaseValuePtr cond = std::any_cast<BaseValuePtr>(ctx->condExp()->accept(this));
 
     CfgNodePtr cond_end = cur_block;  // last-condition block
-    cur_block->blk_attr.cond_end = true;
 
     SymbolTable *last_table = cur_table;
     SymbolTable *table_true = NewLocalTable(last_table);
     SymbolTable *table_false = NewLocalTable(last_table);
 
     CfgNodePtr iftrue_begin = cur_func->CreateCfgNode();  // first-block-of-true-branch
-    iftrue_begin->blk_attr.iftrue_begin = true;
 
     cur_table = table_true;
     cur_block = iftrue_begin;
     ctx->stmt(0)->accept(this);
 
     CfgNodePtr iftrue_end = cur_block;  // last-block-of-true-branch
-    iftrue_end->blk_attr.iftrue_end = true;
 
     CfgNodePtr iffalse_begin = cur_func->CreateCfgNode();  // first-block-of-false-branch
-    iffalse_begin->blk_attr.iffalse_begin = true;
 
     cur_table = table_false;
     cur_block = iffalse_begin;
     if (ctx->Else() != nullptr) ctx->stmt(1)->accept(this);
 
     CfgNodePtr iffalse_end = cur_block;  // last-block-of-false-branch
-    iffalse_end->blk_attr.iffalse_end = true;
 
     for (auto &&lAnd_inst : lAnd_list) {
         lAnd_inst->SetFalseTarget(iffalse_begin);
@@ -528,7 +513,6 @@ std::any AstVisitor::visitIfStmt(SysYParser::IfStmtContext *ctx) {
     cond_end->InsertInstBack(BranchInst::CreatePtr(cond, iftrue_begin, iffalse_begin, cond_end));
 
     CfgNodePtr structure_out = cur_func->CreateCfgNode();  // after-branch
-    structure_out->blk_attr.structure_out = true;
 
     cur_table = last_table;
     cur_block = structure_out;
@@ -615,6 +599,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
+    cur_block->AppBlkType(BlkAttr::Continue);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
@@ -622,6 +607,7 @@ std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContex
 std::any AstVisitor::visitBreakStmt(CRVC_UNUSE SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(break_inst);
+    cur_block->AppBlkType(BlkAttr::Break);
     break_list.push_back(break_inst);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;

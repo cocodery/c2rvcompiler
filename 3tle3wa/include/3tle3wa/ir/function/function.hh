@@ -14,6 +14,7 @@
 #include "3tle3wa/ir/function/basefunc.hh"
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/structure/branch.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
@@ -34,7 +35,8 @@ class NormalFunction final : public BaseFunction {
     size_t blk_idx;
 
    public:
-    Structure *structure;
+    Loop *loops;
+    Branch_ *branch;
 
     NormalFunction(ScalarTypePtr, std::string &, ParamList &);
     ~NormalFunction() = default;
@@ -50,10 +52,6 @@ class NormalFunction final : public BaseFunction {
 
     void SetEntryNode(CfgNodePtr);
     void SetExitNode(CfgNodePtr);
-
-    void GetCondBlks(CfgNodePtr &, std::stack<CfgNodePtr> &, CfgNodeList &,
-                     std::unordered_map<CtrlFlowGraphNode *, bool> &);
-    void GetBodyBlks(CfgNodePtr &, CfgNodeList &, std::unordered_map<CtrlFlowGraphNode *, bool> &);
 
     CfgNodeList GetSequentialNodes();
     CfgNodeList GetReverseSeqNodes();

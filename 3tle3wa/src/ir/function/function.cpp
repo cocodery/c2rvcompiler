@@ -21,7 +21,7 @@
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list), structure(nullptr) {}
+    : BaseFunction(_type, _name, _list), loops(nullptr), branch(nullptr) {}
 
 bool NormalFunction::IsLibFunction() const { return false; }
 
@@ -45,60 +45,17 @@ CfgNodePtr NormalFunction::GetExitNode() { return exit; }
 void NormalFunction::SetEntryNode(CfgNodePtr _entry) { entry = _entry; }
 void NormalFunction::SetExitNode(CfgNodePtr _exit) { exit = _exit; }
 
-void NormalFunction::GetCondBlks(CfgNodePtr &node, std::stack<CfgNodePtr> &parent, CfgNodeList &list,
-                                 std::unordered_map<CtrlFlowGraphNode *, bool> &visit) {
-    assert(node->blk_attr.cond_begin);  // node must be cond-begin
-    std::stack<CfgNodePtr> stack;
-    stack.push(node);
-
-    while (!stack.empty()) {
-        auto &&top = stack.top();
-        stack.pop();
-
-        if (!visit[top.get()]) {
-            visit[top.get()] = true;
-            list.push_back(top);
-
-            Instruction *last_inst = top->GetLastInst().get();
-            if (last_inst->IsBranchInst()) {
-                BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
-                auto &&lhs = br_inst->GetTrueTarget();
-                auto &&rhs = br_inst->GetFalseTarget();
-
-                auto &&lhs_attr = lhs->blk_attr;
-                auto &&rhs_attr = rhs->blk_attr;
-
-                if (!rhs_attr.iftrue_begin && !rhs_attr.iffalse_begin && !rhs_attr.body_begin &&
-                    !rhs_attr.structure_out) {
-                    stack.push(rhs);
-                }
-                if (!lhs_attr.iftrue_begin && !lhs_attr.iffalse_begin && !lhs_attr.body_begin &&
-                    !lhs_attr.structure_out) {
-                    stack.push(lhs);
-                }
-                // last branch of cond
-                if ((lhs_attr.iftrue_begin && rhs_attr.iffalse_begin) ||
-                    (lhs_attr.body_begin && rhs_attr.structure_out)) {
-                    parent.push(rhs);
-                    parent.push(lhs);
-                }
-            } else {
-                assert(false);
-            }
-        }
-    }
-    return;
-}
-
-void NormalFunction::GetBodyBlks(CfgNodePtr &node, CfgNodeList &list,
-                                 std::unordered_map<CtrlFlowGraphNode *, bool> &visit) {
-    std::stack<CfgNodePtr> stack;
-    stack.push(node);
+CfgNodeList NormalFunction::GetSequentialNodes() {
+    CfgNodeList list;
+    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
 
     auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) -> bool {
         if (node->blk_attr.CheckBlkType(BlkAttr::Entry)) return true;
+        if (node->blk_attr.CheckBlkType(BlkAttr::Exit)) return false;
         assert(node->GetPredecessors().size() > 0);
         for (auto &&pred : node->GetPredecessors()) {
+            if (pred->blk_attr.body_end) continue;
+            if (pred->blk_attr.CheckBlkType(BlkAttr::Continue)) continue;
             if (!visit[pred.get()]) {
                 return false;
             }
@@ -106,56 +63,34 @@ void NormalFunction::GetBodyBlks(CfgNodePtr &node, CfgNodeList &list,
         return true;
     };
 
+    // GetBodyBlks(entry, list, visit);
+    std::stack<CfgNodePtr> stack;
+    stack.push(entry);
     while (!stack.empty()) {
-        auto &&top = stack.top();
+        auto &&front = stack.top();
         stack.pop();
 
-        if (!visit[top.get()] && ChkAllPredVisit(top.get()) && !top->blk_attr.CheckBlkType(BlkAttr::Exit)) {
-            visit[top.get()] = true;
-            list.push_back(top);
+        if (!visit[front.get()] && ChkAllPredVisit(front.get())) {
+            visit[front.get()] = true;
+            list.push_back(front);
 
-            Instruction *last_inst = top->GetLastInst().get();
+            auto &&last_inst = front->GetLastInst().get();
             if (last_inst->IsBranchInst()) {
                 BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
                 auto &&lhs = br_inst->GetTrueTarget();
                 auto &&rhs = br_inst->GetFalseTarget();
 
-                auto &&lhs_attr = lhs->blk_attr;
-                auto &&rhs_attr = rhs->blk_attr;
+                stack.push(rhs);
+                stack.push(lhs);
 
-                if (!rhs_attr.cond_begin && !rhs_attr.structure_out && !rhs_attr.iftrue_begin &&
-                    !rhs_attr.iffalse_begin) {
-                    stack.push(rhs);
-                }
-                if (!lhs_attr.cond_begin && !lhs_attr.structure_out && !lhs_attr.iftrue_begin &&
-                    !lhs_attr.iffalse_begin) {
-                    stack.push(lhs);
-                }
             } else if (last_inst->IsJumpInst()) {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                auto &&target_attr = target->blk_attr;
-
-                if (!target_attr.cond_begin && !target_attr.structure_out) {
-                    stack.push(target);
-                } else if (target_attr.cond_begin) {
-                    GetCondBlks(target, stack, list, visit);
-                } else if (target_attr.structure_out &&
-                           (top->blk_attr.body_end || top->blk_attr.iftrue_end || top->blk_attr.iffalse_end)) {
-                    stack.push(target);
-                }
+                stack.push(target);
             }
         }
     }
-    return;
-}
-
-CfgNodeList NormalFunction::GetSequentialNodes() {
-    CfgNodeList list;
-    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
-
-    GetBodyBlks(entry, list, visit);
     list.push_back(exit);
 
     return list;

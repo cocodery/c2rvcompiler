@@ -21,6 +21,9 @@ struct BlkAttr {
     static const BlkType Entry = (1ul << 0x0001);
     static const BlkType Exit = (1ul << 0x0002);
 
+    static const BlkType Break = (1ul << 0x000c);
+    static const BlkType Continue = (1ul << 0x000d);
+
     static const BlkType LoopTag = (1ul << 0x000e);
     static const BlkType BranchTag = (1ul << 0x000f);
 
@@ -61,6 +64,8 @@ struct BlkAttr {
         std::stringstream ss;
         if (CheckBlkType(BlkAttr::Entry)) ss << "Entry ";
         if (CheckBlkType(BlkAttr::Normal)) ss << "Normal ";
+        if (CheckBlkType(BlkAttr::Break)) ss << "Break ";
+        if (CheckBlkType(BlkAttr::Continue)) ss << "Continue ";
         if (CheckBlkType(BlkAttr::Exit)) ss << "Exit ";
         ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin << ' ' << body_end << ' '
            << iftrue_begin << ' ' << iftrue_end << ' ' << iffalse_begin << ' ' << iffalse_end << ' ' << structure_out
