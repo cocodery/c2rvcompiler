@@ -9,7 +9,7 @@
 #include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-struct Branch_ : Structure {
+struct Branch_ final : Structure {
     CfgNodePtr before_blk;
 
     CfgNodePtr cond_begin;
@@ -33,6 +33,8 @@ struct Branch_ : Structure {
           iffalse_begin(nullptr),
           iffalse_end(nullptr),
           branch_out(nullptr) {}
+
+    ~Branch_() = default;
 
     CfgNodeList GetCondBodyBlks();
 

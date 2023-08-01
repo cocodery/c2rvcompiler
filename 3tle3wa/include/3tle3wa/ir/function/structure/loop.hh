@@ -9,7 +9,7 @@
 #include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-struct Loop : Structure {
+struct Loop final : Structure {
     CfgNodePtr before_blk;
 
     CfgNodePtr cond_begin;
@@ -28,6 +28,8 @@ struct Loop : Structure {
           body_begin(nullptr),
           body_end(nullptr),
           loop_exit(nullptr) {}
+
+    ~Loop() = default;
 
     CfgNodeList GetCondBodyBlks();
     CfgNodeList GetLoopBodyBlks();

@@ -16,6 +16,10 @@ struct Structure {
     std::list<Structure *> sub_structures;
 
     Structure(Type _type, depth_t _depth, Structure *_parent) : type(_type), depth(_depth), parent(_parent){};
+    ~Structure() = default;
+
+    bool IsLoop() const { return type == Type::Loop; };
+    bool IsBranch() const { return type == Type::Branch; };
 
     virtual CfgNodeList GetEntireStructure() = 0;
     virtual void PrintStructure() = 0;
