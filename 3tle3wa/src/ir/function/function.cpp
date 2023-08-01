@@ -54,6 +54,7 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
         if (node->blk_attr.CheckBlkType(BlkAttr::Exit)) return false;
         assert(node->GetPredecessors().size() > 0);
         for (auto &&pred : node->GetPredecessors()) {
+            // exclude loop back-edge
             if (pred->blk_attr.body_end) continue;
             if (pred->blk_attr.CheckBlkType(BlkAttr::Continue)) continue;
             if (!visit[pred.get()]) {
@@ -67,14 +68,14 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
     std::stack<CfgNodePtr> stack;
     stack.push(entry);
     while (!stack.empty()) {
-        auto &&front = stack.top();
+        auto &&top = stack.top();
         stack.pop();
 
-        if (!visit[front.get()] && ChkAllPredVisit(front.get())) {
-            visit[front.get()] = true;
-            list.push_back(front);
+        if (!visit[top.get()] && ChkAllPredVisit(top.get())) {
+            visit[top.get()] = true;
+            list.push_back(top);
 
-            auto &&last_inst = front->GetLastInst().get();
+            auto &&last_inst = top->GetLastInst().get();
             if (last_inst->IsBranchInst()) {
                 BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
                 auto &&lhs = br_inst->GetTrueTarget();
@@ -87,7 +88,8 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                stack.push(target);
+                // if Break-Block, wait while-cond to insert Loop-Exit
+                if (!top->blk_attr.CheckBlkType(BlkAttr::Break)) stack.push(target);
             }
         }
     }
