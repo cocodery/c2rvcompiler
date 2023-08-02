@@ -31,10 +31,10 @@ struct Loop final : Structure {
 
     ~Loop() = default;
 
-    CfgNodeList GetCondBodyBlks();
-    CfgNodeList GetLoopBodyBlks();
+    CfgNodeList GetCondBodyBlks() const;
+    CfgNodeList GetLoopBodyBlks() const;
 
-    CfgNodeList GetEntireStructure();
+    CfgNodeList GetEntireStructure() const;
 
-    void PrintStructure();
+    void PrintStructure() const;
 };

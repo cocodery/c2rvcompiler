@@ -36,12 +36,12 @@ struct Branch_ final : Structure {
 
     ~Branch_() = default;
 
-    CfgNodeList GetCondBodyBlks();
+    CfgNodeList GetCondBodyBlks() const;
 
-    CfgNodeList GetIftrueBlks();
-    CfgNodeList GetIffalseBlks();
+    CfgNodeList GetIftrueBlks() const;
+    CfgNodeList GetIffalseBlks() const;
 
-    CfgNodeList GetEntireStructure();
+    CfgNodeList GetEntireStructure() const;
 
-    void PrintStructure() {}
+    void PrintStructure() const {}
 };

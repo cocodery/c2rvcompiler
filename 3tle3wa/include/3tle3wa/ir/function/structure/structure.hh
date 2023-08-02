@@ -21,6 +21,6 @@ struct Structure {
     bool IsLoop() const { return type == Type::Loop; };
     bool IsBranch() const { return type == Type::Branch; };
 
-    virtual CfgNodeList GetEntireStructure() = 0;
-    virtual void PrintStructure() = 0;
+    virtual CfgNodeList GetEntireStructure() const = 0;
+    virtual void PrintStructure() const = 0;
 };

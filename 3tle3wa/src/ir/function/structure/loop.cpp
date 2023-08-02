@@ -12,7 +12,7 @@
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-CfgNodeList Loop::GetCondBodyBlks() {
+CfgNodeList Loop::GetCondBodyBlks() const {
     CfgNodeList loop_cond_blks;
 
     std::queue<CfgNodePtr> queue;
@@ -43,7 +43,7 @@ CfgNodeList Loop::GetCondBodyBlks() {
     return loop_cond_blks;
 }
 
-CfgNodeList Loop::GetLoopBodyBlks() {
+CfgNodeList Loop::GetLoopBodyBlks() const {
     CfgNodeList loop_body_blks;
 
     std::stack<CfgNodePtr> stack;
@@ -82,7 +82,7 @@ CfgNodeList Loop::GetLoopBodyBlks() {
     return loop_body_blks;
 }
 
-CfgNodeList Loop::GetEntireStructure() {
+CfgNodeList Loop::GetEntireStructure() const {
     auto &&loop_blks = GetCondBodyBlks();
     auto &&loop_body = GetLoopBodyBlks();
 
@@ -91,7 +91,7 @@ CfgNodeList Loop::GetEntireStructure() {
     return loop_blks;
 }
 
-void Loop::PrintStructure() {
+void Loop::PrintStructure() const {
     auto &&PrintTab = [](depth_t depth) {
         std::stringstream ss;
         for (size_t idx = 0; idx < depth; ++idx) {
@@ -117,12 +117,6 @@ void Loop::PrintStructure() {
 
         cout << PrintTab(depth) << "  Loop-Bodys  :";
         for (auto body : GetLoopBodyBlks()) {
-            cout << " Block_" << body->GetBlockIdx();
-        }
-        cout << endl;
-
-        cout << PrintTab(depth) << "  Loop-Blocks :";
-        for (auto body : GetEntireStructure()) {
             cout << " Block_" << body->GetBlockIdx();
         }
         cout << endl;

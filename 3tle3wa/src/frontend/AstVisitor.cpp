@@ -757,7 +757,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
     if (callee_name == cur_func->GetFuncName()) cur_func->SetRecursive(true);
 
     // only user-defined, non-recursive function can be inline
-    if (false && !callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
+    if (!callee_func->IsLibFunction() && !callee_func->GetRecursive()) {
         auto &&block_inline = cur_func->CreateCfgNode();
         cur_block->InsertInstBack(JumpInst::CreatePtr(block_inline, cur_block));
         cur_block = block_inline;

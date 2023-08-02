@@ -8,7 +8,7 @@
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 
-CfgNodeList Branch_::GetCondBodyBlks() {
+CfgNodeList Branch_::GetCondBodyBlks() const {
     CfgNodeList branch_cond_blks;
 
     std::queue<CfgNodePtr> queue;
@@ -39,7 +39,7 @@ CfgNodeList Branch_::GetCondBodyBlks() {
     return branch_cond_blks;
 }
 
-CfgNodeList Branch_::GetIftrueBlks() {
+CfgNodeList Branch_::GetIftrueBlks() const {
     CfgNodeList branch_true_blks;
 
     std::stack<CfgNodePtr> stack;
@@ -77,7 +77,7 @@ CfgNodeList Branch_::GetIftrueBlks() {
     return branch_true_blks;
 }
 
-CfgNodeList Branch_::GetIffalseBlks() {
+CfgNodeList Branch_::GetIffalseBlks() const {
     CfgNodeList branch_false_blks;
 
     std::stack<CfgNodePtr> stack;
@@ -115,7 +115,7 @@ CfgNodeList Branch_::GetIffalseBlks() {
     return branch_false_blks;
 }
 
-CfgNodeList Branch_::GetEntireStructure() {
+CfgNodeList Branch_::GetEntireStructure() const {
     auto &&branch_blks = GetCondBodyBlks();
     auto &&iftrue_blks = GetIftrueBlks();
     auto &&iffalse_blks = GetIffalseBlks();
