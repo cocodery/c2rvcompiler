@@ -88,7 +88,9 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, Normal
     for (auto node : callee->GetSequentialNodes()) {
         block_map[node] = cur_block;
         cur_block->blk_attr = node->blk_attr;
-        cur_block->ClrBlkType(BlkAttr::Entry | BlkAttr::Exit);
+        cur_block->blk_attr.ClrBlkTypes(BlkAttr::Entry, BlkAttr::GoReturn, BlkAttr::Exit);
+        // replace orgin-goreturn to inline-goreturn
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) cur_block->blk_attr.AppBlkTypes(BlkAttr::InlineGR);
 
         inline_blks.push_back(cur_block);
 

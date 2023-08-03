@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <initializer_list>
 #include <list>
 #include <memory>
 #include <sstream>
@@ -19,13 +20,17 @@ struct BlkAttr {
     typedef size_t BlkType;
     static const BlkType Normal = (1ul << 0x0000);
     static const BlkType Entry = (1ul << 0x0001);
-    static const BlkType Exit = (1ul << 0x0002);
 
-    static const BlkType Break = (1ul << 0x000c);
-    static const BlkType Continue = (1ul << 0x000d);
+    static const BlkType Break = (1ul << 0x000b);
+    static const BlkType Continue = (1ul << 0x000c);
 
-    static const BlkType LoopTag = (1ul << 0x000e);
-    static const BlkType BranchTag = (1ul << 0x000f);
+    static const BlkType GoReturn = (1ul << 0x000d);
+    static const BlkType InlineGR = (1ul << 0x000e);
+
+    static const BlkType Exit = (1ul << 0x000f);
+
+    static const BlkType LoopTag = (1ul << 0x0010);
+    static const BlkType BranchTag = (1ul << 0x00011);
 
     BlkType blk_type;
 
@@ -58,15 +63,49 @@ struct BlkAttr {
           iffalse_end(false),
           structure_out(false) {}
 
-    bool CheckBlkType(BlkType _blk_type) { return ((blk_type & _blk_type) != 0); }
+    template <typename... BlkTypes>
+    void AppBlkTypes(BlkType first, BlkTypes... rest) {
+        blk_type |= first;
+        for (auto &&follow : std::initializer_list<BlkType>{rest...}) {
+            blk_type |= follow;
+        }
+    }
+
+    template <typename... BlkTypes>
+    void ClrBlkTypes(BlkType first, BlkTypes... rest) {
+        blk_type &= (~first);
+        for (auto &&follow : std::initializer_list<BlkType>{rest...}) {
+            blk_type &= (~follow);
+        }
+    }
+
+    template <typename... BlkTypes>
+    bool ChkOneOfBlkType(BlkType first, BlkTypes... rest) const {
+        bool res = static_cast<bool>(blk_type & first);
+        for (auto &&follow : std::initializer_list<BlkType>{rest...}) {
+            res = res | static_cast<bool>(blk_type & follow);
+        }
+        return res;
+    }
+
+    template <typename... BlkTypes>
+    bool ChkAllOfBlkType(BlkType first, BlkTypes... rest) const {
+        bool res = static_cast<bool>(blk_type & first);
+        for (auto &&follow : std::initializer_list<BlkType>{rest...}) {
+            res = res & static_cast<bool>(blk_type & follow);
+        }
+        return res;
+    }
 
     std::string to_str() {
         std::stringstream ss;
-        if (CheckBlkType(BlkAttr::Entry)) ss << "Entry ";
-        if (CheckBlkType(BlkAttr::Normal)) ss << "Normal ";
-        if (CheckBlkType(BlkAttr::Break)) ss << "Break ";
-        if (CheckBlkType(BlkAttr::Continue)) ss << "Continue ";
-        if (CheckBlkType(BlkAttr::Exit)) ss << "Exit ";
+        if (ChkOneOfBlkType(BlkAttr::Entry)) ss << "Entry ";
+        if (ChkOneOfBlkType(BlkAttr::Normal)) ss << "Normal ";
+        if (ChkOneOfBlkType(BlkAttr::Break)) ss << "Break ";
+        if (ChkOneOfBlkType(BlkAttr::Continue)) ss << "Continue ";
+        if (ChkOneOfBlkType(BlkAttr::GoReturn)) ss << "GoReturn ";
+        if (ChkOneOfBlkType(BlkAttr::InlineGR)) ss << "InlineGR ";
+        if (ChkOneOfBlkType(BlkAttr::Exit)) ss << "Exit ";
         ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin << ' ' << body_end << ' '
            << iftrue_begin << ' ' << iftrue_end << ' ' << iffalse_begin << ' ' << iffalse_end << ' ' << structure_out
            << " ]";
@@ -107,9 +146,6 @@ class BasicBlock {
     static void ResetBlkIdx();
     static size_t GetBlkIdx();
     static void SetBlkIdx(size_t);
-
-    void AppBlkType(BlkAttr::BlkType blk_type) { blk_attr.blk_type |= blk_type; }
-    void ClrBlkType(BlkAttr::BlkType blk_type) { blk_attr.blk_type &= (~blk_type); }
 
     virtual std::string tollvmIR() = 0;
 };

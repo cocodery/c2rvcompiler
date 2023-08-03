@@ -530,7 +530,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 
     CfgNodePtr before_blk = cur_block;  // block-before-enter-while-condition
     cur_block->blk_attr.before_blk = true;
-    cur_block->AppBlkType(BlkAttr::LoopTag);
+    cur_block->blk_attr.AppBlkTypes(BlkAttr::LoopTag);
 
     CfgNodePtr cond_begin = cur_func->CreateCfgNode();  // first-block-of-loop-condition
     cond_begin->blk_attr.cond_begin = true;
@@ -599,7 +599,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
 std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContext *ctx) {
     assert(target_continue != nullptr);
     cur_block->InsertInstBack(JumpInst::CreatePtr(target_continue, cur_block));
-    cur_block->AppBlkType(BlkAttr::Continue);
+    cur_block->blk_attr.AppBlkTypes(BlkAttr::Continue);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
 }
@@ -607,7 +607,7 @@ std::any AstVisitor::visitContinueStmt(CRVC_UNUSE SysYParser::ContinueStmtContex
 std::any AstVisitor::visitBreakStmt(CRVC_UNUSE SysYParser::BreakStmtContext *ctx) {
     JumpInstPtr break_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(break_inst);
-    cur_block->AppBlkType(BlkAttr::Break);
+    cur_block->blk_attr.AppBlkTypes(BlkAttr::Break);
     break_list.push_back(break_inst);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
@@ -630,6 +630,7 @@ std::any AstVisitor::visitReturnStmt(SysYParser::ReturnStmtContext *ctx) {
     }
     JumpInstPtr ret_inst = JumpInst::CreatePtr(nullptr, cur_block);
     cur_block->InsertInstBack(ret_inst);
+    cur_block->blk_attr.AppBlkTypes(BlkAttr::GoReturn);
     return_list.push_back(ret_inst);
     cur_block = cur_func->CreateCfgNode();
     return nullptr;
