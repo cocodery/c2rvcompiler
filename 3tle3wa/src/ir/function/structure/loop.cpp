@@ -1,97 +1,170 @@
 #include "3tle3wa/ir/function/structure/loop.hh"
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
-#include <queue>
 #include <sstream>
 #include <stack>
 #include <unordered_map>
 
+#include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/pass/analysis/structure/structure.hh"
 
 CfgNodeList Loop::GetCondBodyBlks() const {
-    CfgNodeList loop_cond_blks;
-
-    std::queue<CfgNodePtr> queue;
+    CfgNodeList list;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
-    queue.push(cond_begin);
-    while (!queue.empty()) {
-        auto node = queue.front();
-        queue.pop();
-        if (!visit[node.get()]) {
-            visit[node.get()] = true;
-            loop_cond_blks.push_back(node);
 
-            Instruction *last_inst = node->GetLastInst().get();
-            if (last_inst->IsBranchInst()) {
-                BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
-                auto &&lhs = br_inst->GetTrueTarget();
-                auto &&rhs = br_inst->GetFalseTarget();
-
-                if (lhs != body_begin && lhs != loop_exit && !visit[lhs.get()]) {
-                    queue.push(lhs);
-                }
-                if (rhs != body_begin && rhs != loop_exit && !visit[rhs.get()]) {
-                    queue.push(rhs);
-                }
-            }
+    auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) {
+        if (node->blk_attr.cond_begin) return true;
+        if (node->blk_attr.cond_end) return false;
+        assert(node->GetPredecessors().size() > 0);
+        for (const auto &pred : node->GetPredecessors()) {
+            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
+            if (!visit[pred.get()]) return false;
         }
-    }
-    return loop_cond_blks;
-}
-
-CfgNodeList Loop::GetLoopBodyBlks() const {
-    CfgNodeList loop_body_blks;
+        return true;
+    };
 
     std::stack<CfgNodePtr> stack;
-    std::unordered_map<CfgNodePtr, bool> visit;
-    stack.push(body_begin);
+    stack.push(cond_begin);
     while (!stack.empty()) {
-        auto node = stack.top();
+        auto &&top = stack.top();
         stack.pop();
-        if (!visit[node]) {
-            visit[node] = true;
-            loop_body_blks.push_back(node);
 
-            Instruction *last_inst = node->GetLastInst().get();
+        if (!visit[top.get()] && ChkAllPredVisit(top.get())) {
+            visit[top.get()] = true;
+            list.push_back(top);
+
+            auto &&last_inst = top->GetLastInst().get();
             if (last_inst->IsBranchInst()) {
                 BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
                 auto &&lhs = br_inst->GetTrueTarget();
                 auto &&rhs = br_inst->GetFalseTarget();
 
-                if (rhs != cond_begin && rhs != loop_exit && !visit[rhs]) {
+                if (lhs->blk_attr.cond_begin) {
+                    auto &&sub_loop = StructureAnalysis::Node2Loop[lhs.get()];
+                    assert(sub_loop != nullptr);
+                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                    for (auto &&blk : sub_loop_blks) {
+                        visit[blk.get()] = true;
+                        list.push_back(blk);
+                    }
+                    stack.push(sub_loop->loop_exit);
+                }
+                if (rhs->blk_attr.cond_begin) {
+                    auto &&sub_loop = StructureAnalysis::Node2Loop[rhs.get()];
+                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                    for (auto &&blk : sub_loop_blks) {
+                        visit[blk.get()] = true;
+                        list.push_back(blk);
+                    }
+                    stack.push(sub_loop->loop_exit);
+                }
+                if (!rhs->blk_attr.cond_begin && !rhs->blk_attr.body_begin && !rhs->blk_attr.structure_out) {
                     stack.push(rhs);
                 }
-                if (lhs != cond_begin && lhs != loop_exit && !visit[lhs]) {
+                if (!lhs->blk_attr.cond_begin && !lhs->blk_attr.body_begin && !lhs->blk_attr.structure_out) {
                     stack.push(lhs);
                 }
             } else if (last_inst->IsJumpInst()) {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                if (target != cond_begin && target != loop_exit && !visit[target]) {
+                if (target->blk_attr.cond_begin) {
+                    auto &&sub_loop = StructureAnalysis::Node2Loop[target.get()];
+                    assert(sub_loop != nullptr);
+                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                    for (auto &&blk : sub_loop_blks) {
+                        visit[blk.get()] = true;
+                        list.push_back(blk);
+                    }
+                    stack.push(sub_loop->loop_exit);
+                } else if (!target->blk_attr.body_begin && !target->blk_attr.structure_out) {
                     stack.push(target);
                 }
             }
         }
     }
+    if (!visit[cond_end.get()]) list.push_back(cond_end);
+    return list;
+}
 
-    return loop_body_blks;
+CfgNodeList Loop::GetLoopBodyBlks() const {
+    CfgNodeList list;
+    std::unordered_map<CtrlFlowGraphNode *, bool> visit;
+
+    auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) {
+        if (node->blk_attr.body_begin) return true;
+        if (node->blk_attr.body_end) return false;
+        assert(node->GetPredecessors().size() > 0);
+        for (const auto &pred : node->GetPredecessors()) {
+            if (!visit[pred.get()]) return false;
+        }
+        return true;
+    };
+
+    std::stack<CfgNodePtr> stack;
+    stack.push(body_begin);
+    while (!stack.empty()) {
+        auto &&top = stack.top();
+        stack.pop();
+
+        if (!visit[top.get()] && ChkAllPredVisit(top.get())) {
+            visit[top.get()] = true;
+            list.push_back(top);
+
+            auto &&last_inst = top->GetLastInst().get();
+            if (last_inst->IsBranchInst()) {
+                BranchInst *br_inst = static_cast<BranchInst *>(last_inst);
+                auto &&lhs = br_inst->GetTrueTarget();
+                auto &&rhs = br_inst->GetFalseTarget();
+
+                if (!rhs->blk_attr.cond_begin && !rhs->blk_attr.structure_out) {
+                    stack.push(rhs);
+                }
+                if (!lhs->blk_attr.cond_begin && !lhs->blk_attr.structure_out) {
+                    stack.push(lhs);
+                }
+            } else if (last_inst->IsJumpInst()) {
+                JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
+                auto &&target = jump_inst->GetTarget();
+
+                if (target->blk_attr.cond_begin) {
+                    auto &&sub_loop = StructureAnalysis::Node2Loop[target.get()];
+                    assert(sub_loop != nullptr);
+                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                    for (auto &&blk : sub_loop_blks) {
+                        visit[blk.get()] = true;
+                        list.push_back(blk);
+                    }
+                    stack.push(sub_loop->loop_exit);
+                } else if (!top->blk_attr.ChkOneOfBlkType(BlkAttr::Break, BlkAttr::GoReturn, BlkAttr::InlineGR) &&
+                           !target->blk_attr.cond_begin && !target->blk_attr.structure_out) {
+                    stack.push(target);
+                }
+            }
+        }
+    }
+    if (!visit[body_end.get()]) list.push_back(body_end);
+    return list;
 }
 
 CfgNodeList Loop::GetEntireStructure() const {
-    auto &&loop_blks = GetCondBodyBlks();
-    auto &&loop_body = GetLoopBodyBlks();
+    auto &&cond = GetCondBodyBlks();
+    auto &&body = GetLoopBodyBlks();
 
-    loop_blks.insert(loop_blks.end(), loop_body.begin(), loop_body.end());
+    auto &&entire = cond;
+    entire.insert(entire.end(), body.begin(), body.end());
 
-    return loop_blks;
+    return entire;
 }
 
-void Loop::PrintStructure() const {
+void Loop::PrintCurStructure() const {
     auto &&PrintTab = [](depth_t depth) {
         std::stringstream ss;
         for (size_t idx = 0; idx < depth; ++idx) {
@@ -121,6 +194,10 @@ void Loop::PrintStructure() const {
         }
         cout << endl;
     }
+}
+
+void Loop::PrintStructure() const {
+    PrintCurStructure();
     for (auto &&sub_structure : sub_structures) {
         sub_structure->PrintStructure();
     }

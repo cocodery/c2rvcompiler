@@ -43,5 +43,6 @@ struct Branch_ final : Structure {
 
     CfgNodeList GetEntireStructure() const;
 
+    void PrintCurStructure() const {}
     void PrintStructure() const {}
 };

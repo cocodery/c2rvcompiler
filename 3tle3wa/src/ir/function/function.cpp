@@ -50,21 +50,18 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
 
     auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) -> bool {
-        if (node->blk_attr.CheckBlkType(BlkAttr::Entry)) return true;
-        if (node->blk_attr.CheckBlkType(BlkAttr::Exit)) return false;
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::Entry)) return true;
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::Exit)) return false;
         assert(node->GetPredecessors().size() > 0);
-        for (auto &&pred : node->GetPredecessors()) {
+        for (const auto &pred : node->GetPredecessors()) {
             // exclude loop back-edge
-            if (pred->blk_attr.body_end) continue;
-            if (pred->blk_attr.CheckBlkType(BlkAttr::Continue)) continue;
-            if (!visit[pred.get()]) {
-                return false;
-            }
+            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
+            if (!visit[pred.get()]) return false;
         }
         return true;
     };
 
-    // GetBodyBlks(entry, list, visit);
     std::stack<CfgNodePtr> stack;
     stack.push(entry);
     while (!stack.empty()) {
@@ -89,7 +86,11 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
                 auto &&target = jump_inst->GetTarget();
 
                 // if Break-Block, wait while-cond to insert Loop-Exit
-                if (!top->blk_attr.CheckBlkType(BlkAttr::Break)) stack.push(target);
+                if (!top->blk_attr.ChkOneOfBlkType(BlkAttr::Break)) {
+                    // if return-block is pushed, its predecessors are not all visit
+                    // no need to check for return-block
+                    stack.push(target);
+                }
             }
         }
     }

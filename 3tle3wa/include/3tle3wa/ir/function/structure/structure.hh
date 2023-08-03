@@ -22,5 +22,7 @@ struct Structure {
     bool IsBranch() const { return type == Type::Branch; };
 
     virtual CfgNodeList GetEntireStructure() const = 0;
+
+    virtual void PrintCurStructure() const = 0;
     virtual void PrintStructure() const = 0;
 };
