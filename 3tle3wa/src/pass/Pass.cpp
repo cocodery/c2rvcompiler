@@ -15,6 +15,9 @@ void Optimization::DoOptimization() {
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
+        StructureAnalysis::LoopAnalysis(func);
+        func->loops->PrintStructure();
+
         // LoopInvariant::LoopInvariant(func);
 
         // SCCP::SCCP(func);
@@ -23,7 +26,7 @@ void Optimization::DoOptimization() {
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
-        InstComb::InstCombine(func);
+        // InstComb::InstCombine(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 

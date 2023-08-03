@@ -12,6 +12,7 @@ void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
     if (func->loops == nullptr) {
         delete func->loops;
     }
+    Node2Loop.clear();
 
     std::stack<Loop *> stack;
     depth_t depth = 0;
@@ -20,7 +21,7 @@ void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
 
     auto &&seq_nodes = func->GetSequentialNodes();
     for (auto &&node : seq_nodes) {
-        cout << "Node_" << node->GetBlockIdx() << endl;
+        // cout << "Node_" << node->GetBlockIdx() << endl;
         const auto &blk_attr = node->blk_attr;
 
         if (blk_attr.structure_out) {
@@ -29,7 +30,10 @@ void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
             depth -= 1;
         }
 
-        if (blk_attr.cond_begin) stack.top()->cond_begin = node;
+        if (blk_attr.cond_begin) {
+            stack.top()->cond_begin = node;
+            Node2Loop[node.get()] = stack.top();
+        }
         if (blk_attr.cond_end) stack.top()->cond_end = node;
         if (blk_attr.body_begin) stack.top()->body_begin = node;
         if (blk_attr.body_end) stack.top()->body_end = node;
@@ -43,4 +47,5 @@ void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
         }
     }
 }
-void StructureAnalysis::BranchAnalysis(NormalFuncPtr &);
+
+void StructureAnalysis::BranchAnalysis(NormalFuncPtr &) {}

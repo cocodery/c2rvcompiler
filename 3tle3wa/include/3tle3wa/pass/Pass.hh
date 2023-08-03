@@ -2,6 +2,7 @@
 
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/pass/analysis/dominance/dominance.hh"
+#include "3tle3wa/pass/analysis/structure/structure.hh"
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 #include "3tle3wa/pass/interprocedural/instcomb/instcomb.hh"
