@@ -565,7 +565,8 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     before_blk->InsertInstBack(JumpInst::CreatePtr(cond_begin, before_blk));
 
     CfgNodePtr body_end = cur_block;
-    body_end->blk_attr.body_end = true;
+    body_end->blk_attr.AppBlkTypes(BlkAttr::Continue);
+    // body_end->blk_attr.body_end = true;
 
     body_end->InsertInstBack(JumpInst::CreatePtr(cond_begin, body_end));
 

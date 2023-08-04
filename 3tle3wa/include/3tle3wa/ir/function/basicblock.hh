@@ -42,7 +42,7 @@ struct BlkAttr {
     bool cond_end;
 
     bool body_begin;
-    bool body_end;
+    // bool body_end;
 
     bool iftrue_begin;
     bool iftrue_end;
@@ -60,7 +60,7 @@ struct BlkAttr {
           cond_begin(false),
           cond_end(false),
           body_begin(false),
-          body_end(false),
+          //   body_end(false),
           iftrue_begin(false),
           iftrue_end(false),
           iffalse_begin(false),
@@ -111,7 +111,8 @@ struct BlkAttr {
         if (ChkOneOfBlkType(BlkAttr::GoReturn)) ss << "GoReturn ";
         if (ChkOneOfBlkType(BlkAttr::InlineGR)) ss << "InlineGR ";
         if (ChkOneOfBlkType(BlkAttr::Exit)) ss << "Exit ";
-        ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin << ' ' << body_end << ' '
+        ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin
+           << ' ' /*<< body_end << ' '*/
            << iftrue_begin << ' ' << iftrue_end << ' ' << iffalse_begin << ' ' << iffalse_end << ' ' << structure_out
            << " ]";
         return ss.str();

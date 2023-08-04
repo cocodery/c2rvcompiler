@@ -23,7 +23,7 @@ CfgNodeList Loop::GetCondBodyBlks() const {
         if (node->blk_attr.cond_end) return false;
         assert(node->GetPredecessors().size() > 0);
         for (const auto &pred : node->GetPredecessors()) {
-            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            // if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
             if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
             if (!visit[pred.get()]) return false;
         }

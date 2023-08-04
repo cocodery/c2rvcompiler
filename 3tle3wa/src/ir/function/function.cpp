@@ -55,7 +55,7 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
         assert(node->GetPredecessors().size() > 0);
         for (const auto &pred : node->GetPredecessors()) {
             // exclude loop back-edge
-            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            // if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
             if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
             if (!visit[pred.get()]) return false;
         }
