@@ -16,6 +16,8 @@ using BlockPtr = std::shared_ptr<BasicBlock>;
 
 class BaseFunction;
 
+struct Loop;
+
 struct BlkAttr {
     typedef size_t BlkType;
     static const BlkType Normal = (1ul << 0x0000);
@@ -50,6 +52,8 @@ struct BlkAttr {
 
     bool structure_out;
 
+    Loop *loop;
+
     BlkAttr(BlkType _type = Normal)
         : blk_type(_type),
           before_blk(false),
@@ -61,7 +65,8 @@ struct BlkAttr {
           iftrue_end(false),
           iffalse_begin(false),
           iffalse_end(false),
-          structure_out(false) {}
+          structure_out(false),
+          loop(nullptr) {}
 
     template <typename... BlkTypes>
     void AppBlkTypes(BlkType first, BlkTypes... rest) {

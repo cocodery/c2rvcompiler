@@ -12,6 +12,8 @@ namespace StructureAnalysis {
 static std::unordered_map<CtrlFlowGraphNode *, Loop *> Node2Loop;
 static std::unordered_map<CtrlFlowGraphNode *, Branch_ *> Node2Branch;
 
+Loop *FindInNode2Loop(CtrlFlowGraphNode *);
+
 void LoopAnalysis(NormalFuncPtr &);
 void BranchAnalysis(NormalFuncPtr &);
 }  // namespace StructureAnalysis

@@ -16,7 +16,7 @@ struct Loop final : Structure {
     CfgNodePtr cond_end;
 
     CfgNodePtr body_begin;
-    CfgNodePtr body_end;
+    // CfgNodePtr body_end;
 
     CfgNodePtr loop_exit;
 
@@ -26,7 +26,7 @@ struct Loop final : Structure {
           cond_begin(nullptr),
           cond_end(nullptr),
           body_begin(nullptr),
-          body_end(nullptr),
+          // body_end(nullptr),
           loop_exit(nullptr) {}
 
     ~Loop() = default;

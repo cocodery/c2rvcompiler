@@ -8,6 +8,13 @@
 #include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/function/structure/structure.hh"
 
+Loop *StructureAnalysis::FindInNode2Loop(CtrlFlowGraphNode *node) {
+    if (Node2Loop.find(node) == Node2Loop.end()) {
+        assert(false);
+    }
+    return Node2Loop[node];
+}
+
 void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
     if (func->loops == nullptr) {
         delete func->loops;
@@ -36,7 +43,10 @@ void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
         }
         if (blk_attr.cond_end) stack.top()->cond_end = node;
         if (blk_attr.body_begin) stack.top()->body_begin = node;
-        if (blk_attr.body_end) stack.top()->body_end = node;
+
+        if (blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn, BlkAttr::InlineGR)) {
+            node->blk_attr.loop = stack.top();  // record this GR belongs to which loop
+        }
 
         if (blk_attr.before_blk) {
             Loop *loop = new Loop(stack.top(), depth++);
