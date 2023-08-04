@@ -33,7 +33,7 @@ CfgNodeList Loop::GetCondBodyBlks() const {
     std::stack<CfgNodePtr> stack;
     stack.push(cond_begin);
     while (!stack.empty()) {
-        auto &&top = stack.top();
+        auto top = stack.top();
         stack.pop();
 
         if (!visit[top.get()] && ChkAllPredVisit(top.get())) {
@@ -46,24 +46,30 @@ CfgNodeList Loop::GetCondBodyBlks() const {
                 auto &&lhs = br_inst->GetTrueTarget();
                 auto &&rhs = br_inst->GetFalseTarget();
 
-                if (lhs->blk_attr.cond_begin) {
-                    auto &&sub_loop = StructureAnalysis::Node2Loop[lhs.get()];
-                    assert(sub_loop != nullptr);
-                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
-                    for (auto &&blk : sub_loop_blks) {
-                        visit[blk.get()] = true;
-                        list.push_back(blk);
+                if (lhs->blk_attr.cond_begin || rhs->blk_attr.cond_begin) {
+                    if (lhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(lhs.get());
+                        assert(sub_loop != nullptr);
+                        auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                        for (auto &&blk : sub_loop_blks) {
+                            visit[blk.get()] = true;
+                            list.push_back(blk);
+                        }
                     }
-                    stack.push(sub_loop->loop_exit);
-                }
-                if (rhs->blk_attr.cond_begin) {
-                    auto &&sub_loop = StructureAnalysis::Node2Loop[rhs.get()];
-                    auto &&sub_loop_blks = sub_loop->GetEntireStructure();
-                    for (auto &&blk : sub_loop_blks) {
-                        visit[blk.get()] = true;
-                        list.push_back(blk);
+                    if (rhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(rhs.get());
+                        auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                        for (auto &&blk : sub_loop_blks) {
+                            visit[blk.get()] = true;
+                            list.push_back(blk);
+                        }
+                        stack.push(sub_loop->loop_exit);
                     }
-                    stack.push(sub_loop->loop_exit);
+                    if (lhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(lhs.get());
+                        assert(sub_loop != nullptr);
+                        stack.push(sub_loop->loop_exit);
+                    }
                 }
                 if (!rhs->blk_attr.cond_begin && !rhs->blk_attr.body_begin && !rhs->blk_attr.structure_out) {
                     stack.push(rhs);
@@ -76,7 +82,7 @@ CfgNodeList Loop::GetCondBodyBlks() const {
                 auto &&target = jump_inst->GetTarget();
 
                 if (target->blk_attr.cond_begin) {
-                    auto &&sub_loop = StructureAnalysis::Node2Loop[target.get()];
+                    auto &&sub_loop = StructureAnalysis::FindInNode2Loop(target.get());
                     assert(sub_loop != nullptr);
                     auto &&sub_loop_blks = sub_loop->GetEntireStructure();
                     for (auto &&blk : sub_loop_blks) {
@@ -100,7 +106,6 @@ CfgNodeList Loop::GetLoopBodyBlks() const {
 
     auto &&ChkAllPredVisit = [&visit](CtrlFlowGraphNode *node) {
         if (node->blk_attr.body_begin) return true;
-        if (node->blk_attr.body_end) return false;
         assert(node->GetPredecessors().size() > 0);
         for (const auto &pred : node->GetPredecessors()) {
             if (!visit[pred.get()]) return false;
@@ -111,7 +116,7 @@ CfgNodeList Loop::GetLoopBodyBlks() const {
     std::stack<CfgNodePtr> stack;
     stack.push(body_begin);
     while (!stack.empty()) {
-        auto &&top = stack.top();
+        auto top = stack.top();
         stack.pop();
 
         if (!visit[top.get()] && ChkAllPredVisit(top.get())) {
@@ -124,6 +129,32 @@ CfgNodeList Loop::GetLoopBodyBlks() const {
                 auto &&lhs = br_inst->GetTrueTarget();
                 auto &&rhs = br_inst->GetFalseTarget();
 
+                if (lhs->blk_attr.cond_begin || rhs->blk_attr.cond_begin) {
+                    if (lhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(lhs.get());
+                        assert(sub_loop != nullptr);
+                        auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                        for (auto &&blk : sub_loop_blks) {
+                            visit[blk.get()] = true;
+                            list.push_back(blk);
+                        }
+                    }
+                    if (rhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(rhs.get());
+                        auto &&sub_loop_blks = sub_loop->GetEntireStructure();
+                        for (auto &&blk : sub_loop_blks) {
+                            visit[blk.get()] = true;
+                            list.push_back(blk);
+                        }
+                        stack.push(sub_loop->loop_exit);
+                    }
+                    if (lhs->blk_attr.cond_begin) {
+                        auto &&sub_loop = StructureAnalysis::FindInNode2Loop(lhs.get());
+                        assert(sub_loop != nullptr);
+                        stack.push(sub_loop->loop_exit);
+                    }
+                }
+
                 if (!rhs->blk_attr.cond_begin && !rhs->blk_attr.structure_out) {
                     stack.push(rhs);
                 }
@@ -134,8 +165,9 @@ CfgNodeList Loop::GetLoopBodyBlks() const {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                if (target->blk_attr.cond_begin) {
-                    auto &&sub_loop = StructureAnalysis::Node2Loop[target.get()];
+                // if target is cond-begin, check whether corresponding-loop is itself
+                if (target->blk_attr.cond_begin && StructureAnalysis::FindInNode2Loop(target.get()) != this) {
+                    auto &&sub_loop = StructureAnalysis::FindInNode2Loop(target.get());
                     assert(sub_loop != nullptr);
                     auto &&sub_loop_blks = sub_loop->GetEntireStructure();
                     for (auto &&blk : sub_loop_blks) {
@@ -143,14 +175,14 @@ CfgNodeList Loop::GetLoopBodyBlks() const {
                         list.push_back(blk);
                     }
                     stack.push(sub_loop->loop_exit);
-                } else if (!top->blk_attr.ChkOneOfBlkType(BlkAttr::Break, BlkAttr::GoReturn, BlkAttr::InlineGR) &&
+                } else if (!(top->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn, BlkAttr::InlineGR) &&
+                             this == target->blk_attr.loop) &&
                            !target->blk_attr.cond_begin && !target->blk_attr.structure_out) {
                     stack.push(target);
                 }
             }
         }
     }
-    if (!visit[body_end.get()]) list.push_back(body_end);
     return list;
 }
 
@@ -179,7 +211,6 @@ void Loop::PrintCurStructure() const {
         cout << PrintTab(depth) << "Cond-Begin : Block_" << cond_begin->GetBlockIdx() << endl;
         cout << PrintTab(depth) << "Cond-End   : Block_" << cond_end->GetBlockIdx() << endl;
         cout << PrintTab(depth) << "Body-Begin : Block_" << body_begin->GetBlockIdx() << endl;
-        cout << PrintTab(depth) << "Body-End   : Block_" << body_end->GetBlockIdx() << endl;
         cout << PrintTab(depth) << "Loop-Exit  : Block_" << loop_exit->GetBlockIdx() << endl;
 
         cout << PrintTab(depth) << "  Conditions  :";

@@ -16,19 +16,18 @@ void Optimization::DoOptimization() {
         GVN::DVNT(func, comp_unit.getGlbTable());
 
         StructureAnalysis::LoopAnalysis(func);
-        func->loops->PrintStructure();
 
-        // LoopInvariant::LoopInvariant(func);
+        LoopInvariant::LoopInvariant(func);
 
         // SCCP::SCCP(func);
         // DCE::EliminateUnreachableCode(func);
         // DCE::DCE(func);
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // GVN::DVNT(func, comp_unit.getGlbTable());
 
-        // InstComb::InstCombine(func);
+        // // InstComb::InstCombine(func);
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // GVN::DVNT(func, comp_unit.getGlbTable());
 
         SSA::SSADestruction(func);
 
