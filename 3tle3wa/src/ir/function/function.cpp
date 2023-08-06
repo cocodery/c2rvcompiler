@@ -85,16 +85,14 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                // if Break-Block, wait while-cond to insert Loop-Exit
-                if (!top->blk_attr.ChkOneOfBlkType(BlkAttr::Break)) {
-                    // if return-block is pushed, its predecessors are not all visit
-                    // no need to check for return-block
+                // no matter Break or GR, it is pushed until all predecessor tag `visit`
+                if (ChkAllPredVisit(target.get())) {
                     stack.push(target);
                 }
             }
         }
     }
-    list.push_back(exit);
+    if (!visit[exit.get()]) list.push_back(exit);
 
     return list;
 }

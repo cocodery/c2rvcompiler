@@ -19,15 +19,15 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
-        // SCCP::SCCP(func);
-        // DCE::EliminateUnreachableCode(func);
+        SCCP::SCCP(func);  // cause `final_performance/derich` WA, waiting fix
+
         // DCE::DCE(func);
 
-        // GVN::DVNT(func, comp_unit.getGlbTable());
+        GVN::DVNT(func, comp_unit.getGlbTable());
 
-        // // InstComb::InstCombine(func);
+        // InstComb::InstCombine(func);
 
-        // GVN::DVNT(func, comp_unit.getGlbTable());
+        GVN::DVNT(func, comp_unit.getGlbTable());
 
         SSA::SSADestruction(func);
 

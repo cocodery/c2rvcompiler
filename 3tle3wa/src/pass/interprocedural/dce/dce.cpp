@@ -4,6 +4,7 @@
 #include <cassert>
 #include <memory>
 
+#include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
@@ -64,7 +65,6 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     std::map<CfgNodePtr, CfgNodePtr> NodeMap;
     for (auto node : func->GetSequentialNodes()) {
         NodeMap[node] = node;
-
         for (auto inst : node->GetInstList()) {
             if (inst->IsPhiInst()) {
                 auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
@@ -106,33 +106,33 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     CRVC_UNUSE auto RemoveEmptyBlock = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
     CRVC_UNUSE auto CombineBlocks = [&func](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {
-        // i->RemoveLastInst();
-        // auto &&i_inst_list = i->GetInstList();
-        // auto &&j_inst_list = j->GetInstList();
-        // for_each(i_inst_list.begin(), i_inst_list.end(), [&j](const auto &inst) { inst->SetParent(j); });
-        // i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
-        // j_inst_list = std::move(i_inst_list);
+        i->RemoveLastInst();
+        auto &&i_inst_list = i->GetInstList();
+        auto &&j_inst_list = j->GetInstList();
+        for_each(i_inst_list.begin(), i_inst_list.end(), [&j](const auto &inst) { inst->SetParent(j); });
+        i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
+        j_inst_list = std::move(i_inst_list);
 
-        // j->AppendBlkAttr(i->GetBlockAttr());
+        j->blk_attr.CombineBlkAttr(i->blk_attr);
 
-        // if (j->FindBlkAttr(ENTRY)) {
-        //     func->SetEntryNode(j);
-        // }
+        if (j->blk_attr.ChkOneOfBlkType(BlkAttr::Entry)) {
+            func->SetEntryNode(j);
+        }
 
-        // // ReplacePredSucc(i, j);
-        // for (auto &&pred : i->GetPredecessors()) {
-        //     pred->AddSuccessor(j);
-        //     j->AddPredecessor(pred);
-        //     pred->GetLastInst()->ReplaceTarget(i, j);
-        // }
-        // RemoveNode(i);
+        // ReplacePredSucc(i, j);
+        for (auto &&pred : i->GetPredecessors()) {
+            pred->AddSuccessor(j);
+            j->AddPredecessor(pred);
+            pred->GetLastInst()->ReplaceTarget(i, j);
+        }
+        RemoveNode(i);
     };
 
     CRVC_UNUSE auto HoistBranch = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
-    auto OnePass = [&](CfgNodeList &post_order) {
+    auto OnePass = [&](CfgNodeList &seq_nodes) {
         bool changed = false;
-        for (auto &&iter = post_order.begin(); iter != post_order.end();) {
+        for (auto &&iter = seq_nodes.begin(); iter != seq_nodes.end();) {
             auto i = (*iter);
 
             // if i act as a phi parameter, cannot be processed
@@ -159,13 +159,13 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                     // case 2, remove empty block
 
                     // case 3, combine i and j
-                    // if (j->GetPredecessors().size() == 1) {
-                    //     CombineBlocks(i, j);
-                    //     NodeMap[i] = j;
-                    //     changed = true;
-                    //     iter = post_order.erase(iter);
-                    //     continue;
-                    // }
+                    if (j->GetPredecessors().size() == 1) {
+                        CombineBlocks(i, j);
+                        NodeMap[i] = j;
+                        changed = true;
+                        iter = seq_nodes.erase(iter);
+                        continue;
+                    }
                     // case 4, hoist a branch
                 }
             }
@@ -175,8 +175,12 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     };
 
     while (true) {
-        auto &&post_order = func->GetReverseSeqNodes();
-        if (!OnePass(post_order)) break;
+        // although remove false-branch of branch-inst
+        // false-branch still exsit in control-flow-graph, without predecessors but have successors
+        // so, use EliminateUnreachableCode to fix control-flow-graph
+        DCE::EliminateUnreachableCode(func);
+        auto &&seq_nodes = func->GetSequentialNodes();
+        if (!OnePass(seq_nodes)) break;
     }
 
     // modify origin-alloca parent which been merged
@@ -237,6 +241,5 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
 
 void DCE::DCE(NormalFuncPtr func) {
     EliminateUselessCode(func);
-    // EliminateUselessControlFlow(func);
-    EliminateUnreachableCode(func);
+    EliminateUselessControlFlow(func);
 }

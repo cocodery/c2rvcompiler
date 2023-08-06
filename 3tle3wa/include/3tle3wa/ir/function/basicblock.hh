@@ -84,6 +84,24 @@ struct BlkAttr {
         }
     }
 
+    void CombineBlkAttr(const BlkAttr &blk_attr) {
+        blk_type |= blk_attr.blk_type;
+
+        cond_begin = cond_begin | blk_attr.cond_begin;
+        cond_end = cond_end | blk_attr.cond_end;
+        body_begin = body_begin | blk_attr.body_begin;
+        iftrue_begin = iftrue_begin | blk_attr.iftrue_begin;
+        iftrue_end = iftrue_end | blk_attr.iftrue_end;
+        iffalse_begin = iffalse_begin | blk_attr.iffalse_begin;
+        iffalse_end = iffalse_end | blk_attr.iffalse_end;
+        structure_out = structure_out | blk_attr.structure_out;
+        loop = nullptr;
+
+        if (ChkAllOfBlkType(GoReturn, Exit)) {
+            ClrBlkTypes(GoReturn);
+        }
+    }
+
     template <typename... BlkTypes>
     bool ChkOneOfBlkType(BlkType first, BlkTypes... rest) const {
         bool res = static_cast<bool>(blk_type & first);
