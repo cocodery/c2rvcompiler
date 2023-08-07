@@ -7,6 +7,7 @@
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 
@@ -65,20 +66,27 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     // it cannot be a phi parameter
     std::map<CtrlFlowGraphNode *, bool> PhiParamBlock;
     std::map<CtrlFlowGraphNode *, CfgNodePtr> NodeMap;
-    for (auto node : func->GetSequentialNodes()) {
-        NodeMap[node.get()] = node;
-        for (auto inst : node->GetInstList()) {
-            if (inst->IsPhiInst()) {
-                auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
-                for (auto [value, block] : phi_inst->GetDataList()) {
-                    PhiParamBlock[block.get()] = true;
+
+    auto Initialition = [&func, &PhiParamBlock, &NodeMap]() {
+        PhiParamBlock.clear();
+        NodeMap.clear();
+        for (auto node : func->GetSequentialNodes()) {
+            NodeMap[node.get()] = node;
+            for (auto inst : node->GetInstList()) {
+                if (inst->IsPhiInst()) {
+                    auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                    for (auto [value, block] : phi_inst->GetDataList()) {
+                        PhiParamBlock[block.get()] = true;
+                    }
+                    auto alloca_inst = phi_inst->GetOriginAlloca();
+                    PhiParamBlock[alloca_inst->GetParent().get()] = true;
                 }
             }
         }
-    }
+    };
 
-    CRVC_UNUSE auto FlodRedundantBranch = [&PhiParamBlock](const BaseValue *cond, const CfgNodePtr &node,
-                                                           const CfgNodePtr &iftrue, const CfgNodePtr &iffalse) {
+    auto FlodRedundantBranch = [&PhiParamBlock](const BaseValue *cond, const CfgNodePtr &node, const CfgNodePtr &iftrue,
+                                                const CfgNodePtr &iffalse) {
         bool changed = false;
         bool phi_iftrue = PhiParamBlock[iftrue.get()];
         bool phi_iffalse = PhiParamBlock[iffalse.get()];
@@ -105,9 +113,20 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         return changed;
     };
 
-    CRVC_UNUSE auto RemoveEmptyBlock = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
+    auto RemoveEmptyBlock = [](const CfgNodePtr &i, const CfgNodePtr &j) {
+        auto &&predecessors = i->GetPredecessors();
 
-    CRVC_UNUSE auto CombineBlocks = [&func](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {
+        for (auto &&pred : predecessors) {
+            pred->AddSuccessor(j);
+            j->AddPredecessor(pred);
+            pred->GetLastInst()->ReplaceTarget(i, j);
+
+            pred->blk_attr.CombineBlkAttr(i->blk_attr);
+        }
+        RemoveNode(i);
+    };
+
+    auto CombineBlocks = [&func](const CfgNodePtr &i, const CfgNodePtr &j) {
         i->RemoveLastInst();
         auto &&i_inst_list = i->GetInstList();
         auto &&j_inst_list = j->GetInstList();
@@ -132,16 +151,37 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
 
     CRVC_UNUSE auto HoistBranch = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
+    auto AdjustOriAlloca = [&func, &NodeMap]() {
+        for (auto &&node : func->GetSequentialNodes()) {
+            for (auto &&inst : node->GetInstList()) {
+                if (inst->IsPhiInst()) {
+                    auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                    auto &&origin_alloca = phi_inst->GetOriginAlloca();
+
+                    // iterate to get a fixed parent
+                    auto parent = origin_alloca->GetParent();
+                    while (parent != NodeMap[parent.get()]) {
+                        parent = NodeMap[parent.get()];
+                    }
+                    origin_alloca->SetParent(parent);
+                }
+            }
+        }
+    };
+
     auto OnePass = [&](CfgNodeList &seq_nodes) {
+        Initialition();
+
         bool changed = false;
         for (auto &&iter = seq_nodes.begin(); iter != seq_nodes.end();) {
             auto i = (*iter);
 
             // if i act as a phi parameter, cannot be processed
-            if (PhiParamBlock[i.get()] == true) {
+            if (PhiParamBlock[i.get()]) {
                 ++iter;
                 continue;
             }
+            assert(!PhiParamBlock[i.get()]);
             auto last_inst = i->GetLastInst();
             if (last_inst->IsBranchInst()) {
                 // case 1, fold redundant branch
@@ -157,8 +197,14 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                 auto jump_inst = std::static_pointer_cast<JumpInst>(last_inst);
                 auto j = jump_inst->GetTarget();
 
-                if (PhiParamBlock[j.get()] == false) {
+                if (!PhiParamBlock[j.get()]) {
                     // case 2, remove empty block
+                    if (i->GetPredecessors().size() && i->GetInstCnt() == 1 && i->GetLastInst()->IsJumpInst()) {
+                        RemoveEmptyBlock(i, j);
+                        changed = true;
+                        iter = seq_nodes.erase(iter);
+                        continue;
+                    }
 
                     // case 3, combine i and j
                     if (j->GetPredecessors().size() == 1) {
@@ -173,6 +219,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
             }
             ++iter;
         }
+        AdjustOriAlloca();
         return changed;
     };
 
@@ -180,6 +227,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         // although remove false-branch of branch-inst
         // false-branch still exsit in control-flow-graph, without predecessors but have successors
         // so, use EliminateUnreachableCode to fix control-flow-graph
+        DCE::EliminateUselessCode(func);
         DCE::EliminateUnreachableCode(func);
         auto &&seq_nodes = func->GetSequentialNodes();
         if (!OnePass(seq_nodes)) break;
@@ -244,7 +292,4 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
     std::for_each(delNodes.begin(), delNodes.end(), RemoveNode);
 }
 
-void DCE::DCE(NormalFuncPtr func) {
-    EliminateUselessCode(func);
-    EliminateUselessControlFlow(func);
-}
+void DCE::DCE(NormalFuncPtr func) { EliminateUselessControlFlow(func); }

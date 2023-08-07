@@ -167,9 +167,9 @@ void SSA::SSAConstruction(NormalFuncPtr func) {
 
 void SSA::SSADestruction(NormalFuncPtr func) {
     auto &&allNodes = func->GetSequentialNodes();
-    std::unordered_map<AllocaInstPtr, bool> allocaMap;
+    std::unordered_map<AllocaInst *, bool> visit;
 
-    for (auto node : allNodes) {
+    for (auto node : func->GetSequentialNodes()) {
         auto &&inst_list = node->GetInstList();
         for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
             auto inst = (*iter);
@@ -178,10 +178,11 @@ void SSA::SSADestruction(NormalFuncPtr func) {
                 auto result = phi_inst->GetResult();
 
                 auto alloca_inst = phi_inst->GetOriginAlloca();
-                if (allocaMap[alloca_inst] == false) {
+
+                if (visit[alloca_inst.get()] == false) {
                     auto node = alloca_inst->GetParent();
                     node->InsertInstFront(alloca_inst);
-                    allocaMap[alloca_inst] = true;
+                    visit[alloca_inst.get()] = true;
                 }
 
                 auto addr = alloca_inst->GetAllocaAddr();
