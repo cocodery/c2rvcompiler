@@ -21,7 +21,7 @@ void Optimization::DoOptimization() {
 
         SCCP::SCCP(func);  // cause `final_performance/derich` WA, waiting fix
 
-        // DCE::DCE(func);
+        DCE::DCE(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 

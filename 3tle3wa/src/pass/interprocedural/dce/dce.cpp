@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <unordered_map>
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
@@ -10,16 +11,15 @@
 #include "3tle3wa/ir/instruction/otherInst.hh"
 
 void DCE::EliminateUselessCode(NormalFuncPtr func) {
-    auto allNodes = func->GetSequentialNodes();
+    auto seq_nodes = func->GetSequentialNodes();
 
-    std::set<InstPtr> visitSet;
+    std::unordered_map<Instruction *, bool> visit;
     std::queue<InstPtr> WorkList;
 
-    auto Mark = [&visitSet, &allNodes, &WorkList]() {
-        for (auto &&node : allNodes) {
+    auto Mark = [&visit, &seq_nodes, &WorkList]() {
+        for (auto &&node : seq_nodes) {
             for (auto &&inst : node->GetInstList()) {
                 if (inst->IsCriticalOperation()) {
-                    visitSet.insert(inst);
                     WorkList.push(inst);
                 }
             }
@@ -27,24 +27,26 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
         while (!WorkList.empty()) {
             auto &&front = WorkList.front();
             WorkList.pop();
-            for (auto &&value : front->GetOprands()) {
-                auto &&inst_def_value = value->GetParent();
-                if (inst_def_value == nullptr) continue;
-                if (visitSet.find(inst_def_value) == visitSet.end()) {
-                    visitSet.insert(inst_def_value);
-                    WorkList.push(inst_def_value);
+            if (visit[front.get()] == false) {
+                visit[front.get()] = true;
+                for (auto &&value : front->GetOprands()) {
+                    auto &&inst_def_value = value->GetParent();
+                    if (inst_def_value == nullptr) continue;
+                    if (visit[inst_def_value.get()] == false) {
+                        WorkList.push(inst_def_value);
+                    }
                 }
             }
         }
         assert(WorkList.empty());
     };
 
-    auto Sweep = [&visitSet, &allNodes]() {
-        for (auto &&node : allNodes) {
+    auto Sweep = [&visit, &seq_nodes]() {
+        for (auto &&node : seq_nodes) {
             auto &&inst_list = node->GetInstList();
             for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
                 auto &&inst = (*iter);
-                if (visitSet.find(inst) == visitSet.end()) {
+                if (visit[inst.get()] == false) {
                     RemoveInst(inst);
                     iter = inst_list.erase(iter);
                     continue;
@@ -62,9 +64,9 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
     // when processing a node
     // it cannot be a phi parameter
     std::map<CtrlFlowGraphNode *, bool> PhiParamBlock;
-    std::map<CfgNodePtr, CfgNodePtr> NodeMap;
+    std::map<CtrlFlowGraphNode *, CfgNodePtr> NodeMap;
     for (auto node : func->GetSequentialNodes()) {
-        NodeMap[node] = node;
+        NodeMap[node.get()] = node;
         for (auto inst : node->GetInstList()) {
             if (inst->IsPhiInst()) {
                 auto phi_inst = std::static_pointer_cast<PhiInst>(inst);
@@ -161,7 +163,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                     // case 3, combine i and j
                     if (j->GetPredecessors().size() == 1) {
                         CombineBlocks(i, j);
-                        NodeMap[i] = j;
+                        NodeMap[i.get()] = j;
                         changed = true;
                         iter = seq_nodes.erase(iter);
                         continue;
@@ -183,16 +185,19 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         if (!OnePass(seq_nodes)) break;
     }
 
-    // modify origin-alloca parent which been merged
     for (auto &&node : func->GetSequentialNodes()) {
         for (auto &&inst : node->GetInstList()) {
             if (inst->IsPhiInst()) {
                 auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
                 auto &&origin_alloca = phi_inst->GetOriginAlloca();
 
-                origin_alloca->SetParent(NodeMap[origin_alloca->GetParent()]);
-            } else {
-                break;
+                // iterate to get a fixed parent
+                auto parent = origin_alloca->GetParent();
+                while (parent != NodeMap[parent.get()]) {
+                    parent = NodeMap[parent.get()];
+                }
+
+                origin_alloca->SetParent(parent);
             }
         }
     }
@@ -202,14 +207,14 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
     std::queue<CfgNodePtr> queue;
     std::unordered_map<CtrlFlowGraphNode *, bool> visit;
 
-    CfgNodeList allNodes;
+    CfgNodeList seq_nodes;
     queue.push(func->GetEntryNode());
     while (!queue.empty()) {
         auto &&front = queue.front();
         queue.pop();
         if (!visit[front.get()]) {
             visit[front.get()] = true;
-            allNodes.push_back(front);
+            seq_nodes.push_back(front);
             for (auto &&node : front->GetSuccessors()) {
                 queue.push(node);
             }
@@ -227,7 +232,7 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
             visit[front.get()] = true;
             for (auto &&pred : front->GetPredecessors()) {
                 queue.push(pred);
-                if (std::find(allNodes.begin(), allNodes.end(), pred) == allNodes.end()) {
+                if (std::find(seq_nodes.begin(), seq_nodes.end(), pred) == seq_nodes.end()) {
                     delNodes.push_back(pred);
                 }
             }
