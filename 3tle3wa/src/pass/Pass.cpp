@@ -25,7 +25,7 @@ void Optimization::DoOptimization() {
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
-        // InstComb::InstCombine(func);
+        InstComb::InstCombine(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
