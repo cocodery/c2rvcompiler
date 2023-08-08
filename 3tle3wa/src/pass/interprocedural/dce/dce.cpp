@@ -1,15 +1,20 @@
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
+#include <math.h>
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/use.hh"
 
 void DCE::EliminateUselessCode(NormalFuncPtr func) {
     auto seq_nodes = func->GetSequentialNodes();
@@ -42,6 +47,46 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
         assert(WorkList.empty());
     };
 
+    auto EliminateRedundantStore = [&visit, seq_nodes]() {
+        // addr is real use by call-inst except memset
+        auto NotMemsetFunc = [](InstPtr inst) -> bool {
+            assert(inst->IsCallInst());
+            auto &&call_inst = std::static_pointer_cast<CallInst>(inst);
+            return (call_inst->GetCalleeFunc()->GetFuncName() != "llvm.memset.p0i8.i64");
+        };
+
+        for (auto &&node : seq_nodes) {
+            for (auto &&inst : node->GetInstList()) {
+                if (inst->IsAllocaInst()) {
+                    bool real_use = false;      // load, or non-memset call
+                    InstList inst_list;         // related inst-list
+                    std::queue<InstPtr> queue;  // iterate to get all related-inst
+                    queue.push(std::static_pointer_cast<AllocaInst>(inst));
+                    while (!queue.empty()) {
+                        auto &&front = queue.front();
+                        inst_list.push_front(front);
+                        queue.pop();
+                        if (front->IsLoadInst() || (front->IsCallInst() && NotMemsetFunc(front))) {  // read-use. stop
+                            real_use = true;
+                            break;
+                        }
+                        if (front->GetResult() != nullptr) {  // avoid store or void-call cause seg-fault
+                            for (auto &&user : front->GetResult()->GetUserList()) {
+                                queue.push(user);
+                            }
+                        }
+                    }                         // iterate end
+                    if (real_use == false) {  // alloca-addr is not real-use, tag related-inst to be deleted
+                        for (auto &&inst : inst_list) {
+                            visit[inst.get()] = false;
+                        }
+                    }
+                }
+            }
+        }
+        // no need to delete relate-inst, Sweep will do it
+    };
+
     auto Sweep = [&visit, &seq_nodes]() {
         for (auto &&node : seq_nodes) {
             auto &&inst_list = node->GetInstList();
@@ -58,6 +103,7 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
     };
 
     Mark();
+    EliminateRedundantStore();
     Sweep();
 }
 
@@ -227,7 +273,6 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
         // although remove false-branch of branch-inst
         // false-branch still exsit in control-flow-graph, without predecessors but have successors
         // so, use EliminateUnreachableCode to fix control-flow-graph
-        DCE::EliminateUselessCode(func);
         DCE::EliminateUnreachableCode(func);
         auto &&seq_nodes = func->GetSequentialNodes();
         if (!OnePass(seq_nodes)) break;
@@ -292,4 +337,7 @@ void DCE::EliminateUnreachableCode(NormalFuncPtr func) {
     std::for_each(delNodes.begin(), delNodes.end(), RemoveNode);
 }
 
-void DCE::DCE(NormalFuncPtr func) { EliminateUselessControlFlow(func); }
+void DCE::DCE(NormalFuncPtr func) {
+    EliminateUselessCode(func);
+    EliminateUselessControlFlow(func);
+}
