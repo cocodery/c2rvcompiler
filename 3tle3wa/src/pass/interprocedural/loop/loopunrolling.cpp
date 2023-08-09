@@ -33,13 +33,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto &&end_value = last_inst_oprands.front();
         auto &&cmp_inst = end_value->GetParent();
         if (cmp_inst == nullptr) {
-            std::cout << "br: " << last_inst->tollvmIR() << std::endl;
-            std::cout << "cmp_inst is nullptr" << std::endl;
+            // cmp_inst is nullptr
             return 0;
         }
         auto opcode = cmp_inst->GetOpCode();
         if (opcode < OP_LTH) {
-            std::cout << "Opcode is less than LTH" << std::endl;
+            // not compare inst
             return 0;
         }
 
@@ -48,10 +47,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         int32_t change_val = 0;
         int const_check = ConstCheck(cmp_inst);
         if (const_check == 0) {
-            std::cout << "\n\n";
-            std::cout << "both cmp operands are not constant" << std::endl;
-            std::cout << cmp_inst->tollvmIR() << std::endl;
-            std::cout << "\n\n";
+            // both cmp operands are not constant
             return 0;
         }
 
@@ -62,14 +58,13 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto key = operands_of_cmp_vector.at(2 - const_check);
         auto &&cmp_value = operands_of_cmp_vector.at(const_check - 1);
         if (cmp_value->IsConstant() == false || cmp_value->GetBaseType()->IntType() == false) {
-            std::cout << cmp_inst->tollvmIR() << std::endl;
-            std::cout << "cmp_value is not constant" << std::endl;
+            // cmp_value is not int
             return 0;
         }
         auto &&constant_value = std::static_pointer_cast<Constant>(cmp_value);
         auto const_val = constant_value->GetValue();
         if (!std::holds_alternative<int32_t>(const_val) && !std::holds_alternative<int64_t>(const_val)) {
-            std::cout << "when get limit, type is not right" << std::endl;
+            // compare limit type is not int32_t or int64_t
             return 0;
         }
         limit = std::get<int32_t>(const_val);
@@ -87,57 +82,62 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             return 0;
         }
         if (key_parent->IsPhiInst() == false) {
+            // compare key is not from phi inst
             return 0;
         }
 
         auto &&phi_inst = std::static_pointer_cast<PhiInst>(key_parent);
-        // std::cout << phi_inst->tollvmIR() << std::endl;
+
+        // start to get init value of key
         auto &&data_list = phi_inst->GetDataList();
         auto &&data_source1 = data_list.front();
         auto &&data_source2 = *std::next(data_list.begin(), 1);
         auto &&source_value1 = data_source1.first;
         auto &&source_blk1 = data_source1.second;
         auto &&source_value2 = data_source2.first;
+        auto &&source_blk2 = data_source2.second;
 
-        InstPtr phi_defined_in_loop;
+        InstPtr phi_part_defined_in_loop;
         BaseValuePtr value_defined_in_loop;
         if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
             value_defined_in_loop = source_value1;
-            phi_defined_in_loop = source_value1->GetParent();
+            phi_part_defined_in_loop = source_value1->GetParent();
             auto const_init_val = std::static_pointer_cast<Constant>(source_value2);
             if (const_init_val == nullptr) {
                 return 0;
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                std::cout << "when get init, type is not right" << std::endl;
+                // init of key is not int
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
-        } else {
+        } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
             value_defined_in_loop = source_value2;
-            phi_defined_in_loop = source_value2->GetParent();
+            phi_part_defined_in_loop = source_value2->GetParent();
             auto const_init_val = std::static_pointer_cast<Constant>(source_value1);
             if (const_init_val == nullptr) {
                 return 0;
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                std::cout << "when get init, type is not right" << std::endl;
+                // init of key is not int
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
+        } else {
+            // both phi oprands are not from the loop
+            return 0;
         }
+        // end of finding init value of key
 
-        std::cout << phi_defined_in_loop->tollvmIR() << std::endl;
-        std::cout << key_parent->tollvmIR() << "\n\n\n";
         while (value_defined_in_loop != key) {
-            if (phi_defined_in_loop == nullptr) {
+            if (phi_part_defined_in_loop == nullptr) {
                 return 0;
             }
-            if (phi_defined_in_loop->GetOpCode() == OP_ADD) {
-                auto operands = InstOperandsInVector(phi_defined_in_loop);
-                const_check = ConstCheck(phi_defined_in_loop);
+            if (phi_part_defined_in_loop->GetOpCode() == OP_ADD) {
+                auto operands = InstOperandsInVector(phi_part_defined_in_loop);
+                const_check = ConstCheck(phi_part_defined_in_loop);
                 auto const_val_in_phi = operands.at(const_check - 1);
                 if (const_val_in_phi->IsConstant() == false) {
                     return 0;
@@ -145,14 +145,14 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
-                    std::cout << "when get outer value,type is not right" << std::endl;
+                    // change value of key is not int
                     return 0;
                 }
                 change_val += std::get<int32_t>(constant_in_phi);
                 value_defined_in_loop = operands.at(2 - const_check);
-            } else if (phi_defined_in_loop->GetOpCode() == OP_SUB) {
-                auto operands = InstOperandsInVector(phi_defined_in_loop);
-                const_check = ConstCheck(phi_defined_in_loop);
+            } else if (phi_part_defined_in_loop->GetOpCode() == OP_SUB) {
+                auto operands = InstOperandsInVector(phi_part_defined_in_loop);
+                const_check = ConstCheck(phi_part_defined_in_loop);
                 auto const_val_in_phi = operands.at(const_check - 1);
                 if (const_val_in_phi->IsConstant() == false) {
                     return 0;
@@ -160,6 +160,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
+                    // change value of key is not int
                     return 0;
                 }
                 change_val -= std::get<int32_t>(constant_in_phi);
@@ -170,7 +171,6 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         }
 
         int32_t gap = init - limit;
-        std::cout << "gap: " << gap << std::endl;
         switch (opcode) {
             case OP_GEQ:
                 if (gap < 0) {
@@ -228,16 +228,6 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                     return time;
                 }
                 break;
-            // case OP_NEQ:
-            //     if (gap == 0) {
-            //         return -1;
-            //     } else {
-            //         if (gap % change_val != 0) {
-            //             return 0;
-            //         }
-            //         return gap / change_val;
-            //     }
-            //     break;
             default:
                 return 0;
                 break;
