@@ -19,6 +19,8 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
+        LoopUnrolling::LoopUnrolling(func);
+
         SCCP::SCCP(func);
         DCE::EliminateUnreachableCode(func);
         DCE::DCE(func);
