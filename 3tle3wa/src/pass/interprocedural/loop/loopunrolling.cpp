@@ -139,6 +139,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         }
         // end of finding init value of key
 
+        // obtain the change in value of the key during loop iteration
         while (value_defined_in_loop != key) {
             if (phi_part_defined_in_loop == nullptr) {
                 return 0;
@@ -177,6 +178,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 return 0;
             }
         }
+        // obtain the change in value of the key during loop iteration ENDs
 
         int32_t gap = init - limit;
         switch (opcode) {
@@ -236,16 +238,6 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                     return time;
                 }
                 break;
-            // case OP_NEQ:
-            //     if (gap == 0) {
-            //         return -1;
-            //     } else {
-            //         if (gap % change_val != 0) {
-            //             return 0;
-            //         }
-            //         return gap / change_val;
-            //     }
-            //     break;
             default:
                 return 0;
                 break;
