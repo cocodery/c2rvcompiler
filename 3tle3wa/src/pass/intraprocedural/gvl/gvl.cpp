@@ -26,33 +26,39 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
     for (auto &&iter = glb_table.begin(); iter != glb_table.end();) {
         auto &&[_, value] = (*iter);
 
-        // only scalar glb-value need localization
-        if (!(value->IsGlobalValue() && value->GetBaseType()->IsScalar())) {
-            ++iter;
-            continue;
-        }
-
         auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
         auto &&glbv_type = glb_value->GetBaseType();
 
         auto &&define_in = glb_value->GetDefineIn();
         auto &&used_in = glb_value->GetUsedIn();
 
-        if (used_in.size() == 0) {        // glb-value nerver be loaded
+        // glb-value never be loaded, and not do as a function parameter
+        if (used_in.size() == 0 && glb_value->IsAsParam() == false) {
             if (define_in.size() != 0) {  // remove redundant store
-                for (auto &&gep : glb_value->GetUserList()) {
-                    assert(gep->IsGepInst());
-                    del_lists[gep->GetParent().get()].push_back(gep);
-                    for (auto &&store : gep->GetResult()->GetUserList()) {
-                        assert(store->IsStoreInst());
-                        del_lists[store->GetParent().get()].push_back(store);
+                std::queue<InstPtr> queue;
+                for (auto &&inst : glb_value->GetUserList()) {
+                    queue.push(inst);
+                }
+                while (!queue.empty()) {
+                    auto &&front = queue.front();
+                    queue.pop();
+                    del_lists[front->GetParent().get()].push_back(front);
+                    if (front->GetResult() != nullptr) {
+                        for (auto &&user : front->GetResult()->GetUserList()) {
+                            queue.push(user);
+                        }
                     }
                 }
             }
-
             iter = glb_table.erase(iter);
             continue;
-        } else if (define_in.size() == 0 && used_in.size() != 0) {  // only initilize no more assign
+        }
+        // only scalar glb-value need localization
+        if (!(value->IsGlobalValue() && value->GetBaseType()->IsScalar())) {
+            ++iter;
+            continue;
+        }
+        if (define_in.size() == 0 && used_in.size() != 0) {  // only initilize no more assign
             auto init_value = glb_value->GetInitValue();
             assert(init_value->IsConstant() || init_value->IsUnInitVar());
 
@@ -61,7 +67,6 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
                     init_value = glbv_type->IntType() ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
                                                       : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
                 }
-
                 for (auto &&gep : glb_value->GetUserList()) {
                     assert(gep->IsGepInst());
                     del_lists[gep->GetParent().get()].push_back(gep);
@@ -73,7 +78,6 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
                         }
                     }
                 }
-
                 iter = glb_table.erase(iter);
                 continue;
             }
@@ -104,7 +108,6 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
                     init_value = int_type ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
                                           : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
                 }
-
                 auto &&store_inst = StoreInst::CreatePtr(address, init_value, entry);
 
                 entry->InsertInstFront(store_inst);
@@ -115,7 +118,6 @@ void GVL::GlbValueLocalization(CompilationUnit &comp_unit) {
                     del_lists[gep->GetParent().get()].push_back(gep);
                     ReplaceSRC(gep->GetResult(), address);
                 }
-
                 normal_func->SetVarIdx(Variable::GetVarIdx());
                 normal_func->SetBlkIdx(BasicBlock::GetBlkIdx());
 
