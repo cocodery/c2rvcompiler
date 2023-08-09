@@ -328,7 +328,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
             : std::any_cast<std::pair<std::vector<std::string>, ParamList>>(ctx->funcFParams()->accept(this));
     cur_position = LOCAL;
 
-    NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
+    NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list, false);
     comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 

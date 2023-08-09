@@ -20,8 +20,8 @@
 //                     NormalFunction Implementation
 //===-----------------------------------------------------------===//
 
-NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list), loops(nullptr), branch(nullptr) {}
+NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
+    : BaseFunction(_type, _name, _list, _effect), loops(nullptr), branch(nullptr) {}
 
 bool NormalFunction::IsLibFunction() const { return false; }
 
@@ -110,8 +110,8 @@ size_t NormalFunction::GetVarIdx() { return var_idx; }
 void NormalFunction::SetBlkIdx(size_t _blk_idx) { blk_idx = _blk_idx; }
 size_t NormalFunction::GetBlkIdx() { return blk_idx; }
 
-NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
-    return std::make_shared<NormalFunction>(_type, _name, _list);
+NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect) {
+    return std::make_shared<NormalFunction>(_type, _name, _list, _effect);
 }
 
 std::string NormalFunction::tollvmIR() {
@@ -142,9 +142,9 @@ std::string NormalFunction::tollvmIR() {
 //                     LibraryFunction Implementation
 //===-----------------------------------------------------------===//
 
-LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : BaseFunction(_type, _name, _list, true) {
-    assert(side_effect == true && recursive == false);
+LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
+    : BaseFunction(_type, _name, _list, _effect) {
+    assert(recursive == false);
 }
 
 bool LibraryFunction::IsLibFunction() const { return true; }
@@ -170,13 +170,13 @@ std::string LibraryFunction::tollvmIR() {
 //                     SYSYLibFunction Implementation
 //===-----------------------------------------------------------===//
 
-SYSYLibFunction::SYSYLibFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
-    : LibraryFunction(_type, _name, _list) {}
+SYSYLibFunction::SYSYLibFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
+    : LibraryFunction(_type, _name, _list, _effect) {}
 
 bool SYSYLibFunction::IsSYSYLibFunction() const { return true; }
 
-SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
-    return std::make_shared<SYSYLibFunction>(_type, _name, _list);
+SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list, bool _effect) {
+    return std::make_shared<SYSYLibFunction>(_type, _name, _list, _effect);
 }
 
 //===-----------------------------------------------------------===//
@@ -184,8 +184,8 @@ SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name
 //===-----------------------------------------------------------===//
 
 LLVMLibFunction::LLVMLibFunction(std::string &_prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
-                                 std::string &_name, ParamList &_list)
-    : LibraryFunction(_type, _name, _list), proto_name(_prote_name), proto_arg_nums(_proto_arg_nums) {}
+                                 std::string &_name, ParamList &_list, bool _effect)
+    : LibraryFunction(_type, _name, _list, _effect), proto_name(_prote_name), proto_arg_nums(_proto_arg_nums) {}
 
 bool LLVMLibFunction::IsSYSYLibFunction() const { return false; }
 
@@ -193,8 +193,8 @@ std::string &LLVMLibFunction::GetProtoName() { return proto_name; }
 size_t LLVMLibFunction::GetProtoArgNums() const { return proto_arg_nums; }
 
 LLVMLibFuncPtr LLVMLibFunction::CreatePtr(std::string _prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
-                                          std::string _name, ParamList &_list) {
-    return std::make_shared<LLVMLibFunction>(_prote_name, _proto_arg_nums, _type, _name, _list);
+                                          std::string _name, ParamList &_list, bool _effect) {
+    return std::make_shared<LLVMLibFunction>(_prote_name, _proto_arg_nums, _type, _name, _list, _effect);
 }
 
 std::ostream &operator<<(std::ostream &os, BaseFuncPtr func) {

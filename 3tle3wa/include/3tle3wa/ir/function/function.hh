@@ -38,7 +38,7 @@ class NormalFunction final : public BaseFunction {
     Loop *loops;
     Branch_ *branch;
 
-    NormalFunction(ScalarTypePtr, std::string &, ParamList &);
+    NormalFunction(ScalarTypePtr, std::string &, ParamList &, bool);
     ~NormalFunction() = default;
 
     bool IsLibFunction() const;
@@ -62,7 +62,7 @@ class NormalFunction final : public BaseFunction {
     void SetBlkIdx(size_t);
     size_t GetBlkIdx();
 
-    static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &);
+    static NormalFuncPtr CreatePtr(ScalarTypePtr, std::string &, ParamList &, bool);
 
     std::string tollvmIR();
 };
@@ -72,7 +72,7 @@ using LibFuncPtr = std::shared_ptr<LibraryFunction>;
 
 class LibraryFunction : public BaseFunction {
    public:
-    LibraryFunction(ScalarTypePtr, std::string &, ParamList &);
+    LibraryFunction(ScalarTypePtr, std::string &, ParamList &, bool);
     ~LibraryFunction() = default;
 
     bool IsLibFunction() const;
@@ -87,12 +87,12 @@ using SYSYLibFuncPtr = std::shared_ptr<SYSYLibFunction>;
 
 class SYSYLibFunction final : public LibraryFunction {
    public:
-    SYSYLibFunction(ScalarTypePtr, std::string &, ParamList &);
+    SYSYLibFunction(ScalarTypePtr, std::string &, ParamList &, bool);
     ~SYSYLibFunction() = default;
 
     bool IsSYSYLibFunction() const;
 
-    static SYSYLibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &);
+    static SYSYLibFuncPtr CreatePtr(ScalarTypePtr, std::string, ParamList &, bool);
 };
 
 class LLVMLibFunction;
@@ -103,7 +103,7 @@ class LLVMLibFunction final : public LibraryFunction {
     std::string proto_name;
     size_t proto_arg_nums;
 
-    LLVMLibFunction(std::string &, size_t, ScalarTypePtr, std::string &, ParamList &);
+    LLVMLibFunction(std::string &, size_t, ScalarTypePtr, std::string &, ParamList &, bool);
     ~LLVMLibFunction() = default;
 
     bool IsSYSYLibFunction() const;
@@ -111,7 +111,7 @@ class LLVMLibFunction final : public LibraryFunction {
     std::string &GetProtoName();
     size_t GetProtoArgNums() const;
 
-    static LLVMLibFuncPtr CreatePtr(std::string, size_t, ScalarTypePtr, std::string, ParamList &);
+    static LLVMLibFuncPtr CreatePtr(std::string, size_t, ScalarTypePtr, std::string, ParamList &, bool);
 };
 
 std::ostream &operator<<(std::ostream &, BaseFuncPtr);
