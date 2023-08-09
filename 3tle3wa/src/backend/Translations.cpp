@@ -1,87 +1,182 @@
 #include <cmath>
 
-#include "3tle3wa/backend/InternalTranslation.hh"
+#include "3tle3wa/backend/asm/AsmAbi.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
+#include "3tle3wa/backend/rl/InternalTranslation.hh"
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
 #include "3tle3wa/backend/rl/RLPlanner.hh"
 #include "3tle3wa/backend/rl/RLProgress.hh"
+#include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLUop.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 
-void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo) {
-    uint32_t imm = 0;
+void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo, InternalTranslationContext &ctx) {
+    int32_t imm = 0;
+
+    // assuming no 64bit imm
     if (cinfo.width_ == 32) {
-        imm = cinfo.v32_.u32_;
+        imm = cinfo.v32_.i32_;
     } else {
-        imm = cinfo.v64_.u64_;
+        imm = cinfo.v64_.i64_;
     }
 
     if (ImmWithin(12, imm)) {
-        auto uop_ori = new UopIBinImm;
+        auto uop = new UopLi;
+        uop->SetImm(imm);
+        uop->SetDst(dst);
 
-        int32_t val12 = imm;
-        SEXT32(val12, 12);
-
-        uop_ori->SetImm(val12);
-        uop_ori->SetLhs(nullptr);
-        uop_ori->SetDst(dst);
-        uop_ori->SetKind(IBIN_KIND::ADD);
-
-        curstat_.cur_blk->Push(uop_ori);
+        ctx.cur_blk->PushUop(uop);
         return;
     }
-    uint32_t msk = 0xFFF;
-    VirtualRegister *internal = nullptr;
 
-    int32_t val12 = imm & msk;
-    uint32_t upper = 0;
-    SEXT32(val12, 12);
+    uint32_t msk = 0xfff;
+    uint32_t up20 = 0;
 
-    if (val12 < 0) {
-        uint32_t up20 = imm & (~msk);
-        uint32_t down20 = up20 >> 12;
-        upper = (down20 + 1) << 12;
+    int32_t lo12 = Sext32(12, msk & imm);
+    up20 = (imm >> 12) + !!(lo12 < 0);
+
+    Assert(up20 != 0, "if up20 == 0, it should not use lui");
+
+    VirtualRegister *upper = nullptr;
+
+    if (auto fnd = ctx.lui_map.find(up20); fnd != ctx.lui_map.end()) {
+        upper = fnd->second;
     } else {
-        upper = imm & (~msk);
-    }
-
-    upper >>= 12;
-
-    if (upper != 0) {
-        internal = curstat_.planner->NewVReg(VREG_TYPE::INT);
+        upper = ctx.planner->NewVReg(VREG_TYPE::INT);
         auto uop_lui = new UopLui;
-        uop_lui->SetImm(upper);
-        uop_lui->SetDst(internal);
-        curstat_.cur_blk->Push(uop_lui);
+        uop_lui->SetImm(up20);
+        uop_lui->SetDst(upper);
+        ctx.cur_blk->PushUop(uop_lui);
+
+        ctx.lui_map.emplace(up20, upper);
     }
 
-    auto uop_ori = new UopIBinImm;
-    uop_ori->SetImm(val12);
-    uop_ori->SetLhs(internal);
-    uop_ori->SetDst(dst);
-    if (val12 > 0) {
-        uop_ori->SetKind(IBIN_KIND::OR);
-    } else {
-        uop_ori->SetKind(IBIN_KIND::ADD);
-    }
+    auto uop = new UopIBinImm;
+    uop->SetImm(lo12);
+    uop->SetLhs(upper);
+    uop->SetDst(dst);
+    uop->SetKind(IBIN_KIND::ADD);
 
-    curstat_.cur_blk->Push(uop_ori);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(ReturnInst *ll) {
+void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, InternalTranslationContext &ctx) {
+    auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+
+    if (cinfo.v32_.u32_ == 0) {
+        auto uop = new UopLi;
+        uop->SetImm(0);
+        uop->SetDst(dst);
+
+        ctx.cur_blk->PushUop(uop);
+    } else {
+        if (auto fnd = ctx.fimm_map.find(cinfo.v32_.u32_); fnd != ctx.fimm_map.end()) {
+            auto uop = new UopMv;
+            uop->SetSrc(fnd->second);
+            uop->SetDst(dst);
+
+            ctx.cur_blk->PushUop(uop);
+        } else {
+            auto lbname = std::string(".LC") + std::to_string(lc_idx);
+
+            auto uoplo = new UopFLoadLB;
+            uoplo->SetHelper(nullptr);
+            uoplo->SetSym(lbname);
+            uoplo->SetDst(dst);
+
+            ctx.cur_blk->PushUop(uoplo);
+
+            ctx.fimm_map.emplace(cinfo.v32_.u32_, dst);
+        }
+    }
+}
+
+void RLPlanner::RegisterParams(ParamList &plst) {
+    size_t cnt_i{0}, cnt_f{0}, cnt_stk{0};
+
+    for (auto &&param : plst) {
+        auto &&ptype = param->GetBaseType();
+        auto &&var = dynamic_cast<Variable *>(param.get());
+        Assert(var != nullptr, "param should not be constant");
+
+        VirtualRegister *vr = nullptr;
+
+        if (ptype->IsPointer()) {
+            vr = AllocVReg(VREG_TYPE::PTR, var->GetVariableIdx());
+
+            if (cnt_i < abi_info.i.nm_arg) {
+                vr->SetRealRegIdx(cnt_i + abi_info.i.arg_bgn);
+                vr->SetParamRegIdx(cnt_i);
+                vr->SetOnStack(false);
+
+                cnt_i += 1;
+            } else {
+                auto stk = Alloca(8);
+                stk->SetParamOff(cnt_stk * 8);
+
+                vr->SetStackInfo(stk);
+                vr->SetOnStack(true);
+
+                cnt_stk += 1;
+            }
+        } else if (ptype->FloatType()) {
+            vr = AllocVReg(VREG_TYPE::FLT, var->GetVariableIdx());
+
+            if (cnt_f < abi_info.f.nm_arg) {
+                vr->SetRealRegIdx(cnt_f + abi_info.f.arg_bgn);
+                vr->SetParamRegIdx(cnt_f);
+                vr->SetOnStack(false);
+
+                cnt_f += 1;
+            } else {
+                auto stk = Alloca(8);
+                stk->SetParamOff(cnt_stk * 8);
+
+                vr->SetStackInfo(stk);
+                vr->SetOnStack(true);
+
+                cnt_stk += 1;
+            }
+        } else if (ptype->IntType()) {
+            vr = AllocVReg(VREG_TYPE::INT, var->GetVariableIdx());
+
+            if (cnt_i < abi_info.i.nm_arg) {
+                vr->SetRealRegIdx(cnt_i + abi_info.i.arg_bgn);
+                vr->SetParamRegIdx(cnt_i);
+                vr->SetOnStack(false);
+
+                cnt_i += 1;
+            } else {
+                auto stk = Alloca(8);
+                stk->SetParamOff(cnt_stk * 8);
+
+                vr->SetStackInfo(stk);
+                vr->SetOnStack(true);
+
+                cnt_stk += 1;
+            }
+        }
+
+        Assert(vr != nullptr, "illegel param");
+
+        params_.push_back(vr);
+    }
+}
+
+void InternalTranslation::Translate(ReturnInst *ll, InternalTranslationContext &ctx) {
     auto uop = new UopRet;
 
     if (auto &&retval = ll->GetRetValue(); retval != nullptr) {
+        VirtualRegister *ret = nullptr;
+
         if (retval->IsVariable()) {
             auto var = dynamic_cast<Variable *>(retval.get());
             Assert(var, "bad dynamic cast");
 
-            auto vr_retval = curstat_.planner->GetVReg(var->GetVariableIdx());
-
-            uop->SetRetVal(vr_retval);
+            ret = ctx.planner->GetVReg(var->GetVariableIdx());
         } else if (retval->IsConstant()) {
             auto cst = dynamic_cast<Constant *>(retval.get());
             Assert(cst, "bad dynamic cast");
@@ -89,71 +184,39 @@ void InternalTranslation::Translate(ReturnInst *ll) {
             auto &&cinfo = XConstValue(cst->GetValue());
 
             if (cinfo.isflt_) {
-                auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-
-                if (cinfo.v32_.u32_ == 0) {
-                    auto flt_val = curstat_.planner->NewVReg(VREG_TYPE::FLT);
-
-                    auto uop_mv = new UopMv;
-                    uop_mv->SetDst(flt_val);
-                    uop_mv->SetSrc(nullptr);
-
-                    curstat_.cur_blk->Push(uop_mv);
-
-                    uop->SetRetVal(flt_val);
-                } else {
-                    auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-                    auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-                    auto flt_val = curstat_.planner->NewVReg(VREG_TYPE::FLT);
-
-                    auto uop_lla = new UopLla;
-                    uop_lla->SetSrc(lbname);
-                    uop_lla->SetDst(lc_addr);
-
-                    auto uop_fload = new UopFLoad;
-                    uop_fload->SetOff(0);
-                    uop_fload->SetBase(lc_addr);
-                    uop_fload->SetDst(flt_val);
-
-                    curstat_.cur_blk->Push(uop_lla);
-                    curstat_.cur_blk->Push(uop_fload);
-
-                    uop->SetRetVal(flt_val);
-                }
+                ret = ctx.planner->NewVReg(VREG_TYPE::FLT);
+                lf(ret, cinfo, ctx);
             } else {
-                auto vr_retval = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-                li(vr_retval, cinfo);
-
-                uop->SetRetVal(vr_retval);
+                ret = ctx.planner->NewVReg(VREG_TYPE::INT);
+                li(ret, cinfo, ctx);
             }
         } else {
             panic("unexpected");
         }
+
+        uop->SetRetVal(ret);
     }
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(JumpInst *ll) {
+void InternalTranslation::Translate(JumpInst *ll, InternalTranslationContext &ctx) {
     auto tgid = ll->GetTarget()->GetBlockIdx();
 
-    if (curstat_.nxt_cfg and curstat_.nxt_cfg->GetBlockIdx() == tgid) {
-        auto nop = new UopMv;
-        curstat_.cur_blk->Push(nop);
+    if (ctx.nxt_cfg and ctx.nxt_cfg->GetBlockIdx() == tgid) {
+        auto nop = new UopNop;
+        ctx.cur_blk->PushUop(nop);
         return;
     }
 
     auto uop = new UopJump;
-
     uop->SetDstIdx(tgid);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(BranchInst *ll) {
-    auto nxtblkidx = curstat_.nxt_cfg->GetBlockIdx();
+void InternalTranslation::Translate(BranchInst *ll, InternalTranslationContext &ctx) {
+    auto nxtblkidx = ctx.nxt_cfg->GetBlockIdx();
 
     auto tridx = ll->GetTrueTarget()->GetBlockIdx();
     auto faidx = ll->GetFalseTarget()->GetBlockIdx();
@@ -161,31 +224,13 @@ void InternalTranslation::Translate(BranchInst *ll) {
     auto &&cond = ll->GetCondition();
 
     if (cond->IsConstant()) {
-        // auto cst = dynamic_cast<Constant *>(cond.get());
-        // Assert(cst, "bad dynamic cast");
-
-        // auto &&cinfo = XConstValue(cst->GetValue());
-
-        // auto uop = new UopJump;
-
-        // if (cinfo.v32_.u32_ != 0) {
-        //     uop->SetDstIdx(tridx);
-        // } else {
-        //     uop->SetDstIdx(faidx);
-        // }
-
-        // curstat_.cur_blk->Push(uop);
-
-        // return;
-
         panic("constant condition should be optimized");
     }
 
     auto var_cond = dynamic_cast<Variable *>(cond.get());
     auto cvridx = var_cond->GetVariableIdx();
 
-    auto fnd = icmp_map.find(cvridx);
-    if (fnd != icmp_map.end()) {
+    if (auto fnd = ctx.icmp_map.find(cvridx); fnd != ctx.icmp_map.end()) {
         auto icmp = fnd->second;
 
         auto lhs = icmp->GetLHS();
@@ -208,15 +253,14 @@ void InternalTranslation::Translate(BranchInst *ll) {
             if (cinfo.v32_.u32_ == 0) {
                 vrlhs = nullptr;
             } else {
-                vrlhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-                li(vrlhs, cinfo);
+                vrlhs = ctx.planner->NewVReg(VREG_TYPE::INT);
+                li(vrlhs, cinfo, ctx);
             }
         } else if (lhs->IsVariable()) {
             auto var = dynamic_cast<Variable *>(lhs.get());
             Assert(var, "bad dynamic cast");
 
-            vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+            vrlhs = ctx.planner->GetVReg(var->GetVariableIdx());
         } else {
             panic("unexpected");
         }
@@ -231,15 +275,15 @@ void InternalTranslation::Translate(BranchInst *ll) {
             if (cinfo.v32_.u32_ == 0) {
                 vrrhs = nullptr;
             } else {
-                vrrhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                vrrhs = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-                li(vrrhs, cinfo);
+                li(vrrhs, cinfo, ctx);
             }
         } else if (rhs->IsVariable()) {
             auto var = dynamic_cast<Variable *>(rhs.get());
             Assert(var, "bad dynamic cast");
 
-            vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+            vrrhs = ctx.planner->GetVReg(var->GetVariableIdx());
         } else {
             panic("unexpected");
         }
@@ -283,127 +327,72 @@ void InternalTranslation::Translate(BranchInst *ll) {
             panic("unexpected");
         }
 
-        curstat_.cur_blk->Push(uop);
+        ctx.cur_blk->PushUop(uop);
 
         return;
     }
 
-    auto uop = new UopBranch;
+    if (auto fnd = ctx.fcmp_map.find(cvridx); fnd != ctx.fcmp_map.end()) {
+        auto ontrue = fnd->second;
 
-    auto vr_cond = curstat_.planner->GetVReg(var_cond->GetVariableIdx());
-    uop->SetCond(vr_cond);
+        auto uop = new UopBranch;
 
-    if (nxtblkidx == tridx) {
-        uop->SetOnTrue(false);
-        uop->SetDstIdx(faidx);
-    } else if (nxtblkidx == faidx) {
-        uop->SetOnTrue(true);
-        uop->SetDstIdx(tridx);
-    } else {
-        panic("unexpected");
+        auto vr_cond = ctx.planner->GetVReg(var_cond->GetVariableIdx());
+        uop->SetCond(vr_cond);
+
+        if (nxtblkidx == tridx) {
+            uop->SetOnTrue(not ontrue);
+            uop->SetDstIdx(faidx);
+        } else if (nxtblkidx == faidx) {
+            uop->SetOnTrue(ontrue);
+            uop->SetDstIdx(tridx);
+        } else {
+            panic("unexpected");
+        }
+
+        ctx.cur_blk->PushUop(uop);
+        return;
     }
 
-    curstat_.cur_blk->Push(uop);
+    panic("need fix");
 }
 
-void InternalTranslation::Translate(ICmpInst *ll) {
+void InternalTranslation::Translate(ICmpInst *ll, InternalTranslationContext &ctx) {
     auto &&res = ll->GetResult();
+    ctx.icmp_map.emplace(res->GetVariableIdx(), ll);
+}
 
-    auto &&uses = res->GetUserList();
-    bool allbranch = true;
-    for (auto &&use : uses) {
-        if (use->GetOpCode() != Branch) {
-            allbranch = false;
+void InternalTranslation::Translate(FCmpInst *ll, InternalTranslationContext &ctx) {
+    auto &&res = ll->GetResult();
+    auto lhs = ll->GetLHS();
+    auto rhs = ll->GetRHS();
+    auto opcode = ll->GetOpCode();
+
+    auto ontrue = false;
+
+    switch (opcode) {
+        case OP_LEQ:
+        case OP_LTH:
+        case OP_EQU:
+            ontrue = true;
             break;
-        }
+        case OP_GEQ:
+            opcode = OP_LTH;
+            ontrue = false;
+            break;
+        case OP_GTH:
+            opcode = OP_LEQ;
+            ontrue = false;
+            break;
+        case OP_NEQ:
+            opcode = OP_EQU;
+            ontrue = false;
+            break;
+        default:
+            panic("unexpected");
     }
 
-    if (allbranch) {
-        icmp_map[res->GetVariableIdx()] = ll;
-        return;
-    }
-
-    auto lhs = ll->GetLHS();
-    auto rhs = ll->GetRHS();
-    auto opcode = ll->GetOpCode();
-
-    if (lhs->IsConstant() and rhs->IsConstant()) {
-        panic("unexpected");
-    }
-
-    VirtualRegister *vrlhs;
-    VirtualRegister *vrrhs;
-
-    if (lhs->IsConstant()) {
-        auto cst = dynamic_cast<Constant *>(lhs.get());
-        Assert(cst, "bad dynamic cast");
-
-        auto &&cinfo = XConstValue(cst->GetValue());
-        Assert(not cinfo.isflt_, "unexpected");
-
-        if (cinfo.v32_.u32_ == 0) {
-            vrlhs = nullptr;
-        } else {
-            vrlhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-            li(vrlhs, cinfo);
-        }
-    } else if (lhs->IsVariable()) {
-        auto var = dynamic_cast<Variable *>(lhs.get());
-        Assert(var, "bad dynamic cast");
-
-        vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
-    } else {
-        panic("unexpected");
-    }
-
-    if (rhs->IsConstant()) {
-        auto cst = dynamic_cast<Constant *>(rhs.get());
-        Assert(cst, "bad dynamic cast");
-
-        auto &&cinfo = XConstValue(cst->GetValue());
-        Assert(not cinfo.isflt_, "unexpected");
-
-        if (cinfo.v32_.u32_ == 0) {
-            vrrhs = nullptr;
-        } else {
-            vrrhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-            li(vrrhs, cinfo);
-        }
-    } else if (rhs->IsVariable()) {
-        auto var = dynamic_cast<Variable *>(rhs.get());
-        Assert(var, "bad dynamic cast");
-
-        vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
-    } else {
-        panic("unexpected");
-    }
-
-    if (vrlhs == nullptr and vrrhs == nullptr) {
-        panic("unexpected");
-    }
-
-    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
-
-    auto uop = new UopICmp;
-    uop->SetLhs(vrlhs);
-    uop->SetRhs(vrrhs);
-    uop->SetDst(dst);
-    uop->SetKind((COMP_KIND)opcode);
-
-    curstat_.cur_blk->Push(uop);
-}
-
-void InternalTranslation::Translate(FCmpInst *ll) {
-    auto &&res = ll->GetResult();
-    auto lhs = ll->GetLHS();
-    auto rhs = ll->GetRHS();
-    auto opcode = ll->GetOpCode();
-
-    if (lhs->IsConstant() and rhs->IsConstant()) {
-        panic("unexpected");
-    }
+    ctx.fcmp_map.emplace(res->GetVariableIdx(), ontrue);
 
     VirtualRegister *vrlhs;
     VirtualRegister *vrrhs;
@@ -415,38 +404,13 @@ void InternalTranslation::Translate(FCmpInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(cinfo.isflt_, "unexpected");
 
-        vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
-
-        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-
-        if (cinfo.v32_.u32_ == 0) {
-            auto uop_mv = new UopMv;
-            uop_mv->SetDst(vrlhs);
-            uop_mv->SetSrc(nullptr);
-
-            curstat_.cur_blk->Push(uop_mv);
-        } else {
-            auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-
-            auto uop_lla = new UopLla;
-            uop_lla->SetSrc(lbname);
-            uop_lla->SetDst(lc_addr);
-
-            auto uop_fload = new UopFLoad;
-            uop_fload->SetOff(0);
-            uop_fload->SetBase(lc_addr);
-            uop_fload->SetDst(vrlhs);
-
-            curstat_.cur_blk->Push(uop_lla);
-            curstat_.cur_blk->Push(uop_fload);
-        }
+        vrlhs = ctx.planner->NewVReg(VREG_TYPE::FLT);
+        lf(vrlhs, cinfo, ctx);
     } else {
         auto var = dynamic_cast<Variable *>(lhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrlhs = ctx.planner->GetVReg(var->GetVariableIdx());
     }
 
     if (rhs->IsConstant()) {
@@ -456,44 +420,25 @@ void InternalTranslation::Translate(FCmpInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(cinfo.isflt_, "unexpected");
 
-        vrrhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+        vrrhs = ctx.planner->NewVReg(VREG_TYPE::FLT);
 
-        if (cinfo.v32_.u32_ == 0) {
-            auto uop_mv = new UopMv;
-            uop_mv->SetDst(vrrhs);
-            uop_mv->SetSrc(nullptr);
-
-            curstat_.cur_blk->Push(uop_mv);
-        } else {
-            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-            auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-
-            auto uop_lla = new UopLla;
-            uop_lla->SetSrc(lbname);
-            uop_lla->SetDst(lc_addr);
-
-            auto uop_fload = new UopFLoad;
-            uop_fload->SetOff(0);
-            uop_fload->SetBase(lc_addr);
-            uop_fload->SetDst(vrrhs);
-
-            curstat_.cur_blk->Push(uop_lla);
-            curstat_.cur_blk->Push(uop_fload);
-        }
+        lf(vrrhs, cinfo, ctx);
     } else {
         auto var = dynamic_cast<Variable *>(rhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrrhs = ctx.planner->GetVReg(var->GetVariableIdx());
+    }
+
+    if (lhs->IsConstant() and rhs->IsConstant()) {
+        panic("unexpected");
     }
 
     if (vrlhs == nullptr or vrrhs == nullptr) {
         panic("unexpected");
     }
 
-    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+    auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
 
     auto uop = new UopFCmp;
     uop->SetLhs(vrlhs);
@@ -501,10 +446,10 @@ void InternalTranslation::Translate(FCmpInst *ll) {
     uop->SetDst(dst);
     uop->SetKind((COMP_KIND)opcode);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(IBinaryInst *ll) {
+void InternalTranslation::Translate(IBinaryInst *ll, InternalTranslationContext &ctx) {
     auto &&res = ll->GetResult();
     auto lhs = ll->GetLHS();
     auto rhs = ll->GetRHS();
@@ -538,14 +483,14 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(not cinfo.isflt_, "unexpected");
 
-        vrlhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
+        vrlhs = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-        li(vrlhs, cinfo);
+        li(vrlhs, cinfo, ctx);
     } else if (lhs->IsVariable()) {
         auto var = dynamic_cast<Variable *>(lhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrlhs = ctx.planner->GetVReg(var->GetVariableIdx());
     } else {
         panic("unexpected");
     }
@@ -566,14 +511,14 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
                     if (__builtin_popcount(cinfo.v32_.u32_) == 1) {
                         auto ctz = __builtin_ctz(cinfo.v32_.u32_);
 
-                        auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+                        auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
                         auto uop_imm = new UopIBinImm;
                         uop_imm->SetImm(ctz);
                         uop_imm->SetLhs(vrlhs);
                         uop_imm->SetDst(dst);
                         uop_imm->SetKind(IBIN_KIND::SLL);
 
-                        curstat_.cur_blk->Push(uop_imm);
+                        ctx.cur_blk->PushUop(uop_imm);
 
                         return;
                     }
@@ -583,46 +528,46 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
                     if (__builtin_popcount(cinfo.v32_.u32_) == 1) {
                         auto ctz = __builtin_ctz(cinfo.v32_.u32_);
 
-                        auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+                        auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
 
-                        auto c1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                        auto c1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                         auto uop_sraiw = new UopIBinImm;
                         uop_sraiw->SetImm(31);
                         uop_sraiw->SetLhs(vrlhs);
                         uop_sraiw->SetDst(c1);
                         uop_sraiw->SetKind(IBIN_KIND::SRA);
-                        curstat_.cur_blk->Push(uop_sraiw);
+                        ctx.cur_blk->PushUop(uop_sraiw);
 
-                        auto c2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                        auto c2 = ctx.planner->NewVReg(VREG_TYPE::INT);
                         auto uop_slliw = new UopIBinImm;
                         uop_slliw->SetImm(32 - ctz);
                         uop_slliw->SetLhs(c1);
                         uop_slliw->SetDst(c2);
                         uop_slliw->SetKind(IBIN_KIND::SLL);
-                        curstat_.cur_blk->Push(uop_slliw);
+                        ctx.cur_blk->PushUop(uop_slliw);
 
-                        auto c3 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                        auto c3 = ctx.planner->NewVReg(VREG_TYPE::INT);
                         auto uop_srliw = new UopIBinImm;
                         uop_srliw->SetImm(32 - ctz);
                         uop_srliw->SetLhs(c2);
                         uop_srliw->SetDst(c3);
                         uop_srliw->SetKind(IBIN_KIND::SRL);
-                        curstat_.cur_blk->Push(uop_srliw);
+                        ctx.cur_blk->PushUop(uop_srliw);
 
-                        auto b1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                        auto b1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                         auto uop_addw = new UopIBin;
                         uop_addw->SetRhs(c3);
                         uop_addw->SetLhs(vrlhs);
                         uop_addw->SetDst(b1);
                         uop_addw->SetKind(IBIN_KIND::ADD);
-                        curstat_.cur_blk->Push(uop_addw);
+                        ctx.cur_blk->PushUop(uop_addw);
 
                         auto uop_res = new UopIBinImm;
                         uop_res->SetImm(ctz);
                         uop_res->SetLhs(b1);
                         uop_res->SetDst(dst);
                         uop_res->SetKind(IBIN_KIND::SRA);
-                        curstat_.cur_blk->Push(uop_res);
+                        ctx.cur_blk->PushUop(uop_res);
 
                         return;
                     }
@@ -634,122 +579,122 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
 
                         auto msk = (1 << ctz) - 1;
 
-                        auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+                        auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
 
                         if (ImmWithin(12, msk)) {
-                            auto c1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto c1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_sraiw = new UopIBinImm;
                             uop_sraiw->SetImm(31);
                             uop_sraiw->SetLhs(vrlhs);
                             uop_sraiw->SetDst(c1);
                             uop_sraiw->SetKind(IBIN_KIND::SRA);
-                            curstat_.cur_blk->Push(uop_sraiw);
+                            ctx.cur_blk->PushUop(uop_sraiw);
 
-                            auto c2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto c2 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_srliw0 = new UopIBinImm;
                             uop_srliw0->SetImm(32 - ctz);
                             uop_srliw0->SetLhs(c1);
                             uop_srliw0->SetDst(c2);
                             uop_srliw0->SetKind(IBIN_KIND::SRL);
-                            curstat_.cur_blk->Push(uop_srliw0);
+                            ctx.cur_blk->PushUop(uop_srliw0);
 
-                            auto b1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto b1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_addw = new UopIBin;
                             uop_addw->SetRhs(c2);
                             uop_addw->SetLhs(vrlhs);
                             uop_addw->SetDst(b1);
                             uop_addw->SetKind(IBIN_KIND::ADD);
-                            curstat_.cur_blk->Push(uop_addw);
+                            ctx.cur_blk->PushUop(uop_addw);
 
-                            auto b2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto b2 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_andi = new UopIBinImm;
                             uop_andi->SetImm(msk);
                             uop_andi->SetLhs(b1);
                             uop_andi->SetDst(b2);
                             uop_andi->SetKind(IBIN_KIND::AND);
-                            curstat_.cur_blk->Push(uop_andi);
+                            ctx.cur_blk->PushUop(uop_andi);
 
                             auto uop_res = new UopIBin;
                             uop_res->SetRhs(c2);
                             uop_res->SetLhs(b2);
                             uop_res->SetDst(dst);
                             uop_res->SetKind(IBIN_KIND::SUB);
-                            curstat_.cur_blk->Push(uop_res);
+                            ctx.cur_blk->PushUop(uop_res);
                         } else {
-                            auto c1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto c1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_sraiw = new UopIBinImm;
                             uop_sraiw->SetImm(31);
                             uop_sraiw->SetLhs(vrlhs);
                             uop_sraiw->SetDst(c1);
                             uop_sraiw->SetKind(IBIN_KIND::SRA);
-                            curstat_.cur_blk->Push(uop_sraiw);
+                            ctx.cur_blk->PushUop(uop_sraiw);
 
-                            auto c2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto c2 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_srliw0 = new UopIBinImm;
                             uop_srliw0->SetImm(32 - ctz);
                             uop_srliw0->SetLhs(c1);
                             uop_srliw0->SetDst(c2);
                             uop_srliw0->SetKind(IBIN_KIND::SRL);
-                            curstat_.cur_blk->Push(uop_srliw0);
+                            ctx.cur_blk->PushUop(uop_srliw0);
 
-                            auto b1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto b1 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_addw = new UopIBin;
                             uop_addw->SetRhs(c2);
                             uop_addw->SetLhs(vrlhs);
                             uop_addw->SetDst(b1);
                             uop_addw->SetKind(IBIN_KIND::ADD);
-                            curstat_.cur_blk->Push(uop_addw);
+                            ctx.cur_blk->PushUop(uop_addw);
 
-                            auto b2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto b2 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_slliw = new UopIBinImm;
                             uop_slliw->SetImm(32 - ctz);
                             uop_slliw->SetLhs(b1);
                             uop_slliw->SetDst(b2);
                             uop_slliw->SetKind(IBIN_KIND::SLL);
-                            curstat_.cur_blk->Push(uop_slliw);
+                            ctx.cur_blk->PushUop(uop_slliw);
 
-                            auto b3 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+                            auto b3 = ctx.planner->NewVReg(VREG_TYPE::INT);
                             auto uop_srliw1 = new UopIBinImm;
                             uop_srliw1->SetImm(32 - ctz);
                             uop_srliw1->SetLhs(b2);
                             uop_srliw1->SetDst(b3);
                             uop_srliw1->SetKind(IBIN_KIND::SRL);
-                            curstat_.cur_blk->Push(uop_srliw1);
+                            ctx.cur_blk->PushUop(uop_srliw1);
 
                             auto uop_res = new UopIBin;
                             uop_res->SetRhs(c2);
                             uop_res->SetLhs(b3);
                             uop_res->SetDst(dst);
                             uop_res->SetKind(IBIN_KIND::SUB);
-                            curstat_.cur_blk->Push(uop_res);
+                            ctx.cur_blk->PushUop(uop_res);
                         }
                         return;
                     }
                     break;
 
                 case OP_ADD: {
-                    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+                    auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
                     auto uop_imm = new UopIBinImm;
                     uop_imm->SetImm(cinfo.v32_.i32_);
                     uop_imm->SetLhs(vrlhs);
                     uop_imm->SetDst(dst);
                     uop_imm->SetKind(IBIN_KIND::ADD);
 
-                    curstat_.cur_blk->Push(uop_imm);
+                    ctx.cur_blk->PushUop(uop_imm);
 
                     return;
                 } break;
 
                 case OP_SUB:
                     if (ImmWithin(12, -cinfo.v32_.i32_)) {
-                        auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+                        auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
                         auto uop_imm = new UopIBinImm;
                         uop_imm->SetImm(-cinfo.v32_.i32_);
                         uop_imm->SetLhs(vrlhs);
                         uop_imm->SetDst(dst);
                         uop_imm->SetKind(IBIN_KIND::ADD);
 
-                        curstat_.cur_blk->Push(uop_imm);
+                        ctx.cur_blk->PushUop(uop_imm);
 
                         return;
                     }
@@ -760,7 +705,7 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
             };
         }
 
-        vrrhs = curstat_.planner->NewVReg(VREG_TYPE::INT);
+        vrrhs = ctx.planner->NewVReg(VREG_TYPE::INT);
 
         if (opcode == OP_DIV and std::log(cinfo.v32_.i32_) <= 28) {
             auto magic = Magika(cinfo.v32_.i32_);
@@ -768,25 +713,33 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
             cvi.width_ = 32;
             cvi.v32_.i32_ = magic.magic_number;
 
-            li(vrrhs, cvi);
+            li(vrrhs, cvi, ctx);
 
-            auto upper32 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto mulres = ctx.planner->NewVReg(VREG_TYPE::INT);
+            auto upper32 = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-            auto op0 = new UopIBin;
+            auto op0 = new UopIBin64;
             op0->SetLhs(vrrhs);
             op0->SetRhs(vrlhs);
-            op0->SetDst(upper32);
-            op0->SetKind(IBIN_KIND::MULHS);
-            curstat_.cur_blk->Push(op0);
+            op0->SetDst(mulres);
+            op0->SetKind(IBIN_KIND::MUL);
+            ctx.cur_blk->PushUop(op0);
 
-            auto inter1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto opsh = new UopIBinImm64;
+            opsh->SetImm(32);
+            opsh->SetLhs(mulres);
+            opsh->SetDst(upper32);
+            opsh->SetKind(IBIN_KIND::SRL);
+            ctx.cur_blk->PushUop(opsh);
+
+            auto inter1 = ctx.planner->NewVReg(VREG_TYPE::INT);
             if (cinfo.v32_.i32_ > 0 and magic.magic_number < 0) {
                 auto op1 = new UopIBin;
                 op1->SetLhs(upper32);
                 op1->SetRhs(vrlhs);
                 op1->SetDst(inter1);
                 op1->SetKind(IBIN_KIND::ADD);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
 
             } else if (cinfo.v32_.i32_ < 0 and magic.magic_number > 0) {
                 auto op1 = new UopIBin;
@@ -794,44 +747,44 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
                 op1->SetRhs(vrlhs);
                 op1->SetDst(inter1);
                 op1->SetKind(IBIN_KIND::SUB);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
             } else {
                 auto op1 = new UopMv;
                 op1->SetSrc(upper32);
                 op1->SetDst(inter1);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
             }
 
-            auto inter2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto inter2 = ctx.planner->NewVReg(VREG_TYPE::INT);
             if (magic.shift_amount > 0) {
                 auto op2 = new UopIBinImm;
                 op2->SetImm(magic.shift_amount);
                 op2->SetLhs(inter1);
                 op2->SetDst(inter2);
                 op2->SetKind(IBIN_KIND::SRA);
-                curstat_.cur_blk->Push(op2);
+                ctx.cur_blk->PushUop(op2);
             } else {
                 auto op2 = new UopMv;
                 op2->SetSrc(inter1);
                 op2->SetDst(inter2);
-                curstat_.cur_blk->Push(op2);
+                ctx.cur_blk->PushUop(op2);
             }
 
-            auto sgn = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto sgn = ctx.planner->NewVReg(VREG_TYPE::INT);
             auto op3 = new UopIBinImm;
             op3->SetImm(31);
             op3->SetLhs(inter2);
             op3->SetDst(sgn);
             op3->SetKind(IBIN_KIND::SRL);
-            curstat_.cur_blk->Push(op3);
+            ctx.cur_blk->PushUop(op3);
 
-            auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+            auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
             auto op4 = new UopIBin;
             op4->SetLhs(sgn);
             op4->SetRhs(inter2);
             op4->SetDst(dst);
             op4->SetKind(IBIN_KIND::ADD);
-            curstat_.cur_blk->Push(op4);
+            ctx.cur_blk->PushUop(op4);
 
             return;
         } else if (opcode == OP_REM and std::log(cinfo.v32_.i32_) <= 25) {
@@ -840,25 +793,33 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
             cvi.width_ = 32;
             cvi.v32_.i32_ = magic.magic_number;
 
-            li(vrrhs, cvi);
+            li(vrrhs, cvi, ctx);
 
-            auto upper32 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto mulres = ctx.planner->NewVReg(VREG_TYPE::INT);
+            auto upper32 = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-            auto op0 = new UopIBin;
+            auto op0 = new UopIBin64;
             op0->SetLhs(vrrhs);
             op0->SetRhs(vrlhs);
-            op0->SetDst(upper32);
-            op0->SetKind(IBIN_KIND::MULHS);
-            curstat_.cur_blk->Push(op0);
+            op0->SetDst(mulres);
+            op0->SetKind(IBIN_KIND::MUL);
+            ctx.cur_blk->PushUop(op0);
 
-            auto inter1 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto opsh = new UopIBinImm64;
+            opsh->SetImm(32);
+            opsh->SetLhs(mulres);
+            opsh->SetDst(upper32);
+            opsh->SetKind(IBIN_KIND::SRL);
+            ctx.cur_blk->PushUop(opsh);
+
+            auto inter1 = ctx.planner->NewVReg(VREG_TYPE::INT);
             if (cinfo.v32_.i32_ > 0 and magic.magic_number < 0) {
                 auto op1 = new UopIBin;
                 op1->SetLhs(upper32);
                 op1->SetRhs(vrlhs);
                 op1->SetDst(inter1);
                 op1->SetKind(IBIN_KIND::ADD);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
 
             } else if (cinfo.v32_.i32_ < 0 and magic.magic_number > 0) {
                 auto op1 = new UopIBin;
@@ -866,74 +827,74 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
                 op1->SetRhs(vrlhs);
                 op1->SetDst(inter1);
                 op1->SetKind(IBIN_KIND::SUB);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
             } else {
                 auto op1 = new UopMv;
                 op1->SetSrc(upper32);
                 op1->SetDst(inter1);
-                curstat_.cur_blk->Push(op1);
+                ctx.cur_blk->PushUop(op1);
             }
 
-            auto inter2 = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto inter2 = ctx.planner->NewVReg(VREG_TYPE::INT);
             if (magic.shift_amount > 0) {
                 auto op2 = new UopIBinImm;
                 op2->SetImm(magic.shift_amount);
                 op2->SetLhs(inter1);
                 op2->SetDst(inter2);
                 op2->SetKind(IBIN_KIND::SRA);
-                curstat_.cur_blk->Push(op2);
+                ctx.cur_blk->PushUop(op2);
             } else {
                 auto op2 = new UopMv;
                 op2->SetSrc(inter1);
                 op2->SetDst(inter2);
-                curstat_.cur_blk->Push(op2);
+                ctx.cur_blk->PushUop(op2);
             }
 
-            auto sgn = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto sgn = ctx.planner->NewVReg(VREG_TYPE::INT);
             auto op3 = new UopIBinImm;
             op3->SetImm(31);
             op3->SetLhs(inter2);
             op3->SetDst(sgn);
             op3->SetKind(IBIN_KIND::SRL);
-            curstat_.cur_blk->Push(op3);
+            ctx.cur_blk->PushUop(op3);
 
-            auto q = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            auto q = ctx.planner->NewVReg(VREG_TYPE::INT);
             auto op4 = new UopIBin;
             op4->SetLhs(sgn);
             op4->SetRhs(inter2);
             op4->SetDst(q);
             op4->SetKind(IBIN_KIND::ADD);
-            curstat_.cur_blk->Push(op4);
+            ctx.cur_blk->PushUop(op4);
 
-            auto t = curstat_.planner->NewVReg(VREG_TYPE::INT);
-            auto d = curstat_.planner->NewVReg(VREG_TYPE::INT);
-            li(d, cinfo);
+            auto t = ctx.planner->NewVReg(VREG_TYPE::INT);
+            auto d = ctx.planner->NewVReg(VREG_TYPE::INT);
+            li(d, cinfo, ctx);
 
             auto op5 = new UopIBin;
             op5->SetLhs(q);
             op5->SetRhs(d);
             op5->SetDst(t);
             op5->SetKind(IBIN_KIND::MUL);
-            curstat_.cur_blk->Push(op5);
+            ctx.cur_blk->PushUop(op5);
 
-            auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+            auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
             auto op6 = new UopIBin;
             op6->SetLhs(vrlhs);
             op6->SetRhs(t);
             op6->SetDst(dst);
             op6->SetKind(IBIN_KIND::SUB);
-            curstat_.cur_blk->Push(op6);
+            ctx.cur_blk->PushUop(op6);
 
             return;
         } else {
-            li(vrrhs, cinfo);
+            li(vrrhs, cinfo, ctx);
         }
 
     } else if (rhs->IsVariable()) {
         auto var = dynamic_cast<Variable *>(rhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrrhs = ctx.planner->GetVReg(var->GetVariableIdx());
     } else {
         panic("unexpected");
     }
@@ -942,7 +903,7 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
         panic("unexpected");
     }
 
-    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+    auto dst = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
 
     auto uop = new UopIBin;
     uop->SetLhs(vrlhs);
@@ -950,10 +911,10 @@ void InternalTranslation::Translate(IBinaryInst *ll) {
     uop->SetDst(dst);
     uop->SetKind((IBIN_KIND)opcode);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(FBinaryInst *ll) {
+void InternalTranslation::Translate(FBinaryInst *ll, InternalTranslationContext &ctx) {
     auto &&res = ll->GetResult();
     auto lhs = ll->GetLHS();
     auto rhs = ll->GetRHS();
@@ -973,37 +934,14 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(cinfo.isflt_, "unexpected");
 
-        vrlhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+        vrlhs = ctx.planner->NewVReg(VREG_TYPE::FLT);
 
-        if (cinfo.v32_.u32_ == 0) {
-            auto uop_mv = new UopMv;
-            uop_mv->SetDst(vrlhs);
-            uop_mv->SetSrc(nullptr);
-
-            curstat_.cur_blk->Push(uop_mv);
-        } else {
-            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-            auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-
-            auto uop_lla = new UopLla;
-            uop_lla->SetSrc(lbname);
-            uop_lla->SetDst(lc_addr);
-
-            auto uop_fload = new UopFLoad;
-            uop_fload->SetOff(0);
-            uop_fload->SetBase(lc_addr);
-            uop_fload->SetDst(vrlhs);
-
-            curstat_.cur_blk->Push(uop_lla);
-            curstat_.cur_blk->Push(uop_fload);
-        }
+        lf(vrlhs, cinfo, ctx);
     } else {
         auto var = dynamic_cast<Variable *>(lhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrlhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrlhs = ctx.planner->GetVReg(var->GetVariableIdx());
     }
 
     if (rhs->IsConstant()) {
@@ -1013,44 +951,21 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
         auto &&cinfo = XConstValue(cst->GetValue());
         Assert(cinfo.isflt_, "unexpected");
 
-        vrrhs = curstat_.planner->NewVReg(VREG_TYPE::FLT);
+        vrrhs = ctx.planner->NewVReg(VREG_TYPE::FLT);
 
-        if (cinfo.v32_.u32_ == 0) {
-            auto uop_mv = new UopMv;
-            uop_mv->SetDst(vrrhs);
-            uop_mv->SetSrc(nullptr);
-
-            curstat_.cur_blk->Push(uop_mv);
-        } else {
-            auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-            auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-            auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-
-            auto uop_lla = new UopLla;
-            uop_lla->SetSrc(lbname);
-            uop_lla->SetDst(lc_addr);
-
-            auto uop_fload = new UopFLoad;
-            uop_fload->SetOff(0);
-            uop_fload->SetBase(lc_addr);
-            uop_fload->SetDst(vrrhs);
-
-            curstat_.cur_blk->Push(uop_lla);
-            curstat_.cur_blk->Push(uop_fload);
-        }
+        lf(vrlhs, cinfo, ctx);
     } else {
         auto var = dynamic_cast<Variable *>(rhs.get());
         Assert(var, "bad dynamic cast");
 
-        vrrhs = curstat_.planner->GetVReg(var->GetVariableIdx());
+        vrrhs = ctx.planner->GetVReg(var->GetVariableIdx());
     }
 
     if (vrlhs == nullptr or vrrhs == nullptr) {
         panic("unexpected");
     }
 
-    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    auto dst = ctx.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
 
     auto uop = new UopFBin;
     uop->SetLhs(vrlhs);
@@ -1058,102 +973,84 @@ void InternalTranslation::Translate(FBinaryInst *ll) {
     uop->SetDst(dst);
     uop->SetKind((FBIN_KIND)opcode);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(SitoFpInst *ll) {
+void InternalTranslation::Translate(SitoFpInst *ll, InternalTranslationContext &ctx) {
     auto oprand = ll->GetOprand();
-    auto var = std::dynamic_pointer_cast<Variable>(oprand);
-    Assert(var, "bitcast should op on var");
+    auto var = dynamic_cast<Variable *>(oprand.get());
+    Assert(var, "SitoFp should op on var");
 
     auto &&res = ll->GetResult();
 
-    auto rsvr = curstat_.planner->GetVReg(var->GetVariableIdx());
-    auto nwvr = curstat_.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    auto rsvr = ctx.planner->GetVReg(var->GetVariableIdx());
+    auto nwvr = ctx.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
 
     auto uop = new UopCvtW2S;
     uop->SetSrc(rsvr);
     uop->SetDst(nwvr);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(FptoSiInst *ll) {
+void InternalTranslation::Translate(FptoSiInst *ll, InternalTranslationContext &ctx) {
     auto oprand = ll->GetOprand();
-    auto var = std::dynamic_pointer_cast<Variable>(oprand);
-    Assert(var, "bitcast should op on var");
+    auto var = dynamic_cast<Variable *>(oprand.get());
+    Assert(var, "FptoSi should op on var");
 
     auto &&res = ll->GetResult();
 
-    auto rsvr = curstat_.planner->GetVReg(var->GetVariableIdx());
-    auto nwvr = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+    auto rsvr = ctx.planner->GetVReg(var->GetVariableIdx());
+    auto nwvr = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
 
     auto uop = new UopCvtS2W;
     uop->SetSrc(rsvr);
     uop->SetDst(nwvr);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(ZextInst *ll) {
+void InternalTranslation::Translate(ZextInst *ll, InternalTranslationContext &ctx) {
     auto oprand = ll->GetOprand();
-    auto var = std::dynamic_pointer_cast<Variable>(oprand);
+    auto var = dynamic_cast<Variable *>(oprand.get());
+    Assert(var, "bitcast should op on var");
+
+    ctx.planner->Link(ll->GetResult()->GetVariableIdx(), var->GetVariableIdx());
+}
+
+void InternalTranslation::Translate(BitCastInst *ll, InternalTranslationContext &ctx) {
+    auto oprand = ll->GetOprand();
+    auto var = dynamic_cast<Variable *>(oprand.get());
     Assert(var, "bitcast should op on var");
 
     auto &&res = ll->GetResult();
-
-    auto rsvr = curstat_.planner->GetVReg(var->GetVariableIdx());
-    auto nwvr = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
-
-    auto uop = new UopMv;
-    uop->SetSrc(rsvr);
-    uop->SetDst(nwvr);
-
-    curstat_.cur_blk->Push(uop);
-}
-
-void InternalTranslation::Translate(BitCastInst *ll) {
-    auto oprand = ll->GetOprand();
-    auto var = std::dynamic_pointer_cast<Variable>(oprand);
-    Assert(var, "bitcast should op on var");
-
-    auto &&res = ll->GetResult();
-
-    VirtualRegister *rsvr = nullptr;
-    VirtualRegister *nwvr = nullptr;
 
     auto varidx = var->GetVariableIdx();
-    if (auto fnd = gep_map.find(varidx); fnd != gep_map.end()) {
+    if (auto fnd = ctx.gep_map.find(varidx); fnd != ctx.gep_map.end()) {
         auto &&[vridx, offset] = fnd->second;
 
-        auto nwvr = curstat_.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
-        auto base = curstat_.planner->GetVReg(vridx);
+        if (offset == 0) {
+            ctx.planner->Link(ll->GetResult()->GetVariableIdx(), vridx);
+            return;
+        }
 
-        auto uop = new UopIBinImm;
+        VirtualRegister *nwvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
+        VirtualRegister *base = ctx.planner->GetVReg(vridx);
+
+        auto uop = new UopIBinImm64;
         uop->SetImm(offset);
         uop->SetLhs(base);
         uop->SetDst(nwvr);
         uop->SetKind(IBIN_KIND::ADD);
 
-        curstat_.cur_blk->Push(uop);
+        ctx.cur_blk->PushUop(uop);
         return;
     }
 
-    rsvr = curstat_.planner->GetVReg(varidx);
-    if (res->GetBaseType()->IsPointer()) {
-        nwvr = curstat_.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
-    } else {
-        nwvr = curstat_.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
-    }
-
-    auto uop = new UopMv;
-    uop->SetSrc(rsvr);
-    uop->SetDst(nwvr);
-
-    curstat_.cur_blk->Push(uop);
+    ctx.planner->Link(ll->GetResult()->GetVariableIdx(), var->GetVariableIdx());
 }
 
-void InternalTranslation::Translate(AllocaInst *ll) {
+void InternalTranslation::Translate(AllocaInst *ll, InternalTranslationContext &ctx) {
     if (auto &&type = ll->GetAllocaType(); type->IsScalar()) {
         size_t slen = 0;
         if (type->IsPointer()) {
@@ -1164,11 +1061,11 @@ void InternalTranslation::Translate(AllocaInst *ll) {
             panic("unexpected");
         }
 
-        auto stkvr = curstat_.planner->Alloca(ll->GetResult()->GetVariableIdx(), slen);
+        auto stkvr = ctx.planner->Alloca(ll->GetResult()->GetVariableIdx(), slen);
         auto uop = new UopLla;
         uop->SetDst(stkvr);
 
-        curstat_.cur_blk->Push(uop);
+        ctx.cur_blk->PushUop(uop);
     } else {
         auto lstty = dynamic_cast<ListType *>(type.get());
         Assert(lstty, "bad dynamic cast");
@@ -1177,15 +1074,15 @@ void InternalTranslation::Translate(AllocaInst *ll) {
             panic("unexpected");
         }
 
-        auto stkvr = curstat_.planner->Alloca(ll->GetResult()->GetVariableIdx(), lstty->GetCapacity() * 4);
+        auto stkvr = ctx.planner->Alloca(ll->GetResult()->GetVariableIdx(), lstty->GetCapacity() * 4);
         auto uop = new UopLla;
         uop->SetDst(stkvr);
 
-        curstat_.cur_blk->Push(uop);
+        ctx.cur_blk->PushUop(uop);
     }
 }
 
-void InternalTranslation::Translate(StoreInst *ll) {
+void InternalTranslation::Translate(StoreInst *ll, InternalTranslationContext &ctx) {
     auto &&s_val = ll->GetStoreValue();
     auto &&s_addr = ll->GetStoreAddr();
 
@@ -1197,7 +1094,7 @@ void InternalTranslation::Translate(StoreInst *ll) {
         Assert(var, "bad dynamic cast");
 
         onflt = s_val->GetBaseType()->FloatType();
-        srcvr = curstat_.planner->GetVReg(var->GetVariableIdx());
+        srcvr = ctx.planner->GetVReg(var->GetVariableIdx());
     } else if (s_val->IsConstant()) {
         auto cst = dynamic_cast<Constant *>(s_val.get());
         Assert(cst, "bad dynamic cast");
@@ -1207,9 +1104,9 @@ void InternalTranslation::Translate(StoreInst *ll) {
         if (cinfo.v32_.u32_ == 0) {
             srcvr = nullptr;
         } else {
-            srcvr = curstat_.planner->NewVReg(VREG_TYPE::INT);
+            srcvr = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-            li(srcvr, cinfo);
+            li(srcvr, cinfo, ctx);
         }
     }
 
@@ -1221,12 +1118,12 @@ void InternalTranslation::Translate(StoreInst *ll) {
 
         auto avridx = addr->GetVariableIdx();
 
-        auto fnd = gep_map.find(avridx);
+        auto fnd = ctx.gep_map.find(avridx);
 
-        if (fnd != gep_map.end()) {
+        if (fnd != ctx.gep_map.end()) {
             auto &&[vridx, offset] = fnd->second;
 
-            auto base = curstat_.planner->GetVReg(vridx);
+            auto base = ctx.planner->GetVReg(vridx);
 
             if (onflt) {
                 auto uop = new UopFStore;
@@ -1234,17 +1131,17 @@ void InternalTranslation::Translate(StoreInst *ll) {
                 uop->SetSrc(srcvr);
                 uop->SetOff(offset);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             } else {
                 auto uop = new UopStore;
                 uop->SetBase(base);
                 uop->SetSrc(srcvr);
                 uop->SetOff(offset);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             }
         } else {
-            auto base = curstat_.planner->GetVReg(avridx);
+            auto base = ctx.planner->GetVReg(avridx);
 
             if (onflt) {
                 auto uop = new UopFStore;
@@ -1252,20 +1149,20 @@ void InternalTranslation::Translate(StoreInst *ll) {
                 uop->SetSrc(srcvr);
                 uop->SetOff(0);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             } else {
                 auto uop = new UopStore;
                 uop->SetBase(base);
                 uop->SetSrc(srcvr);
                 uop->SetOff(0);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             }
         }
     }
 }
 
-void InternalTranslation::Translate(LoadInst *ll) {
+void InternalTranslation::Translate(LoadInst *ll, InternalTranslationContext &ctx) {
     auto &&l_dst = ll->GetResult();
     auto &&l_addr = ll->GetOprand();
 
@@ -1279,7 +1176,7 @@ void InternalTranslation::Translate(LoadInst *ll) {
     } else {
         vtype = VREG_TYPE::INT;
     }
-    dstvr = curstat_.planner->AllocVReg(vtype, l_dst->GetVariableIdx());
+    dstvr = ctx.planner->AllocVReg(vtype, l_dst->GetVariableIdx());
 
     if (l_addr->IsGlobalValue()) {
         panic("try another way please");
@@ -1289,12 +1186,12 @@ void InternalTranslation::Translate(LoadInst *ll) {
 
         auto avridx = addr->GetVariableIdx();
 
-        auto fnd = gep_map.find(avridx);
+        auto fnd = ctx.gep_map.find(avridx);
 
-        if (fnd != gep_map.end()) {
+        if (fnd != ctx.gep_map.end()) {
             auto &&[vridx, offset] = fnd->second;
 
-            auto base = curstat_.planner->GetVReg(vridx);
+            auto base = ctx.planner->GetVReg(vridx);
 
             if (onflt) {
                 auto uop = new UopFLoad;
@@ -1302,17 +1199,17 @@ void InternalTranslation::Translate(LoadInst *ll) {
                 uop->SetDst(dstvr);
                 uop->SetOff(offset);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             } else {
                 auto uop = new UopLoad;
                 uop->SetBase(base);
                 uop->SetDst(dstvr);
                 uop->SetOff(offset);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             }
         } else {
-            auto base = curstat_.planner->GetVReg(avridx);
+            auto base = ctx.planner->GetVReg(avridx);
 
             if (onflt) {
                 auto uop = new UopFLoad;
@@ -1320,20 +1217,20 @@ void InternalTranslation::Translate(LoadInst *ll) {
                 uop->SetDst(dstvr);
                 uop->SetOff(0);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             } else {
                 auto uop = new UopLoad;
                 uop->SetBase(base);
                 uop->SetDst(dstvr);
                 uop->SetOff(0);
 
-                curstat_.cur_blk->Push(uop);
+                ctx.cur_blk->PushUop(uop);
             }
         }
     }
 }
 
-void InternalTranslation::Translate(GetElementPtrInst *ll) {
+void InternalTranslation::Translate(GetElementPtrInst *ll, InternalTranslationContext &ctx) {
     auto &&res = ll->GetResult();
 
     VirtualRegister *off = nullptr;
@@ -1345,19 +1242,19 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
     uint32_t imm = 0;
 
     if (offset->IsVariable()) {
-        auto var = std::dynamic_pointer_cast<Variable>(offset);
+        auto var = dynamic_cast<Variable *>(offset.get());
         Assert(var, "bad dynamic cast");
 
-        auto offnum = curstat_.planner->GetVReg(var->GetVariableIdx());
-        off = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+        auto offnum = ctx.planner->GetVReg(var->GetVariableIdx());
+        off = ctx.planner->NewVReg(VREG_TYPE::PTR);
 
-        auto uop_slli = new UopIBinImm;
+        auto uop_slli = new UopIBinImm64;
         uop_slli->SetLhs(offnum);
         uop_slli->SetImm(2);
         uop_slli->SetDst(off);
         uop_slli->SetKind(IBIN_KIND::SLL);
 
-        curstat_.cur_blk->Push(uop_slli);
+        ctx.cur_blk->PushUop(uop_slli);
     } else if (offset->IsConstant()) {
         auto cst = dynamic_cast<Constant *>(offset.get());
         Assert(cst, "bad dynamic cast");
@@ -1398,20 +1295,20 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
                     Assert(addr, "bad dynamic cast");
 
                     auto vridx = res->GetVariableIdx();
-                    gep_map[vridx] = std::make_pair(addr->GetVariableIdx(), (size_t)imm);
+                    ctx.gep_map[vridx] = std::make_pair(addr->GetVariableIdx(), (size_t)imm);
                     return;
                 }
             } else {
-                off = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+                off = ctx.planner->NewVReg(VREG_TYPE::PTR);
 
-                li(off, cinfo);
+                li(off, cinfo, ctx);
             }
         }
     } else {
         panic("unexpected");
     }
 
-    auto resvr = curstat_.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
+    auto resvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
 
     if (base->IsGlobalValue()) {
         auto gv = dynamic_cast<GlobalValue *>(base.get());
@@ -1425,55 +1322,54 @@ void InternalTranslation::Translate(GetElementPtrInst *ll) {
             uop_lla->SetSrc(glb_name);
             uop_lla->SetOff(imm);
             uop_lla->SetDst(resvr);
-            curstat_.cur_blk->Push(uop_lla);
+            ctx.cur_blk->PushUop(uop_lla);
         } else {
-            auto glb_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
+            auto glb_addr = ctx.planner->NewVReg(VREG_TYPE::PTR);
             auto glb_name = std::string(gv_map_.at(gvidx)->Label());
             auto uop_lla = new UopLla;
             uop_lla->SetSrc(glb_name);
             uop_lla->SetDst(glb_addr);
             uop_lla->SetOff(0);
 
-            auto uop_add = new UopIBin;
+            auto uop_add = new UopIBin64;
             uop_add->SetLhs(glb_addr);
             uop_add->SetRhs(off);
             uop_add->SetDst(resvr);
             uop_add->SetKind(IBIN_KIND::ADD);
 
-            curstat_.cur_blk->Push(uop_lla);
-            curstat_.cur_blk->Push(uop_add);
+            ctx.cur_blk->PushUop(uop_lla);
+            ctx.cur_blk->PushUop(uop_add);
         }
     } else if (base->IsVariable()) {
         auto addr = dynamic_cast<Variable *>(base.get());
         Assert(addr, "bad dynamic cast");
 
-        auto vr_addr = curstat_.planner->GetVReg(addr->GetVariableIdx());
+        auto vr_addr = ctx.planner->GetVReg(addr->GetVariableIdx());
 
         if (immoff) {
-            auto uop_add = new UopIBinImm;
+            auto uop_add = new UopIBinImm64;
             uop_add->SetLhs(vr_addr);
             uop_add->SetImm(imm);
             uop_add->SetDst(resvr);
             uop_add->SetKind(IBIN_KIND::ADD);
 
-            curstat_.cur_blk->Push(uop_add);
+            ctx.cur_blk->PushUop(uop_add);
         } else {
-            auto uop_add = new UopIBin;
-            uop_add->SetLhs(vr_addr);
-            uop_add->SetRhs(off);
+            auto uop_add = new UopIBin64;
+            uop_add->SetRhs(vr_addr);
+            uop_add->SetLhs(off);
             uop_add->SetDst(resvr);
             uop_add->SetKind(IBIN_KIND::ADD);
 
-            curstat_.cur_blk->Push(uop_add);
+            ctx.cur_blk->PushUop(uop_add);
         }
-
     } else {
         panic("unexpected");
     }
 }
 
-void InternalTranslation::Translate(CallInst *ll) {
-    curstat_.meetcall = true;
+void InternalTranslation::Translate(CallInst *ll, InternalTranslationContext &ctx) {
+    ctx.meet_call = true;
 
     // decide if is tail call
 
@@ -1489,39 +1385,24 @@ void InternalTranslation::Translate(CallInst *ll) {
         uop->SetCallSelf(true);
     }
 
-    uop->SetTailCall(ll->GetTailCall());
+    if (ll->GetTailCall()) {
+        uop->SetTailCall(true);
+        ctx.meet_tail = true;
+    } else {
+        uop->SetTailCall(false);
+    }
 
-    auto make_param = [&params, &uop, this](size_t num) {
+    auto make_param = [&params, &uop, &ctx, this](size_t num) {
         size_t pcnt = 0;
-
-        size_t ips = 0;
-        size_t fps = 0;
-        size_t sps = 0;
-
-        extern size_t abi_arg_reg;
 
         for (auto &&param : params) {
             auto &&ptype = param->GetBaseType();
-
-            if (ptype->FloatType()) {
-                if (fps < abi_arg_reg) {
-                    fps += 1;
-                } else {
-                    sps += 1;
-                }
-            } else {
-                if (ips < abi_arg_reg) {
-                    ips += 1;
-                } else {
-                    sps += 1;
-                }
-            }
 
             if (param->IsVariable()) {
                 auto var = dynamic_cast<Variable *>(param.get());
                 Assert(var, "bad dynamic cast");
 
-                auto vr_param = curstat_.planner->GetVReg(var->GetVariableIdx());
+                auto vr_param = ctx.planner->GetVReg(var->GetVariableIdx());
                 uop->PushParam(vr_param);
             } else if (param->IsConstant()) {
                 auto cst = dynamic_cast<Constant *>(param.get());
@@ -1530,56 +1411,13 @@ void InternalTranslation::Translate(CallInst *ll) {
                 auto &&cinfo = XConstValue(cst->GetValue());
 
                 if (cinfo.isflt_) {
-                    if (cinfo.v32_.u32_ == 0) {
-                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::FLT);
-
-                        auto uop_mv = new UopMv;
-                        uop_mv->SetDst(vr_param);
-                        uop_mv->SetSrc(nullptr);
-
-                        curstat_.cur_blk->Push(uop_mv);
-
-                        uop->PushParam(vr_param);
-                    } else {
-                        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-                        auto lbname = std::string(".LC") + std::to_string(lc_idx);
-
-                        auto lc_addr = curstat_.planner->NewVReg(VREG_TYPE::PTR);
-                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::FLT);
-
-                        auto uop_lla = new UopLla;
-                        uop_lla->SetSrc(lbname);
-                        uop_lla->SetDst(lc_addr);
-
-                        auto uop_fload = new UopFLoad;
-                        uop_fload->SetOff(0);
-                        uop_fload->SetBase(lc_addr);
-                        uop_fload->SetDst(vr_param);
-
-                        curstat_.cur_blk->Push(uop_lla);
-                        curstat_.cur_blk->Push(uop_fload);
-
-                        uop->PushParam(vr_param);
-                    }
-
+                    auto vr_param = ctx.planner->NewVReg(VREG_TYPE::FLT);
+                    lf(vr_param, cinfo, ctx);
+                    uop->PushParam(vr_param);
                 } else {
-                    if (cinfo.v32_.u32_ == 0 and cinfo.v64_.u64_ == 0) {
-                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-                        auto uop_mv = new UopMv;
-                        uop_mv->SetDst(vr_param);
-                        uop_mv->SetSrc(nullptr);
-
-                        curstat_.cur_blk->Push(uop_mv);
-
-                        uop->PushParam(vr_param);
-                    } else {
-                        auto vr_param = curstat_.planner->NewVReg(VREG_TYPE::INT);
-
-                        li(vr_param, cinfo);
-
-                        uop->PushParam(vr_param);
-                    }
+                    auto vr_param = ctx.planner->NewVReg(VREG_TYPE::INT);
+                    li(vr_param, cinfo, ctx);
+                    uop->PushParam(vr_param);
                 }
             } else {
                 panic("unexpected");
@@ -1590,8 +1428,6 @@ void InternalTranslation::Translate(CallInst *ll) {
                 break;
             }
         }
-
-        curstat_.planner->SetPstkSiz(sps);
     };
 
     if (callee->IsLibFunction()) {
@@ -1651,14 +1487,14 @@ void InternalTranslation::Translate(CallInst *ll) {
         } else {
             panic("unexpected");
         }
-        retvr = curstat_.planner->AllocVReg(vtype, res->GetVariableIdx());
+        retvr = ctx.planner->AllocVReg(vtype, res->GetVariableIdx());
         uop->SetRetVal(retvr);
     }
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(FNegInst *ll) {
+void InternalTranslation::Translate(FNegInst *ll, InternalTranslationContext &ctx) {
     auto uop = new UopFBin;
 
     auto res = ll->GetResult();
@@ -1667,44 +1503,80 @@ void InternalTranslation::Translate(FNegInst *ll) {
     auto srcopd = dynamic_cast<Variable *>(operand.get());
     Assert(srcopd != nullptr, "should be fold");
 
-    auto dst = curstat_.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
-    auto src = curstat_.planner->GetVReg(srcopd->GetVariableIdx());
+    auto dst = ctx.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    auto src = ctx.planner->GetVReg(srcopd->GetVariableIdx());
 
     uop->SetDst(dst);
     uop->SetLhs(src);
     uop->SetRhs(nullptr);
     uop->SetKind(FBIN_KIND::NEG);
 
-    curstat_.cur_blk->Push(uop);
+    ctx.cur_blk->PushUop(uop);
 }
 
-void InternalTranslation::Translate(CRVC_UNUSE PhiInst *ll) {
-    panic("not implemented well");
+void InternalTranslation::Translate(PhiInst *ll, InternalTranslationContext &ctx) {
+    auto res = ll->GetResult();
+    VirtualRegister *mux, *recv;
 
-    // auto &&datalst = ll->GetDataList();
-    // for (auto &&[value, cfg] : datalst) {
-    //     PhiOperand popd;
+    if (res->GetBaseType()->IsPointer()) {
+        mux = ctx.planner->NewVReg(VREG_TYPE::PTR);
+        recv = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
+    } else if (res->GetBaseType()->FloatType()) {
+        mux = ctx.planner->NewVReg(VREG_TYPE::FLT);
+        recv = ctx.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    } else {
+        mux = ctx.planner->NewVReg(VREG_TYPE::INT);
+        recv = ctx.planner->AllocVReg(VREG_TYPE::INT, res->GetVariableIdx());
+    }
 
-    //     if (value->IsVariable()) {
-    //         popd.kind = PHI_KIND::REG;
+    ctx.phi_vec.push_back(std::make_pair(ll, mux->GetVRIdx()));
 
-    //         auto var = dynamic_cast<Variable *>(value.get());
-    //         Assert(var, "bad dynamic cast");
+    auto uop = new UopMv;
+    uop->SetSrc(mux);
+    uop->SetDst(recv);
 
-    //         popd.data = var->GetVariableIdx();
-    //         popd.lbidx = cfg->GetBlockIdx();
-    //     } else if (value->IsConstant()) {
-    //         uint32_t imm = 0;
-    //         if (value->GetBaseType()->FloatType()) {
-    //             panic("impossible");
-    //         } else {
-    //             popd.kind = PHI_KIND::IMM;
-    //         }
+    ctx.cur_blk->PushUop(uop);
+}
 
-    //         popd.data = imm;
-    //         popd.lbidx = cfg->GetBlockIdx();
-    //     } else {
-    //         panic("unexpected");
-    //     }
-    // }
+void InternalTranslation::dephi(InternalTranslationContext &ctx) {
+    for (auto &&pr : ctx.phi_vec) {
+        auto &&res = pr.second;
+        auto vrres = ctx.planner->GetVReg(res);
+
+        for (auto &&data : pr.first->GetDataList()) {
+            auto lbidx = data.second->GetBlockIdx();
+            auto rlbb = rlps_->FindBlkById(lbidx);
+
+            if (data.first->IsConstant()) {
+                auto cst = dynamic_cast<Constant *>(data.first.get());
+                Assert(cst, "bad dynamic cast");
+
+                auto &&cinfo = XConstValue(cst->GetValue());
+
+                ctx.cur_blk = rlbb;
+                rlbb->TempPop();
+
+                if (data.first->GetBaseType()->FloatType()) {
+                    lf(vrres, cinfo, ctx);
+                } else {
+                    li(vrres, cinfo, ctx);
+                }
+
+                ctx.cur_blk = nullptr;
+            } else {
+                auto var = dynamic_cast<Variable *>(data.first.get());
+                Assert(var, "bitcast should op on var");
+                auto rsvr = ctx.planner->GetVReg(var->GetVariableIdx());
+
+                auto uop = new UopMv;
+                uop->SetSrc(rsvr);
+                uop->SetDst(vrres);
+
+                rlbb->TempPop();
+                rlbb->PushUop(uop);
+            }
+
+            rlbb->RecoverUops();
+        }
+    }
 }

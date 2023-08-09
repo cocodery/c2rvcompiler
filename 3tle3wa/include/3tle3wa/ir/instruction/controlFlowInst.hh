@@ -28,7 +28,7 @@ class ReturnInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class JumpInst;
@@ -58,7 +58,7 @@ class JumpInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class BranchInst;
@@ -93,5 +93,5 @@ class BranchInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };

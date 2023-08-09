@@ -22,7 +22,7 @@ class SitoFpInst final : public UnaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class FptoSiInst;
@@ -42,7 +42,7 @@ class FptoSiInst final : public UnaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class ZextInst;
@@ -62,5 +62,5 @@ class ZextInst final : public UnaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };

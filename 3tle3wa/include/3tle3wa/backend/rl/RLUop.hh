@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <list>
 #include <unordered_set>
 #include <vector>
 
@@ -10,6 +11,7 @@
 
 class VirtualRegister;
 class AsmBasicBlock;
+class RLBasicBlock;
 class RLPlanner;
 
 class UopGeneral : public Serializable {
@@ -17,45 +19,46 @@ class UopGeneral : public Serializable {
     size_t uop_idx_{};
 
    public:
-    size_t GetUopIdx() const;
-    void SetUopIdx(size_t idx);
+    size_t GetUopIdx() const { return uop_idx_; }
+    void SetUopIdx(size_t idx) { uop_idx_ = idx; }
 
     virtual const std::vector<VirtualRegister *> GetOperands() const = 0;
     virtual VirtualRegister *GetResult() const = 0;
 
-    virtual OPERATION_KIND GetOpKind() const = 0;
-
-    virtual ~UopGeneral() = default;
+    virtual bool IsCall() { return false; }
 
     virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan) = 0;
+
+    virtual void Rewrite(std::list<UopGeneral *>::iterator it, RLBasicBlock *rlbb, RLPlanner *plan) = 0;
+
+    virtual ~UopGeneral() = default;
 };
 
-template <typename T>
-class InternalUop : public UopGeneral {};
+#define VIRTTBL()                                             \
+    const std::vector<VirtualRegister *> GetOperands() const; \
+    VirtualRegister *GetResult() const;                       \
+    virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);  \
+    virtual void Rewrite(std::list<UopGeneral *>::iterator it, RLBasicBlock *rlbb, RLPlanner *plan);
 
-class UopRet : public InternalUop<UopRet> {
+class UopRet : public UopGeneral {
     VirtualRegister *retval_{nullptr};
 
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetRetVal(VirtualRegister *retval);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopCall : public InternalUop<UopCall> {
+class UopCall : public UopGeneral {
     std::vector<VirtualRegister *> params_{};
 
     VirtualRegister *retval_{nullptr};
 
     std::string callee_{};
 
-    std::unordered_set<VirtualRegister *> living_regs_;
+    std::unordered_set<VirtualRegister *> living_regs_{};
 
     bool libcall_{false};
     bool tailcall_{false};
@@ -64,8 +67,9 @@ class UopCall : public InternalUop<UopCall> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
+
+    bool IsCall() { return true; }
 
     void SetRetVal(VirtualRegister *retval);
     void SetCallee(std::string &callee);
@@ -75,14 +79,9 @@ class UopCall : public InternalUop<UopCall> {
 
     void PushParam(VirtualRegister *param);
     void PushLiver(VirtualRegister *liver);
-
-    void BroadCastCall(size_t lbidx);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopLui : public InternalUop<UopLui> {
+class UopLui : public UopGeneral {
     VirtualRegister *dst_{nullptr};
 
     uint32_t imm_up20_{};
@@ -90,68 +89,66 @@ class UopLui : public InternalUop<UopLui> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetImm(uint32_t imm);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopMv : public InternalUop<UopMv> {
+class UopLi : public UopGeneral {
+    VirtualRegister *dst_{nullptr};
+
+    int32_t imm32_{};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    void SetDst(VirtualRegister *dst);
+    void SetImm(int32_t imm);
+};
+
+class UopMv : public UopGeneral {
     VirtualRegister *dst_{nullptr};
     VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopCvtS2W : public InternalUop<UopCvtS2W> {
+class UopCvtS2W : public UopGeneral {
     VirtualRegister *dst_{nullptr};
     VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopCvtW2S : public InternalUop<UopCvtW2S> {
+class UopCvtW2S : public UopGeneral {
     VirtualRegister *dst_{nullptr};
     VirtualRegister *src_{nullptr};
 
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetSrc(VirtualRegister *src);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopBranch : public InternalUop<UopBranch> {
+class UopBranch : public UopGeneral {
     VirtualRegister *cond_{nullptr};
 
     size_t dst_idx_{};
@@ -160,33 +157,25 @@ class UopBranch : public InternalUop<UopBranch> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetCond(VirtualRegister *cond);
     void SetOnTrue(bool cond);
     void SetDstIdx(size_t dst_idx);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopJump : public InternalUop<UopJump> {
+class UopJump : public UopGeneral {
     size_t dst_idx_{};
 
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDstIdx(size_t dst_idx);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopLla : public InternalUop<UopLla> {
+class UopLla : public UopGeneral {
     VirtualRegister *dst_{nullptr};
 
     std::string src_{};
@@ -196,18 +185,14 @@ class UopLla : public InternalUop<UopLla> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
-    void SetSrc(std::string &src);
+    void SetSrc(std::string src);
     void SetOff(size_t off);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopLoad : public InternalUop<UopLoad> {
+class UopLoad : public UopGeneral {
     VirtualRegister *dst_{nullptr};
     VirtualRegister *base_{nullptr};
 
@@ -216,18 +201,14 @@ class UopLoad : public InternalUop<UopLoad> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopStore : public InternalUop<UopStore> {
+class UopStore : public UopGeneral {
     VirtualRegister *src_{nullptr};
     VirtualRegister *base_{nullptr};
 
@@ -236,18 +217,14 @@ class UopStore : public InternalUop<UopStore> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetSrc(VirtualRegister *src);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopFLoad : public InternalUop<UopFLoad> {
+class UopFLoad : public UopGeneral {
     VirtualRegister *dst_{nullptr};
     VirtualRegister *base_{nullptr};
 
@@ -256,18 +233,29 @@ class UopFLoad : public InternalUop<UopFLoad> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetDst(VirtualRegister *dst);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopFStore : public InternalUop<UopFStore> {
+class UopFLoadLB : public UopGeneral {
+    VirtualRegister *dst_{nullptr};
+    VirtualRegister *helper_{nullptr};
+    std::string sym_{};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    void SetDst(VirtualRegister *dst);
+    void SetHelper(VirtualRegister *helper);
+    void SetSym(std::string sym);
+};
+
+class UopFStore : public UopGeneral {
     VirtualRegister *src_{nullptr};
     VirtualRegister *base_{nullptr};
 
@@ -276,18 +264,30 @@ class UopFStore : public InternalUop<UopFStore> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetSrc(VirtualRegister *src);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopICmp : public InternalUop<UopICmp> {
+class UopLNot : public UopGeneral {
+    VirtualRegister *src_{nullptr};
+
+    VirtualRegister *dst_{nullptr};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    COMP_KIND GetKind() const;
+
+    void SetSrc(VirtualRegister *lhs);
+    void SetDst(VirtualRegister *dst);
+};
+
+class UopFCmp : public UopGeneral {
     VirtualRegister *lhs_{nullptr};
     VirtualRegister *rhs_{nullptr};
 
@@ -298,46 +298,17 @@ class UopICmp : public InternalUop<UopICmp> {
     void formatString(FILE *fp) final;
 
    public:
-    COMP_KIND GetKind() const;
+    VIRTTBL();
 
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    COMP_KIND GetKind() const;
 
     void SetLhs(VirtualRegister *lhs);
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(COMP_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopFCmp : public InternalUop<UopFCmp> {
-    VirtualRegister *lhs_{nullptr};
-    VirtualRegister *rhs_{nullptr};
-
-    VirtualRegister *dst_{nullptr};
-
-    COMP_KIND kind_{};
-
-    void formatString(FILE *fp) final;
-
-   public:
-    COMP_KIND GetKind() const;
-
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
-
-    void SetLhs(VirtualRegister *lhs);
-    void SetRhs(VirtualRegister *rhs);
-    void SetDst(VirtualRegister *dst);
-    void SetKind(COMP_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
-};
-
-class UopIBin : public InternalUop<UopIBin> {
+class UopIBin : public UopGeneral {
     VirtualRegister *lhs_{nullptr};
     VirtualRegister *rhs_{nullptr};
 
@@ -348,21 +319,38 @@ class UopIBin : public InternalUop<UopIBin> {
     void formatString(FILE *fp) final;
 
    public:
-    IBIN_KIND GetKind() const;
+    VIRTTBL();
 
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    IBIN_KIND GetKind() const;
 
     void SetLhs(VirtualRegister *lhs);
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(IBIN_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopIBinImm : public InternalUop<UopIBinImm> {
+class UopIBin64 : public UopGeneral {
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
+
+    VirtualRegister *dst_{nullptr};
+
+    IBIN_KIND kind_{};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    IBIN_KIND GetKind() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(IBIN_KIND kind);
+};
+
+class UopIBinImm : public UopGeneral {
     VirtualRegister *lhs_{nullptr};
     int32_t imm_lo12_{};
 
@@ -373,21 +361,38 @@ class UopIBinImm : public InternalUop<UopIBinImm> {
     void formatString(FILE *fp) final;
 
    public:
-    IBIN_KIND GetKind() const;
+    VIRTTBL();
 
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    IBIN_KIND GetKind() const;
 
     void SetLhs(VirtualRegister *lhs);
     void SetImm(int32_t imm);
     void SetDst(VirtualRegister *dst);
     void SetKind(IBIN_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopFBin : public InternalUop<UopFBin> {
+class UopIBinImm64 : public UopGeneral {
+    VirtualRegister *lhs_{nullptr};
+    int32_t imm_lo12_{};
+
+    VirtualRegister *dst_{nullptr};
+
+    IBIN_KIND kind_{};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    IBIN_KIND GetKind() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetImm(int32_t imm);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(IBIN_KIND kind);
+};
+
+class UopFBin : public UopGeneral {
     VirtualRegister *lhs_{nullptr};
     VirtualRegister *rhs_{nullptr};
 
@@ -398,21 +403,40 @@ class UopFBin : public InternalUop<UopFBin> {
     void formatString(FILE *fp) final;
 
    public:
-    FBIN_KIND GetKind() const;
+    VIRTTBL();
 
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    FBIN_KIND GetKind() const;
 
     void SetLhs(VirtualRegister *lhs);
     void SetRhs(VirtualRegister *rhs);
     void SetDst(VirtualRegister *dst);
     void SetKind(FBIN_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-class UopICmpBranch : public InternalUop<UopICmpBranch> {
+class UopFTri : public UopGeneral {
+    VirtualRegister *lhs_{nullptr};
+    VirtualRegister *rhs_{nullptr};
+    VirtualRegister *ahs_{nullptr};
+
+    VirtualRegister *dst_{nullptr};
+
+    FTRI_KIND kind_{};
+
+    void formatString(FILE *fp) final;
+
+   public:
+    VIRTTBL();
+
+    FTRI_KIND GetKind() const;
+
+    void SetLhs(VirtualRegister *lhs);
+    void SetRhs(VirtualRegister *rhs);
+    void SetAhs(VirtualRegister *ahs);
+    void SetDst(VirtualRegister *dst);
+    void SetKind(FTRI_KIND kind);
+};
+
+class UopICmpBranch : public UopGeneral {
     VirtualRegister *lhs_{nullptr};
     VirtualRegister *rhs_{nullptr};
 
@@ -423,40 +447,19 @@ class UopICmpBranch : public InternalUop<UopICmpBranch> {
     void formatString(FILE *fp) final;
 
    public:
-    const std::vector<VirtualRegister *> GetOperands() const;
-    VirtualRegister *GetResult() const;
+    VIRTTBL();
 
     void SetLhs(VirtualRegister *lhs);
     void SetRhs(VirtualRegister *rhs);
     void SetDstIdx(size_t dst_idx);
     void SetKind(COMP_KIND kind);
-
-    OPERATION_KIND GetOpKind() const;
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
 };
 
-// for phi operation
+class UopNop : public UopGeneral {
+    size_t dst_idx_{};
 
-// struct PhiOperand {
-//     PHI_KIND kind;
-//     size_t data;
-//     size_t lbidx;
-// };
+    void formatString(FILE *fp) final;
 
-// class UopPhi : public InternalUop<UopPhi> {
-//     std::vector<PhiOperand> operands_;
-
-//     VirtualRegister *dst_{nullptr};
-
-//     void formatString(FILE *fp) final;
-
-//    public:
-//     const std::vector<VirtualRegister *> GetOperands() const;
-//     VirtualRegister *GetResult() const;
-
-//     void PushOperand(PhiOperand &operand);
-//     void SetDst(size_t dst_idx);
-
-//     OPERATION_KIND GetOpKind() const { return OPERATION_KIND::INTOPT; };
-//     void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
-// };
+   public:
+    VIRTTBL();
+};

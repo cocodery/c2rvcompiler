@@ -8,7 +8,7 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
-class AsmLocalConstant : public Serializable {
+class AsmLocalConstant final : public Serializable {
     size_t idx_;
 
     uint32_t values_;
@@ -21,6 +21,4 @@ class AsmLocalConstant : public Serializable {
 
    public:
     AsmLocalConstant(size_t idx, uint32_t values);
-
-    virtual ~AsmLocalConstant();
 };

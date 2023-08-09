@@ -8,13 +8,19 @@
 #include <memory>
 #include <string>
 
-#include "3tle3wa/backend/asm/AsmBasicBlock.hh"
+#include "3tle3wa/backend/rl/RLGen.hh"
+#include "3tle3wa/backend/rl/RLProgress.hh"
+#include "3tle3wa/backend/rl/RLPlanner.hh"
+#include "3tle3wa/backend/rl/RLStackInfo.hh"
+#include "3tle3wa/backend/rl/RLVirtualRegister.hh"
+#include "3tle3wa/backend/rl/RLBasicBlock.hh"
+#include "3tle3wa/backend/rl/RLUop.hh"
+#include "3tle3wa/backend/rl/InternalTranslation.hh"
 #include "3tle3wa/backend/asm/AsmGen.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
-#include "3tle3wa/backend/asm/AsmInstruction.hh"
-#include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/asm/AsmProgress.hh"
-#include "3tle3wa/backend/rl/RLGen.hh"
+#include "3tle3wa/backend/asm/AsmBasicBlock.hh"
+#include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/frontend/AstVisitor.hh"
 #include "3tle3wa/pass/Pass.hh"
 #include "3tle3wa/utils/logs.hh"
@@ -112,7 +118,6 @@ int main(int argc, char *argv[]) {
         comp_unit.generatellvmIR(irfile);
     }
 
-    std::unique_ptr<AsmGen> asmgen = nullptr;
 
     if (output != nullptr or dbgfile != nullptr) {
         RLGen rlgen;
@@ -129,14 +134,12 @@ int main(int argc, char *argv[]) {
             fs << rlgen.CString();
         }
 
-        asmgen = std::move(rlgen.ExportAsmGen());
-    }
+        if (output != nullptr) {
+            Log("output asm file");
 
-    if (output != nullptr and asmgen != nullptr) {
-        Log("output asm file");
-
-        std::fstream fs(output, std::ios::out);
-        fs << asmgen->CString();
+            std::fstream fs(output, std::ios::out);
+            fs << rlgen.AG()->CString();
+        }
     }
 
     Log("out main");

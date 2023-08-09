@@ -24,7 +24,7 @@ class IBinaryInst final : public BinaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class FBinaryInst;
@@ -46,5 +46,5 @@ class FBinaryInst final : public BinaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };

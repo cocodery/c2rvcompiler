@@ -3,39 +3,42 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
-#include "3tle3wa/backend/IntervalTree.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
+#include "3tle3wa/backend/rl/LiveInterval.hh"
 
 class StackInfo;
 class AsmBasicBlock;
 class RLPlanner;
 
-class VirtualRegister final : public Serializable, public Weightable {
+class VirtualRegister final : public Serializable {
     VREG_TYPE type_;
 
-    uint64_t vridx_;
+    size_t virt_reg_idx_;
 
-    StackInfo *sinfo_;
-    StackInfo *ainfo_;
+    size_t real_reg_idx_;
+    size_t param_reg_idx_;
 
-    bool onstack_;
+    StackInfo *stk_info_;
+    StackInfo *addr_info_;
 
-    size_t real_regidx_;
-    size_t param_regidx_;
-
-    bool assigned_;
-    bool param_;
-    bool retval_;
-    bool this_ret_;
-
-    IntervalManager imgr_;
-
-    bool saving_;
-    int64_t save_off_;
-
+    bool on_stk_;
+    bool reg_allocated_;
+    bool is_param_;
+    bool is_retval_;
     bool can_spill_;
+
+    bool is_saving_;
+    size_t save_off_;
+
+    LiveInterval ival_mgr_;
+    size_t def_idx_;
+    std::vector<size_t> use_idx_;
+
+    size_t use_times_;
+    double weight_;
 
     void formatString(FILE *fp) final;
 
@@ -43,82 +46,41 @@ class VirtualRegister final : public Serializable, public Weightable {
     VirtualRegister(VREG_TYPE type, uint64_t vridx);
 
     void SetOnStack(bool on);
-
     void SetCanSpill(bool on);
+    void SetIsRetval(bool on);
 
-    void SetParam(size_t pos);
+    void SetRealRegIdx(size_t idx);
+    void SetParamRegIdx(size_t idx);
+    void SetSavingOff(size_t off);
+    void SetStackInfo(StackInfo *info);
+    void SetAddressInfo(StackInfo *info);
 
-    void SetRetval(bool on);
-
-    void SetThisRet(bool on);
-
-    void SetRRidx(size_t rridx);
-
-    void SetSaving(int64_t off);
-
-    int64_t SavingInfo();
+    size_t GetSaveInfo();
+    size_t GetVRIdx();
+    size_t GetRealRegIdx();
+    StackInfo *GetStackInfo();
+    StackInfo *GetAddressInfo();
+    const std::set<Segment> &GetLiveSegs();
 
     bool IsSaving();
-
-    bool IsAssigned();
-
+    bool IsAllocated();
     bool IsParam();
-
     bool IsRetval();
-
-    bool IsThisRet();
+    bool IsOnStk();
 
     bool CanSpill();
+    bool UseIGPR();
+    bool UseFGPR();
 
-    bool OnStk();
+    VREG_TYPE GetVRType();
+    void ResetRAInfo();
 
-    bool PtrOnStk();
+    void Def(size_t idx, size_t loopt);
+    void Use(size_t idx);
+    void GenSegment(size_t loopt);
+    
+    bool LiveAt(size_t idx);
 
-    bool FGPR() const;
-
-    void SetStackInfo(StackInfo *sinfo);
-
-    StackInfo *GetStackInfo();
-
-    StackInfo *GetAllocaInfo();
-
-    VREG_TYPE GetType();
-
-    void NewInterval(size_t idx, size_t begin, size_t end, size_t len);
-
-    void UpdateIntervalBegin(size_t idx, size_t begin, size_t len);
-
-    IntervalManager &Imgr();
-
-    void UpdateIntervalEnd(size_t idx, size_t begin, size_t end, size_t len);
-
-    void CalcuWeight();
-
-    double CalcuBlkWeight(size_t lbidx);
-
-    double NowWeight();
-
-    void CallAt(size_t lbidx, size_t pos);
-
-    void UseAt(size_t lbidx);
-
-    uint64_t GetVRIdx() const;
-
-    size_t GetPPos();
-
-    size_t GetRRid();
-
-    size_t GetSize();
-
-    size_t GetRRidWithSaving(AsmBasicBlock *abb);
-
-    void LoadTo(size_t to, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan);
-
-    void StoreFrom(size_t from, size_t to_tmp, AsmBasicBlock *abb, RLPlanner *plan);
-
-    virtual bool operator>(const VirtualRegister &other) final;
-
-    virtual bool operator==(const VirtualRegister &other) final;
-
-    virtual bool operator<(const VirtualRegister &other) final;
+    void CaculateWeight();
+    double Weight();
 };

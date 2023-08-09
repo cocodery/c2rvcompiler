@@ -1,9 +1,5 @@
 #include "3tle3wa/backend/Interface.hh"
 
-//
-// serializable
-//
-
 void Serializable::MakeString() {
     if (buf_) {
         free(buf_);

@@ -19,7 +19,7 @@ class NormalFunction;
 using NormalFuncPtr = std::shared_ptr<NormalFunction>;
 using NormalFuncList = std::list<NormalFuncPtr>;
 
-class RLGen : public Serializable {
+class RLGen final : public Serializable {
     // look up table
     std::unordered_map<uint32_t, size_t> lc_map_;
     std::unordered_map<size_t, AsmGlobalValue *> gv_map_;
@@ -29,9 +29,7 @@ class RLGen : public Serializable {
     std::unique_ptr<AsmGen> asm_gen_;
 
     void registerGlobalValue(GlobalValue *gvp, const std::string &name);
-
     void registerLocalConstant(Constant *cvp, const size_t idx);
-
     void registerNormalFunction(NormalFuncList &nflst);
 
     void formatString(FILE *fp) final;
@@ -39,13 +37,9 @@ class RLGen : public Serializable {
    public:
     RLGen();
 
-    ~RLGen();
-
-    std::unique_ptr<AsmGen> &ExportAsmGen();
+    std::unique_ptr<AsmGen> &AG();
 
     void Register(CompilationUnit &comp_unit);
 
     void SerialGenerate();
-
-    void ParallelGenerate();
 };

@@ -1,24 +1,26 @@
 #include "3tle3wa/backend/rl/RLPlanner.hh"
 
+#include "3tle3wa/backend/asm/AsmAbi.hh"
+#include "3tle3wa/backend/rl/RLBasicBlock.hh"
 #include "3tle3wa/backend/rl/RLProgress.hh"
 #include "3tle3wa/backend/rl/RLStackInfo.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
+#include "3tle3wa/ir/IR.hh"
 
-RLPlanner::RLPlanner(size_t regidx)
-    : sinfo_map_(),
+RLPlanner::RLPlanner(size_t alloc_from)
+    : stk_map_(),
       vr_map_(),
-      vr_storage_(),
       stk_storage_(),
+      vr_storage_(),
+      params_(),
       stkidx_(0),
-      regidx_(regidx),
-      param_stack_(0),
+      regidx_(alloc_from),
       total_stack_size_(0),
       belong_to_(nullptr),
-      real_reg_inval_(),
-      real_stk_inval_(),
-      real_stkinfo_(),
-      place_to_save_(),
-      savings_() {}
+      used_real_regs_(),
+      save_stack_() {}
+
+void RLPlanner::RegisterOwner(RLProgress *rlp) { belong_to_ = rlp; }
 
 StackInfo *RLPlanner::Alloca(size_t len) {
     stkidx_ += 1;
@@ -26,7 +28,7 @@ StackInfo *RLPlanner::Alloca(size_t len) {
     auto stkinfo = std::make_unique<StackInfo>(stkidx_, len);
     auto bptr = stkinfo.get();
 
-    CRVC_UNUSE auto result = sinfo_map_.emplace(stkidx_, bptr);
+    CRVC_UNUSE auto result = stk_map_.emplace(stkidx_, bptr);
     Assert(result.second, "stkinfo add failed");
 
     stk_storage_.push_back(std::move(stkinfo));
@@ -34,28 +36,11 @@ StackInfo *RLPlanner::Alloca(size_t len) {
 }
 
 VirtualRegister *RLPlanner::Alloca(uint64_t vridx, size_t len) {
-    auto ptr = AllocVReg(VREG_TYPE::PTR, vridx);
+    auto vr = AllocVReg(VREG_TYPE::PTR, vridx);
     auto stk = Alloca(len);
 
-    stk->SetFromAlloca(true);
-    ptr->SetStackInfo(stk);
-
-    return ptr;
-}
-
-VirtualRegister *RLPlanner::AllocParam(VREG_TYPE type, uint64_t vridx, size_t len, bool onstk, size_t pos) {
-    auto ptr = AllocVReg(type, vridx);
-    if (onstk) {
-        auto stk = Alloca(len);
-        stk->SetParam(pos * 8);
-        ptr->SetOnStack(true);
-        ptr->SetStackInfo(stk);
-        ptr->SetParam(pos);
-    } else {
-        ptr->SetOnStack(false);
-        ptr->SetParam(pos);
-    }
-    return ptr;
+    vr->SetAddressInfo(stk);
+    return vr;
 }
 
 VirtualRegister *RLPlanner::AllocVReg(VREG_TYPE type, uint64_t vridx) {
@@ -98,8 +83,4 @@ void RLPlanner::Link(uint64_t income, uint64_t old) {
     vr_map_[income] = vr_map_.at(old);
 }
 
-void RLPlanner::SetPstkSiz(size_t sps) { param_stack_ = std::max(param_stack_, sps); }
-
-void RLPlanner::RegisterOwner(RLProgress *rlp) { belong_to_ = rlp; }
-
-size_t RLPlanner::TotalStackSize() { return total_stack_size_; }
+std::vector<VirtualRegister *> &RLPlanner::Params() { return params_; }

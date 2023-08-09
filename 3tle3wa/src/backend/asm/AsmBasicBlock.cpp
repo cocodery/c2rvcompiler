@@ -8,20 +8,21 @@
 AsmBasicBlock::AsmBasicBlock(size_t lbidx, AsmProgress *father) : lbidx_(lbidx), father_(father), is_ret_(false) {}
 
 void AsmBasicBlock::Push(AsmInstruction *inst) { insts_.push_back(std::unique_ptr<AsmInstruction>(inst)); }
+
 void AsmBasicBlock::Pop() { insts_.pop_back(); }
 
 void AsmBasicBlock::formatString(FILE *fp) {
     fprintf(fp, ".L.%s.b%" PRIu64 ":\n", father_->Label(), lbidx_);
-    for (auto &&inst : view_insts_) {
+    for (auto &&inst : insts_view_) {
         fprintf(fp, "%s", inst->CString());
     }
 }
 
 void AsmBasicBlock::SetIsRet(bool on) { is_ret_ = on; }
 
-size_t AsmBasicBlock::Lbidx() { return lbidx_; }
-
 bool AsmBasicBlock::IsRet() { return is_ret_; }
+
+size_t AsmBasicBlock::Lbidx() { return lbidx_; }
 
 size_t AsmBasicBlock::GetBlockIdx() { return lbidx_; }
 
