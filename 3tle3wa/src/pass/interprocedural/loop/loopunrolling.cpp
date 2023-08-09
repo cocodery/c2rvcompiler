@@ -5,10 +5,10 @@ void LoopUnrolling::LoopUnrolling(NormalFuncPtr func) {
 }
 
 void LoopUnrolling::ExpandLoop(Loop *loop) {
-    for (auto &&sub_loop : loop->sub_loops) {
-        ExpandLoop(sub_loop);
+    for (auto &&sub_loop : loop->sub_structures) {
+        ExpandLoop(static_cast<Loop *>(sub_loop));
     }
-    if (loop->before_loop) {
+    if (loop->before_blk) {
         int looptime = LoopTime(loop);
         std::cout << "loop time is " << looptime << std::endl;
     }
@@ -16,9 +16,9 @@ void LoopUnrolling::ExpandLoop(Loop *loop) {
 
 int LoopUnrolling::LoopTime(Loop *loop) {
     int32_t time = 0;
-    auto loop_blks = loop->GetEntireLoop();
+    auto loop_blks = loop->GetEntireStructure();
     auto cond_begin = loop->cond_begin;
-    auto loop_end = loop->body_end;
+    auto loop_end = loop->loop_exit;
     if (cond_begin->GetPredecessors().size() > 2) {
         return 0;
     }
@@ -33,12 +33,13 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto &&end_value = last_inst_oprands.front();
         auto &&cmp_inst = end_value->GetParent();
         if (cmp_inst == nullptr) {
-            // cmp_inst is nullptr
+            std::cout << "br: " << last_inst->tollvmIR() << std::endl;
+            std::cout << "cmp_inst is nullptr" << std::endl;
             return 0;
         }
         auto opcode = cmp_inst->GetOpCode();
         if (opcode < OP_LTH) {
-            // not compare inst
+            std::cout << "Opcode is less than LTH" << std::endl;
             return 0;
         }
 
@@ -47,7 +48,10 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         int32_t change_val = 0;
         int const_check = ConstCheck(cmp_inst);
         if (const_check == 0) {
-            // both cmp operands are not constant
+            std::cout << "\n\n";
+            std::cout << "both cmp operands are not constant" << std::endl;
+            std::cout << cmp_inst->tollvmIR() << std::endl;
+            std::cout << "\n\n";
             return 0;
         }
 
@@ -58,13 +62,14 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto key = operands_of_cmp_vector.at(2 - const_check);
         auto &&cmp_value = operands_of_cmp_vector.at(const_check - 1);
         if (cmp_value->IsConstant() == false || cmp_value->GetBaseType()->IntType() == false) {
-            // cmp_value is not int
+            std::cout << cmp_inst->tollvmIR() << std::endl;
+            std::cout << "cmp_value is not int" << std::endl;
             return 0;
         }
         auto &&constant_value = std::static_pointer_cast<Constant>(cmp_value);
         auto const_val = constant_value->GetValue();
         if (!std::holds_alternative<int32_t>(const_val) && !std::holds_alternative<int64_t>(const_val)) {
-            // compare limit type is not int32_t or int64_t
+            std::cout << "when get compare limit, type is not int32_t or int64_t" << std::endl;
             return 0;
         }
         limit = std::get<int32_t>(const_val);
@@ -82,11 +87,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             return 0;
         }
         if (key_parent->IsPhiInst() == false) {
-            // compare key is not from phi inst
+            std::cout << "compare key is not from phi inst" << std::endl;
             return 0;
         }
 
         auto &&phi_inst = std::static_pointer_cast<PhiInst>(key_parent);
+        // std::cout << phi_inst->tollvmIR() << std::endl;
 
         // start to get init value of key
         auto &&data_list = phi_inst->GetDataList();
@@ -108,7 +114,8 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                // init of key is not int
+                std::cout << "init of key is not int" << std::endl;
+                std::cout << source_value2->tollvmIR() << std::endl;
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
@@ -121,12 +128,13 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                // init of key is not int
+                std::cout << "init of key is not int" << std::endl;
+                std::cout << source_value1->tollvmIR() << std::endl;
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
         } else {
-            // both phi oprands are not from the loop
+            std::cout << "both phi oprands are not from the loop" << std::endl;
             return 0;
         }
         // end of finding init value of key
@@ -145,7 +153,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
-                    // change value of key is not int
+                    std::cout << "change value of key is not int" << std::endl;
                     return 0;
                 }
                 change_val += std::get<int32_t>(constant_in_phi);
@@ -160,7 +168,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
-                    // change value of key is not int
+                    std::cout << "change value is not int" << std::endl;
                     return 0;
                 }
                 change_val -= std::get<int32_t>(constant_in_phi);
@@ -228,6 +236,16 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                     return time;
                 }
                 break;
+            // case OP_NEQ:
+            //     if (gap == 0) {
+            //         return -1;
+            //     } else {
+            //         if (gap % change_val != 0) {
+            //             return 0;
+            //         }
+            //         return gap / change_val;
+            //     }
+            //     break;
             default:
                 return 0;
                 break;
