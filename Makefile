@@ -9,7 +9,7 @@ CMAKE 			:= cmake
 NINJA			:= ninja
 GDB 			:= gdb
 DIFF 			:= diff
-ECHO			:= echo
+ECHO			:= echo -e
 TMP				:= /tmp
 
 CMAKE_GEN		:= $(NINJA)
@@ -50,7 +50,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional # performance final_performance # 
+MODE 			?= functional hidden_functional performance final_performance # 
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -114,9 +114,9 @@ endif
 run: build $(SYLIB_LL)
 	$(LOAD)
 	$(BINARY) -S -o $(SINGLE_TEST).s -l $(SINGLE_TEST).ll $(SINGLE_TEST).sy
-	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
-	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
-	$(ECHO) $$?
+#	$(LLLD) $(SYLIB_LL) $(SINGLE_TEST).ll -S -o $(SINGLE_TEST).run.ll
+#	$(LLI) $(SINGLE_TEST).run.ll $(REDINP)
+#	$(ECHO) $$?
 
 .PHONY: ll
 ll: $(SYLIB_LL)

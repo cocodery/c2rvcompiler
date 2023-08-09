@@ -10,6 +10,7 @@
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/uninitvar.hh"
 #include "3tle3wa/ir/value/variable.hh"
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
 SCCP::Lattice::Lattice() : state(Undefine), value(nullptr) {}
 SCCP::Lattice::Lattice(State _state, BaseValuePtr _value) : state(_state), value(_value) {}
@@ -185,7 +186,7 @@ void SCCP::SCCP(NormalFuncPtr func) {
         }
     }
 
-    auto &&node_list = func->TopoSortFromEntry();
+    auto &&node_list = func->GetSequentialNodes();
 
     for (auto &&iter = node_list.begin(); iter != node_list.end();) {
         auto node = (*iter);
@@ -223,6 +224,8 @@ void SCCP::SCCP(NormalFuncPtr func) {
         }
     }
 
+    DCE::EliminateUnreachableCode(func);
+
     for (auto &&node : node_list) {
         assert(ExcutedMap[node]);
         auto &&inst_list = node->GetInstList();
@@ -241,8 +244,10 @@ void SCCP::SCCP(NormalFuncPtr func) {
 
                     auto &&datalist_ref = phi_inst->GetRefList();
                     for (auto &&it = datalist_ref.begin(); it != datalist_ref.end();) {
+                        auto &&predecessors = node->GetPredecessors();
+
                         auto [value, block] = (*it);
-                        if (ExcutedMap[block] == true) {
+                        if (ExcutedMap[block] == true && predecessors.find(block) != predecessors.end()) {
                             ++it;
                         } else {
                             it = datalist_ref.erase(it);

@@ -9,12 +9,11 @@
 #include <unordered_map>
 
 #include "3tle3wa/ir/function/cfgNode.hh"
-#include "3tle3wa/ir/function/loop.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/use.hh"
 
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
-    PrintLoop(*(func->loops));
     assert(visit.size() == 0 && is_variant.size() == 0);
 
     InvariantMotion(func->loops);
@@ -24,13 +23,13 @@ void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
 }
 
 void LoopInvariant::InvariantMotion(Loop *loop) {
-    for (auto &&sub_loop : loop->sub_loops) {
-        InvariantMotion(sub_loop);
+    for (auto &&sub_loop : loop->sub_structures) {
+        InvariantMotion(static_cast<Loop *>(sub_loop));
     }
-    if (loop->before_loop) {
+    if (loop->before_blk) {
         Invariants invariants = FindInvariant(loop);
 
-        auto &&target_node = loop->before_loop;
+        auto &&target_node = loop->before_blk;
         for (auto &&inst : invariants) {
             auto &&source_node = inst->GetParent();
 
@@ -49,7 +48,7 @@ void LoopInvariant::InvariantMotion(Loop *loop) {
 LoopInvariant::Invariants LoopInvariant::FindInvariant(Loop *loop) {
     Invariants invariants;
 
-    LoopBlocks &&entire_loop = loop->GetEntireLoop();
+    CfgNodeList &&entire_loop = loop->GetEntireStructure();
 
     std::queue<InstPtr> variant;
 
