@@ -1,12 +1,15 @@
 #include "3tle3wa/ir/function/cfgNode.hh"
 
-CtrlFlowGraphNode::CtrlFlowGraphNode(BlockAttr _attr, BaseFunction *_parent) : BasicBlock(_attr, _parent) {}
+#include "3tle3wa/ir/function/basicblock.hh"
+
+CtrlFlowGraphNode::CtrlFlowGraphNode(BaseFunction *_parent, BlkAttr::BlkType blk_type)
+    : BasicBlock(_parent, blk_type) {}
 
 bool CtrlFlowGraphNode::GetDirty() { return dirty; }
 void CtrlFlowGraphNode::SetDirty(bool _dirty) { dirty = _dirty; }
 
-CfgNodePtr CtrlFlowGraphNode::CreatePtr(BlockAttr _attr, BaseFunction *_parent) {
-    return std::make_shared<CtrlFlowGraphNode>(_attr, _parent);
+CfgNodePtr CtrlFlowGraphNode::CreatePtr(BaseFunction *_parent, BlkAttr::BlkType blk_type) {
+    return std::make_shared<CtrlFlowGraphNode>(_parent, blk_type);
 }
 
 void CtrlFlowGraphNode::AddPredecessor(CfgNodePtr predecessor) { predecessors.insert(predecessor); }
@@ -36,7 +39,7 @@ DominatorSet &CtrlFlowGraphNode::GetDomFrontier() { return dominance_frontier; }
 std::string CtrlFlowGraphNode::tollvmIR() {
     std::stringstream ss;
 
-    ss << "Block_" << idx << ": ;" << AttrToStr(block_attr) << endl;
+    ss << "Block_" << idx << ": ; " << blk_attr.to_str() << endl;
     ss << "\t; Predecessors: ";
     for (auto &&pred : predecessors) {
         ss << pred->idx << ' ';
@@ -49,29 +52,29 @@ std::string CtrlFlowGraphNode::tollvmIR() {
     }
     ss << '\n';
 
-    ss << "\t; DominatorSet: ";
-    for (auto &&node : dominator_set) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominatorSet: ";
+    // for (auto &&node : dominator_set) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
-    ss << "\t; ImmediateDominator: ";
-    if (immediate_dominator != nullptr) {
-        ss << immediate_dominator->idx;
-    }
-    ss << '\n';
+    // ss << "\t; ImmediateDominator: ";
+    // if (immediate_dominator != nullptr) {
+    //     ss << immediate_dominator->idx;
+    // }
+    // ss << '\n';
 
-    ss << "\t; DominateChildren: ";
-    for (auto &&node : dominate_children) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominateChildren: ";
+    // for (auto &&node : dominate_children) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
-    ss << "\t; DominanceFrontier: ";
-    for (auto &&node : dominance_frontier) {
-        ss << node->idx << ' ';
-    }
-    ss << '\n';
+    // ss << "\t; DominanceFrontier: ";
+    // for (auto &&node : dominance_frontier) {
+    //     ss << node->idx << ' ';
+    // }
+    // ss << '\n';
 
     for (auto &&inst : inst_list) {
         ss << '\t' << inst->tollvmIR() << endl;

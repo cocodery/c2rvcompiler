@@ -5,6 +5,7 @@
 
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
+#include "3tle3wa/ir/instruction/otherInst.hh"
 
 bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
     if (opcode != e.opcode) {
@@ -156,7 +157,7 @@ bool GVN::IsPhiOprandSame(InstPtr inst) {
 void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
     if (auto oprand = inst->FindInComingUse(node)) {
         if (auto vn = GetVN(oprand)) {
-            ReplaceSRC(oprand, vn);
+            inst->ReplaceSRC(oprand, vn);
         }
     }
 }
@@ -237,7 +238,9 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 VN[result] = result;
             }
             if (inst->IsCallInst()) {
-                Scope.load_map.clear();
+                if (auto &&callee = static_cast<CallInst *>(inst.get())->GetCalleeFunc(); callee->GetSideEffect()) {
+                    Scope.load_map.clear();
+                }
             }
         }
         ++iter;

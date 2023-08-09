@@ -69,7 +69,7 @@ void Dominance::ComputeDominanceFrontier(CfgNodeList allNodes) {
 
 void Dominance::DominanceAnalysis(NormalFuncPtr func) {
     auto entry = func->GetEntryNode();
-    auto allNodes = func->TopoSortFromEntry();
+    auto allNodes = func->GetSequentialNodes();
 
     auto Initialization = [&entry, &allNodes]() {
         DominatorSet allNodeSet = DominatorSet(allNodes.begin(), allNodes.end());

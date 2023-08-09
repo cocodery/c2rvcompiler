@@ -1,25 +1,9 @@
 #include "3tle3wa/ir/function/basicblock.hh"
 
-std::string AttrToStr(BlockAttr attr) {
-    std::stringstream ss;
-
-    if (attr & NORMAL) ss << " normal";
-    if (attr & ENTRY) ss << " entry";
-    if (attr & LOOPBEGIN) ss << " loop-begin";
-    if (attr & LOOPEND) ss << " loop-end";
-    if (attr & LOOPEND) ss << " loop-out";
-    if (attr & BREAK) ss << " break";
-    if (attr & CONTINUE) ss << " continue";
-    if (attr & GORETURN) ss << " go-return";
-    if (attr & EXIT) ss << " exit";
-
-    return ss.str();
-}
-
 size_t BasicBlock::blk_idx = 1;
 
-BasicBlock::BasicBlock(BlockAttr _attr, BaseFunction *_parent)
-    : idx(blk_idx++), inst_list(InstList()), block_attr(_attr), parent(_parent) {}
+BasicBlock::BasicBlock(BaseFunction *_parent, BlkAttr::BlkType blk_type)
+    : idx(blk_idx++), inst_list(InstList()), parent(_parent), blk_attr(blk_type) {}
 
 size_t BasicBlock::GetBlockIdx() { return idx; }
 
@@ -42,11 +26,6 @@ void BasicBlock::RemoveLastInst() {
 void BasicBlock::InsertInstBack(InstPtr inst) { inst_list.push_back(inst); }
 void BasicBlock::InsertInstFront(InstPtr inst) { inst_list.push_front(inst); }
 void BasicBlock::RemoveInst(InstPtr inst) { inst_list.remove(inst); }
-
-bool BasicBlock::FindBlkAttr(BlockAttr _attr) { return ((block_attr & _attr) != 0); };
-void BasicBlock::AppendBlkAttr(BlockAttr _attr) { block_attr |= _attr; }
-void BasicBlock::ClearSpecAttr(BlockAttr _attr) { block_attr &= ~_attr; }
-BlockAttr BasicBlock::GetBlockAttr() const { return block_attr; }
 
 BaseFunction *BasicBlock::GetParent() { return parent; }
 

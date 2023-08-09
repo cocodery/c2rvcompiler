@@ -1,6 +1,12 @@
 #include "3tle3wa/pass/intraprocedural/inline/inline.hh"
 
-BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
+#include "3tle3wa/ir/function/basicblock.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/utils/logs.hh"
+
+BaseValuePtr Inline::InstCopy(InstPtr &inst_, CfgNodePtr &parent) {
     assert(!(inst_->IsReturnInst() || inst_->IsPhiInst()));
     BaseValuePtr result = nullptr;
     OpCode opcode = inst_->GetOpCode();
@@ -38,11 +44,6 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
         } else {
             assert(false);
         }
-        // } else if (inst_->IsAllocaInst()) {
-        //     auto alloca_inst_ = std::static_pointer_cast<AllocaInst>(inst_);
-        //     result = AllocaInst::DoAllocaAddr(alloca_inst_->GetAllocaType(),
-        //     alloca_inst_->GetAllocaAddr()->GetBaseType(),
-        //                                       parent);
     } else if (inst_->IsGepInst()) {
         auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
         OffsetList off_list;
@@ -63,11 +64,11 @@ BaseValuePtr Inline::InstCopy(InstPtr inst_, CfgNodePtr parent) {
     return result;
 }
 
-std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalFuncPtr callee, ParamList &param_list,
-                                                   NameValueMap &glb_table, CfgNodePtr cur_block, bool in_loop,
-                                                   CfgNodePtr out_loop_block) {
+std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, NormalFuncPtr callee, ParamList &param_list,
+                                                   NameValueMap &glb_table, CfgNodePtr &cur_block, bool in_loop,
+                                                   CfgNodePtr &out_loop_block) {
     assert(value_map.empty() && block_map.empty());
-
+    Log("Do Inline");
     BaseValuePtr ret_value = nullptr;
     CfgNodePtr ret_block = nullptr;
 
@@ -83,8 +84,15 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
     std::list<std::pair<JumpInstPtr, JumpInstPtr>> jump_list;
     std::list<std::pair<BranchInstPtr, BranchInstPtr>> branch_list;
 
-    for (auto node : callee->TopoSortFromEntry()) {
+    CfgNodeList inline_blks;
+    for (auto node : callee->GetSequentialNodes()) {
         block_map[node] = cur_block;
+        cur_block->blk_attr = node->blk_attr;
+        cur_block->blk_attr.ClrBlkTypes(BlkAttr::Entry, BlkAttr::GoReturn, BlkAttr::Exit);
+        // replace orgin-goreturn to inline-goreturn
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) cur_block->blk_attr.AppBlkTypes(BlkAttr::InlineGR);
+
+        inline_blks.push_back(cur_block);
 
         for (auto inst_ : node->GetInstList()) {
             if (inst_->IsReturnInst()) {  // inst->ret-inst, set ret_value and block
@@ -122,7 +130,7 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
                 value_map[inst_->GetResult()] = InstCopy(inst_, cur_block);
             }
         }
-        cur_block = caller->CreateCfgNode(node->GetBlockAttr() & ~(ENTRY | EXIT | GORETURN));
+        cur_block = caller->CreateCfgNode();
     }
     // fill jump-target
     for (auto &&[jump1, jump2] : jump_list) {
@@ -132,6 +140,7 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr caller, NormalF
         branch1->SetTrueTarget(block_map[branch2->GetTrueTarget()]);
         branch1->SetFalseTarget(block_map[branch2->GetFalseTarget()]);
     }
+
     // after inline, clear
     value_map.clear();
     block_map.clear();

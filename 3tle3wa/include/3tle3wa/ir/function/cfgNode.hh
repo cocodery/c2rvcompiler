@@ -31,7 +31,7 @@ class CtrlFlowGraphNode final : public BasicBlock {
     DominatorSet dominance_frontier;
 
    public:
-    CtrlFlowGraphNode(BlockAttr, BaseFunction *);
+    CtrlFlowGraphNode(BaseFunction *, BlkAttr::BlkType blk_type = BlkAttr::Normal);
     ~CtrlFlowGraphNode() = default;
 
     bool GetDirty();
@@ -57,7 +57,7 @@ class CtrlFlowGraphNode final : public BasicBlock {
     void InsertDomFrontier(CfgNodePtr);
     DominatorSet &GetDomFrontier();
 
-    static CfgNodePtr CreatePtr(BlockAttr, BaseFunction *);
+    static CfgNodePtr CreatePtr(BaseFunction *, BlkAttr::BlkType blk_type = BlkAttr::Normal);
 
     std::string tollvmIR();
 };
