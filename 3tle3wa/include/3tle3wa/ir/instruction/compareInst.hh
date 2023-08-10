@@ -16,6 +16,8 @@ class ICmpInst final : public BinaryInstruction {
 
     bool IsICmpInst() const final override;
 
+    bool IsIntegerNot() const;
+
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;

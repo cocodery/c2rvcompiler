@@ -16,6 +16,8 @@ class IBinaryInst final : public BinaryInstruction {
 
     bool IsIBinaryInst() const final override;
 
+    bool IsIntegerNeg() const;
+
     static VariablePtr DoIBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
@@ -39,25 +41,6 @@ class FBinaryInst final : public BinaryInstruction {
     bool IsFBinaryInst() const final override;
 
     static VariablePtr DoFBinOperate(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
-
-    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
-
-    std::string tollvmIR() final override;
-
-    void TranslateTo(InternalTranslation &itx) final override;
-};
-
-class FNegInst;
-using FNegInstPtr = std::shared_ptr<FNegInst>;
-class FNegInst final : public UnaryInstruction {
-   private:
-    static FNegInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
-
-   public:
-    FNegInst(VariablePtr, BaseValuePtr, CfgNodePtr);
-    ~FNegInst() = default;
-
-    static VariablePtr DoFloatNeg(BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
