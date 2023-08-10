@@ -15,7 +15,11 @@ void InterferenceGraph::Connect(size_t first, size_t second) {
     nodes_.at(second)->ConnectTo(first);
 }
 
-InterferenceGraph::IGNode::IGNode(size_t idx, VirtualRegister *ref) : idx_(idx), color_(-1), ref_(ref), another_() {}
+InterferenceGraph::IGNode::IGNode(size_t idx, VirtualRegister *ref) : idx_(idx), color_(-1), ref_(ref), another_() {
+    if (ref->IsParam() and not ref->IsOnStk()) {
+        SetColor(ref->GetRealRegIdx());
+    }
+}
 
 void InterferenceGraph::IGNode::ConnectTo(size_t another) { another_.insert(another); }
 

@@ -73,6 +73,7 @@ class VirtualRegister final : public Serializable {
     bool UseFGPR();
 
     VREG_TYPE GetVRType();
+    size_t GetSize();
     void ResetRAInfo();
 
     void Def(size_t idx, size_t loopt);

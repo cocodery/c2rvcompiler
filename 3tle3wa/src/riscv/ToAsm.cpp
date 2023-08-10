@@ -74,9 +74,12 @@ void RLPlanner::Init(CRVC_UNUSE AsmBasicBlock *abb) {
     abb->Push(new riscv::SD(riscv::ra, riscv::sp, callee_save_off));
 
     for (auto &&v : used_real_regs_) {
-        if (abi_reg_info.i.callee_save.count(v) or abi_reg_info.f.callee_save.count(v)) {
+        if (abi_reg_info.i.callee_save.count(v)) {
             callee_save_off -= 8;
             abb->Push(new riscv::SD(v, riscv::sp, callee_save_off));
+        } else if (abi_reg_info.f.callee_save.count(v)) {
+            callee_save_off -= 8;
+            abb->Push(new riscv::FSW(v, riscv::sp, callee_save_off));
         }
     }
 
@@ -104,9 +107,12 @@ void RLPlanner::RecoverBeforeRet(CRVC_UNUSE AsmBasicBlock *abb) {
     abb->Push(new riscv::LD(riscv::ra, riscv::sp, callee_save_off));
 
     for (auto &&v : used_real_regs_) {
-        if (abi_reg_info.i.callee_save.count(v) or abi_reg_info.f.callee_save.count(v)) {
+        if (abi_reg_info.i.callee_save.count(v)) {
             callee_save_off -= 8;
             abb->Push(new riscv::LD(v, riscv::sp, callee_save_off));
+        } else if (abi_reg_info.f.callee_save.count(v)) {
+            callee_save_off -= 8;
+            abb->Push(new riscv::FLW(v, riscv::sp, callee_save_off));
         }
     }
 }
@@ -442,7 +448,13 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
                     abb->Push(new riscv::SD(rridx, riscv::sp, pi.imm));
                 }
             } else {
-                abb->Push(new riscv::MV(pi.imm, rridx));
+                if (pi.info == pinfo::P_INFO::F32) {
+                    abb->Push(new riscv::FMV_S(pi.imm, rridx));
+                } else if (pi.info == pinfo::P_INFO::I32) {
+                    abb->Push(new riscv::MV(pi.imm, rridx));
+                } else if (pi.info == pinfo::P_INFO::I64) {
+                    abb->Push(new riscv::MV(pi.imm, rridx));
+                }
             }
         }
     }
@@ -496,7 +508,13 @@ void UopMv::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 
     UseVirtReg(abb, plan, src_);
 
-    abb->Push(new riscv::MV(dst_->GetRealRegIdx(), src_->GetRealRegIdx()));
+    if (dst_->UseFGPR()) {
+        abb->Push(new riscv::FMV_S(dst_->GetRealRegIdx(), src_->GetRealRegIdx()));
+    } else if (dst_->UseIGPR()) {
+        abb->Push(new riscv::MV(dst_->GetRealRegIdx(), src_->GetRealRegIdx()));
+    } else {
+        panic("unexpected");
+    }
 }
 
 void UopCvtS2W::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
@@ -543,7 +561,13 @@ void UopLla::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         return;
     }
 
-    abb->Push(new riscv::LLA_LB(dst_->GetRealRegIdx(), src_.c_str()));
+    auto src = src_;
+
+    if (off_ != 0) {
+        src += '+' + std::to_string(off_);
+    }
+
+    abb->Push(new riscv::LLA_LB(dst_->GetRealRegIdx(), src.c_str()));
 }
 
 void UopLoad::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {

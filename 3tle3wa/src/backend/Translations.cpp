@@ -36,7 +36,7 @@ void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
     uint32_t up20 = 0;
 
     int32_t lo12 = Sext32(12, msk & imm);
-    up20 = (imm >> 12) + !!(lo12 < 0);
+    up20 = ((imm >> 12) + !!(lo12 < 0)) & 0xfffff;
 
     Assert(up20 != 0, "if up20 == 0, it should not use lui");
 
@@ -953,7 +953,7 @@ void InternalTranslation::Translate(FBinaryInst *ll, InternalTranslationContext 
 
         vrrhs = ctx.planner->NewVReg(VREG_TYPE::FLT);
 
-        lf(vrlhs, cinfo, ctx);
+        lf(vrrhs, cinfo, ctx);
     } else {
         auto var = dynamic_cast<Variable *>(rhs.get());
         Assert(var, "bad dynamic cast");
@@ -1477,7 +1477,7 @@ void InternalTranslation::Translate(CallInst *ll, InternalTranslationContext &ct
         make_param(-1);
     }
 
-    if (auto &&res = ll->GetResult(); res != nullptr) {
+    if (auto &&res = ll->GetResult(); res != nullptr and not res->GetUserList().empty()) {
         VirtualRegister *retvr;
         VREG_TYPE vtype;
         if (auto btype = res->GetBaseType(); btype->FloatType()) {

@@ -34,6 +34,7 @@ class LiveInterval {
     LiveInterval();
 
     void MakeSeg(size_t bgn, size_t end, VirtualRegister *belong_to);
+    void ClearAll();
 
     size_t LiveSize();
     size_t SegNum();

@@ -46,6 +46,7 @@ static inline VirtualRegister *load(std::list<UopGeneral *>::iterator it, RLBasi
     auto si = from->GetStackInfo();
     auto off = si->GetStackOff();
     auto to = plan->NewVReg(from->GetVRType());
+    to->SetCanSpill(false);
 
     if (from->UseFGPR()) {
         auto uop = new UopFLoad;
@@ -77,6 +78,7 @@ static inline VirtualRegister *store(std::list<UopGeneral *>::iterator it, RLBas
     auto si = to->GetStackInfo();
     auto off = si->GetStackOff();
     auto from = plan->NewVReg(to->GetVRType());
+    from->SetCanSpill(false);
 
     it++;
 
@@ -103,7 +105,8 @@ static inline VirtualRegister *store(std::list<UopGeneral *>::iterator it, RLBas
 
 #define LOAD(x) (x) = load(it, rlbb, plan, (x))
 #define STORE(x) (x) = store(it, rlbb, plan, (x))
-#define REWRITE() Rewrite(CRVC_UNUSE std::list<UopGeneral *>::iterator it, CRVC_UNUSE RLBasicBlock *rlbb, CRVC_UNUSE RLPlanner *plan)
+#define REWRITE() \
+    Rewrite(CRVC_UNUSE std::list<UopGeneral *>::iterator it, CRVC_UNUSE RLBasicBlock *rlbb, CRVC_UNUSE RLPlanner *plan)
 
 void UopRet::REWRITE() { LOAD(retval_); }
 
@@ -118,7 +121,16 @@ void UopLui::REWRITE() { STORE(dst_); }
 
 void UopLi::REWRITE() { STORE(dst_); }
 
-void UopLla::REWRITE() { STORE(dst_); }
+void UopLla::REWRITE() {
+    if (not src_.empty()) {
+        STORE(dst_);
+        return;
+    }
+
+    auto addr = dst_->GetAddressInfo();
+    STORE(dst_);
+    dst_->SetAddressInfo(addr);
+}
 
 void UopMv::REWRITE() {
     LOAD(src_);

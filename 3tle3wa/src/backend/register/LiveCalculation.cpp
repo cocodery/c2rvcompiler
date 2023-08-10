@@ -40,12 +40,14 @@ void RLProgress::DoAssignment() {
 
         auto spill = registerAllocation();
 
-        if (spill) {
-            planner_->GenerateStackInfo();
-            rewrite();
-            continue;
+        if (not spill) {
+            break;
         }
-    } while (0);
+
+        planner_->GenerateStackInfo();
+
+        rewrite();
+    } while (true);
 
     planner_->GenerateStackInfo();
 }

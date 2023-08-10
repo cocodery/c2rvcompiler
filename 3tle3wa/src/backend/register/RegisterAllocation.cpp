@@ -24,6 +24,7 @@ void RLPlanner::UseRealRegister(size_t rridx) { used_real_regs_.insert(rridx); }
 
 bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::set<size_t> &args,
                                     std::set<size_t> &callers, std::set<size_t> &callees) {
+    
     auto &&intfer = node->InterferWith(nodes_);
     std::set<size_t> candidates;
 
@@ -105,11 +106,16 @@ bool InterferenceGraph::KempeOptimistic(std::set<size_t> &args, std::set<size_t>
 
     printf("spill:");
     for (auto &&vr : spills) {
-        printf(" %" PRIu64, vr->GetRef()->GetVRIdx());
+        auto ref = vr->GetRef();
+        auto sinfo = planner_->Alloca(ref->GetSize());
+        ref->SetStackInfo(sinfo);
+        ref->SetOnStack(true);
+
+        printf(" %" PRIu64, ref->GetVRIdx());
     }
     printf("\n");
 
-    return spills.empty();
+    return not spills.empty();
 }
 
 bool RLPlanner::GraphAllocation() {
@@ -156,28 +162,30 @@ bool RLPlanner::GraphAllocation() {
         }
     }
 
-    std::set<rpack> frpq;
-    std::set<rpack> irpq;
+    std::vector<rpack> frpq;
+    std::vector<rpack> irpq;
 
     while (not ipq.empty()) {
         auto seg = ipq.top().seg;
         ipq.pop();
 
         auto cur_time = seg->GetBegin();
+        auto vridx = seg->GetOwner()->GetVRIdx();
 
-        for (auto it = irpq.begin(); it != irpq.end(); ++it) {
-            if (it->seg->GetEnd() <= cur_time) {
-                it = irpq.erase(it);
+        while (not irpq.empty()) {
+            if (irpq.front().seg->GetEnd() > cur_time) {
+                break;
             }
-            break;
+            std::pop_heap(irpq.begin(), irpq.end(), std::greater<rpack>());
+            irpq.pop_back();
         }
 
-        auto vridx = seg->GetOwner()->GetVRIdx();
         for (auto &&pk : irpq) {
             ig4i.Connect(pk.seg->GetOwner()->GetVRIdx(), vridx);
         }
 
-        irpq.insert(rpack{.seg = seg});
+        irpq.push_back(rpack{.seg = seg});
+        std::push_heap(irpq.begin(), irpq.end(), std::greater<rpack>());
     }
 
     while (not fpq.empty()) {
@@ -185,26 +193,30 @@ bool RLPlanner::GraphAllocation() {
         fpq.pop();
 
         auto cur_time = seg->GetBegin();
-
-        for (auto it = frpq.begin(); it != frpq.end(); ++it) {
-            if (it->seg->GetEnd() <= cur_time) {
-                it = frpq.erase(it);
-            }
-            break;
-        }
-
         auto vridx = seg->GetOwner()->GetVRIdx();
-        for (auto &&pk : frpq) {
-            ig4i.Connect(pk.seg->GetOwner()->GetVRIdx(), vridx);
+
+        while (not frpq.empty()) {
+            if (frpq.front().seg->GetEnd() > cur_time) {
+                break;
+            }
+            std::pop_heap(frpq.begin(), frpq.end(), std::greater<rpack>());
+            frpq.pop_back();
         }
 
-        frpq.insert(rpack{.seg = seg});
+        for (auto &&pk : frpq) {
+            ig4f.Connect(pk.seg->GetOwner()->GetVRIdx(), vridx);
+        }
+
+        frpq.push_back(rpack{.seg = seg});
+        std::push_heap(frpq.begin(), frpq.end(), std::greater<rpack>());
     }
 
-    ig4i.KempeOptimistic(abi_reg_info.i.arg, abi_reg_info.i.caller_save, abi_reg_info.i.callee_save);
-    ig4f.KempeOptimistic(abi_reg_info.f.arg, abi_reg_info.f.caller_save, abi_reg_info.f.callee_save);
+    bool spill = false;
 
-    return false;
+    spill = ig4i.KempeOptimistic(abi_reg_info.i.arg, abi_reg_info.i.caller_save, abi_reg_info.i.callee_save) || spill;
+    spill = ig4f.KempeOptimistic(abi_reg_info.f.arg, abi_reg_info.f.caller_save, abi_reg_info.f.callee_save) || spill;
+
+    return spill;
 }
 
 bool RLProgress::registerAllocation() { return planner_->GraphAllocation(); }

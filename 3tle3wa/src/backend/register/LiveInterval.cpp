@@ -36,6 +36,8 @@ void LiveInterval::MakeSeg(size_t bgn, size_t end, VirtualRegister *belong_to) {
     }
 }
 
+void LiveInterval::ClearAll() { segs_.clear(); }
+
 size_t LiveInterval::LiveSize() { return live_size_; }
 
 size_t LiveInterval::SegNum() { return segs_.size(); }

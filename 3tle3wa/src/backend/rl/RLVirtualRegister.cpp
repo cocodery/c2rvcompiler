@@ -104,20 +104,35 @@ bool VirtualRegister::UseFGPR() {
 
 VREG_TYPE VirtualRegister::GetVRType() { return type_; }
 
+size_t VirtualRegister::GetSize() {
+    switch (type_) {
+        case VREG_TYPE::FLT:
+        case VREG_TYPE::INT:
+            return 4;
+        case VREG_TYPE::PTR:
+            return 8;
+    }
+    panic("illegel");
+    return 0;
+}
+
 void VirtualRegister::ResetRAInfo() {
     real_reg_idx_ = 0;
     reg_allocated_ = false;
+    ival_mgr_.ClearAll();
 }
 
 void VirtualRegister::Def(size_t idx, size_t loopt) {
     if (def_idx_ != 0) {
         GenSegment(loopt);
     }
-    def_idx_ = idx; }
+    def_idx_ = idx;
+}
 
 void VirtualRegister::Use(size_t idx) { use_idx_.push_back(idx); }
 
 void VirtualRegister::GenSegment(size_t loopt) {
+    Assert(not use_idx_.empty(), "use should not empty");
     ival_mgr_.MakeSeg(def_idx_, use_idx_.back(), this);
     use_times_ += use_idx_.size() * loopt;
 
@@ -125,6 +140,4 @@ void VirtualRegister::GenSegment(size_t loopt) {
     use_idx_.clear();
 }
 
-bool VirtualRegister::LiveAt(size_t idx) {
-    return ival_mgr_.LiveAt(idx);
-}
+bool VirtualRegister::LiveAt(size_t idx) { return ival_mgr_.LiveAt(idx); }
