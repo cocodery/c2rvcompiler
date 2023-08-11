@@ -15,10 +15,9 @@ void LoopUnrolling::ExpandLoop(Loop *loop) {
             return;
         }
         auto loop_time = LoopTime(loop);
-        if (loop_time == 0 || loop_time > 500) {
+        if (loop_time == 0 || loop_time > 100) {
             return;
         }
-
         FullyExpand(loop_time, loop);
     }
 }
@@ -315,10 +314,10 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 if (gap <= 0) {
                     return -1;
                 } else {
-                    if (change_val >= 0) {
+                    if (change_val > 0) {
                         return 0;
                     }
-                    while (gap >= 0) {
+                    while (gap > 0) {
                         gap += change_val;
                         time++;
                     }
@@ -329,7 +328,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 if (gap >= 0) {
                     return -1;
                 } else {
-                    if (change_val <= 0) {
+                    if (change_val < 0) {
                         return 0;
                     }
                     while (gap < 0) {
