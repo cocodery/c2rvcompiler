@@ -198,16 +198,9 @@ CfgNodeList Loop::GetEntireStructure() const {
 }
 
 bool Loop::IsSimpleLoop() const {
-    assert(before_blk != nullptr);
-    if (cond_begin->GetPredecessors().size() != 2) return false;  // before-blk + real-loop-end, exclude `continue`
-    if (loop_exit->GetPredecessors().size() != 1) return false;   // cond-end, exclude `break`
-    for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
-        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
-            return false;
-        }
-    }
+    // assert(before_blk != nullptr);
     // sub-loops all simple
-    std::queue<const Loop *> queue;
+    std::queue<Loop *> queue;  // process sub-loop first
     for (auto &&sub_loop : this->sub_structures) {
         queue.push(static_cast<Loop *>(sub_loop));
     }
@@ -219,6 +212,15 @@ bool Loop::IsSimpleLoop() const {
         }
         for (auto &&sub_loop : front->sub_structures) {
             queue.push(static_cast<Loop *>(sub_loop));
+        }
+    }
+    if (before_blk != nullptr) {
+        if (cond_begin->GetPredecessors().size() != 2) return false;  // before-blk + real-loop-end, exclude `continue`
+        if (loop_exit->GetPredecessors().size() != 1) return false;   // cond-end, exclude `break`
+        for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
+            if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
+                return false;
+            }
         }
     }
     return true;
