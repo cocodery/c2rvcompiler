@@ -9,16 +9,117 @@ void LoopUnrolling::ExpandLoop(Loop *loop) {
         ExpandLoop(static_cast<Loop *>(sub_loop));
     }
     if (loop->before_blk) {
-        int looptime = LoopTime(loop);
-        std::cout << "loop time is " << looptime << std::endl;
+        auto loop_cond = loop->GetCondBodyBlks();
+        auto loop_blks = loop->GetLoopBodyBlks();
+        if (loop_cond.size() > 1 || loop_blks.size() > 1) {
+            return;
+        }
+        auto loop_time = LoopTime(loop);
+        if (loop_time == 0 || loop_time > 500) {
+            return;
+        }
+        FullyExpand(loop_time, loop);
     }
+}
+
+void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
+    auto &&before_blk = loop->before_blk;
+    auto loop_blks = loop->GetEntireStructure();
+    auto cond_begin = loop->cond_begin;
+    auto loop_end = loop_blks.back();
+    auto loop_exit = loop->loop_exit;
+
+    // remove loop branch inst
+    auto &&entry_terminator = before_blk->GetInstList().back();
+    if (entry_terminator->IsJumpInst() == false) {
+        return;
+    }
+    auto &&loop_branch = std::static_pointer_cast<BranchInst>(entry_terminator);
+    auto &&out_loop_blk = loop_branch->GetFalseTarget();
+    auto &&body_terminator = loop_end->GetInstList().back();
+    if (body_terminator->IsJumpInst() == false) {
+        return;
+    }
+    before_blk->RemoveInst(entry_terminator);
+    loop_end->RemoveInst(body_terminator);
+
+    // START
+    // Record the mapping of the result of the phi instruction to its sources (from outside the loop
+    // or within the loop) for updating instructions using the result during the loop iteration
+    phi_results.clear();
+    phi_source_defined_in_loop.clear();
+    phi_source_defined_out_loop.clear();
+    phi_source_updated.clear();
+    old_to_new.clear();
+
+    for (auto &&inst : cond_begin->GetInstList()) {
+        if (inst->IsPhiInst()) {
+            auto &&result = inst->GetResult();
+            auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+            auto &&data_list = phi_inst->GetDataList();
+            auto &&data_source1 = data_list.front();
+            auto &&data_source2 = *std::next(data_list.begin(), 1);
+            auto &&source_value1 = data_source1.first;
+            auto &&source_blk1 = data_source1.second;
+            auto &&source_value2 = data_source2.first;
+            auto &&source_blk2 = data_source2.second;
+
+            phi_results.insert(result);
+            if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value1;
+                phi_source_defined_out_loop[result] = source_value2;
+            } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value2;
+                phi_source_defined_out_loop[result] = source_value1;
+            } else {
+                continue;
+            }
+        }
+    }
+    // ENDS
+
+    // copy insts
+    bool init_flag = true;
+    for (int i = 0; i < loop_time; ++i) {
+        for (auto &&inst : loop_end->GetInstList()) {
+            if (inst->IsReturnInst() || inst->IsPhiInst()) {
+                return;
+            }
+            if ((inst->GetResult() == nullptr) || (inst->IsCallInst())) {
+                return;
+            }
+            auto new_value = InstCopy(inst, before_blk, init_flag);
+            if (new_value == nullptr) {
+                continue;
+            }
+            auto new_inst = new_value->GetParent();
+            old_to_new[inst->GetResult()] = new_value;
+        }
+        init_flag = false;
+        for (auto pair : old_to_new) {
+            phi_source_updated[pair.first] = old_to_new[pair.second];
+        }
+    }
+
+    // remove all loop blocks
+    // for (auto &&blk : loop_blks) {
+    //     for (auto &&inst : blk->GetInstList()) {
+    //         blk->RemoveInst(inst);
+    //     }
+    // }
+
+    before_blk->RmvSuccessor(cond_begin);
+    before_blk->AddSuccessor(loop_exit);
+    loop_exit->AddPredecessor(before_blk);
+    JumpInstPtr to_loop_exit = std::make_shared<JumpInst>(loop_exit, before_blk);
+    before_blk->InsertInstBack(to_loop_exit);
 }
 
 int LoopUnrolling::LoopTime(Loop *loop) {
     int32_t time = 0;
-    auto loop_blks = loop->GetEntireStructure();
+    auto loop_blks = loop->GetLoopBodyBlks();
     auto cond_begin = loop->cond_begin;
-    auto loop_end = loop->loop_exit;
+    auto loop_end = loop_blks.back();
     if (cond_begin->GetPredecessors().size() > 2) {
         return 0;
     }
@@ -27,7 +128,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
     }
 
     auto cond_end = loop->cond_end;
-    auto last_inst = cond_end->GetLastInst();
+    auto last_inst = cond_end->GetInstList().back();
     if (last_inst->IsBranchInst() && last_inst->GetOprands().size() != 0) {
         auto &&last_inst_oprands = last_inst->GetOprands();
         auto &&end_value = last_inst_oprands.front();
@@ -48,10 +149,8 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         int32_t change_val = 0;
         int const_check = ConstCheck(cmp_inst);
         if (const_check == 0) {
-            std::cout << "\n\n";
             std::cout << "both cmp operands are not constant" << std::endl;
             std::cout << cmp_inst->tollvmIR() << std::endl;
-            std::cout << "\n\n";
             return 0;
         }
 
@@ -290,4 +389,87 @@ Operands LoopUnrolling::InstOperandsInVector(InstPtr inst) {
         operands_in_vector.push_back(operand);
     }
     return operands_in_vector;
+}
+
+BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent, bool init_flag) {
+    assert(!(inst_->IsReturnInst() || inst_->IsPhiInst()));
+    BaseValuePtr result = nullptr;
+    OpCode opcode = inst_->GetOpCode();
+    if (inst_->IsOneOprandInst()) {
+        auto &&unary_inst_ = std::static_pointer_cast<UnaryInstruction>(inst_);
+        auto &&oprand = unary_inst_->GetOprand();
+        oprand = OperandUpdate(oprand, init_flag);
+        if (opcode == Load) {
+            result = LoadInst::DoLoadValue(oprand, parent);
+        } else if (opcode == BitCast) {
+            result = BitCastInst::DoBitCast(oprand, parent);
+        } else if (opcode == SiToFp) {
+            result = SitoFpInst::DoSitoFp(oprand, parent);
+        } else if (opcode == FpToSi) {
+            auto type = unary_inst_->GetResult()->GetBaseType()->GetAttrType();
+            result = FptoSiInst::DoFptoSi(type, oprand, parent);
+        } else if (opcode == Zext) {
+            result = ZextInst::DoZeroExt(oprand, parent);
+        } else if (opcode == FNeg) {
+            result = FNegInst::DoFloatNeg(oprand, parent);
+        } else {
+            assert(false);
+        }
+    } else if (inst_->IsTwoOprandInst()) {
+        auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst_);
+        auto &&lhs = binary_inst_->GetLHS();
+        auto &&rhs = binary_inst_->GetRHS();
+        lhs = OperandUpdate(lhs, init_flag);
+        rhs = OperandUpdate(rhs, init_flag);
+        if (binary_inst_->IsIBinaryInst()) {
+            result = IBinaryInst::DoIBinOperate(opcode, lhs, rhs, parent);
+        } else if (binary_inst_->IsFBinaryInst()) {
+            result = FBinaryInst::DoFBinOperate(opcode, lhs, rhs, parent);
+        } else if (binary_inst_->IsICmpInst()) {
+            result = ICmpInst::DoICompare(opcode, lhs, rhs, parent);
+        } else if (binary_inst_->IsFCmpInst()) {
+            result = FCmpInst::DoFCompare(opcode, lhs, rhs, parent);
+        } else {
+            assert(false);
+        }
+    } else if (inst_->IsGepInst()) {
+        auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
+        OffsetList off_list;
+        for (auto &&off : gep_inst_->GetOffList()) {
+            auto result = OperandUpdate(off, init_flag);
+            off_list.push_back(result);
+        }
+        auto new_addr = OperandUpdate(gep_inst_->GetBaseAddr(), init_flag);
+        result = GetElementPtrInst::DoGetPointer(gep_inst_->GetStoreType(), new_addr, off_list, parent);
+    } else if (inst_->IsCallInst()) {
+        auto &&call_inst_ = std::static_pointer_cast<CallInst>(inst_);
+        ParamList param_list;
+        for (auto &&param : call_inst_->GetParamList()) {
+            auto result = OperandUpdate(param, init_flag);
+            param_list.push_back(result);
+        }
+        result = CallInst::DoCallFunction(call_inst_->GetRetType(), call_inst_->GetCalleeFunc(), param_list, parent);
+    }
+    assert((result != nullptr) || (inst_->IsCallInst()));
+    return result;
+}
+
+BaseValuePtr LoopUnrolling::OperandUpdate(BaseValuePtr operand, bool init_flag) {
+    BaseValuePtr result = nullptr;
+    if (phi_results.find(operand) == phi_results.end()) {
+        return operand;
+    }
+    if (init_flag) {
+        if (phi_source_defined_out_loop[operand] != nullptr) {
+            result = phi_source_defined_out_loop[operand];
+        }
+    }
+    auto old_value = phi_source_defined_in_loop[operand];
+    if (old_value != nullptr) {
+        if (old_to_new[old_value] != nullptr) {
+            result = old_to_new[old_value];
+        }
+    }
+    old_to_new[operand] = result;
+    return result;
 }
