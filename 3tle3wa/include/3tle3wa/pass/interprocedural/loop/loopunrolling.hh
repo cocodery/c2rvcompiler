@@ -14,6 +14,7 @@ typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
 
 static std::set<BaseValuePtr> phi_results;
+static std::set<BaseValuePtr> loop_variants;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_out_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;

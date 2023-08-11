@@ -18,6 +18,7 @@ void LoopUnrolling::ExpandLoop(Loop *loop) {
         if (loop_time == 0 || loop_time > 500) {
             return;
         }
+
         FullyExpand(loop_time, loop);
     }
 }
@@ -34,8 +35,6 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     if (entry_terminator->IsJumpInst() == false) {
         return;
     }
-    auto &&loop_branch = std::static_pointer_cast<BranchInst>(entry_terminator);
-    auto &&out_loop_blk = loop_branch->GetFalseTarget();
     auto &&body_terminator = loop_end->GetInstList().back();
     if (body_terminator->IsJumpInst() == false) {
         return;
@@ -68,9 +67,11 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
             if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
                 phi_source_defined_in_loop[result] = source_value1;
                 phi_source_defined_out_loop[result] = source_value2;
+                loop_variants.insert(source_value1);
             } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
                 phi_source_defined_in_loop[result] = source_value2;
                 phi_source_defined_out_loop[result] = source_value1;
+                loop_variants.insert(source_value2);
             } else {
                 continue;
             }
@@ -90,7 +91,6 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
                 if (new_value == nullptr) {
                     continue;
                 }
-                auto new_inst = new_value->GetParent();
                 old_to_new[inst->GetResult()] = new_value;
             } else {
                 auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
@@ -98,7 +98,7 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
                 auto &&rhs = binary_inst_->GetRHS();
                 lhs = OperandUpdate(lhs, init_flag);
                 rhs = OperandUpdate(rhs, init_flag);
-                StoreInst::DoStoreValue(lhs, rhs, cond_begin);
+                StoreInst::DoStoreValue(lhs, rhs, before_blk);
             }
         }
         init_flag = false;
@@ -108,14 +108,19 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     }
 
     // remove all loop blocks
-    // for (auto &&blk : loop_blks) {
-    //     RemoveNode(blk);
-    // }
+    for (auto &&blk : loop_blks) {
+        RemoveNode(blk);
+    }
 
     before_blk->RmvSuccessor(cond_begin);
     loop_exit->RmvPredecessor(cond_begin);
     JumpInstPtr to_loop_exit = JumpInst::CreatePtr(loop_exit, before_blk);
     before_blk->InsertInstBack(to_loop_exit);
+    for (auto &&invariant : phi_results) {
+        auto defined_in_loop = phi_source_defined_in_loop[invariant];
+        auto replacer = old_to_new[defined_in_loop];
+        ReplaceSRC(invariant, replacer);
+    }
 }
 
 int LoopUnrolling::LoopTime(Loop *loop) {
@@ -137,13 +142,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto &&end_value = last_inst_oprands.front();
         auto &&cmp_inst = end_value->GetParent();
         if (cmp_inst == nullptr) {
-            std::cout << "br: " << last_inst->tollvmIR() << std::endl;
-            std::cout << "cmp_inst is nullptr" << std::endl;
+            // cmp_inst is nullptr
             return 0;
         }
         auto opcode = cmp_inst->GetOpCode();
         if (opcode < OP_LTH) {
-            std::cout << "Opcode is less than LTH" << std::endl;
+            // Opcode is not cmp
             return 0;
         }
 
@@ -152,8 +156,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         int32_t change_val = 0;
         int const_check = ConstCheck(cmp_inst);
         if (const_check == 0) {
-            std::cout << "both cmp operands are not constant" << std::endl;
-            std::cout << cmp_inst->tollvmIR() << std::endl;
+            // both cmp operands are not constant
             return 0;
         }
 
@@ -164,14 +167,13 @@ int LoopUnrolling::LoopTime(Loop *loop) {
         auto key = operands_of_cmp_vector.at(2 - const_check);
         auto &&cmp_value = operands_of_cmp_vector.at(const_check - 1);
         if (cmp_value->IsConstant() == false || cmp_value->GetBaseType()->IntType() == false) {
-            std::cout << cmp_inst->tollvmIR() << std::endl;
-            std::cout << "cmp_value is not int" << std::endl;
+            // cmp_value is not int
             return 0;
         }
         auto &&constant_value = std::static_pointer_cast<Constant>(cmp_value);
         auto const_val = constant_value->GetValue();
         if (!std::holds_alternative<int32_t>(const_val) && !std::holds_alternative<int64_t>(const_val)) {
-            std::cout << "when get compare limit, type is not int32_t or int64_t" << std::endl;
+            // when get compare limit, type is not int32_t or int64_t
             return 0;
         }
         limit = std::get<int32_t>(const_val);
@@ -189,12 +191,11 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             return 0;
         }
         if (key_parent->IsPhiInst() == false) {
-            std::cout << "compare key is not from phi inst" << std::endl;
+            // compare key is not from phi inst
             return 0;
         }
 
         auto &&phi_inst = std::static_pointer_cast<PhiInst>(key_parent);
-        // std::cout << phi_inst->tollvmIR() << std::endl;
 
         // start to get init value of key
         auto &&data_list = phi_inst->GetDataList();
@@ -216,8 +217,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                std::cout << "init of key is not int" << std::endl;
-                std::cout << source_value2->tollvmIR() << std::endl;
+                // init of key is not int
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
@@ -230,13 +230,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
             }
             if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
                 !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
-                std::cout << "init of key is not int" << std::endl;
-                std::cout << source_value1->tollvmIR() << std::endl;
+                // init of key is not int
                 return 0;
             }
             init = std::get<int32_t>(const_init_val->GetValue());
         } else {
-            std::cout << "both phi oprands are not from the loop" << std::endl;
+            // both phi oprands are not from the loop
             return 0;
         }
         // end of finding init value of key
@@ -256,7 +255,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
-                    std::cout << "change value of key is not int" << std::endl;
+                    // change value of key is not int
                     return 0;
                 }
                 change_val += std::get<int32_t>(constant_in_phi);
@@ -271,7 +270,7 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
-                    std::cout << "change value is not int" << std::endl;
+                    // change value is not int
                     return 0;
                 }
                 change_val -= std::get<int32_t>(constant_in_phi);
@@ -460,7 +459,11 @@ BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent, bool in
 BaseValuePtr LoopUnrolling::OperandUpdate(BaseValuePtr operand, bool init_flag) {
     BaseValuePtr result = nullptr;
     if (phi_results.find(operand) == phi_results.end()) {
-        return operand;
+        if (old_to_new[operand] == nullptr) {
+            return operand;
+        } else {
+            return old_to_new[operand];
+        }
     }
     if (init_flag) {
         if (phi_source_defined_out_loop[operand] != nullptr) {
