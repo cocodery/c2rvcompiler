@@ -85,15 +85,21 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
             if (inst->IsReturnInst() || inst->IsPhiInst()) {
                 return;
             }
-            if ((inst->GetResult() == nullptr) || (inst->IsCallInst())) {
-                return;
+            if (inst->IsStoreInst() == false) {
+                auto new_value = InstCopy(inst, before_blk, init_flag);
+                if (new_value == nullptr) {
+                    continue;
+                }
+                auto new_inst = new_value->GetParent();
+                old_to_new[inst->GetResult()] = new_value;
+            } else {
+                auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
+                auto &&lhs = binary_inst_->GetLHS();
+                auto &&rhs = binary_inst_->GetRHS();
+                lhs = OperandUpdate(lhs, init_flag);
+                rhs = OperandUpdate(rhs, init_flag);
+                StoreInst::DoStoreValue(lhs, rhs, cond_begin);
             }
-            auto new_value = InstCopy(inst, before_blk, init_flag);
-            if (new_value == nullptr) {
-                continue;
-            }
-            auto new_inst = new_value->GetParent();
-            old_to_new[inst->GetResult()] = new_value;
         }
         init_flag = false;
         for (auto pair : old_to_new) {
@@ -103,15 +109,12 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
 
     // remove all loop blocks
     // for (auto &&blk : loop_blks) {
-    //     for (auto &&inst : blk->GetInstList()) {
-    //         blk->RemoveInst(inst);
-    //     }
+    //     RemoveNode(blk);
     // }
 
     before_blk->RmvSuccessor(cond_begin);
-    before_blk->AddSuccessor(loop_exit);
-    loop_exit->AddPredecessor(before_blk);
-    JumpInstPtr to_loop_exit = std::make_shared<JumpInst>(loop_exit, before_blk);
+    loop_exit->RmvPredecessor(cond_begin);
+    JumpInstPtr to_loop_exit = JumpInst::CreatePtr(loop_exit, before_blk);
     before_blk->InsertInstBack(to_loop_exit);
 }
 
