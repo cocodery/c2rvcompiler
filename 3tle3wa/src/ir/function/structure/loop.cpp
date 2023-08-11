@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <queue>
 #include <sstream>
 #include <stack>
 #include <unordered_map>
@@ -203,6 +204,21 @@ bool Loop::IsSimpleLoop() const {
     for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
         if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
             return false;
+        }
+    }
+    // sub-loops all simple
+    std::queue<const Loop *> queue;
+    for (auto &&sub_loop : this->sub_structures) {
+        queue.push(static_cast<Loop *>(sub_loop));
+    }
+    while (!queue.empty()) {
+        auto &&front = queue.front();
+        queue.pop();
+        if (front->IsSimpleLoop() == false) {
+            return false;
+        }
+        for (auto &&sub_loop : front->sub_structures) {
+            queue.push(static_cast<Loop *>(sub_loop));
         }
     }
     return true;
