@@ -48,6 +48,7 @@ class BaseFunction {
 
     std::string &GetFuncName();
 
+    size_t GetParamSize() const;
     ParamList &GetParamList();
 
     virtual std::string tollvmIR() = 0;

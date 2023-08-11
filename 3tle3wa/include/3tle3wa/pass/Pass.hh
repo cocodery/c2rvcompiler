@@ -9,6 +9,7 @@
 #include "3tle3wa/pass/interprocedural/loop/loopInvariant.hh"
 #include "3tle3wa/pass/interprocedural/sccp/sccp.hh"
 #include "3tle3wa/pass/interprocedural/ssa/ssa.hh"
+#include "3tle3wa/pass/intraprocedural/edp/edp.hh"
 #include "3tle3wa/pass/intraprocedural/gvl/gvl.hh"
 
 class Optimization {

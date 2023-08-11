@@ -34,7 +34,7 @@ BaseValuePtr CallInst::DoCallFunction(ScalarTypePtr _type, BaseFuncPtr _func, Pa
 
 ScalarTypePtr CallInst::GetRetType() const { return ret_type; }
 BaseFuncPtr CallInst::GetCalleeFunc() const { return callee_func; }
-const ParamList &CallInst::GetParamList() const { return rparam_list; }
+ParamList &CallInst::GetParamList() { return rparam_list; }
 
 void CallInst::SetTailCall(bool _tail_call) { tail_call = _tail_call; }
 bool CallInst::GetTailCall() const { return tail_call; }

@@ -80,5 +80,7 @@ void Optimization::DoOptimization() {
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());
+
+        EDP::EliminateDeadParameter(func);
     }
 }
