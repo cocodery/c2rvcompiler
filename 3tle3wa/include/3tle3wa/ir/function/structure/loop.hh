@@ -36,6 +36,8 @@ struct Loop final : Structure {
 
     CfgNodeList GetEntireStructure() const;
 
+    bool IsSimpleLoop() const;
+
     void PrintCurStructure() const;
     void PrintStructure() const;
 };

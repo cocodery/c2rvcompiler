@@ -196,6 +196,18 @@ CfgNodeList Loop::GetEntireStructure() const {
     return entire;
 }
 
+bool Loop::IsSimpleLoop() const {
+    assert(before_blk != nullptr);
+    if (cond_begin->GetPredecessors().size() != 2) return false;  // before-blk + real-loop-end, exclude `continue`
+    if (loop_exit->GetPredecessors().size() != 1) return false;   // cond-end, exclude `break`
+    for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Loop::PrintCurStructure() const {
     auto &&PrintTab = [](depth_t depth) {
         std::stringstream ss;
@@ -206,7 +218,7 @@ void Loop::PrintCurStructure() const {
     };
 
     if (before_blk) {
-        cout << PrintTab(depth) << "\b\bLoop_" << depth << endl;
+        cout << PrintTab(depth) << "\b\bLoop_" << depth << " " << (IsSimpleLoop() ? "simple" : "complex") << endl;
         cout << PrintTab(depth) << "Before-Loop: Block_" << before_blk->GetBlockIdx() << endl;
         cout << PrintTab(depth) << "Cond-Begin : Block_" << cond_begin->GetBlockIdx() << endl;
         cout << PrintTab(depth) << "Cond-End   : Block_" << cond_end->GetBlockIdx() << endl;
