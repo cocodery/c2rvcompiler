@@ -19,6 +19,11 @@ BaseValuePtr GlobalValue::GetInitValue() const { return this->init_value; }
 
 bool GlobalValue::IsGlobalValue() const { return true; }
 
+void GlobalValue::AddParamUse(BaseFunction *func) { param_use.insert(func); }
+void GlobalValue::RmvParamUse(BaseFunction *func) { param_use.erase(func); }
+bool GlobalValue::IsParamBy(BaseFunction *func) const { return param_use.find(func) != param_use.end(); }
+bool GlobalValue::IsAsParam() const { return param_use.size() != 0; }
+
 void GlobalValue::InsertUser(BaseFunction *func) { used_in.insert(func); }
 void GlobalValue::RemoveUser(BaseFunction *func) { used_in.erase(func); }
 bool GlobalValue::IsBeenUsed() const { return used_in.size() != 0; }
