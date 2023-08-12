@@ -65,14 +65,14 @@ BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
                 return iter->gep_map[expr];
             }
         }
-    } else if (inst->IsLoadInst()) {
-        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        auto &&load_addr = load_inst->GetOprand();
+        // } else if (inst->IsLoadInst()) {
+        //     auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        //     auto &&load_addr = load_inst->GetOprand();
 
-        LoadVNExpr expr{load_addr.get()};
-        if (this->load_map.count(expr)) {
-            return this->load_map[expr];
-        }
+        //     LoadVNExpr expr{load_addr.get()};
+        //     if (this->load_map.count(expr)) {
+        //         return this->load_map[expr];
+        //     }
     } else if (inst->IsOneOprandInst()) {
         auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
 
@@ -96,11 +96,11 @@ void GVN::VNScope::Set(InstPtr inst) {
         auto off_list = gep_inst->GetOffList();
         GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
         gep_map[expr] = inst->GetResult();
-    } else if (inst->IsLoadInst()) {
-        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        auto &&load_addr = load_inst->GetOprand();
-        LoadVNExpr expr{load_addr.get()};
-        load_map[expr] = inst->GetResult();
+        // } else if (inst->IsLoadInst()) {
+        //     auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        //     auto &&load_addr = load_inst->GetOprand();
+        //     LoadVNExpr expr{load_addr.get()};
+        //     load_map[expr] = inst->GetResult();
     } else if (inst->IsOneOprandInst()) {
         auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
         UnaryVNExpr expr{unary_inst->GetOpCode(), unary_inst->GetOprand().get()};
@@ -215,7 +215,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         }
 
         auto &&result = inst->GetResult();
-        if (inst->IsTwoOprandInst() || inst->IsGepInst() || inst->IsLoadInst() || inst->IsOneOprandInst()) {
+        if (inst->IsTwoOprandInst() || inst->IsGepInst() || (inst->IsOneOprandInst() && !inst->IsLoadInst())) {
             if (auto &&res = Scope.Get(inst)) {
                 VN[result] = res;
 
@@ -226,22 +226,23 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 VN[result] = result;
                 Scope.Set(inst);
             }
-        } else if (inst->IsStoreInst()) {
-            auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
-            auto &&store_addr = store_inst->GetStoreAddr();
-            auto &&store_value = store_inst->GetStoreValue();
-            LoadVNExpr load_expr{store_addr.get()};
+            // } else if (inst->IsStoreInst()) {
+            //     auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
+            //     auto &&store_addr = store_inst->GetStoreAddr();
+            //     auto &&store_value = store_inst->GetStoreValue();
+            //     LoadVNExpr load_expr{store_addr.get()};
 
-            Scope.load_map[load_expr] = store_value;
-        } else {
-            if (result != nullptr) {
-                VN[result] = result;
-            }
-            if (inst->IsCallInst()) {
-                if (auto &&callee = static_cast<CallInst *>(inst.get())->GetCalleeFunc(); callee->GetSideEffect()) {
-                    Scope.load_map.clear();
-                }
-            }
+            //     Scope.load_map[load_expr] = store_value;
+            // } else {
+            //     if (result != nullptr) {
+            //         VN[result] = result;
+            //     }
+            //     if (inst->IsCallInst()) {
+            //         if (auto &&callee = static_cast<CallInst *>(inst.get())->GetCalleeFunc();
+            //         callee->GetSideEffect()) {
+            //             Scope.load_map.clear();
+            //         }
+            //     }
         }
         ++iter;
     }
