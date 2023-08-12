@@ -11,7 +11,10 @@ void LoopUnrolling::ExpandLoop(Loop *loop) {
     if (loop->before_blk) {
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
-        if (loop_cond.size() > 1 || loop_blks.size() > 1) {
+        if (loop->IsSimpleLoop() == false) {
+            return;
+        }
+        if (loop_blks.size() > 1) {
             return;
         }
         auto loop_time = LoopTime(loop);

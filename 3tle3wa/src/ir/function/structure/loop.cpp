@@ -200,6 +200,7 @@ bool Loop::IsSimpleLoop() const {
     assert(before_blk != nullptr);
     if (cond_begin->GetPredecessors().size() != 2) return false;  // before-blk + real-loop-end, exclude `continue`
     if (loop_exit->GetPredecessors().size() != 1) return false;   // cond-end, exclude `break`
+    if (GetCondBodyBlks().size() > 1) return false;               // too much conditions
     for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
         if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
             return false;
