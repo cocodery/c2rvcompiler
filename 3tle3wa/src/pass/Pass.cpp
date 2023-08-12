@@ -64,6 +64,8 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
+        LoopUnrolling::LoopUnrolling(func);
+
         SCCP::SCCP(func);  // cause `final_performance/derich` WA, waiting fix
 
         DCE::DCE(func);

@@ -16,6 +16,7 @@
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
     assert(visit.size() == 0 && is_variant.size() == 0);
 
+    // func->loops->PrintStructure();
     InvariantMotion(func->loops);
 
     visit.clear();

@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <variant>
 
+#include "3tle3wa/ir/instruction/compareInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/value/constant.hh"
@@ -52,9 +53,6 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
             auto bin_opcode = bin_inst->GetOpCode();
 
-            // Add, Sub, Mul, Div
-            if (!(OP_ADD <= bin_opcode && bin_opcode <= OP_DIV)) continue;
-
             auto &&bin_lhs = bin_inst->GetLHS();
             auto &&bin_rhs = bin_inst->GetRHS();
 
@@ -64,8 +62,39 @@ void InstComb::InstCombine(NormalFuncPtr func) {
             // both lhs and rhs come from constant or parameter, cannot do combine
             if (lhs_inst == nullptr && rhs_inst == nullptr) continue;
 
+            if (bin_inst->IsICmpInst()) {
+                auto &&icmp_inst = std::static_pointer_cast<ICmpInst>(bin_inst);
+                if (icmp_inst->IsIntegerNot() && lhs_inst->IsTwoOprandInst()) {
+                    auto &&bin_lhs_inst = std::static_pointer_cast<BinaryInstruction>(lhs_inst);
+                    if (bin_lhs_inst->IsICmpInst()) {
+                        auto &&lhs_icmp_inst = std::static_pointer_cast<ICmpInst>(bin_lhs_inst);
+                        if (lhs_icmp_inst->IsIntegerNot()) {
+                            lhs_icmp_inst->SetOpCode(OP_NEQ);
+                            ReplaceSRC(icmp_inst->GetResult(), lhs_icmp_inst->GetResult());
+                        }
+                    }
+                } else if (icmp_inst->IsIntegerBool() && lhs_inst->IsTwoOprandInst()) {
+                    auto &&bin_lhs_inst = std::static_pointer_cast<BinaryInstruction>(lhs_inst);
+                    if (bin_lhs_inst->IsICmpInst()) {
+                        auto &&lhs_icmp_inst = std::static_pointer_cast<ICmpInst>(bin_lhs_inst);
+                        if (lhs_icmp_inst->IsIntegerBool()) {
+                            ReplaceSRC(icmp_inst->GetResult(), lhs_icmp_inst->GetResult());
+                        }
+                    } else if (bin_lhs_inst->IsFCmpInst()) {
+                        auto &&lhs_fcmp_inst = std::static_pointer_cast<FCmpInst>(bin_lhs_inst);
+                        if (lhs_fcmp_inst->IsFloatBool()) {
+                            ReplaceSRC(icmp_inst->GetResult(), lhs_fcmp_inst->GetResult());
+                        }
+                    }
+                }
+                continue;
+            }
+
             bool iop = bin_inst->IsIBinaryInst();
             auto bin_type = GetBinType(bin_lhs.get(), bin_rhs.get());
+
+            // Add, Sub, Mul, Div
+            if (!(OP_ADD <= bin_opcode && bin_opcode <= OP_DIV)) continue;
 
             if (bin_type == LVRV) {
                 // bin_inst = variable OP variable

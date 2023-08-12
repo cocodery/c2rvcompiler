@@ -11,6 +11,7 @@
 #include "3tle3wa/pass/interprocedural/ssa/ssa.hh"
 #include "3tle3wa/pass/intraprocedural/edp/edp.hh"
 #include "3tle3wa/pass/intraprocedural/gvl/gvl.hh"
+#include "3tle3wa/pass/interprocedural/loop/loopunrolling.hh"
 
 class Optimization {
    private:
