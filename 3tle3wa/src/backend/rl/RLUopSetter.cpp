@@ -118,10 +118,6 @@ void UopFLoadLB::SetHelper(VirtualRegister *helper) { helper_ = helper; }
 
 void UopFLoadLB::SetSym(std::string sym) { sym_ = std::move(sym); }
 
-void UopLNot::SetSrc(VirtualRegister *src) { src_ = src; }
-
-void UopLNot::SetDst(VirtualRegister *dst) { dst_ = dst; }
-
 void UopFCmp::SetLhs(VirtualRegister *lhs) { lhs_ = lhs; }
 
 void UopFCmp::SetRhs(VirtualRegister *rhs) { rhs_ = rhs; }

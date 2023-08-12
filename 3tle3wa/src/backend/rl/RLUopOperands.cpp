@@ -113,10 +113,6 @@ const VecVR UopFLoadLB::GetOperands() const {
 
 VirtualRegister *UopFLoadLB::GetResult() const { return dst_; }
 
-const VecVR UopLNot::GetOperands() const { return VecVR{src_}; }
-
-VirtualRegister *UopLNot::GetResult() const { return dst_; }
-
 const VecVR UopFCmp::GetOperands() const { return VecVR{lhs_, rhs_}; }
 
 VirtualRegister *UopFCmp::GetResult() const { return dst_; }

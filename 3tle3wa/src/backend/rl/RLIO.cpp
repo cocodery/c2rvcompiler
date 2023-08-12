@@ -204,7 +204,6 @@ void UopFLoad::formatString(FILE *fp) {
         fprintf(fp, "\tfld\t%s, %" PRId32 "(%s)\n", dst_->CString(), off_lo12_, "sp");
         return;
     }
-    // avoid format
     fprintf(fp, "\tfld\t%s, %" PRId32 "(%s)\n", dst_->CString(), off_lo12_, base_->CString());
 }
 
@@ -213,12 +212,10 @@ void UopFStore::formatString(FILE *fp) {
         fprintf(fp, "\tfst\t%s, %" PRId32 "(%s)\n", src_->CString(), off_lo12_, "sp");
         return;
     }
-    // avoid format
     fprintf(fp, "\tfst\t%s, %" PRId32 "(%s)\n", src_->CString(), off_lo12_, base_->CString());
 }
 
 void UopFLoadLB::formatString(FILE *fp) {
-    // avoid format
     if (helper_ == nullptr) {
         fprintf(fp, "\tfld\t%s, %s\n", dst_->CString(), sym_.c_str());
         return;
@@ -226,106 +223,102 @@ void UopFLoadLB::formatString(FILE *fp) {
     fprintf(fp, "\tfld\t%s, %s, %s\n", dst_->CString(), sym_.c_str(), helper_->CString());
 }
 
-void UopLNot::formatString(FILE *fp) {
-    // avoid format
-    fprintf(fp, "\tseqz\t%s, %s", dst_->CString(), src_->CString());
-}
-
 void UopFCmp::formatString(FILE *fp) {
     switch (kind_) {
         case COMP_KIND::EQU:
-            fprintf(fp, "feq");
+            fprintf(fp, "\tfeq\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case COMP_KIND::LTH:
-            fprintf(fp, "flt");
+            fprintf(fp, "\tflt\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case COMP_KIND::LEQ:
-            fprintf(fp, "fle");
+            fprintf(fp, "\tfle\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         default:
             panic("unexpected");
     }
-    fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }
 
 void UopIBin::formatString(FILE *fp) {
-    fprintf(fp, "\t");
     switch (kind_) {
         case IBIN_KIND::ADD:
-            fprintf(fp, "add");
+            fprintf(fp, "\taddw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SUB:
-            fprintf(fp, "sub");
+            fprintf(fp, "\tsubw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::MUL:
-            fprintf(fp, "mul");
+            fprintf(fp, "\tmulw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::DIV:
-            fprintf(fp, "div");
+            fprintf(fp, "\tdivw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::REM:
-            fprintf(fp, "rem");
+            fprintf(fp, "\tremw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::AND:
-            fprintf(fp, "and");
+            fprintf(fp, "\tand\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::OR:
-            fprintf(fp, "or");
+            fprintf(fp, "\tor\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::XOR:
-            fprintf(fp, "xor");
+            fprintf(fp, "\txor\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SLL:
-            fprintf(fp, "sll");
+            fprintf(fp, "\tsllw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SRA:
-            fprintf(fp, "sra");
+            fprintf(fp, "\tsraw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SRL:
-            fprintf(fp, "srl");
+            fprintf(fp, "\tsrlw\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            break;
+        case IBIN_KIND::LNOT:
+            fprintf(fp, "\tseqz\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
     }
-    fprintf(fp, "w\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }
 
 void UopIBin64::formatString(FILE *fp) {
-    fprintf(fp, "\t");
     switch (kind_) {
         case IBIN_KIND::ADD:
-            fprintf(fp, "add");
+            fprintf(fp, "\tadd\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SUB:
-            fprintf(fp, "sub");
+            fprintf(fp, "\tsub\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::MUL:
-            fprintf(fp, "mul");
+            fprintf(fp, "\tmul\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::DIV:
-            fprintf(fp, "div");
+            fprintf(fp, "\tdiv\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::REM:
-            fprintf(fp, "rem");
+            fprintf(fp, "\trem\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::AND:
-            fprintf(fp, "and");
+            fprintf(fp, "\tand\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::OR:
-            fprintf(fp, "or");
+            fprintf(fp, "\tor\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::XOR:
-            fprintf(fp, "xor");
+            fprintf(fp, "\txor\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SLL:
-            fprintf(fp, "sll");
+            fprintf(fp, "\tsll\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SRA:
-            fprintf(fp, "sra");
+            fprintf(fp, "\tsra\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case IBIN_KIND::SRL:
-            fprintf(fp, "srl");
+            fprintf(fp, "\tsrl\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            break;
+        case IBIN_KIND::LNOT:
+            fprintf(fp, "\tseqz\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
     }
-    fprintf(fp, "\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
 }
 
 void UopIBinImm::formatString(FILE *fp) {
@@ -395,49 +388,47 @@ void UopIBinImm64::formatString(FILE *fp) {
 }
 
 void UopFBin::formatString(FILE *fp) {
-    fprintf(fp, "\tf");
     switch (kind_) {
         case FBIN_KIND::ADD:
-            fprintf(fp, "add\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfadd\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::SUB:
-            fprintf(fp, "sub\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfsub\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::MUL:
-            fprintf(fp, "mul\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfmul\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::DIV:
-            fprintf(fp, "div\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfdiv\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::MAX:
-            fprintf(fp, "max\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfmax\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::MIN:
-            fprintf(fp, "min\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
+            fprintf(fp, "\tfmin\t%s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString());
             break;
         case FBIN_KIND::ABS:
-            fprintf(fp, "abs\t%s, %s\n", dst_->CString(), lhs_->CString());
+            fprintf(fp, "\tfabs\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
         case FBIN_KIND::NEG:
-            fprintf(fp, "neg\t%s, %s\n", dst_->CString(), lhs_->CString());
+            fprintf(fp, "\tfneg\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
     }
 }
 
 void UopFTri::formatString(FILE *fp) {
-    fprintf(fp, "\tf");
     switch (kind_) {
         case FTRI_KIND::MADD:
-            fprintf(fp, "madd\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
+            fprintf(fp, "\tfmadd\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
             break;
         case FTRI_KIND::MSUB:
-            fprintf(fp, "msub\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
+            fprintf(fp, "\tfmsub\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
             break;
         case FTRI_KIND::NMADD:
-            fprintf(fp, "nmadd\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
+            fprintf(fp, "\tfnmadd\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
             break;
         case FTRI_KIND::NMSUB:
-            fprintf(fp, "nmsub\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
+            fprintf(fp, "\tfnmsub\t%s, %s, %s, %s\n", dst_->CString(), lhs_->CString(), rhs_->CString(), ahs_->CString());
             break;
     }
 }

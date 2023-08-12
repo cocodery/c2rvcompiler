@@ -663,12 +663,6 @@ void UopFLoadLB::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan
     abb->Push(new riscv::FLW_LB(dst_->GetRealRegIdx(), sym_.c_str(), helper));
 }
 
-void UopLNot::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
-    UseVirtReg(abb, plan, src_);
-
-    abb->Push(new riscv::SEQZ(dst_->GetRealRegIdx(), src_->GetRealRegIdx()));
-}
-
 void UopFCmp::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
     UseVirtReg(abb, plan, lhs_);
     UseVirtReg(abb, plan, rhs_);
@@ -726,6 +720,9 @@ void UopIBin::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         case IBIN_KIND::SRL:
             abb->Push(new riscv::SRLW(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx(), rhs_->GetRealRegIdx()));
             break;
+        case IBIN_KIND::LNOT:
+            abb->Push(new riscv::SEQZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
+            break;
     }
 }
 
@@ -766,6 +763,9 @@ void UopIBin64::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan)
             break;
         case IBIN_KIND::SRL:
             abb->Push(new riscv::SRL(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx(), rhs_->GetRealRegIdx()));
+            break;
+        case IBIN_KIND::LNOT:
+            abb->Push(new riscv::SEQZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
             break;
     }
 }

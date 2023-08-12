@@ -57,7 +57,7 @@ class RLProgress final : public Serializable {
     void MeetCallSelf();
 
     void DoFIFOSchedule();
-    void DoCallSchedule();
+    void DoFastUseSchedule();
     void DoAssignment();
     void DoToAsm(AsmProgress *apg);
 

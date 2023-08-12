@@ -1,6 +1,6 @@
 #pragma once
 
-enum SCHED_TYPE {
+enum class SCHED_TYPE {
     FENCE,
 
     IMISC,

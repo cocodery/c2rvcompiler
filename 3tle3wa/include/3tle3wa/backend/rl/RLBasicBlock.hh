@@ -68,7 +68,7 @@ class RLBasicBlock final : public Serializable {
     bool IsLiveOut(size_t vridx);
 
     void FIFOSchedule();
-    void CallSchedule();
+    void FastUseSchedule();
 
     // for liveness calculation
     void InitCalculation();

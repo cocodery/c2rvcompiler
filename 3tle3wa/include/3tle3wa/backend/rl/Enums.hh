@@ -29,6 +29,9 @@ enum class IBIN_KIND {
     XOR,
     AND,
     OR,
+    LNOT,
+    // NOT,
+    // NEG,
 };
 
 enum class FBIN_KIND {

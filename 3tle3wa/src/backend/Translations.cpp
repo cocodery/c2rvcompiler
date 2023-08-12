@@ -1439,15 +1439,16 @@ void InternalTranslation::Translate(CallInst *ll, InternalTranslationContext &ct
     if (callee->IsLibFunction()) {
         bool meet = false;
 
-        uop->SetLibCall(true);
-
-        rlps_->MeetLibCall();
-
         do /* sylib */ {
             auto sylib_func = dynamic_cast<SYSYLibFunction *>(callee.get());
             if (sylib_func == nullptr) {
                 break;
             }
+
+            uop->SetLibCall(true);
+
+            rlps_->MeetLibCall();
+
             uop->SetCallee(sylib_func->GetFuncName());
 
             make_param(-1);
@@ -1455,7 +1456,7 @@ void InternalTranslation::Translate(CallInst *ll, InternalTranslationContext &ct
             meet = true;
         } while (0);
 
-        do /* sylib */ {
+        do /* stdlib */ {
             auto llvm_func = dynamic_cast<LLVMLibFunction *>(callee.get());
             if (llvm_func == nullptr) {
                 break;

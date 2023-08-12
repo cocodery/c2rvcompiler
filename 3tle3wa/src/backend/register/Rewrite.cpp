@@ -194,11 +194,6 @@ void UopFStore::REWRITE() {
     LOAD(src_);
 }
 
-void UopLNot::REWRITE() {
-    LOAD(src_);
-    STORE(dst_);
-}
-
 void UopFCmp::REWRITE() {
     LOAD(lhs_);
     LOAD(rhs_);

@@ -39,6 +39,8 @@ void AsmGen::formatString(FILE *fp) {
 
     fprintf(fp, "%s", libfstl);
 
+    fprintf(fp, "%s", libcrvc);
+
     // compiler tag
     fprintf(fp, "\t.ident\t\"c2rv: " VERSION "\"\n");
 }

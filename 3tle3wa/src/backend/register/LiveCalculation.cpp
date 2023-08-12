@@ -15,6 +15,7 @@
 #include "3tle3wa/backend/rl/RLUop.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/backend/scheduler/FIFO.hh"
+#include "3tle3wa/backend/scheduler/FastUse.hh"
 #include "3tle3wa/backend/scheduler/SchedMachine.hh"
 #include "3tle3wa/backend/utils.hh"
 #include "3tle3wa/ir/IR.hh"
@@ -26,6 +27,8 @@ void RLProgress::DoAssignment() {
     // after this scheduler
     // other scheduler should operate on view not on raw
     DoFIFOSchedule();
+
+    // DoFastUseSchedule();
 
     rewrite();
 
@@ -195,33 +198,3 @@ void RLBasicBlock::CalculateInterval() {
         vr->GenSegment(loop_info_.loop_time);
     }
 }
-
-void RLProgress::DoFIFOSchedule() {
-    for (auto &&rlbb : rlbbs_) {
-        rlbb->FIFOSchedule();
-    }
-}
-
-void RLBasicBlock::FIFOSchedule() {
-    SchedMachine mach(std::make_unique<SchedFIFO>());
-
-    for (auto &&uop : uops_) {
-        auto item = std::make_unique<RLSchedItem>();
-        item->uop = uop.get();
-
-        mach.Push(std::move(item));
-    }
-
-    mach.Sched();
-
-    auto fifo = dynamic_cast<SchedFIFO *>(mach.Policy());
-
-    for (auto &&item : fifo->View()) {
-        auto rlitem = dynamic_cast<RLSchedItem *>(item);
-        uops_view_.push_back(rlitem->uop);
-    }
-}
-
-void RLProgress::DoCallSchedule() {}
-
-void RLBasicBlock::CallSchedule() {}

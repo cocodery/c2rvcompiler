@@ -7,6 +7,7 @@
 
 #include "3tle3wa/backend/Interface.hh"
 #include "3tle3wa/backend/rl/Enums.hh"
+#include "3tle3wa/backend/scheduler/Enums.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 
 class VirtualRegister;
@@ -26,19 +27,24 @@ class UopGeneral : public Serializable {
     virtual VirtualRegister *GetResult() const = 0;
 
     virtual bool IsCall() { return false; }
+    virtual bool IsStore() { return false; }
+    virtual bool IsLoad() { return false; }
 
     virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan) = 0;
 
     virtual void Rewrite(std::list<UopGeneral *>::iterator it, RLBasicBlock *rlbb, RLPlanner *plan) = 0;
 
+    virtual SCHED_TYPE GetSchedType() = 0;
+
     virtual ~UopGeneral() = default;
 };
 
-#define VIRTTBL()                                             \
-    const std::vector<VirtualRegister *> GetOperands() const; \
-    VirtualRegister *GetResult() const;                       \
-    virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);  \
-    virtual void Rewrite(std::list<UopGeneral *>::iterator it, RLBasicBlock *rlbb, RLPlanner *plan);
+#define VIRTTBL()                                                                                          \
+    virtual const std::vector<VirtualRegister *> GetOperands() const final;                                \
+    virtual VirtualRegister *GetResult() const final;                                                      \
+    virtual void ToAsm(AsmBasicBlock *abb, RLPlanner *plan) final;                                         \
+    virtual void Rewrite(std::list<UopGeneral *>::iterator it, RLBasicBlock *rlbb, RLPlanner *plan) final; \
+    virtual SCHED_TYPE GetSchedType() final;
 
 class UopRet : public UopGeneral {
     VirtualRegister *retval_{nullptr};
@@ -270,22 +276,6 @@ class UopFStore : public UopGeneral {
     void SetSrc(VirtualRegister *src);
     void SetBase(VirtualRegister *base);
     void SetOff(int32_t off);
-};
-
-class UopLNot : public UopGeneral {
-    VirtualRegister *src_{nullptr};
-
-    VirtualRegister *dst_{nullptr};
-
-    void formatString(FILE *fp) final;
-
-   public:
-    VIRTTBL();
-
-    COMP_KIND GetKind() const;
-
-    void SetSrc(VirtualRegister *lhs);
-    void SetDst(VirtualRegister *dst);
 };
 
 class UopFCmp : public UopGeneral {
