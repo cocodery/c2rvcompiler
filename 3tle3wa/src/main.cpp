@@ -112,33 +112,33 @@ int main(int argc, char *argv[]) {
         comp_unit.generatellvmIR(irfile);
     }
 
-    std::unique_ptr<AsmGen> asmgen = nullptr;
+    // std::unique_ptr<AsmGen> asmgen = nullptr;
 
-    if (output != nullptr or dbgfile != nullptr) {
-        RLGen rlgen;
-        rlgen.Register(comp_unit);
+    // if (output != nullptr or dbgfile != nullptr) {
+    //     RLGen rlgen;
+    //     rlgen.Register(comp_unit);
 
-        Log("generating asm");
+    //     Log("generating asm");
 
-        rlgen.SerialGenerate();
+    //     rlgen.SerialGenerate();
 
-        if (dbgfile != nullptr) {
-            Log("output backend ir file");
+    //     if (dbgfile != nullptr) {
+    //         Log("output backend ir file");
 
-            std::fstream fs(dbgfile, std::ios::out);
-            fs << rlgen.CString();
-        }
+    //         std::fstream fs(dbgfile, std::ios::out);
+    //         fs << rlgen.CString();
+    //     }
 
-        asmgen = std::move(rlgen.ExportAsmGen());
-    }
+    //     asmgen = std::move(rlgen.ExportAsmGen());
+    // }
 
-    if (output != nullptr and asmgen != nullptr) {
-        Log("output asm file");
+    // if (output != nullptr and asmgen != nullptr) {
+    //     Log("output asm file");
 
-        std::fstream fs(output, std::ios::out);
-        fs << asmgen->CString();
-    }
+    //     std::fstream fs(output, std::ios::out);
+    //     fs << asmgen->CString();
+    // }
 
-    Log("out main");
+    // Log("out main");
     return 0;
 }
