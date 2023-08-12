@@ -9,6 +9,7 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/use.hh"
+#include "3tle3wa/pass/analysis/structure/structure.hh"
 
 typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
@@ -21,7 +22,7 @@ static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> old_to_new;  // old variant mapping to updated one
 
 void LoopUnrolling(NormalFuncPtr);
-void ExpandLoop(Loop *);
+bool ExpandLoop(Loop *);
 void FullyExpand(int, Loop *);
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);

@@ -1,28 +1,41 @@
 #include "3tle3wa/pass/interprocedural/loop/loopunrolling.hh"
+
 void LoopUnrolling::LoopUnrolling(NormalFuncPtr func) {
     auto &&loops = func->loops;
-    ExpandLoop(loops);
+    assert(ExpandLoop(loops) == false);
 }
 
-void LoopUnrolling::ExpandLoop(Loop *loop) {
-    for (auto &&sub_loop : loop->sub_structures) {
-        ExpandLoop(static_cast<Loop *>(sub_loop));
+bool LoopUnrolling::ExpandLoop(Loop *loop) {
+    auto &&sub_loops = loop->sub_structures;
+    for (auto &&iter = sub_loops.begin(); iter != sub_loops.end();) {
+        auto &&sub_loop = static_cast<Loop *>(*iter);
+        if (ExpandLoop(sub_loop)) {
+            StructureAnalysis::RmvLoopInNode2Loop(sub_loop);
+            iter = sub_loops.erase(iter);
+        } else {
+            ++iter;
+        }
     }
     if (loop->before_blk) {
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
+        // cout << "Loop_" << loop->depth << endl;
+        // cout << loop->IsSimpleLoop() << ' ' << loop_blks.size() << ' ' << LoopTime(loop) << endl;
         if (loop->IsSimpleLoop() == false) {
-            return;
+            return false;
         }
         if (loop_blks.size() > 1) {
-            return;
+            return false;
         }
         auto loop_time = LoopTime(loop);
         if (loop_time == 0 || loop_time > 100) {
-            return;
+            return false;
         }
         FullyExpand(loop_time, loop);
+        return true;
     }
+    assert(loop->parent == nullptr);
+    return false;
 }
 
 void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
