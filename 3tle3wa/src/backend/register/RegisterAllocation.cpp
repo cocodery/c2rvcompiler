@@ -81,7 +81,7 @@ bool InterferenceGraph::KempeOptimistic(std::set<size_t> &args, std::set<size_t>
     all.insert(callers.begin(), callers.end());
     all.insert(callees.begin(), callees.end());
 
-    std::priority_queue<pack, std::vector<pack>, std::greater<>> pq;
+    std::priority_queue<pack> pq;
     std::vector<IGNode *> spills;
 
     for (auto &&node : nodes_) {

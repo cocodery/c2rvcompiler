@@ -79,6 +79,7 @@ class UopCall : public UopGeneral {
 
     void PushParam(VirtualRegister *param);
     void PushLiver(VirtualRegister *liver);
+    void PushParamLiver();
 };
 
 class UopLui : public UopGeneral {

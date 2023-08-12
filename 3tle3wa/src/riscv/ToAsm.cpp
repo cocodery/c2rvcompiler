@@ -27,7 +27,7 @@ static inline void UseVirtReg(AsmBasicBlock *abb, RLPlanner *plan, VirtualRegist
 
     if (vr->IsSaving()) {
         auto off = vr->GetSaveInfo();
-        plan->Recover(off);
+        plan->Recover(vr->GetRealRegIdx());
 
         int64_t real_off = -(int64_t)off;
         if (real_off < 0 and ImmWithin(12, real_off)) {
@@ -117,44 +117,41 @@ void RLPlanner::RecoverBeforeRet(CRVC_UNUSE AsmBasicBlock *abb) {
     }
 }
 
-void RLPlanner::Recover(size_t off) { save_stack_.at(off / 8 - 1) = nullptr; }
+void RLPlanner::Recover(size_t idx) {
+    auto &&tpl = save_stack_.at(idx);
+    std::get<1>(tpl) = false;
+    std::get<2>(tpl) = nullptr;
+}
 
 size_t RLPlanner::BeforeCall(AsmBasicBlock *abb, const std::unordered_set<VirtualRegister *> &livings) {
     for (auto &&live : livings) {
         if (not live->IsSaving()) {
-            bool allocated = false;
-            for (size_t i = 0; i < save_stack_.size(); ++i) {
-                if (save_stack_[i] == nullptr) {
-                    live->SetSavingOff(8 * (i + 1));
-                    save_stack_[i] = live;
-                    allocated = true;
-                    SaveVirtReg(abb, live);
-                    break;
-                }
+            auto rridx = live->GetRealRegIdx();
+
+            if (auto fnd = save_stack_.find(rridx); fnd != save_stack_.end()) {
+                auto &&tpl = fnd->second;
+                Assert(std::get<1>(tpl) == false and std::get<2>(tpl) == nullptr, "should free before saving again");
+                live->SetSavingOff(std::get<0>(tpl));
+                std::get<1>(tpl) = true;
+                std::get<2>(tpl) = live;
+            } else {
+                auto siz = save_stack_.size();
+                auto tpl = std::make_tuple((siz + 1) * 8, true, live);
+                live->SetSavingOff(std::get<0>(tpl));
+                save_stack_.emplace(rridx, std::move(tpl));
             }
 
-            if (not allocated) {
-                save_stack_.push_back(live);
-                live->SetSavingOff(save_stack_.size() * 8);
-                SaveVirtReg(abb, live);
-            }
+            SaveVirtReg(abb, live);
         }
     }
 
-    size_t siz = -1;
-    for (size_t i = 0; i < save_stack_.size(); ++i) {
-        if (save_stack_[i] != nullptr) {
-            siz = i;
-        }
-    }
-
-    return (siz + 1) * 8;
+    return save_stack_.size() * 8;
 }
 
-void RLPlanner::RecoverCall(AsmBasicBlock *abb) {
-    for (size_t i = 0; i < save_stack_.size(); ++i) {
-        if (save_stack_[i] != nullptr) {
-            UseVirtReg(abb, this, save_stack_[i]);
+void RLPlanner::RecoverCall(AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
+    for (auto &&[rridx, elem] : save_stack_) {
+        if (std::get<1>(elem)) {
+            UseVirtReg(abb, this, std::get<2>(elem));
         }
     }
     save_stack_.clear();
@@ -186,7 +183,19 @@ void UopRet::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
 }
 
 void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
+    std::unordered_set<VirtualRegister *> arg_param;
+    for (auto &&p : params_) {
+        if (p->IsOnStk()) {
+            continue;
+        }
+        if ((abi_reg_info.i.caller_save.count(p->GetRealRegIdx()) or abi_reg_info.f.caller_save.count(p->GetRealRegIdx())) and
+            not living_regs_.count(p)) {
+            arg_param.insert(p);
+        }
+    }
+
     auto pstk_siz = plan->BeforeCall(abb, living_regs_);
+    pstk_siz = plan->BeforeCall(abb, arg_param);
 
     std::unordered_map<size_t, std::pair<size_t, VirtualRegister *>> used_args;
 
@@ -459,6 +468,11 @@ void UopCall::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         }
     }
 
+    for (auto &&p : arg_param) {
+        plan->Recover(p->GetRealRegIdx());
+        p->SetSavingOff(0);
+    }
+
     if (libcall_) {
         if (stk_top) abb->Push(new riscv::ADDI(riscv::sp, riscv::sp, -stk_top));
         abb->Push(new riscv::CALL(callee_.c_str()));
@@ -646,7 +660,7 @@ void UopFLoadLB::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan
         helper = helper_->GetRealRegIdx();
     }
 
-    abb->Push(new riscv::FSW_LB(dst_->GetRealRegIdx(), sym_.c_str(), helper));
+    abb->Push(new riscv::FLW_LB(dst_->GetRealRegIdx(), sym_.c_str(), helper));
 }
 
 void UopLNot::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {

@@ -32,6 +32,8 @@ void UopCall::PushLiver(VirtualRegister *liver) {
     living_regs_.insert(liver);
 }
 
+void UopCall::PushParamLiver() { living_regs_.insert(params_.begin(), params_.end()); }
+
 void UopLui::SetDst(VirtualRegister *dst) { dst_ = dst; }
 
 void UopLui::SetImm(uint32_t imm) { imm_up20_ = imm; }

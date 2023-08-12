@@ -8,9 +8,6 @@ size_t StackInfo::GetStackIdx() { return stk_idx_; }
 size_t StackInfo::GetStackLength() { return stk_len_; }
 
 size_t StackInfo::GetStackOff() {
-    if (is_param_) {
-        return param_offset_;
-    }
     return offset_;
 }
 

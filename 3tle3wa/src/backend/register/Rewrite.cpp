@@ -47,6 +47,7 @@ static inline VirtualRegister *load(std::list<UopGeneral *>::iterator it, RLBasi
     auto off = si->GetStackOff();
     auto to = plan->NewVReg(from->GetVRType());
     to->SetCanSpill(false);
+    to->SetStackInfo(si);
 
     if (from->UseFGPR()) {
         auto uop = new UopFLoad;
@@ -79,6 +80,7 @@ static inline VirtualRegister *store(std::list<UopGeneral *>::iterator it, RLBas
     auto off = si->GetStackOff();
     auto from = plan->NewVReg(to->GetVRType());
     from->SetCanSpill(false);
+    from->SetStackInfo(si);
 
     it++;
 
@@ -152,16 +154,28 @@ void UopBranch::REWRITE() { LOAD(cond_); }
 void UopJump::REWRITE() {}
 
 void UopLoad::REWRITE() {
+    if (base_ == nullptr) {
+        off_lo12_ = dst_->GetStackInfo()->GetStackOff();
+        return;
+    }
     LOAD(base_);
     STORE(dst_);
 }
 
 void UopStore::REWRITE() {
+    if (base_ == nullptr) {
+        off_lo12_ = src_->GetStackInfo()->GetStackOff();
+        return;
+    }
     LOAD(base_);
     LOAD(src_);
 }
 
 void UopFLoad::REWRITE() {
+    if (base_ == nullptr) {
+        off_lo12_ = dst_->GetStackInfo()->GetStackOff();
+        return;
+    }
     LOAD(base_);
     STORE(dst_);
 }
@@ -172,6 +186,10 @@ void UopFLoadLB::REWRITE() {
 }
 
 void UopFStore::REWRITE() {
+    if (base_ == nullptr) {
+        off_lo12_ = src_->GetStackInfo()->GetStackOff();
+        return;
+    }
     LOAD(base_);
     LOAD(src_);
 }

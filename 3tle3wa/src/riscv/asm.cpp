@@ -71,7 +71,7 @@ FLW_LB::FLW_LB(uint64_t frd, const char *sym, uint64_t rt) : Instruction(frd, rt
 
 FSW_LB::FSW_LB(uint64_t frs, const char *sym, uint64_t rt) : Instruction(riscv::zero, frs, rt) {
     // avoid format
-    GENINST("fld" TAB "%s" COMMA "%s" COMMA "%s", gpr[frs], sym, gpr[rt]);
+    GENINST("fsw" TAB "%s" COMMA "%s" COMMA "%s", gpr[frs], sym, gpr[rt]);
 }
 
 //

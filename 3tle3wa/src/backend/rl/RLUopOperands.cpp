@@ -167,8 +167,12 @@ VirtualRegister *UopIBinImm64::GetResult() const { return dst_; }
 
 const VecVR UopFBin::GetOperands() const {
     VecVR vec;
-    vec.push_back(lhs_);
-    vec.push_back(rhs_);
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
     return vec;
 }
 

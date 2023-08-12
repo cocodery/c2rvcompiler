@@ -4,6 +4,7 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "3tle3wa/backend/Interface.hh"
@@ -83,6 +84,6 @@ class RLBasicBlock final : public Serializable {
     void Rewrite();
     std::list<UopGeneral *>::iterator InsertToView(std::list<UopGeneral *>::iterator it, UopGeneral *uop);
 
-    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan);
-    void GetCallMapInfo(std::unordered_map<size_t, UopCall *> &call_map);
+    void ToAsm(AsmBasicBlock *abb, RLPlanner *plan, const std::unordered_set<size_t> &last_call);
+    void GetCallMapInfo(std::unordered_map<size_t, UopCall *> &call_map, std::unordered_set<size_t> &last_call);
 };

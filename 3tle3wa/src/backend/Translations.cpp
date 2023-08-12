@@ -64,7 +64,6 @@ void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
 }
 
 void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, InternalTranslationContext &ctx) {
-    auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
 
     if (cinfo.v32_.u32_ == 0) {
         auto uop = new UopLi;
@@ -73,6 +72,8 @@ void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
 
         ctx.cur_blk->PushUop(uop);
     } else {
+        auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
+        
         if (auto fnd = ctx.fimm_map.find(cinfo.v32_.u32_); fnd != ctx.fimm_map.end()) {
             auto uop = new UopMv;
             uop->SetSrc(fnd->second);
@@ -707,7 +708,7 @@ void InternalTranslation::Translate(IBinaryInst *ll, InternalTranslationContext 
 
         vrrhs = ctx.planner->NewVReg(VREG_TYPE::INT);
 
-        if (opcode == OP_DIV and std::log(cinfo.v32_.i32_) <= 28) {
+        if (opcode == OP_DIV and std::log(cinfo.v32_.i32_) <= 16) {
             auto magic = Magika(cinfo.v32_.i32_);
             ConstValueInfo cvi;
             cvi.width_ = 32;
@@ -787,7 +788,7 @@ void InternalTranslation::Translate(IBinaryInst *ll, InternalTranslationContext 
             ctx.cur_blk->PushUop(op4);
 
             return;
-        } else if (opcode == OP_REM and std::log(cinfo.v32_.i32_) <= 25) {
+        } else if (opcode == OP_REM and std::log(cinfo.v32_.i32_) <= 16) {
             auto magic = Magika(cinfo.v32_.i32_);
             ConstValueInfo cvi;
             cvi.width_ = 32;
@@ -1308,12 +1309,11 @@ void InternalTranslation::Translate(GetElementPtrInst *ll, InternalTranslationCo
         panic("unexpected");
     }
 
-    auto resvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
-
     if (base->IsGlobalValue()) {
         auto gv = dynamic_cast<GlobalValue *>(base.get());
         Assert(gv, "bad dynamic cast");
 
+        auto resvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
         auto gvidx = gv->GetGlobalValueIdx();
 
         if (off == nullptr) {
@@ -1347,14 +1347,20 @@ void InternalTranslation::Translate(GetElementPtrInst *ll, InternalTranslationCo
         auto vr_addr = ctx.planner->GetVReg(addr->GetVariableIdx());
 
         if (immoff) {
-            auto uop_add = new UopIBinImm64;
-            uop_add->SetLhs(vr_addr);
-            uop_add->SetImm(imm);
-            uop_add->SetDst(resvr);
-            uop_add->SetKind(IBIN_KIND::ADD);
+            if (imm == 0) {
+                ctx.planner->Link(res->GetVariableIdx(), vr_addr->GetVRIdx());
+            } else {
+                auto resvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
+                auto uop_add = new UopIBinImm64;
+                uop_add->SetLhs(vr_addr);
+                uop_add->SetImm(imm);
+                uop_add->SetDst(resvr);
+                uop_add->SetKind(IBIN_KIND::ADD);
 
-            ctx.cur_blk->PushUop(uop_add);
+                ctx.cur_blk->PushUop(uop_add);
+            }
         } else {
+            auto resvr = ctx.planner->AllocVReg(VREG_TYPE::PTR, res->GetVariableIdx());
             auto uop_add = new UopIBin64;
             uop_add->SetRhs(vr_addr);
             uop_add->SetLhs(off);

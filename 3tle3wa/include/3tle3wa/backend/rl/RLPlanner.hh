@@ -39,7 +39,7 @@ class RLPlanner final : public Serializable {
 
     std::set<size_t> used_real_regs_;
 
-    std::vector<VirtualRegister *> save_stack_;
+    std::unordered_map<size_t, std::tuple<size_t, bool, VirtualRegister *>> save_stack_;
 
     void formatString(FILE *fp) final;
 
@@ -67,9 +67,9 @@ class RLPlanner final : public Serializable {
     void ResetRAInfo();
     void GenerateCallInfo(const std::unordered_map<size_t, UopCall *> &call_map);
     void Init(AsmBasicBlock *abb);
-    void Recover(size_t off);
+    void Recover(size_t idx);
     size_t BeforeCall(AsmBasicBlock *abb, const std::unordered_set<VirtualRegister *> &livings);
-    void RecoverCall(AsmBasicBlock *abb);
+    void RecoverCall(AsmBasicBlock *abb, RLPlanner *plan);
     void RecoverBeforeRet(AsmBasicBlock *abb);
 
     

@@ -20,42 +20,46 @@ void RLProgress::DoToAsm(AsmProgress *apg) {
     auto init = apg->CreateEntryBlock();
     planner_->Init(init);
 
-    do {
-        std::unordered_map<size_t, UopCall *> call_map;
-        for (auto &&rlbb : rlbbs_) {
-            rlbb->GetCallMapInfo(call_map);
-        }
+    std::unordered_map<size_t, UopCall *> call_map;
+    std::unordered_set<size_t> last_calls;
+    for (auto &&rlbb : rlbbs_) {
+        rlbb->GetCallMapInfo(call_map, last_calls);
+    }
 
-        planner_->GenerateCallInfo(call_map);
-    } while (0);
+    planner_->GenerateCallInfo(call_map);
 
     apg->SetFirstBlk(rlbbs_.front()->GetLabelIdx());
 
     for (auto &&rlbb : rlbbs_) {
         auto abb = std::make_unique<AsmBasicBlock>(rlbb->GetLabelIdx(), apg);
-        rlbb->ToAsm(abb.get(), planner_.get());
+        rlbb->ToAsm(abb.get(), planner_.get(), last_calls);
         apg->Push(std::move(abb), abb->IsRet());
     }
 
     apg->DoOptimization();
 }
 
-void RLBasicBlock::GetCallMapInfo(std::unordered_map<size_t, UopCall *> &call_map) {
+void RLBasicBlock::GetCallMapInfo(std::unordered_map<size_t, UopCall *> &call_map, std::unordered_set<size_t> &last_call) {
+    size_t idx = 0;
     for (auto &&uop : uops_view_) {
         if (uop->IsCall()) {
+            idx = uop->GetUopIdx();
             auto call = dynamic_cast<UopCall *>(uop);
-            call_map.emplace(uop->GetUopIdx(), call);
+            call_map.emplace(idx, call);
         }
+    }
+
+    if (idx != 0) {
+        last_call.insert(idx);
     }
 }
 
-void RLBasicBlock::ToAsm(AsmBasicBlock *abb, RLPlanner *plan) {
-    auto end2 = --uops_view_.end();
+void RLBasicBlock::ToAsm(AsmBasicBlock *abb, RLPlanner *plan, const std::unordered_set<size_t> &last_call) {
     for (auto it = uops_view_.begin(); it != uops_view_.end(); ++it) {
-        if (it == end2) {
-            plan->RecoverCall(abb);
-        }
         (*it)->ToAsm(abb, plan);
+        if (last_call.count((*it)->GetUopIdx())) {
+            plan->RecoverCall(abb, plan);
+        }
     }
 }
 

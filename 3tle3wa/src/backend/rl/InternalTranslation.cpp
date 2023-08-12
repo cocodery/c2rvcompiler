@@ -61,6 +61,7 @@ void InternalTranslation::DoTranslation() {
         ctx.cur_blk = rlbb.get();
         ctx.meet_tail = false;
         ctx.lui_map.clear();
+        ctx.fimm_map.clear();
 
         for (auto &&inst : (*cur_cfgit)->GetInstList()) {
             inst->TranslateTo(*this, ctx);

@@ -71,28 +71,24 @@ std::set<size_t> InterferenceGraph::IGNode::InterferWith(
 
 bool InterferenceGraph::IGNode::operator<(const IGNode &other) const {
     if (not ref_->CanSpill() and other.ref_->CanSpill()) {
-        return true;
-    }
-
-    if (GetDegree() < other.GetDegree()) {
-        return true;
-    } else if (GetDegree() > other.GetDegree()) {
         return false;
     }
 
-    return ref_->Weight() > other.ref_->Weight();
+    if (GetDegree() == other.GetDegree()) {
+        return ref_->Weight() < other.ref_->Weight();
+    }
+
+    return not (GetDegree() < other.GetDegree());
 }
 
 bool InterferenceGraph::IGNode::operator>(const IGNode &other) const {
-    if (ref_->CanSpill() and not other.ref_->CanSpill()) {
-        return false;
-    }
-
-    if (GetDegree() > other.GetDegree()) {
+    if (not ref_->CanSpill() and other.ref_->CanSpill()) {
         return true;
-    } else if (GetDegree() < other.GetDegree()) {
-        return false;
     }
 
-    return ref_->Weight() < other.ref_->Weight();
+    if (GetDegree() == other.GetDegree()) {
+        return ref_->Weight() > other.ref_->Weight();
+    }
+
+    return not (GetDegree() > other.GetDegree());
 }

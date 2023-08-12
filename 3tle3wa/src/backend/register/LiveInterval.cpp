@@ -17,6 +17,10 @@ void Segment::ExtendEnd(size_t end) { end_ = end; }
 LiveInterval::LiveInterval() : segs_(), live_size_(0) {}
 
 void LiveInterval::MakeSeg(size_t bgn, size_t end, VirtualRegister *belong_to) {
+    if (bgn == end) {
+        return;
+    }
+
     Segment seg(bgn, end, belong_to);
     live_size_ += end - bgn;
 
