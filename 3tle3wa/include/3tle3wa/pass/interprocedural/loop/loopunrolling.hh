@@ -14,8 +14,11 @@
 typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
 
+static bool init_flag;
+
 static std::set<BaseValuePtr> phi_results;
 static std::set<BaseValuePtr> loop_variants;
+static std::set<InstPtr> phi_to_update;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_out_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
@@ -27,10 +30,13 @@ bool ExpandLoop(Loop *);
 void FullyExpand(int, Loop *);
 void FullyExpand_mul_blks(int, Loop *);
 void AddJmpInst(CfgNodePtr &);
+void AddBranchInst(CfgNodePtr &);
+void AddPhiInst();
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);
 OpCode FlipComparisonOp(OpCode);
 Operands InstOperandsInVector(InstPtr);
-BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &, bool);
-BaseValuePtr OperandUpdate(BaseValuePtr, bool);
+BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &);
+BaseValuePtr OperandUpdate(const BaseValuePtr);
+CfgNodePtr CfgNodeUpdate(const CfgNodePtr);
 }  // namespace LoopUnrolling

@@ -19,8 +19,12 @@ bool LoopUnrolling::ExpandLoop(Loop *loop) {
     if (loop->before_blk) {
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
+        auto cond_begin = loop->cond_begin;
+        auto loop_exit = loop->loop_exit;
         if (loop->IsSimpleLoop() == false) {
-            std::cout << "not simple" << std::endl;
+            return false;
+        }
+        if (loop->sub_structures.size() != 0) {
             return false;
         }
         auto loop_time = LoopTime(loop);
@@ -28,8 +32,8 @@ bool LoopUnrolling::ExpandLoop(Loop *loop) {
             return false;
         }
         std::cout << "loop time: " << loop_time << std::endl;
-        FullyExpand(loop_time, loop);
-        // FullyExpand_mul_blks(loop_time, loop);
+        // FullyExpand(loop_time, loop);
+        FullyExpand_mul_blks(loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);
@@ -93,14 +97,14 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     // ENDS
 
     // copy insts
-    bool init_flag = true;
+    init_flag = true;
     for (int i = 0; i < loop_time; ++i) {
         for (auto &&inst : loop_end->GetInstList()) {
             if (inst->IsReturnInst() || inst->IsPhiInst()) {
                 return;
             }
             if (inst->IsStoreInst() == false) {
-                auto new_value = InstCopy(inst, before_blk, init_flag);
+                auto new_value = InstCopy(inst, before_blk);
                 if (new_value == nullptr) {
                     continue;
                 }
@@ -109,8 +113,8 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
                 auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
                 auto &&lhs = binary_inst_->GetLHS();
                 auto &&rhs = binary_inst_->GetRHS();
-                lhs = OperandUpdate(lhs, init_flag);
-                rhs = OperandUpdate(rhs, init_flag);
+                lhs = OperandUpdate(lhs);
+                rhs = OperandUpdate(rhs);
                 StoreInst::DoStoreValue(lhs, rhs, before_blk);
             }
         }
@@ -265,6 +269,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 if (const_val_in_phi->IsConstant() == false) {
                     return 0;
                 }
+                auto key_source_in_loop_body = operands.at(2 - const_check);
+                auto key_source_inst = key_source_in_loop_body->GetParent();
+                if (key_source_inst != key_parent) {
+                    // multi operations to loop key in loop body
+                    return 0;
+                }
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
                 if (!std::holds_alternative<int32_t>(constant_in_phi) &&
                     !std::holds_alternative<int64_t>(constant_in_phi)) {
@@ -278,6 +288,12 @@ int LoopUnrolling::LoopTime(Loop *loop) {
                 const_check = ConstCheck(phi_part_defined_in_loop);
                 auto const_val_in_phi = operands.at(const_check - 1);
                 if (const_val_in_phi->IsConstant() == false) {
+                    return 0;
+                }
+                auto key_source_in_loop_body = operands.at(2 - const_check);
+                auto key_source_inst = key_source_in_loop_body->GetParent();
+                if (key_source_inst != key_parent) {
+                    // multi operations to loop key in loop body
                     return 0;
                 }
                 auto constant_in_phi = std::static_pointer_cast<Constant>(const_val_in_phi)->GetValue();
@@ -406,14 +422,14 @@ Operands LoopUnrolling::InstOperandsInVector(InstPtr inst) {
     return operands_in_vector;
 }
 
-BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent, bool init_flag) {
+BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent) {
     assert(!(inst_->IsReturnInst() || inst_->IsPhiInst()));
     BaseValuePtr result = nullptr;
     OpCode opcode = inst_->GetOpCode();
     if (inst_->IsOneOprandInst()) {
         auto &&unary_inst_ = std::static_pointer_cast<UnaryInstruction>(inst_);
         auto &&oprand = unary_inst_->GetOprand();
-        oprand = OperandUpdate(oprand, init_flag);
+        oprand = OperandUpdate(oprand);
         if (opcode == Load) {
             result = LoadInst::DoLoadValue(oprand, parent);
         } else if (opcode == BitCast) {
@@ -434,8 +450,8 @@ BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent, bool in
         auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst_);
         auto &&lhs = binary_inst_->GetLHS();
         auto &&rhs = binary_inst_->GetRHS();
-        lhs = OperandUpdate(lhs, init_flag);
-        rhs = OperandUpdate(rhs, init_flag);
+        lhs = OperandUpdate(lhs);
+        rhs = OperandUpdate(rhs);
         if (binary_inst_->IsIBinaryInst()) {
             result = IBinaryInst::DoIBinOperate(opcode, lhs, rhs, parent);
         } else if (binary_inst_->IsFBinaryInst()) {
@@ -451,45 +467,21 @@ BaseValuePtr LoopUnrolling::InstCopy(InstPtr &inst_, CfgNodePtr &parent, bool in
         auto &&gep_inst_ = std::static_pointer_cast<GetElementPtrInst>(inst_);
         OffsetList off_list;
         for (auto &&off : gep_inst_->GetOffList()) {
-            auto result = OperandUpdate(off, init_flag);
+            auto result = OperandUpdate(off);
             off_list.push_back(result);
         }
-        auto new_addr = OperandUpdate(gep_inst_->GetBaseAddr(), init_flag);
+        auto new_addr = OperandUpdate(gep_inst_->GetBaseAddr());
         result = GetElementPtrInst::DoGetPointer(gep_inst_->GetStoreType(), new_addr, off_list, parent);
     } else if (inst_->IsCallInst()) {
         auto &&call_inst_ = std::static_pointer_cast<CallInst>(inst_);
         ParamList param_list;
         for (auto &&param : call_inst_->GetParamList()) {
-            auto result = OperandUpdate(param, init_flag);
+            auto result = OperandUpdate(param);
             param_list.push_back(result);
         }
         result = CallInst::DoCallFunction(call_inst_->GetRetType(), call_inst_->GetCalleeFunc(), param_list, parent);
     }
     assert((result != nullptr) || (inst_->IsCallInst()));
-    return result;
-}
-
-BaseValuePtr LoopUnrolling::OperandUpdate(BaseValuePtr operand, bool init_flag) {
-    BaseValuePtr result = nullptr;
-    if (phi_results.find(operand) == phi_results.end()) {
-        if (old_to_new[operand] == nullptr) {
-            return operand;
-        } else {
-            return old_to_new[operand];
-        }
-    }
-    if (init_flag) {
-        if (phi_source_defined_out_loop[operand] != nullptr) {
-            result = phi_source_defined_out_loop[operand];
-        }
-    }
-    auto old_value = phi_source_defined_in_loop[operand];
-    if (old_value != nullptr) {
-        if (old_to_new[old_value] != nullptr) {
-            result = old_to_new[old_value];
-        }
-    }
-    old_to_new[operand] = result;
     return result;
 }
 
@@ -525,6 +517,7 @@ void LoopUnrolling::FullyExpand_mul_blks(int loop_time, Loop *loop) {
     phi_source_updated.clear();
     old_to_new.clear();
     block_mapping.clear();
+    phi_to_update.clear();
 
     for (auto &&inst : cond_begin->GetInstList()) {
         if (inst->IsPhiInst()) {
@@ -555,7 +548,7 @@ void LoopUnrolling::FullyExpand_mul_blks(int loop_time, Loop *loop) {
     // ENDS
 
     // copy insts
-    bool init_flag = true;
+    init_flag = true;
     CfgNodePtr new_entry = nullptr;
     for (int i = 0; i < loop_time; ++i) {
         for (auto &&body_blk : loop_blks) {
@@ -564,50 +557,65 @@ void LoopUnrolling::FullyExpand_mul_blks(int loop_time, Loop *loop) {
             }
             auto new_blk = CtrlFlowGraphNode::CreatePtr(body_blk->GetParent(), body_blk->blk_attr.blk_type);
 
-            for (auto &&inst : body_blk->GetInstList()) {
-                if (inst->IsReturnInst() || inst->IsPhiInst() || inst->IsBranchInst()) {
-                    return;
-                }
-                if (inst->IsJumpInst()) {
-                    continue;
-                }
-                if (inst->IsStoreInst() == false) {
-                    auto new_value = InstCopy(inst, new_blk, init_flag);
-                    if (new_value == nullptr) {
-                        continue;
-                    }
-                    old_to_new[inst->GetResult()] = new_value;
-                } else {
-                    auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
-                    auto &&lhs = binary_inst_->GetLHS();
-                    auto &&rhs = binary_inst_->GetRHS();
-                    lhs = OperandUpdate(lhs, init_flag);
-                    rhs = OperandUpdate(rhs, init_flag);
-                    StoreInst::DoStoreValue(lhs, rhs, new_blk);
-                }
-            }
-            for (auto pair : old_to_new) {
-                phi_source_updated[pair.first] = old_to_new[pair.second];
-            }
-
             // get the beginning block of the new iteration and replace the loop_exit block of the previous iteration
             // with this block
             if (body_blk == loop_begin) {
                 if (init_flag == false) {
                     block_mapping[cond_begin] = new_blk;
                     AddJmpInst(cond_begin);
+                    AddBranchInst(cond_begin);
+                    AddPhiInst();
                 } else {
                     new_entry = new_blk;  // update new body entry
                 }
             }
+
+            for (auto &&inst : body_blk->GetInstList()) {
+                if (inst->IsReturnInst()) {
+                    return;
+                }
+                if (inst->IsJumpInst() || inst->IsBranchInst()) {
+                    continue;
+                }
+                if (inst->IsStoreInst() == false && inst->IsPhiInst() == false) {
+                    auto new_value = InstCopy(inst, new_blk);
+                    if (new_value == nullptr) {
+                        continue;
+                    }
+                    old_to_new[inst->GetResult()] = new_value;
+                } else if (inst->IsStoreInst() && inst->IsPhiInst() == false) {
+                    auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
+                    auto &&lhs = binary_inst_->GetLHS();
+                    auto &&rhs = binary_inst_->GetRHS();
+                    lhs = OperandUpdate(lhs);
+                    rhs = OperandUpdate(rhs);
+                    StoreInst::DoStoreValue(lhs, rhs, new_blk);
+                } else {
+                    auto old_phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                    auto new_phi_inst = PhiInst::CreatePtr(old_phi_inst->GetResult()->GetBaseType(), new_blk);
+                    auto datalist = old_phi_inst->GetDataList();
+                    new_phi_inst->SetOriginAlloca(old_phi_inst->GetOriginAlloca());
+                    for (auto &&pair : datalist) {
+                        new_phi_inst->InsertPhiData(new_phi_inst, pair.first, pair.second);
+                    }
+                    phi_to_update.insert(new_phi_inst);
+                    old_to_new[inst->GetResult()] = new_phi_inst->GetResult();
+                }
+            }
+            for (auto pair : old_to_new) {
+                phi_source_updated[pair.first] = old_to_new[pair.second];
+            }
+
             block_mapping[body_blk] = new_blk;
-            init_flag = false;
         }
+        init_flag = false;
     }
 
     // after the last iteration is completed, update the jump instruction for the blocks of the final iteration
     block_mapping[cond_begin] = loop_exit;
     AddJmpInst(cond_begin);
+    AddBranchInst(cond_begin);
+    AddPhiInst();
 
     // remove all loop blocks
     for (auto &&blk : loop_blks) {
@@ -627,16 +635,89 @@ void LoopUnrolling::FullyExpand_mul_blks(int loop_time, Loop *loop) {
 }
 
 void LoopUnrolling::AddJmpInst(CfgNodePtr &cond_begin) {
-    for (auto &&pair : block_mapping) {
-        auto &&new_one = pair.second;
-        auto &&old_one = pair.first;
+    for (auto &pair : block_mapping) {
+        auto &new_one = pair.second;
+        auto &old_one = pair.first;
         if (old_one == cond_begin) {
             continue;
         }
-        auto &&old_jmp = old_one->GetInstList().back();
+        auto &old_jmp = old_one->GetInstList().back();
+        if (old_jmp->IsJumpInst() == false) {
+            continue;
+        }
         auto old_jmp_inst = std::static_pointer_cast<JumpInst>(old_jmp);
         auto old_target = old_jmp_inst->GetTarget();
         auto new_jmp_inst = JumpInst::CreatePtr(block_mapping[old_target], new_one);
         new_one->InsertInstBack(new_jmp_inst);
     }
+}
+
+void LoopUnrolling::AddBranchInst(CfgNodePtr &cond_begin) {
+    for (auto &pair : block_mapping) {
+        auto &old_block = pair.first;
+        auto &new_block = pair.second;
+        if (old_block == cond_begin) {
+            continue;
+        }
+        auto &last_inst = old_block->GetInstList().back();
+        if (last_inst->IsBranchInst() == false) {
+            continue;
+        }
+        auto old_br = std::static_pointer_cast<BranchInst>(last_inst);
+        auto old_cond = old_br->GetCondition();
+        auto if_false = old_br->GetFalseTarget();
+        auto if_true = old_br->GetTrueTarget();
+        auto new_cond = OperandUpdate(old_cond);
+        auto new_if_false = CfgNodeUpdate(if_false);
+        auto new_if_true = CfgNodeUpdate(if_true);
+        auto new_br = BranchInst::CreatePtr(new_cond, new_if_true, new_if_false, new_block);
+        new_block->InsertInstBack(new_br);
+    }
+}
+
+void LoopUnrolling::AddPhiInst() {
+    for (auto &inst : phi_to_update) {
+        auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+        auto &datalist = phi_inst->GetRefList();
+        for (auto &pair : datalist) {
+            auto &source_val = pair.first;
+            auto &source_blk = pair.second;
+            source_val = OperandUpdate(source_val);
+            source_blk = CfgNodeUpdate(source_blk);
+        }
+    }
+    phi_to_update.clear();
+}
+
+BaseValuePtr LoopUnrolling::OperandUpdate(const BaseValuePtr operand) {
+    BaseValuePtr result = nullptr;
+    if (phi_results.find(operand) == phi_results.end()) {
+        if (old_to_new[operand] == nullptr) {
+            return operand;
+        } else {
+            return old_to_new[operand];
+        }
+    }
+    if (init_flag) {
+        if (phi_source_defined_out_loop[operand] != nullptr) {
+            result = phi_source_defined_out_loop[operand];
+        }
+    }
+    auto old_value = phi_source_defined_in_loop[operand];
+    if (old_value != nullptr) {
+        if (old_to_new[old_value] != nullptr) {
+            result = old_to_new[old_value];
+        }
+    }
+    old_to_new[operand] = result;
+    return result;
+}
+
+CfgNodePtr LoopUnrolling::CfgNodeUpdate(const CfgNodePtr cfgnode) {
+    if (block_mapping[cfgnode] == nullptr) {
+        return cfgnode;
+    }
+    CfgNodePtr result = nullptr;
+    result = block_mapping[cfgnode];
+    return result;
 }
