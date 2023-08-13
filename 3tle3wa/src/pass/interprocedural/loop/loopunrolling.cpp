@@ -19,19 +19,17 @@ bool LoopUnrolling::ExpandLoop(Loop *loop) {
     if (loop->before_blk) {
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
-        // cout << "Loop_" << loop->depth << endl;
-        // cout << loop->IsSimpleLoop() << ' ' << loop_blks.size() << ' ' << LoopTime(loop) << endl;
         if (loop->IsSimpleLoop() == false) {
-            return false;
-        }
-        if (loop_blks.size() > 1) {
+            std::cout << "not simple" << std::endl;
             return false;
         }
         auto loop_time = LoopTime(loop);
-        if (loop_time == 0 || loop_time > 100) {
+        if (loop_time == 0 || loop_time > 300) {
             return false;
         }
+        std::cout << "loop time: " << loop_time << std::endl;
         FullyExpand(loop_time, loop);
+        // FullyExpand_mul_blks(loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);
@@ -493,4 +491,152 @@ BaseValuePtr LoopUnrolling::OperandUpdate(BaseValuePtr operand, bool init_flag) 
     }
     old_to_new[operand] = result;
     return result;
+}
+
+void LoopUnrolling::FullyExpand_mul_blks(int loop_time, Loop *loop) {
+    if (loop_time == -1) {
+        return;
+    }
+    auto &&before_blk = loop->before_blk;
+    auto &&loop_blks = loop->GetLoopBodyBlks();
+    auto &&loop_begin = loop->body_begin;
+    auto cond_begin = loop->cond_begin;
+    auto loop_end = loop_blks.back();
+    auto loop_exit = loop->loop_exit;
+
+    // remove loop branch inst
+    auto &&entry_terminator = before_blk->GetInstList().back();
+    if (entry_terminator->IsJumpInst() == false) {
+        return;
+    }
+    auto &&body_terminator = loop_end->GetInstList().back();
+    if (body_terminator->IsJumpInst() == false) {
+        return;
+    }
+    before_blk->RemoveInst(entry_terminator);
+    // loop_end->RemoveInst(body_terminator);
+
+    // START
+    // Record the mapping of the result of the phi instruction to its sources (from outside the loop
+    // or within the loop) for updating instructions using the result during the loop iteration
+    phi_results.clear();
+    phi_source_defined_in_loop.clear();
+    phi_source_defined_out_loop.clear();
+    phi_source_updated.clear();
+    old_to_new.clear();
+    block_mapping.clear();
+
+    for (auto &&inst : cond_begin->GetInstList()) {
+        if (inst->IsPhiInst()) {
+            auto &&result = inst->GetResult();
+            auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+            auto &&data_list = phi_inst->GetDataList();
+            auto &&data_source1 = data_list.front();
+            auto &&data_source2 = *std::next(data_list.begin(), 1);
+            auto &&source_value1 = data_source1.first;
+            auto &&source_blk1 = data_source1.second;
+            auto &&source_value2 = data_source2.first;
+            auto &&source_blk2 = data_source2.second;
+
+            phi_results.insert(result);
+            if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value1;
+                phi_source_defined_out_loop[result] = source_value2;
+                loop_variants.insert(source_value1);
+            } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value2;
+                phi_source_defined_out_loop[result] = source_value1;
+                loop_variants.insert(source_value2);
+            } else {
+                continue;
+            }
+        }
+    }
+    // ENDS
+
+    // copy insts
+    bool init_flag = true;
+    CfgNodePtr new_entry = nullptr;
+    for (int i = 0; i < loop_time; ++i) {
+        for (auto &&body_blk : loop_blks) {
+            if (body_blk == cond_begin) {
+                continue;
+            }
+            auto new_blk = CtrlFlowGraphNode::CreatePtr(body_blk->GetParent(), body_blk->blk_attr.blk_type);
+
+            for (auto &&inst : body_blk->GetInstList()) {
+                if (inst->IsReturnInst() || inst->IsPhiInst() || inst->IsBranchInst()) {
+                    return;
+                }
+                if (inst->IsJumpInst()) {
+                    continue;
+                }
+                if (inst->IsStoreInst() == false) {
+                    auto new_value = InstCopy(inst, new_blk, init_flag);
+                    if (new_value == nullptr) {
+                        continue;
+                    }
+                    old_to_new[inst->GetResult()] = new_value;
+                } else {
+                    auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
+                    auto &&lhs = binary_inst_->GetLHS();
+                    auto &&rhs = binary_inst_->GetRHS();
+                    lhs = OperandUpdate(lhs, init_flag);
+                    rhs = OperandUpdate(rhs, init_flag);
+                    StoreInst::DoStoreValue(lhs, rhs, new_blk);
+                }
+            }
+            for (auto pair : old_to_new) {
+                phi_source_updated[pair.first] = old_to_new[pair.second];
+            }
+
+            // get the beginning block of the new iteration and replace the loop_exit block of the previous iteration
+            // with this block
+            if (body_blk == loop_begin) {
+                if (init_flag == false) {
+                    block_mapping[cond_begin] = new_blk;
+                    AddJmpInst(cond_begin);
+                } else {
+                    new_entry = new_blk;  // update new body entry
+                }
+            }
+            block_mapping[body_blk] = new_blk;
+            init_flag = false;
+        }
+    }
+
+    // after the last iteration is completed, update the jump instruction for the blocks of the final iteration
+    block_mapping[cond_begin] = loop_exit;
+    AddJmpInst(cond_begin);
+
+    // remove all loop blocks
+    for (auto &&blk : loop_blks) {
+        RemoveNode(blk);
+    }
+    RemoveNode(cond_begin);
+
+    before_blk->RmvSuccessor(cond_begin);
+    loop_exit->RmvPredecessor(cond_begin);
+    JumpInstPtr to_new_entry = JumpInst::CreatePtr(new_entry, before_blk);
+    before_blk->InsertInstBack(to_new_entry);
+    for (auto &&invariant : phi_results) {
+        auto defined_in_loop = phi_source_defined_in_loop[invariant];
+        auto replacer = old_to_new[defined_in_loop];
+        ReplaceSRC(invariant, replacer);
+    }
+}
+
+void LoopUnrolling::AddJmpInst(CfgNodePtr &cond_begin) {
+    for (auto &&pair : block_mapping) {
+        auto &&new_one = pair.second;
+        auto &&old_one = pair.first;
+        if (old_one == cond_begin) {
+            continue;
+        }
+        auto &&old_jmp = old_one->GetInstList().back();
+        auto old_jmp_inst = std::static_pointer_cast<JumpInst>(old_jmp);
+        auto old_target = old_jmp_inst->GetTarget();
+        auto new_jmp_inst = JumpInst::CreatePtr(block_mapping[old_target], new_one);
+        new_one->InsertInstBack(new_jmp_inst);
+    }
 }

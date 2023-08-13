@@ -20,10 +20,13 @@ static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_out_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> old_to_new;  // old variant mapping to updated one
+static std::unordered_map<CfgNodePtr, CfgNodePtr> block_mapping;
 
 void LoopUnrolling(NormalFuncPtr);
 bool ExpandLoop(Loop *);
 void FullyExpand(int, Loop *);
+void FullyExpand_mul_blks(int, Loop *);
+void AddJmpInst(CfgNodePtr &);
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);
 OpCode FlipComparisonOp(OpCode);
