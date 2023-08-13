@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <utility>
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/otherInst.hh"
 
 size_t cur_unroll_time = 0;
 
@@ -212,6 +214,19 @@ void LoopUnrolling::FullyExpand(NormalFuncPtr func, int loop_time, Loop *loop) {
             loop_exit->blk_attr.body_begin = true;
         }
     }
+    // adjust phi-origin-alloca-parent
+    for (auto &&node : func->GetSequentialNodes()) {
+        for (auto &&inst : node->GetInstList()) {
+            if (inst->IsPhiInst()) {
+                auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                auto &&ori_alloca = phi_inst->GetOriginAlloca();
+                if (ori_alloca->GetParent() == before_blk) {
+                    ori_alloca->SetParent(loop_exit);
+                }
+            }
+        }
+    }
+    return;
 }
 
 int LoopUnrolling::LoopTime(Loop *loop) {
