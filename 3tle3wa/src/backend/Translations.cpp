@@ -54,13 +54,19 @@ void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
         ctx.lui_map.emplace(up20, upper);
     }
 
-    auto uop = new UopIBinImm;
-    uop->SetImm(lo12);
-    uop->SetLhs(upper);
-    uop->SetDst(dst);
-    uop->SetKind(IBIN_KIND::ADD);
-
-    ctx.cur_blk->PushUop(uop);
+    if (imm < 0 or lo12 != 0) {
+        auto uop = new UopIBinImm;
+        uop->SetImm(lo12);
+        uop->SetLhs(upper);
+        uop->SetDst(dst);
+        uop->SetKind(IBIN_KIND::ADD);
+        ctx.cur_blk->PushUop(uop);
+    } else {
+        auto uop = new UopMv;
+        uop->SetSrc(upper);
+        uop->SetDst(dst);
+        ctx.cur_blk->PushUop(uop);
+    }
 }
 
 void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, InternalTranslationContext &ctx) {
@@ -359,8 +365,35 @@ void InternalTranslation::Translate(BranchInst *ll, InternalTranslationContext &
 }
 
 void InternalTranslation::Translate(ICmpInst *ll, InternalTranslationContext &ctx) {
-    auto &&res = ll->GetResult();
-    ctx.icmp_map.emplace(res->GetVariableIdx(), ll);
+    // if (ll->IsIntegerBool()) {
+    //     auto &&res = ctx.planner->AllocVReg(VREG_TYPE::INT, ll->GetResult()->GetVariableIdx());
+
+    //     // assuming always true
+    //     auto var = dynamic_cast<Variable *>(ll->GetLHS().get());
+    //     auto lhs = ctx.planner->GetVReg(var->GetVariableIdx());
+
+    //     auto uop = new UopIBin;
+    //     uop->SetDst(res);
+    //     uop->SetLhs(lhs);
+    //     uop->SetRhs(nullptr);
+    //     uop->SetKind(IBIN_KIND::LBOOL);
+    //     ctx.cur_blk->PushUop(uop);
+    // } else if (ll->IsIntegerNot()) {
+    //     auto &&res = ctx.planner->AllocVReg(VREG_TYPE::INT, ll->GetResult()->GetVariableIdx());
+
+    //     // assuming always true
+    //     auto var = dynamic_cast<Variable *>(ll->GetLHS().get());
+    //     auto lhs = ctx.planner->GetVReg(var->GetVariableIdx());
+
+    //     auto uop = new UopIBin;
+    //     uop->SetDst(res);
+    //     uop->SetLhs(lhs);
+    //     uop->SetRhs(nullptr);
+    //     uop->SetKind(IBIN_KIND::LNOT);
+    //     ctx.cur_blk->PushUop(uop);
+    // }
+
+    ctx.icmp_map.emplace(ll->GetResult()->GetVariableIdx(), ll);
 }
 
 void InternalTranslation::Translate(FCmpInst *ll, InternalTranslationContext &ctx) {

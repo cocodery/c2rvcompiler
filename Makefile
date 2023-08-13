@@ -50,7 +50,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional # performance final_performance # 
+MODE 			?= functional hidden_functional performance final_performance
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022

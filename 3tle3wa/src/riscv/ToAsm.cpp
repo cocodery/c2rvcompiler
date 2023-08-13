@@ -723,6 +723,9 @@ void UopIBin::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan) {
         case IBIN_KIND::LNOT:
             abb->Push(new riscv::SEQZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
             break;
+        case IBIN_KIND::LBOOL:
+            abb->Push(new riscv::SNEZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
+            break;
     }
 }
 
@@ -766,6 +769,9 @@ void UopIBin64::ToAsm(CRVC_UNUSE AsmBasicBlock *abb, CRVC_UNUSE RLPlanner *plan)
             break;
         case IBIN_KIND::LNOT:
             abb->Push(new riscv::SEQZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
+            break;
+        case IBIN_KIND::LBOOL:
+            abb->Push(new riscv::SNEZ(dst_->GetRealRegIdx(), lhs_->GetRealRegIdx()));
             break;
     }
 }

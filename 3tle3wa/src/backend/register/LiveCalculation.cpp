@@ -50,9 +50,12 @@ void RLProgress::DoAssignment() {
         planner_->GenerateStackInfo();
 
         rewrite();
+
     } while (true);
 
     planner_->GenerateStackInfo();
+    
+    rewrite();
 }
 
 void RLProgress::cleanAll() { planner_->ResetRAInfo(); }

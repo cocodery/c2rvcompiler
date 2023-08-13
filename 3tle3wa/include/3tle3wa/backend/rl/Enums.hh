@@ -30,6 +30,7 @@ enum class IBIN_KIND {
     AND,
     OR,
     LNOT,
+    LBOOL,
     // NOT,
     // NEG,
 };

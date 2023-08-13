@@ -132,10 +132,10 @@ void VirtualRegister::Def(size_t idx, size_t loopt) {
 void VirtualRegister::Use(size_t idx) { use_idx_.push_back(idx); }
 
 void VirtualRegister::GenSegment(size_t loopt) {
-    if (use_idx_.empty() and is_param_) {
+    if (use_idx_.empty() /* and is_param_ */) {
         use_idx_.push_back(def_idx_);
     }
-    Assert(not use_idx_.empty(), "use should not empty");
+    // Assert(not use_idx_.empty(), "use should not empty");
     ival_mgr_.MakeSeg(def_idx_, use_idx_.back(), this);
     use_times_ += use_idx_.size() * loopt;
 

@@ -277,6 +277,9 @@ void UopIBin::formatString(FILE *fp) {
         case IBIN_KIND::LNOT:
             fprintf(fp, "\tseqz\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
+        case IBIN_KIND::LBOOL:
+            fprintf(fp, "\tsnez\t%s, %s\n", dst_->CString(), lhs_->CString());
+            break;
     }
 }
 
@@ -317,6 +320,9 @@ void UopIBin64::formatString(FILE *fp) {
             break;
         case IBIN_KIND::LNOT:
             fprintf(fp, "\tseqz\t%s, %s\n", dst_->CString(), lhs_->CString());
+            break;
+        case IBIN_KIND::LBOOL:
+            fprintf(fp, "\tsnez\t%s, %s\n", dst_->CString(), lhs_->CString());
             break;
     }
 }
