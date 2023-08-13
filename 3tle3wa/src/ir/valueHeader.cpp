@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "3tle3wa/ir/instruction/opCode.hh"
-#include "3tle3wa/ir/instruction/unaryOpInst.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/constarray.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
@@ -22,9 +20,17 @@ BaseValuePtr Value::UnaryOperate(const OpCode op, BaseValuePtr oprand, CfgNodePt
                            : (_type == INT32) ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
                                               : ConstantAllocator::FindConstantPtr(static_cast<float>(0));
         if (op == OP_MINUS) {
-            return BinaryOperate(OP_SUB, zero, oprand, block);
+            if (oprand->GetBaseType()->FloatType()) {
+                return FNegInst::DoFloatNeg(oprand, block);
+            } else {
+                return BinaryOperate(OP_SUB, zero, oprand, block);
+            }
         } else if (op == OP_NOT) {
-            return BinaryOperate(OP_EQU, oprand, zero, block);
+            if (_type == FLOAT) {
+                return FCmpInst::DoFCompare(OP_EQU, oprand, zero, block);
+            } else {
+                return ICmpInst::DoICompare(OP_EQU, oprand, zero, block);
+            }
         }
     }
     assert(0);
@@ -59,7 +65,7 @@ BaseValuePtr Value::BinaryOperate(const OpCode op, BaseValuePtr lhs, BaseValuePt
         if (lhs_type == INT32) {
             return IBinaryInst::DoIBinOperate(op, i_lhs, i_rhs, block);
         } else {
-            if (op == OP_SUB && f_lhs == ConstantAllocator::FindConstantPtr(static_cast<float>(0))) {
+            if (f_lhs == ConstantAllocator::FindConstantPtr(static_cast<float>(0))) {
                 return FNegInst::DoFloatNeg(f_rhs, block);
             } else {
                 return FBinaryInst::DoFBinOperate(op, f_lhs, f_rhs, block);

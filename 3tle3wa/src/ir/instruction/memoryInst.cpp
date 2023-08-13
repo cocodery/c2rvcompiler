@@ -84,7 +84,9 @@ void StoreInst::DoStoreValue(BaseValuePtr addr, BaseValuePtr value, CfgNodePtr b
     }
 
     if (auto [glb_addr, is_glb] = AddrFromGlobal(addr.get()); is_glb) {
-        glb_addr->InsertDefiner(block->GetParent());
+        auto global_value = static_cast<GlobalValue *>(glb_addr);
+
+        global_value->InsertDefiner(block->GetParent());
     }
     // for store, only two target type, `INT32` and `FLOAT`
     assert(value->IsOprand());
@@ -161,7 +163,9 @@ BaseValuePtr LoadInst::DoLoadValue(BaseValuePtr addr, CfgNodePtr block) {
     }
 
     if (auto [glb_addr, is_glb] = AddrFromGlobal(addr.get()); is_glb) {
-        glb_addr->InsertUser(block->GetParent());
+        auto global_value = static_cast<GlobalValue *>(glb_addr);
+
+        global_value->InsertUser(block->GetParent());
     }
 
     VariablePtr value = Variable::CreatePtr(addr_type->IntType() ? type_int_L : type_float_L, nullptr);
@@ -285,17 +289,17 @@ std::string GetElementPtrInst::tollvmIR() {
 //                     AddrFromGlobal Implementation
 //===-----------------------------------------------------------===//
 
-std::pair<GlobalValue *, bool> AddrFromGlobal(BaseValue *addr) {
-    std::pair<GlobalValue *, bool> ret = {nullptr, false};
+std::pair<BaseValue *, bool> AddrFromGlobal(BaseValue *addr) {
+    std::pair<BaseValue *, bool> ret = {nullptr, false};
     if (addr->IsGlobalValue()) {
-        ret = {static_cast<GlobalValue *>(addr), true};
+        ret = {addr, true};
     }
     if (Instruction *inst = addr->GetParent().get()) {
         if (inst->IsGepInst()) {
             GetElementPtrInst *gep_inst = static_cast<GetElementPtrInst *>(inst);
             BaseValue *base_addr = gep_inst->GetBaseAddr().get();
             if (base_addr->IsGlobalValue()) {
-                ret = {static_cast<GlobalValue *>(base_addr), true};
+                ret = {base_addr, true};
             }
         }
     }

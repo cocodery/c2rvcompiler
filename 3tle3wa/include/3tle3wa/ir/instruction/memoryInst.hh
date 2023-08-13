@@ -4,7 +4,6 @@
 #include "3tle3wa/ir/instruction/instruction.hh"
 #include "3tle3wa/ir/instruction/typeconvert.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
-#include "3tle3wa/ir/value/globalvalue.hh"
 
 class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
@@ -118,4 +117,4 @@ class GetElementPtrInst final : public Instruction {
     void TranslateTo(InternalTranslation &itx) final override;
 };
 
-std::pair<GlobalValue *, bool> AddrFromGlobal(BaseValue *addr);
+std::pair<BaseValue *, bool> AddrFromGlobal(BaseValue *addr);

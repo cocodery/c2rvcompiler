@@ -1,10 +1,5 @@
 #include "3tle3wa/ir/instruction/compareInst.hh"
 
-#include <cstdint>
-
-#include "3tle3wa/ir/instruction/opCode.hh"
-#include "3tle3wa/ir/value/constant.hh"
-
 //===-----------------------------------------------------------===//
 //                     ICmpInst Implementation
 //===-----------------------------------------------------------===//
@@ -17,18 +12,6 @@ ICmpInst::ICmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr
 }
 
 bool ICmpInst::IsICmpInst() const { return true; }
-
-bool ICmpInst::IsIntegerBool() const {
-    const auto &&zero = rhs->GetBaseType()->BoolType() ? ConstantAllocator::FindConstantPtr(static_cast<bool>(0))
-                                                       : ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
-    return (opcode == OP_NEQ) && (rhs->IsConstant() && rhs == zero);
-}
-
-bool ICmpInst::IsIntegerNot() const {
-    const auto &&zero = rhs->GetBaseType()->BoolType() ? ConstantAllocator::FindConstantPtr(static_cast<bool>(0))
-                                                       : ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
-    return (opcode == OP_EQU) && (rhs->IsConstant() && rhs == zero);
-}
 
 ICmpInstPtr ICmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     return std::make_shared<ICmpInst>(_res, _op, _lhs, _rhs, block);
@@ -107,16 +90,6 @@ FCmpInst::FCmpInst(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr
 }
 
 bool FCmpInst::IsFCmpInst() const { return true; }
-
-bool FCmpInst::IsFloatBool() const {
-    const auto &&zero = ConstantAllocator::FindConstantPtr(static_cast<float>(0));
-    return (opcode == OP_NEQ) && (rhs->IsConstant() && rhs == zero);
-}
-
-bool FCmpInst::IsFloatNot() const {
-    const auto &&zero = ConstantAllocator::FindConstantPtr(static_cast<float>(0));
-    return (opcode == OP_EQU) && (rhs->IsConstant() && rhs == zero);
-}
 
 FCmpInstPtr FCmpInst::CreatePtr(VariablePtr _res, OpCode _op, BaseValuePtr _lhs, BaseValuePtr _rhs, CfgNodePtr block) {
     return std::make_shared<FCmpInst>(_res, _op, _lhs, _rhs, block);

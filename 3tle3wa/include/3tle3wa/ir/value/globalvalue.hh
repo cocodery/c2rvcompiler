@@ -14,7 +14,6 @@ class GlobalValue final : public BaseValue {
     size_t idx;
     BaseValuePtr init_value;
 
-    std::set<BaseFunction *> param_use;
     std::set<BaseFunction *> used_in;
     std::set<BaseFunction *> define_in;
 
@@ -28,11 +27,6 @@ class GlobalValue final : public BaseValue {
     size_t GetGlobalValueIdx() const;
 
     bool IsGlobalValue() const;
-
-    void AddParamUse(BaseFunction *);
-    void RmvParamUse(BaseFunction *);
-    bool IsParamBy(BaseFunction *) const;
-    bool IsAsParam() const;
 
     void InsertUser(BaseFunction *);
     void RemoveUser(BaseFunction *);

@@ -16,9 +16,6 @@ class ICmpInst final : public BinaryInstruction {
 
     bool IsICmpInst() const final override;
 
-    bool IsIntegerBool() const;
-    bool IsIntegerNot() const;
-
     static VariablePtr DoICompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
@@ -40,9 +37,6 @@ class FCmpInst final : public BinaryInstruction {
     ~FCmpInst() = default;
 
     bool IsFCmpInst() const final override;
-
-    bool IsFloatBool() const;
-    bool IsFloatNot() const;
 
     static VariablePtr DoFCompare(OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 

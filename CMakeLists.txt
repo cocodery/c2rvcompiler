@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
+
 file(GLOB_RECURSE CXXSRC
   ${CMAKE_SOURCE_DIR}/3tle3wa/src/*.cpp
   ${CMAKE_SOURCE_DIR}/antlr/*.cpp
@@ -23,11 +25,11 @@ file(GLOB_RECURSE CXXSRC
 # 比如在 archlinux 下安装后就是 find /usr -name antlr4*
 # 找到类似这样的文件名 /usr/lib/cmake/antlr4-runtime/antlr4-runtime-config.cmake
 # 这就是我们所需要的 cmake 文件，他会帮助我们找到 antlr4-runtime
-find_package(antlr4-runtime REQUIRED)
+# find_package(antlr4-runtime REQUIRED)
 
 # 以下方法适用于低版本的 antlr4
-# link_libraries(  ... 你的 lib 路径  )
-# include_directories( ... 你的头文件 )
+link_libraries( /usr/local/lib/libantlr4-runtime.a )
+include_directories( /usr/local/include/antlr4-runtime/ )
 
 # 设置编译参数
 # 官方参数 m 在后面链接

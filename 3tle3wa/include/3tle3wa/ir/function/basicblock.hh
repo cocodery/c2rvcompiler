@@ -42,7 +42,7 @@ struct BlkAttr {
     bool cond_end;
 
     bool body_begin;
-    // bool body_end;
+    bool body_end;
 
     bool iftrue_begin;
     bool iftrue_end;
@@ -60,7 +60,7 @@ struct BlkAttr {
           cond_begin(false),
           cond_end(false),
           body_begin(false),
-          //   body_end(false),
+          body_end(false),
           iftrue_begin(false),
           iftrue_end(false),
           iffalse_begin(false),
@@ -81,24 +81,6 @@ struct BlkAttr {
         blk_type &= (~first);
         for (auto &&follow : std::initializer_list<BlkType>{rest...}) {
             blk_type &= (~follow);
-        }
-    }
-
-    void CombineBlkAttr(const BlkAttr &blk_attr) {
-        blk_type |= blk_attr.blk_type;
-
-        cond_begin = cond_begin | blk_attr.cond_begin;
-        cond_end = cond_end | blk_attr.cond_end;
-        body_begin = body_begin | blk_attr.body_begin;
-        iftrue_begin = iftrue_begin | blk_attr.iftrue_begin;
-        iftrue_end = iftrue_end | blk_attr.iftrue_end;
-        iffalse_begin = iffalse_begin | blk_attr.iffalse_begin;
-        iffalse_end = iffalse_end | blk_attr.iffalse_end;
-        structure_out = structure_out | blk_attr.structure_out;
-        loop = nullptr;
-
-        if (ChkAllOfBlkType(GoReturn, Exit)) {
-            ClrBlkTypes(GoReturn);
         }
     }
 
@@ -129,8 +111,7 @@ struct BlkAttr {
         if (ChkOneOfBlkType(BlkAttr::GoReturn)) ss << "GoReturn ";
         if (ChkOneOfBlkType(BlkAttr::InlineGR)) ss << "InlineGR ";
         if (ChkOneOfBlkType(BlkAttr::Exit)) ss << "Exit ";
-        ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin
-           << ' ' /*<< body_end << ' '*/
+        ss << "[ " << before_blk << ' ' << cond_begin << ' ' << cond_end << ' ' << body_begin << ' ' << body_end << ' '
            << iftrue_begin << ' ' << iftrue_end << ' ' << iffalse_begin << ' ' << iffalse_end << ' ' << structure_out
            << " ]";
         return ss.str();

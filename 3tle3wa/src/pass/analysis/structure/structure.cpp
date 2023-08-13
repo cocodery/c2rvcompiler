@@ -15,17 +15,6 @@ Loop *StructureAnalysis::FindInNode2Loop(CtrlFlowGraphNode *node) {
     return Node2Loop[node];
 }
 
-void StructureAnalysis::RmvLoopInNode2Loop(Loop *del_loop) {
-    for (auto &&iter = Node2Loop.begin(); iter != Node2Loop.end(); ++iter) {
-        auto &&[node, loop] = (*iter);
-        if (del_loop == loop) {
-            iter = Node2Loop.erase(iter);
-            return;
-        }
-    }
-    assert(false);
-}
-
 void StructureAnalysis::LoopAnalysis(NormalFuncPtr &func) {
     if (func->loops == nullptr) {
         delete func->loops;

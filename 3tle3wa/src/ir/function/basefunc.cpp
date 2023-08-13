@@ -27,5 +27,4 @@ ScalarTypePtr BaseFunction::GetReturnType() { return this->ret_type; }
 
 std::string &BaseFunction::GetFuncName() { return this->func_name; }
 
-size_t BaseFunction::GetParamSize() const { return param_list.size(); }
 ParamList &BaseFunction::GetParamList() { return this->param_list; }

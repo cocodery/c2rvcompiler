@@ -20,8 +20,8 @@
 //                     NormalFunction Implementation
 //===-----------------------------------------------------------===//
 
-NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
-    : BaseFunction(_type, _name, _list, _effect), loops(nullptr), branch(nullptr) {}
+NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : BaseFunction(_type, _name, _list), loops(nullptr), branch(nullptr) {}
 
 bool NormalFunction::IsLibFunction() const { return false; }
 
@@ -55,7 +55,7 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
         assert(node->GetPredecessors().size() > 0);
         for (const auto &pred : node->GetPredecessors()) {
             // exclude loop back-edge
-            // if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
             if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
             if (!visit[pred.get()]) return false;
         }
@@ -85,14 +85,16 @@ CfgNodeList NormalFunction::GetSequentialNodes() {
                 JumpInst *jump_inst = static_cast<JumpInst *>(last_inst);
                 auto &&target = jump_inst->GetTarget();
 
-                // no matter Break or GR, it is pushed until all predecessor tag `visit`
-                if (ChkAllPredVisit(target.get())) {
+                // if Break-Block, wait while-cond to insert Loop-Exit
+                if (!top->blk_attr.ChkOneOfBlkType(BlkAttr::Break)) {
+                    // if return-block is pushed, its predecessors are not all visit
+                    // no need to check for return-block
                     stack.push(target);
                 }
             }
         }
     }
-    if (!visit[exit.get()]) list.push_back(exit);
+    list.push_back(exit);
 
     return list;
 }
@@ -110,8 +112,8 @@ size_t NormalFunction::GetVarIdx() { return var_idx; }
 void NormalFunction::SetBlkIdx(size_t _blk_idx) { blk_idx = _blk_idx; }
 size_t NormalFunction::GetBlkIdx() { return blk_idx; }
 
-NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect) {
-    return std::make_shared<NormalFunction>(_type, _name, _list, _effect);
+NormalFuncPtr NormalFunction::CreatePtr(ScalarTypePtr _type, std::string &_name, ParamList &_list) {
+    return std::make_shared<NormalFunction>(_type, _name, _list);
 }
 
 std::string NormalFunction::tollvmIR() {
@@ -142,9 +144,9 @@ std::string NormalFunction::tollvmIR() {
 //                     LibraryFunction Implementation
 //===-----------------------------------------------------------===//
 
-LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
-    : BaseFunction(_type, _name, _list, _effect) {
-    assert(recursive == false);
+LibraryFunction::LibraryFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : BaseFunction(_type, _name, _list, true) {
+    assert(side_effect == true && recursive == false);
 }
 
 bool LibraryFunction::IsLibFunction() const { return true; }
@@ -170,13 +172,13 @@ std::string LibraryFunction::tollvmIR() {
 //                     SYSYLibFunction Implementation
 //===-----------------------------------------------------------===//
 
-SYSYLibFunction::SYSYLibFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
-    : LibraryFunction(_type, _name, _list, _effect) {}
+SYSYLibFunction::SYSYLibFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list)
+    : LibraryFunction(_type, _name, _list) {}
 
 bool SYSYLibFunction::IsSYSYLibFunction() const { return true; }
 
-SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list, bool _effect) {
-    return std::make_shared<SYSYLibFunction>(_type, _name, _list, _effect);
+SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name, ParamList &_list) {
+    return std::make_shared<SYSYLibFunction>(_type, _name, _list);
 }
 
 //===-----------------------------------------------------------===//
@@ -184,8 +186,8 @@ SYSYLibFuncPtr SYSYLibFunction::CreatePtr(ScalarTypePtr _type, std::string _name
 //===-----------------------------------------------------------===//
 
 LLVMLibFunction::LLVMLibFunction(std::string &_prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
-                                 std::string &_name, ParamList &_list, bool _effect)
-    : LibraryFunction(_type, _name, _list, _effect), proto_name(_prote_name), proto_arg_nums(_proto_arg_nums) {}
+                                 std::string &_name, ParamList &_list)
+    : LibraryFunction(_type, _name, _list), proto_name(_prote_name), proto_arg_nums(_proto_arg_nums) {}
 
 bool LLVMLibFunction::IsSYSYLibFunction() const { return false; }
 
@@ -193,8 +195,8 @@ std::string &LLVMLibFunction::GetProtoName() { return proto_name; }
 size_t LLVMLibFunction::GetProtoArgNums() const { return proto_arg_nums; }
 
 LLVMLibFuncPtr LLVMLibFunction::CreatePtr(std::string _prote_name, size_t _proto_arg_nums, ScalarTypePtr _type,
-                                          std::string _name, ParamList &_list, bool _effect) {
-    return std::make_shared<LLVMLibFunction>(_prote_name, _proto_arg_nums, _type, _name, _list, _effect);
+                                          std::string _name, ParamList &_list) {
+    return std::make_shared<LLVMLibFunction>(_prote_name, _proto_arg_nums, _type, _name, _list);
 }
 
 std::ostream &operator<<(std::ostream &os, BaseFuncPtr func) {

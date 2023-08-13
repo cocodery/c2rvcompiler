@@ -13,8 +13,6 @@
 #include "3tle3wa/ir/function/structure/structure.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
-#include "3tle3wa/ir/instruction/memoryInst.hh"
-#include "3tle3wa/ir/instruction/otherInst.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/baseType.hh"
@@ -330,7 +328,7 @@ std::any AstVisitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
             : std::any_cast<std::pair<std::vector<std::string>, ParamList>>(ctx->funcFParams()->accept(this));
     cur_position = LOCAL;
 
-    NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list, false);
+    NormalFuncPtr function = NormalFunction::CreatePtr(ret_type, func_name, param_list);
     comp_unit.InsertFunction(function);  // for recursion
     cur_func = function;
 
@@ -567,8 +565,7 @@ std::any AstVisitor::visitWhileLoop(SysYParser::WhileLoopContext *ctx) {
     before_blk->InsertInstBack(JumpInst::CreatePtr(cond_begin, before_blk));
 
     CfgNodePtr body_end = cur_block;
-    body_end->blk_attr.AppBlkTypes(BlkAttr::Continue);
-    // body_end->blk_attr.body_end = true;
+    body_end->blk_attr.body_end = true;
 
     body_end->InsertInstBack(JumpInst::CreatePtr(cond_begin, body_end));
 
@@ -772,7 +769,6 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
         call_ret_value = ret_value;
         cur_block = ret_block;
 
-        // glb-value directly use in callee-function, as variable
         for (auto [_, value] : comp_unit.getGlbTable().GetNameValueMap()) {
             if (value->IsGlobalValue()) {
                 auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
@@ -786,36 +782,10 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
                 }
             }
         }
-        // glb-value indirectly use in callee-function, as parameter
-        auto &&fparam_list = callee_func->GetParamList();
-        for (size_t idx = 0, size = rparam_list.size(); idx < size; ++idx) {
-            auto &&fparam = fparam_list[idx];
-            auto &&rparam = rparam_list[idx];
-            if (auto &&[glb_addr, glb] = AddrFromGlobal(rparam.get()); glb) {
-                assert(glb_addr->GetBaseType()->IsArray());
-                for (auto &&gep_inst : fparam->GetUserList()) {
-                    for (auto &&user : gep_inst->GetResult()->GetUserList()) {
-                        if (user->IsLoadInst()) {
-                            glb_addr->InsertUser(cur_func.get());
-                        } else if (user->IsStoreInst()) {
-                            glb_addr->InsertDefiner(cur_func.get());
-                        } else if (user->IsCallInst()) {
-                            glb_addr->AddParamUse(std::static_pointer_cast<CallInst>(user)->GetCalleeFunc().get());
-                        }
-                    }
-                }
-            }
-        }
     } else {
         call_ret_value = CallInst::DoCallFunction(ret_type, callee_func, rparam_list, cur_block);
         cur_func->InsertCallWho(callee_func.get());
         callee_func->InsertWhoCall(cur_func.get());
-
-        for (auto &&param : rparam_list) {
-            if (auto &&[glb_addr, glb] = AddrFromGlobal(param.get()); glb) {
-                glb_addr->AddParamUse(callee_func.get());
-            }
-        }
     }
 
     callee_func = last_callee_func;

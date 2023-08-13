@@ -29,7 +29,7 @@ class CallInst final : public Instruction {
 
     ScalarTypePtr GetRetType() const;
     BaseFuncPtr GetCalleeFunc() const;
-    ParamList &GetParamList();
+    const ParamList &GetParamList() const;
 
     void SetTailCall(bool);
     bool GetTailCall() const;
