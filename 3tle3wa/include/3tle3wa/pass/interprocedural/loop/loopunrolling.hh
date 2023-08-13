@@ -14,29 +14,22 @@
 typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
 
-static bool init_flag;
+constexpr size_t MAX_UNROLL_TIME = 3;
 
 static std::set<BaseValuePtr> phi_results;
 static std::set<BaseValuePtr> loop_variants;
-static std::set<InstPtr> phi_to_update;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_out_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> old_to_new;  // old variant mapping to updated one
-static std::unordered_map<CfgNodePtr, CfgNodePtr> block_mapping;
 
 void LoopUnrolling(NormalFuncPtr);
-bool ExpandLoop(Loop *);
-void FullyExpand(int, Loop *);
-void FullyExpand_mul_blks(int, Loop *);
-void AddJmpInst(CfgNodePtr &);
-void AddBranchInst(CfgNodePtr &);
-void AddPhiInst();
+bool ExpandLoop(NormalFuncPtr, Loop *);
+void FullyExpand(NormalFuncPtr, int, Loop *);
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);
 OpCode FlipComparisonOp(OpCode);
 Operands InstOperandsInVector(InstPtr);
-BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &);
-BaseValuePtr OperandUpdate(const BaseValuePtr);
-CfgNodePtr CfgNodeUpdate(const CfgNodePtr);
+BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &, bool);
+BaseValuePtr OperandUpdate(BaseValuePtr, bool);
 }  // namespace LoopUnrolling
