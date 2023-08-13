@@ -1,29 +1,52 @@
 #include "3tle3wa/pass/interprocedural/loop/loopunrolling.hh"
 
-void LoopUnrolling::LoopUnrolling(NormalFuncPtr func) {
-    auto &&loops = func->loops;
-    assert(ExpandLoop(loops) == false);
-}
+#include <algorithm>
+#include <cassert>
+#include <utility>
 
-bool LoopUnrolling::ExpandLoop(Loop *loop) {
-    auto &&sub_loops = loop->sub_structures;
-    for (auto &&iter = sub_loops.begin(); iter != sub_loops.end();) {
+#include "3tle3wa/ir/function/basicblock.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
+
+size_t cur_unroll_time = 0;
+
+void LoopUnrolling::LoopUnrolling(NormalFuncPtr func) {
+    auto &&sub_structures = func->loops->sub_structures;
+    for (auto &&iter = sub_structures.begin(); iter != sub_structures.end();) {
+        cur_unroll_time = 0;  //  for each loop in function
         auto &&sub_loop = static_cast<Loop *>(*iter);
-        if (ExpandLoop(sub_loop)) {
+        if (ExpandLoop(func, sub_loop)) {
             StructureAnalysis::RmvLoopInNode2Loop(sub_loop);
-            iter = sub_loops.erase(iter);
+            iter = sub_structures.erase(iter);
         } else {
             ++iter;
         }
     }
+    return;
+}
+
+bool LoopUnrolling::ExpandLoop(NormalFuncPtr func, Loop *loop) {
+    auto &&sub_loops = loop->sub_structures;
+    for (auto &&iter = sub_loops.begin(); iter != sub_loops.end();) {
+        auto &&sub_loop = static_cast<Loop *>(*iter);
+        if (ExpandLoop(func, sub_loop)) {
+            StructureAnalysis::RmvLoopInNode2Loop(sub_loop);
+            iter = sub_loops.erase(iter);
+            cur_unroll_time += 1;
+        } else {
+            ++iter;
+        }
+        if (cur_unroll_time > MAX_UNROLL_TIME) {
+            return false;
+        }
+    }
     if (loop->before_blk) {
-        auto loop_cond = loop->GetCondBodyBlks();
-        auto loop_blks = loop->GetLoopBodyBlks();
-        // cout << "Loop_" << loop->depth << endl;
         // cout << loop->IsSimpleLoop() << ' ' << loop_blks.size() << ' ' << LoopTime(loop) << endl;
         if (loop->IsSimpleLoop() == false) {
             return false;
         }
+        auto loop_cond = loop->GetCondBodyBlks();
+        auto loop_blks = loop->GetLoopBodyBlks();
         if (loop_blks.size() > 1) {
             return false;
         }
@@ -31,18 +54,18 @@ bool LoopUnrolling::ExpandLoop(Loop *loop) {
         if (loop_time == 0 || loop_time > 100) {
             return false;
         }
-        FullyExpand(loop_time, loop);
+        FullyExpand(func, loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);
     return false;
 }
 
-void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
+void LoopUnrolling::FullyExpand(NormalFuncPtr func, int loop_time, Loop *loop) {
     auto &&before_blk = loop->before_blk;
     auto loop_blks = loop->GetEntireStructure();
     auto cond_begin = loop->cond_begin;
-    auto loop_end = loop_blks.back();
+    auto loop_body = loop_blks.back();
     auto loop_exit = loop->loop_exit;
 
     // remove loop branch inst
@@ -50,12 +73,12 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     if (entry_terminator->IsJumpInst() == false) {
         return;
     }
-    auto &&body_terminator = loop_end->GetInstList().back();
+    auto &&body_terminator = loop_body->GetInstList().back();
     if (body_terminator->IsJumpInst() == false) {
         return;
     }
     before_blk->RemoveInst(entry_terminator);
-    loop_end->RemoveInst(body_terminator);
+    loop_body->RemoveInst(body_terminator);
 
     // START
     // Record the mapping of the result of the phi instruction to its sources (from outside the loop
@@ -97,7 +120,7 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     // copy insts
     bool init_flag = true;
     for (int i = 0; i < loop_time; ++i) {
-        for (auto &&inst : loop_end->GetInstList()) {
+        for (auto &&inst : loop_body->GetInstList()) {
             if (inst->IsReturnInst() || inst->IsPhiInst()) {
                 return;
             }
@@ -126,15 +149,68 @@ void LoopUnrolling::FullyExpand(int loop_time, Loop *loop) {
     for (auto &&blk : loop_blks) {
         RemoveNode(blk);
     }
+    // loop is expanded, expanded-inst is inserted into before-blk
+    auto &&i_inst_list = before_blk->GetInstList();
+    auto &&j_inst_list = loop_exit->GetInstList();
+    // because sub-loop is expanded, before-blk and loop-exit can combine
+    std::for_each(i_inst_list.begin(), i_inst_list.end(),
+                  [&loop_exit](const auto &inst) { inst->SetParent(loop_exit); });
+    i_inst_list.insert(i_inst_list.end(), j_inst_list.begin(), j_inst_list.end());
+    j_inst_list = std::move(i_inst_list);
+    // combine two block-attr
+    loop_exit->blk_attr.blk_type |= before_blk->blk_attr.blk_type;
 
-    before_blk->RmvSuccessor(cond_begin);
-    loop_exit->RmvPredecessor(cond_begin);
-    JumpInstPtr to_loop_exit = JumpInst::CreatePtr(loop_exit, before_blk);
-    before_blk->InsertInstBack(to_loop_exit);
+    assert(before_blk->blk_attr.before_blk && loop_exit->blk_attr.structure_out);
+    assert(!before_blk->blk_attr.cond_begin && !before_blk->blk_attr.cond_end);
+    assert(!loop_exit->blk_attr.cond_begin && !loop_exit->blk_attr.cond_end && !loop_exit->blk_attr.body_begin);
+
+    if (!before_blk->blk_attr.structure_out && !loop_exit->blk_attr.before_blk) {
+        loop_exit->blk_attr.before_blk = false;
+        loop_exit->blk_attr.structure_out = false;
+    } else if (!before_blk->blk_attr.structure_out && loop_exit->blk_attr.before_blk) {
+        loop_exit->blk_attr.before_blk = true;
+        loop_exit->blk_attr.structure_out = false;
+    } else if (before_blk->blk_attr.structure_out && !loop_exit->blk_attr.before_blk) {
+        loop_exit->blk_attr.before_blk = true;
+        loop_exit->blk_attr.structure_out = false;
+    } else if (before_blk->blk_attr.structure_out && loop_exit->blk_attr.before_blk) {
+        loop_exit->blk_attr.before_blk = true;
+        loop_exit->blk_attr.structure_out = true;
+    } else {
+        assert(false);
+    }
+
+    // fix blk-attr
+    if (loop_exit->blk_attr.ChkAllOfBlkType(BlkAttr::GoReturn, BlkAttr::Exit)) {
+        loop_exit->blk_attr.ClrBlkTypes(BlkAttr::GoReturn);
+    }
+    if (loop_exit->blk_attr.ChkOneOfBlkType(BlkAttr::Entry)) {
+        func->SetEntryNode(loop_exit);
+    }
+
+    // adjust predecessors and successors
+    for (auto &&pred : before_blk->GetPredecessors()) {
+        pred->AddSuccessor(loop_exit);
+        loop_exit->AddPredecessor(pred);
+        pred->GetLastInst()->ReplaceTarget(before_blk, loop_exit);
+    }
+
+    // remove before-blk
+    RemoveNode(before_blk);
+    // loop-exit is original jump to parent-loop-cond-begin
+    // no need to insert new jump-inst
     for (auto &&invariant : phi_results) {
         auto defined_in_loop = phi_source_defined_in_loop[invariant];
         auto replacer = old_to_new[defined_in_loop];
         ReplaceSRC(invariant, replacer);
+    }
+
+    if (loop->parent != func->loops) {
+        auto &&parent = static_cast<Loop *>(loop->parent);
+        if (parent->before_blk != nullptr && parent->body_begin == before_blk) {
+            parent->body_begin = loop_exit;
+            loop_exit->blk_attr.body_begin = true;
+        }
     }
 }
 

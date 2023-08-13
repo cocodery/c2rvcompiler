@@ -14,6 +14,8 @@
 typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
 
+constexpr size_t MAX_UNROLL_TIME = 3;
+
 static std::set<BaseValuePtr> phi_results;
 static std::set<BaseValuePtr> loop_variants;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop;
@@ -22,8 +24,8 @@ static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> old_to_new;  // old variant mapping to updated one
 
 void LoopUnrolling(NormalFuncPtr);
-bool ExpandLoop(Loop *);
-void FullyExpand(int, Loop *);
+bool ExpandLoop(NormalFuncPtr, Loop *);
+void FullyExpand(NormalFuncPtr, int, Loop *);
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);
 OpCode FlipComparisonOp(OpCode);

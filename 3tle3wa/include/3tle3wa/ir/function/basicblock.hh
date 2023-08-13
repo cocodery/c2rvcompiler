@@ -87,6 +87,7 @@ struct BlkAttr {
     void CombineBlkAttr(const BlkAttr &blk_attr) {
         blk_type |= blk_attr.blk_type;
 
+        before_blk = before_blk | blk_attr.before_blk;
         cond_begin = cond_begin | blk_attr.cond_begin;
         cond_end = cond_end | blk_attr.cond_end;
         body_begin = body_begin | blk_attr.body_begin;
