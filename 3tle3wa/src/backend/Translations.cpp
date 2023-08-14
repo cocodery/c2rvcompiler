@@ -70,7 +70,6 @@ void InternalTranslation::li(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
 }
 
 void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, InternalTranslationContext &ctx) {
-
     if (cinfo.v32_.u32_ == 0) {
         auto uop = new UopLi;
         uop->SetImm(0);
@@ -79,7 +78,7 @@ void InternalTranslation::lf(VirtualRegister *dst, ConstValueInfo &cinfo, Intern
         ctx.cur_blk->PushUop(uop);
     } else {
         auto lc_idx = lc_map_.at(cinfo.v32_.u32_);
-        
+
         if (auto fnd = ctx.fimm_map.find(cinfo.v32_.u32_); fnd != ctx.fimm_map.end()) {
             auto uop = new UopMv;
             uop->SetSrc(fnd->second);
@@ -410,13 +409,21 @@ void InternalTranslation::Translate(FCmpInst *ll, InternalTranslationContext &ct
         case OP_EQU:
             ontrue = true;
             break;
-        case OP_GEQ:
-            opcode = OP_LTH;
-            ontrue = false;
-            break;
-        case OP_GTH:
+        case OP_GEQ: {
+            auto tmp = std::move(lhs);
+            lhs = std::move(rhs);
+            rhs = std::move(tmp);
+        }
             opcode = OP_LEQ;
-            ontrue = false;
+            ontrue = true;
+            break;
+        case OP_GTH: {
+            auto tmp = std::move(lhs);
+            lhs = std::move(rhs);
+            rhs = std::move(tmp);
+        }
+            opcode = OP_LTH;
+            ontrue = true;
             break;
         case OP_NEQ:
             opcode = OP_EQU;
