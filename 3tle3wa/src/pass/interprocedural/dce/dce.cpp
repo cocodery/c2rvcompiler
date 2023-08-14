@@ -124,8 +124,8 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                     for (auto [value, block] : phi_inst->GetDataList()) {
                         PhiParamBlock[block.get()] = true;
                     }
-                    auto alloca_inst = phi_inst->GetOriginAlloca();
-                    PhiParamBlock[alloca_inst->GetParent().get()] = true;
+                    // auto alloca_inst = phi_inst->GetOriginAlloca();
+                    // PhiParamBlock[alloca_inst->GetParent().get()] = true;
                 }
             }
         }
@@ -243,25 +243,22 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
                 auto jump_inst = std::static_pointer_cast<JumpInst>(last_inst);
                 auto j = jump_inst->GetTarget();
 
-                if (!PhiParamBlock[j.get()]) {
-                    // case 2, remove empty block
-                    if (i->GetPredecessors().size() && i->GetInstCnt() == 1 && i->GetLastInst()->IsJumpInst()) {
-                        RemoveEmptyBlock(i, j);
-                        changed = true;
-                        iter = seq_nodes.erase(iter);
-                        continue;
-                    }
-
-                    // case 3, combine i and j
-                    if (j->GetPredecessors().size() == 1) {
-                        CombineBlocks(i, j);
-                        NodeMap[i.get()] = j;
-                        changed = true;
-                        iter = seq_nodes.erase(iter);
-                        continue;
-                    }
-                    // case 4, hoist a branch
+                // case 2, remove empty block
+                if (i->GetPredecessors().size() && i->GetInstCnt() == 1 && i->GetLastInst()->IsJumpInst()) {
+                    RemoveEmptyBlock(i, j);
+                    changed = true;
+                    iter = seq_nodes.erase(iter);
+                    continue;
                 }
+                // case 3, combine i and j
+                if (j->GetPredecessors().size() == 1) {
+                    CombineBlocks(i, j);
+                    NodeMap[i.get()] = j;
+                    changed = true;
+                    iter = seq_nodes.erase(iter);
+                    continue;
+                }
+                // case 4, hoist a branch
             }
             ++iter;
         }
