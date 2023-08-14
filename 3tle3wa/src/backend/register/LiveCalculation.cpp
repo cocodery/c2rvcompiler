@@ -28,8 +28,6 @@ void RLProgress::DoAssignment() {
     // other scheduler should operate on view not on raw
     DoFIFOSchedule();
 
-    // DoFastUseSchedule();
-
     rewrite();
 
     do {

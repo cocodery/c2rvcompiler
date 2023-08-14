@@ -1,4 +1,4 @@
-#include "3tle3wa/backend/scheduler/FastUse.hh"
+#include "3tle3wa/backend/scheduler/SiFiveU74.hh"
 
 #include <algorithm>
 
@@ -23,7 +23,24 @@ static const std::unordered_map<SCHED_TYPE, size_t> prior_map{
     {SCHED_TYPE::LOAD, 100},
 };
 
-bool SchedFastUse::Wrapper::operator<(const Wrapper &other) const {
+static const std::unordered_map<SCHED_TYPE, size_t> overhead_map{
+    // assuming 0
+    {SCHED_TYPE::JMPBR, 0},
+    {SCHED_TYPE::FENCE, 0},
+    {SCHED_TYPE::FUNCCALL, 0},
+
+    // misc
+    {SCHED_TYPE::STORE, 2},
+    {SCHED_TYPE::IMISC, 2},
+    {SCHED_TYPE::IMUL, 3},
+    {SCHED_TYPE::FMISC, 6},
+    {SCHED_TYPE::FMUL, 9},
+    {SCHED_TYPE::IDIVREM, 30},
+    {SCHED_TYPE::FDIVREM, 45},
+    {SCHED_TYPE::LOAD, 5},
+};
+
+bool SchedSiFiveU74::Wrapper::operator<(const Wrapper &other) const {
     auto self_weight = prior_map.at(node->self->type);
     auto other_weight = prior_map.at(other.node->self->type);
 
@@ -34,9 +51,24 @@ bool SchedFastUse::Wrapper::operator<(const Wrapper &other) const {
     return self_weight < other_weight;
 }
 
-SchedFastUse::SchedFastUse() : fencer_(nullptr), call_(nullptr), status_(), memory_(), storage_(), aovfree_() {}
+bool SchedSiFiveU74::Reservation::operator<(const Reservation &other) const { return avail_time > other.avail_time; }
 
-void SchedFastUse::Push(SchedItem *item) {
+SchedSiFiveU74::SchedSiFiveU74() : fencer_(nullptr), call_(nullptr), status_(), memory_(), am_(), storage_(), aovfree_() {
+    am_.busy.emplace(SCHED_TYPE::JMPBR, false);
+    am_.busy.emplace(SCHED_TYPE::FENCE, false);
+    am_.busy.emplace(SCHED_TYPE::FUNCCALL, false);
+    am_.busy.emplace(SCHED_TYPE::STORE, false);
+
+    am_.busy.emplace(SCHED_TYPE::IMISC, false);
+    am_.busy.emplace(SCHED_TYPE::IMUL, false);
+    am_.busy.emplace(SCHED_TYPE::FMISC, false);
+    am_.busy.emplace(SCHED_TYPE::FMUL, false);
+    am_.busy.emplace(SCHED_TYPE::IDIVREM, false);
+    am_.busy.emplace(SCHED_TYPE::FDIVREM, false);
+    am_.busy.emplace(SCHED_TYPE::LOAD, false);
+}
+
+void SchedSiFiveU74::Push(SchedItem *item) {
     auto node = std::make_unique<AOVNode>();
     node->issued = false;
     node->self = item;
@@ -168,8 +200,10 @@ void SchedFastUse::Push(SchedItem *item) {
     storage_.push_back(std::move(node));
 }
 
-void SchedFastUse::Sched() {
-    std::unordered_set<size_t> results;
+void SchedSiFiveU74::Sched() {
+    size_t now = 0;
+
+    std::priority_queue<Reservation> rsvtbl;
 
     // issue the first instruction for initialzation
     if (not aovfree_.empty()) {
@@ -181,8 +215,15 @@ void SchedFastUse::Sched() {
         view_.push_back(one.node->self);
         one.node->issued = true;
 
-        auto &&w = one.node->self->writes;
-        results.insert(w.begin(), w.end());
+        auto type = one.node->self->type;
+        am_.busy.at(type) = true;
+
+        auto resv = Reservation{.type = type, .avail_time = overhead_map.at(type) + now, .write = size_t(-1)};
+        if (not one.node->self->writes.empty()) {
+            resv.write = one.node->self->writes.at(0);
+            am_.rdy[resv.write] = false;
+        }
+        rsvtbl.push(std::move(resv));
 
         for (auto &&post : one.node->post) {
             post->prev.erase(one.node);
@@ -194,10 +235,10 @@ void SchedFastUse::Sched() {
         }
     }
 
-    auto cmp = [&results](const Wrapper &lhs, const Wrapper &rhs) -> bool {
+    auto cmp = [this](const Wrapper &lhs, const Wrapper &rhs) -> bool {
         for (auto &&v : lhs.node->self->reads) {
-            if (results.count(v)) {
-                return false;
+            if (am_.rdy.find(v) != am_.rdy.end() and not am_.rdy.at(v)) {
+                return true;
             }
         }
 
@@ -209,24 +250,87 @@ void SchedFastUse::Sched() {
     }
 
     while (not aovfree_.empty()) {
-        AOVNode *choice = aovfree_.front().node;
+        AOVNode *choice = nullptr;
 
-        std::pop_heap(aovfree_.begin(), aovfree_.end());
-        aovfree_.pop_back();
+        for (auto &&wrap : aovfree_) {
+            auto node = wrap.node;
+            auto type = node->self->type;
 
-        view_.push_back(choice->self);
-        choice->issued = true;
+            bool can_issue = not am_.busy.at(type) and not node->issued;
 
-        auto &&w = choice->self->writes;
-        results.insert(w.begin(), w.end());
-
-        for (auto &&post : choice->post) {
-            post->prev.erase(choice);
-
-            if (post->prev.empty() and not post->issued) {
-                aovfree_.push_back(Wrapper{.node = post});
-                std::push_heap(aovfree_.begin(), aovfree_.end());
+            auto &&vec = node->self->reads;
+            bool has_w = not node->self->writes.empty();
+            if (has_w) {
+                vec.push_back(node->self->writes.at(0));
             }
+
+            for (auto &&v : vec) {
+                auto rdy = true;
+                if (auto fnd = am_.rdy.find(v); fnd != am_.rdy.end()) {
+                    rdy = fnd->second;
+                }
+
+                can_issue = can_issue and rdy;
+            }
+
+            if (has_w) {
+                vec.pop_back();
+            }
+
+            if (can_issue) {
+                choice = wrap.node;
+                break;
+            }
+        }
+
+        if (choice == nullptr) {
+            auto rsv = rsvtbl.top();
+            rsvtbl.pop();
+
+            now = rsv.avail_time;
+            am_.busy.at(rsv.type) = false;
+            if (rsv.write != size_t(-1)) {
+                am_.rdy.at(rsv.write) = true;
+            }
+        } else {
+            view_.push_back(choice->self);
+            choice->issued = true;
+
+            auto type = choice->self->type;
+            am_.busy.at(type) = true;
+
+            auto resv = Reservation{.type = type, .avail_time = overhead_map.at(type) + now, .write = size_t(-1)};
+            if (not choice->self->writes.empty()) {
+                resv.write = choice->self->writes.at(0);
+                am_.rdy[resv.write] = false;
+            }
+            rsvtbl.push(std::move(resv));
+
+            for (auto &&post : choice->post) {
+                post->prev.erase(choice);
+
+                if (post->prev.empty() and not post->issued) {
+                    aovfree_.push_back(Wrapper{.node = post});
+                    std::push_heap(aovfree_.begin(), aovfree_.end());
+                }
+            }
+
+            now += 1;
+        }
+
+        while (not aovfree_.empty() and aovfree_.front().node->issued) {
+            std::pop_heap(aovfree_.begin(), aovfree_.end(), cmp);
+            aovfree_.pop_back();
+        }
+
+        while (not rsvtbl.empty() and rsvtbl.top().avail_time <= now) {
+            auto &&rsv = rsvtbl.top();
+            now = rsv.avail_time;
+            am_.busy.at(rsv.type) = false;
+            if (rsv.write != size_t(-1)) {
+                am_.rdy.at(rsv.write) = true;
+            }
+            rsvtbl.pop();
         }
     }
 }
