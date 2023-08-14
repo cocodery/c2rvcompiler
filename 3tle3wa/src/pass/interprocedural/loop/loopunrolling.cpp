@@ -49,14 +49,18 @@ bool LoopUnrolling::ExpandLoop(NormalFuncPtr func, Loop *loop) {
         }
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
-        if (loop_blks.size() > 1) {
+        // if (loop_blks.size() > 1) {
+        //     return false;
+        // }
+        if (loop->sub_structures.size() != 0) {
             return false;
         }
         auto loop_time = LoopTime(loop);
         if (loop_time == 0 || loop_time > 100) {
             return false;
         }
-        FullyExpand(func, loop_time, loop);
+        // FullyExpand(func, loop_time, loop);
+        FullyExpand_Multi_Blks(func, loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);
@@ -584,4 +588,208 @@ BaseValuePtr LoopUnrolling::OperandUpdate(BaseValuePtr operand, bool init_flag) 
     }
     old_to_new[operand] = result;
     return result;
+}
+
+CfgNodePtr LoopUnrolling::CfgNodeUpdate(const CfgNodePtr cfgnode) {
+    if (block_mapping[cfgnode] == nullptr) {
+        return cfgnode;
+    }
+    CfgNodePtr result = nullptr;
+    result = block_mapping[cfgnode];
+    return result;
+}
+
+// TODO:jmp from before_blk to new_entry, and remove the original loop body blocks and cond block
+void LoopUnrolling::FullyExpand_Multi_Blks(NormalFuncPtr func, int loop_time, Loop *loop) {
+    if (loop_time == -1) {
+        return;
+    }
+
+    auto &&before_blk = loop->before_blk;
+    auto &&loop_blks = loop->GetLoopBodyBlks();
+    auto &&loop_begin = loop->body_begin;
+    auto &&cond_begin = loop->cond_begin;
+    auto &&loop_end = loop_blks.back();
+    auto &&loop_exit = loop->loop_exit;
+
+    // remove loop branch inst
+    auto &&entry_terminator = before_blk->GetInstList().back();
+    if (entry_terminator->IsJumpInst() == false) {
+        return;
+    }
+    auto &&body_terminator = loop_end->GetInstList().back();
+    if (body_terminator->IsJumpInst() == false) {
+        return;
+    }
+    before_blk->RemoveInst(entry_terminator);
+
+    // START
+    // Record the mapping of the result of the phi instruction to its sources (from outside the loop
+    // or within the loop) for updating instructions using the result during the loop iteration
+    phi_results.clear();
+    phi_source_defined_in_loop.clear();
+    phi_source_defined_out_loop.clear();
+    phi_source_updated.clear();
+    old_to_new.clear();
+    block_mapping.clear();
+    phi_to_update.clear();
+
+    for (auto &&inst : cond_begin->GetInstList()) {
+        if (inst->IsPhiInst()) {
+            auto &&result = inst->GetResult();
+            auto &&phi_inst = std::static_pointer_cast<PhiInst>(inst);
+            auto &&data_list = phi_inst->GetDataList();
+            auto &&data_source1 = data_list.front();
+            auto &&data_source2 = *std::next(data_list.begin(), 1);
+            auto &&source_value1 = data_source1.first;
+            auto &&source_blk1 = data_source1.second;
+            auto &&source_value2 = data_source2.first;
+            auto &&source_blk2 = data_source2.second;
+
+            phi_results.insert(result);
+            if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value1;
+                phi_source_defined_out_loop[result] = source_value2;
+                loop_variants.insert(source_value1);
+            } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
+                phi_source_defined_in_loop[result] = source_value2;
+                phi_source_defined_out_loop[result] = source_value1;
+                loop_variants.insert(source_value2);
+            } else {
+                continue;
+            }
+        }
+    }
+    // ENDS
+
+    // copy insts
+    bool init_flag = true;
+    CfgNodePtr new_entry = nullptr;
+    for (int i = 0; i < loop_time; ++i) {
+        for (auto &&body_blk : loop_blks) {
+            if (body_blk == cond_begin) {
+                continue;
+            }
+            auto new_blk = CtrlFlowGraphNode::CreatePtr(body_blk->GetParent(), body_blk->blk_attr.blk_type);
+
+            // get the beginning block of the new iteration and replace the loop_exit block of the previous iteration
+            // with this block
+            if (body_blk == loop_begin) {
+                if (init_flag == false) {
+                    block_mapping[cond_begin] = new_blk;
+                    AddJmpInst(cond_begin);
+                    AddBranchInst(cond_begin, init_flag);
+                    // AddPhiInst();
+                } else {
+                    new_entry = new_blk;  // update new body entry
+                }
+            }
+            for (auto pair : old_to_new) {
+                phi_source_updated[pair.first] = pair.second;
+            }
+
+            for (auto &&inst : body_blk->GetInstList()) {
+                if (inst->IsReturnInst()) {
+                    return;
+                }
+                if (inst->IsJumpInst() || inst->IsBranchInst()) {
+                    continue;
+                }
+                if (inst->IsStoreInst() == false && inst->IsPhiInst() == false) {
+                    auto new_value = InstCopy(inst, new_blk, init_flag);
+                    if (new_value == nullptr) {
+                        continue;
+                    }
+                    old_to_new[inst->GetResult()] = new_value;
+                } else if (inst->IsStoreInst() && inst->IsPhiInst() == false) {
+                    auto &&binary_inst_ = std::static_pointer_cast<BinaryInstruction>(inst);
+                    auto &&lhs = binary_inst_->GetLHS();
+                    auto &&rhs = binary_inst_->GetRHS();
+                    lhs = OperandUpdate(lhs, init_flag);
+                    rhs = OperandUpdate(rhs, init_flag);
+                    StoreInst::DoStoreValue(lhs, rhs, new_blk);
+                } else {
+                    auto old_phi_inst = std::static_pointer_cast<PhiInst>(inst);
+                    auto new_phi_inst = PhiInst::CreatePtr(old_phi_inst->GetResult()->GetBaseType(), new_blk);
+                    new_phi_inst->SetOriginAlloca(old_phi_inst->GetOriginAlloca());
+                    for (auto &&val_blk : old_phi_inst->GetDataList()) {
+                        auto &&old_val = val_blk.first;
+                        auto &&old_block = val_blk.second;
+                        auto new_val = OperandUpdate(old_val, init_flag);
+                        auto new_block = CfgNodeUpdate(old_block);
+                        new_phi_inst->InsertPhiData(new_phi_inst, new_val, new_block);
+                    }
+                    old_to_new[inst->GetResult()] = new_phi_inst->GetResult();
+                }
+            }
+            block_mapping[body_blk] = new_blk;
+        }
+        init_flag = false;
+        for (auto pair : old_to_new) {
+            phi_source_updated[pair.first] = pair.second;
+        }
+    }
+
+    // after the last iteration is completed, update the jump instruction for the blocks of the final iteration
+    block_mapping[cond_begin] = loop_exit;
+    AddJmpInst(cond_begin);
+    AddBranchInst(cond_begin, init_flag);
+    // AddPhiInst();
+
+    // remove all loop blocks
+    for (auto &&blk : loop_blks) {
+        RemoveNode(blk);
+    }
+    RemoveNode(cond_begin);
+
+    before_blk->RmvSuccessor(cond_begin);
+    loop_exit->RmvPredecessor(cond_begin);
+    JumpInstPtr to_new_entry = JumpInst::CreatePtr(new_entry, before_blk);
+    before_blk->InsertInstBack(to_new_entry);
+    for (auto &&invariant : phi_results) {
+        auto defined_in_loop = phi_source_defined_in_loop[invariant];
+        auto replacer = old_to_new[defined_in_loop];
+        ReplaceSRC(invariant, replacer);
+    }
+}
+
+void LoopUnrolling::AddJmpInst(CfgNodePtr &cond_begin) {
+    for (auto &pair : block_mapping) {
+        auto &new_one = pair.second;
+        auto &old_one = pair.first;
+        if (old_one == cond_begin) {
+            continue;
+        }
+        auto &old_jmp = old_one->GetInstList().back();
+        if (old_jmp->IsJumpInst() == false) {
+            continue;
+        }
+        auto old_jmp_inst = std::static_pointer_cast<JumpInst>(old_jmp);
+        auto old_target = old_jmp_inst->GetTarget();
+        auto new_jmp_inst = JumpInst::CreatePtr(block_mapping[old_target], new_one);
+        new_one->InsertInstBack(new_jmp_inst);
+    }
+}
+
+void LoopUnrolling::AddBranchInst(CfgNodePtr &cond_begin, bool init_flag) {
+    for (auto &pair : block_mapping) {
+        auto &old_block = pair.first;
+        auto &new_block = pair.second;
+        if (old_block == cond_begin) {
+            continue;
+        }
+        auto &last_inst = old_block->GetInstList().back();
+        if (last_inst->IsBranchInst() == false) {
+            continue;
+        }
+        auto old_br = std::static_pointer_cast<BranchInst>(last_inst);
+        auto old_cond = old_br->GetCondition();
+        auto if_false = old_br->GetFalseTarget();
+        auto if_true = old_br->GetTrueTarget();
+        auto new_cond = OperandUpdate(old_cond, init_flag);
+        auto new_if_false = CfgNodeUpdate(if_false);
+        auto new_if_true = CfgNodeUpdate(if_true);
+        auto new_br = BranchInst::CreatePtr(new_cond, new_if_true, new_if_false, new_block);
+        new_block->InsertInstBack(new_br);
+    }
 }
