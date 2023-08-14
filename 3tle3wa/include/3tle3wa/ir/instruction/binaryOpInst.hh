@@ -7,7 +7,7 @@ class IBinaryInst;
 using IBinaryInstPtr = std::shared_ptr<IBinaryInst>;
 
 class IBinaryInst final : public BinaryInstruction {
-   private:
+   public:
     static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
    public:

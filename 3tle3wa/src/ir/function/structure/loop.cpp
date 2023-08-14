@@ -23,7 +23,7 @@ CfgNodeList Loop::GetCondBodyBlks() const {
         if (node->blk_attr.cond_end) return false;
         assert(node->GetPredecessors().size() > 0);
         for (const auto &pred : node->GetPredecessors()) {
-            if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
+            // if (pred->blk_attr.body_end) continue;                            // body-end jump to cond-begin
             if (pred->blk_attr.ChkOneOfBlkType(BlkAttr::Continue)) continue;  // continue to cond-begin
             if (!visit[pred.get()]) return false;
         }
@@ -196,6 +196,18 @@ CfgNodeList Loop::GetEntireStructure() const {
     return entire;
 }
 
+bool Loop::IsSimpleLoop() const {
+    assert(before_blk != nullptr);
+    if (cond_begin->GetPredecessors().size() != 2) return false;  // before-blk + real-loop-end, exclude `continue`
+    if (loop_exit->GetPredecessors().size() != 1) return false;   // cond-end, exclude `break`
+    for (auto &&node : GetEntireStructure()) {                    // exclude `return` in entire-loop
+        if (node->blk_attr.ChkOneOfBlkType(BlkAttr::GoReturn)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Loop::PrintCurStructure() const {
     auto &&PrintTab = [](depth_t depth) {
         std::stringstream ss;
@@ -206,18 +218,12 @@ void Loop::PrintCurStructure() const {
     };
 
     if (before_blk) {
-        cout << PrintTab(depth) << "\b\bLoop_" << depth << endl;
-        Log("\b\bLoop_%zu", depth);
+        cout << PrintTab(depth) << "\b\bLoop_" << depth << " " << (IsSimpleLoop() ? "simple" : "complex") << endl;
         cout << PrintTab(depth) << "Before-Loop: Block_" << before_blk->GetBlockIdx() << endl;
-        Log("Before-Loop: Block_%zu", before_blk->GetBlockIdx());
         cout << PrintTab(depth) << "Cond-Begin : Block_" << cond_begin->GetBlockIdx() << endl;
-        Log("Cond-Begin : Block_%zu", cond_begin->GetBlockIdx());
         cout << PrintTab(depth) << "Cond-End   : Block_" << cond_end->GetBlockIdx() << endl;
-        Log("Cond-End   : Block_%zu", cond_end->GetBlockIdx());
         cout << PrintTab(depth) << "Body-Begin : Block_" << body_begin->GetBlockIdx() << endl;
-        Log("Body-Begin : Block_%zu", body_begin->GetBlockIdx());
         cout << PrintTab(depth) << "Loop-Exit  : Block_" << loop_exit->GetBlockIdx() << endl;
-        Log("Loop-Exit  : Block_%zu", loop_exit->GetBlockIdx());
 
         cout << PrintTab(depth) << "  Conditions  :";
         for (auto cond : GetCondBodyBlks()) {
