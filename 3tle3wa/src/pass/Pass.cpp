@@ -11,45 +11,8 @@ Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) 
 void Optimization::DoOptimization() {
     GVL::GlbValueLocalization(comp_unit);
 
-    auto AnalysisSideEffect = [](CompilationUnit &comp_unit, NormalFuncPtr &func) {
-        for (auto &&callee : func->GetCallWho()) {
-            if (callee->GetSideEffect()) {
-                return true;
-            }
-        }
-        for (auto &&[_, value] : comp_unit.getGlbTable().GetNameValueMap()) {
-            if (value->IsGlobalValue()) {
-                auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
-                auto &&definers = glb_value->GetDefineIn();
-                if (definers.find(func.get()) != definers.end()) {
-                    return true;
-                }
-            }
-        }
-        for (auto &&param : func->GetParamList()) {
-            if (param->IsVariable() && param->GetBaseType()->IsPointer()) {
-                auto &&parameter = std::static_pointer_cast<Variable>(param);
-                std::queue<VariablePtr> queue;
-                queue.push(parameter);
-                while (!queue.empty()) {
-                    auto &&front = queue.front();
-                    queue.pop();
-                    for (auto &&user : front->GetUserList()) {
-                        if (user->IsStoreInst()) {
-                            return true;
-                        }
-                        if (user->GetResult() != nullptr) {
-                            queue.push(user->GetResult());
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    };
-
     for (auto &&func : comp_unit.GetNormalFuncTable()) {
-        func->SetSideEffect(AnalysisSideEffect(comp_unit, func));
+        SideEffect::SideEffectAnalysis(comp_unit, func);
 
         Variable::SetVarIdx(func->GetVarIdx());
         BasicBlock::SetBlkIdx(func->GetBlkIdx());
