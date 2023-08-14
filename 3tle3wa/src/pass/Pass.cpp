@@ -5,6 +5,7 @@
 
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/variable.hh"
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
@@ -32,6 +33,8 @@ void Optimization::DoOptimization() {
         SCCP::SCCP(func);
 
         DCE::DCE(func);
+
+        PeepHole::PeepHoleOpt(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
