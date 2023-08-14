@@ -11,7 +11,7 @@
 
 struct SchedItem;
 
-class SchedFastUse final : public SchedPolicy {
+class SchedSiFiveU74 final : public SchedPolicy {
     struct AOVNode {
         SchedItem *self{nullptr};
 
@@ -31,18 +31,32 @@ class SchedFastUse final : public SchedPolicy {
         AOVNode *writer{nullptr};
         std::unordered_set<AOVNode *> reader{};
     };
+    struct AbstractMachine {
+        std::unordered_map<SCHED_TYPE, bool> busy;
+        std::unordered_map<size_t, bool> rdy;
+    };
+
+    struct Reservation {
+        SCHED_TYPE type;
+        size_t avail_time;
+        size_t write;
+
+        bool operator<(const Reservation &other) const;
+    };
 
     AOVNode *fencer_;
     AOVNode *call_;
     std::unordered_map<size_t, RWStatus> status_;
     RWStatus memory_;
 
+    AbstractMachine am_;
+
     std::list<std::unique_ptr<AOVNode>> storage_;
 
     std::vector<Wrapper> aovfree_;
 
    public:
-    SchedFastUse();
+    SchedSiFiveU74();
 
     void Push(SchedItem *item);
     void Sched();

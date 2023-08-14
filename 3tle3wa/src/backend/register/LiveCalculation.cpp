@@ -30,8 +30,6 @@ void RLProgress::DoAssignment() {
 
     rewrite();
 
-    // DoFastUseSchedule();
-
     do {
         cleanAll();
 
