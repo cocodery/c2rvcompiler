@@ -13,16 +13,21 @@ class RLBasicBlock;
 class VirtualRegister;
 class Variable;
 class AsmProgress;
+class BaseValue;
+class InterferenceGraph;
+class UopCall;
+
+using BaseValuePtr = std::shared_ptr<BaseValue>;
+using ParamList = std::vector<BaseValuePtr>;
 
 class RLProgress final : public Serializable {
     char *label_;
-    size_t label_len_;
 
-    bool has_call_;
-    bool has_lib_call_;
-    bool has_call_other_;
-
-    std::vector<VirtualRegister *> params_;
+    struct call_information {
+        bool call_libfunc;
+        bool call_self;
+        bool call_func;
+    } call_info_;
 
     std::unique_ptr<RLPlanner> planner_;
 
@@ -30,37 +35,30 @@ class RLProgress final : public Serializable {
 
     std::unordered_map<size_t, RLBasicBlock *> lbmap_;
 
-    size_t ips_ = 0;
-    size_t fps_ = 0;
-    size_t sps_ = 0;
-
     void formatString(FILE *fp) final;
 
     void computeLivenessInfomation();
-
     void computeLiveInterval();
-
-    void rvAssigner();
+    void cleanAll();
+    bool registerAllocation();
+    void rewrite();
 
    public:
     RLProgress(const std::string &name);
+    ~RLProgress();
 
-    void RegisterPlanner(std::unique_ptr<RLPlanner> &planner);
-
-    void Push(std::unique_ptr<RLBasicBlock> &rlbb);
-
-    void SetParam(Variable *var, VREG_TYPE type);
+    void RegisterPlanner(std::unique_ptr<RLPlanner> planner);
+    void RegisterParams(ParamList &plst);
+    void RegisterBasicBlock(std::unique_ptr<RLBasicBlock> rlbb, bool tail_call);
 
     void MeetCall();
-
     void MeetLibCall();
-
     void MeetCallOther();
+    void MeetCallSelf();
 
-    bool HasCallFunc();
-
+    void DoFIFOSchedule();
+    void DoFastUseSchedule();
     void DoAssignment();
-
     void DoToAsm(AsmProgress *apg);
 
     RLBasicBlock *FindBlkById(size_t lbidx);

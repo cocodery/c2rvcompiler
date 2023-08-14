@@ -9,45 +9,30 @@
 class AsmInstruction;
 class AsmProgress;
 
-class AsmBasicBlock : public Serializable {
+class AsmBasicBlock final : public Serializable {
     size_t lbidx_;
+
+    const AsmProgress *father_;
 
     std::list<std::unique_ptr<AsmInstruction>> insts_;
 
-    std::list<AsmInstruction *> view_insts_;
-
-    const AsmProgress *father_;
+    std::list<AsmInstruction *> insts_view_;
 
     bool is_ret_;
 
     void formatString(FILE *fp) final;
 
-    // ----- removes -----
-
-    void rmNeedless();
-
-    void rmNeedlessLS();
-
-    // ----- combines -----
-
-    void combineInstruction();
-
-    void combineAddLS();
-
    public:
     AsmBasicBlock(size_t lbidx, AsmProgress *father);
-
-    virtual ~AsmBasicBlock() = default;
 
     void Push(AsmInstruction *inst);
 
     void Pop();
 
     void SetIsRet(bool on);
+    bool IsRet();
 
     size_t Lbidx();
-
-    bool IsRet();
 
     const char *FatherLabel() const;
 

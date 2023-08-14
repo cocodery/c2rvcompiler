@@ -23,8 +23,6 @@ class Instruction : public AsmInstruction {
 
    public:
     Instruction(uint64_t rd = riscv::zero, uint64_t rs = riscv::zero, uint64_t rt = riscv::zero, int64_t imm = 0);
-
-    virtual Transaction ToTrx() = 0;
 };
 
 #define RVINST(name, ...)             \

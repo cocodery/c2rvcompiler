@@ -1,14 +1,12 @@
 #include "3tle3wa/backend/rl/RLGen.hh"
 
-#include <thread>
-
-#include "3tle3wa/backend/InternalTranslation.hh"
 #include "3tle3wa/backend/asm/AsmBasicBlock.hh"
 #include "3tle3wa/backend/asm/AsmGen.hh"
 #include "3tle3wa/backend/asm/AsmGlobalValue.hh"
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/backend/asm/AsmLocalConstant.hh"
 #include "3tle3wa/backend/asm/AsmProgress.hh"
+#include "3tle3wa/backend/rl/InternalTranslation.hh"
 #include "3tle3wa/backend/rl/RLBasicBlock.hh"
 #include "3tle3wa/backend/rl/RLPlanner.hh"
 #include "3tle3wa/backend/rl/RLProgress.hh"
@@ -19,9 +17,7 @@
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/utils/logs.hh"
 
-RLGen::RLGen() : asm_gen_(std::make_unique<AsmGen>()) {}
-
-RLGen::~RLGen() {}
+RLGen::RLGen() : lc_map_(), gv_map_(), translation_tasks_(), asm_gen_(std::make_unique<AsmGen>()) {}
 
 void RLGen::Register(CompilationUnit &comp_unit) {
     auto &&nvmap = comp_unit.getGlbTable().GetNameValueMap();
@@ -43,7 +39,7 @@ void RLGen::Register(CompilationUnit &comp_unit) {
     registerNormalFunction(comp_unit.GetNormalFuncTable());
 }
 
-std::unique_ptr<AsmGen> &RLGen::ExportAsmGen() { return asm_gen_; }
+std::unique_ptr<AsmGen> &RLGen::AG() { return asm_gen_; }
 
 void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
     auto &&init_val_ptr = gvp->GetInitValue().get();
@@ -61,7 +57,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
             CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
             Assert(result.second, "insert global variable fail!");
 
-            asm_gen_->PushAsmGlobalValue(agv);
+            asm_gen_->PushAsmGlobalValue(std::move(agv));
             return;
         }
 
@@ -70,7 +66,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
         CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
         Assert(result.second, "insert global variable fail!");
 
-        asm_gen_->PushAsmGlobalValue(agv);
+        asm_gen_->PushAsmGlobalValue(std::move(agv));
         return;
     }
 
@@ -100,7 +96,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
         CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
         Assert(result.second, "insert global variable fail!");
 
-        asm_gen_->PushAsmGlobalValue(agv);
+        asm_gen_->PushAsmGlobalValue(std::move(agv));
         return;
     }
 
@@ -112,7 +108,7 @@ void RLGen::registerGlobalValue(GlobalValue *gvp, const std::string &name) {
     CRVC_UNUSE auto result = gv_map_.emplace(gvp->GetGlobalValueIdx(), agv.get());
     Assert(result.second, "insert global variable fail!");
 
-    asm_gen_->PushAsmGlobalValue(agv);
+    asm_gen_->PushAsmGlobalValue(std::move(agv));
 }
 
 void RLGen::registerNormalFunction(NormalFuncList &nflst) {
@@ -128,9 +124,7 @@ void RLGen::registerLocalConstant(Constant *cvp, const size_t idx) {
     if (lc_map_.find(cinfo.v32_.u32_) == lc_map_.end()) {
         auto lcv = std::make_unique<AsmLocalConstant>(idx, cinfo.v32_.u32_);
         lc_map_.emplace(cinfo.v32_.u32_, idx);
-        // CRVC_UNUSE auto result = lc_map_.emplace(cinfo.v32_.u32_, idx);
-        // Assert(result.second, "insert local constant fail!");
-        asm_gen_->PushAsmLocalConstant(lcv);
+        asm_gen_->PushAsmLocalConstant(std::move(lcv));
     }
 }
 
@@ -139,29 +133,6 @@ void RLGen::SerialGenerate() {
         task->DoTranslation();
         task->DoAssignment();
         task->DoTranslateToAsm();
-        task->DoRSchedule();
-        asm_gen_->PushAsmProgress(task->ExportAPG());
-    }
-}
-
-void RLGen::ParallelGenerate() {
-    std::vector<std::unique_ptr<std::thread>> trds;
-
-    for (auto &&task : translation_tasks_) {
-        auto trd = std::make_unique<std::thread>([&task]() {
-            task->DoTranslation();
-            task->DoAssignment();
-            task->DoTranslateToAsm();
-            task->DoRSchedule();
-        });
-        trds.push_back(std::move(trd));
-    }
-
-    for (auto &&trd : trds) {
-        trd->join();
-    }
-
-    for (auto &&task : translation_tasks_) {
-        asm_gen_->PushAsmProgress(task->ExportAPG());
+        asm_gen_->PushAsmProgress(task->ExportAP());
     }
 }

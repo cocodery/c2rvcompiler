@@ -7,49 +7,45 @@
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 #include "3tle3wa/ir/IR.hh"
 
-RLProgress::RLProgress(const std::string &name) : has_call_(false), has_lib_call_(false), has_call_other_(false) {
+RLProgress::RLProgress(const std::string &name)
+    : label_(nullptr),
+      call_info_{.call_libfunc = false, .call_self = false, .call_func = false},
+      planner_(nullptr),
+      rlbbs_(),
+      lbmap_() {
+    size_t label_len_ = 0;
+
     FILE *fp = open_memstream(&label_, &label_len_);
     fprintf(fp, "%s", name.c_str());
     fflush(fp);
     fclose(fp);
 }
 
-void RLProgress::RegisterPlanner(std::unique_ptr<RLPlanner> &planner) {
+RLProgress::~RLProgress() {
+    if (label_) {
+        free(label_);
+        label_ = nullptr;
+    }
+}
+
+void RLProgress::MeetCall() { call_info_.call_func = true; }
+void RLProgress::MeetLibCall() { call_info_.call_libfunc = true; }
+void RLProgress::MeetCallOther() { call_info_.call_self = false; }
+void RLProgress::MeetCallSelf() { call_info_.call_self = true; }
+
+void RLProgress::RegisterPlanner(std::unique_ptr<RLPlanner> planner) {
     planner_ = std::move(planner);
     planner_->RegisterOwner(this);
 }
 
-void RLProgress::Push(std::unique_ptr<RLBasicBlock> &rlbb) { rlbbs_.push_back(std::move(rlbb)); }
-
-void RLProgress::SetParam(Variable *var, VREG_TYPE type) {
-    extern size_t abi_arg_reg;
-
-    if (type == VREG_TYPE::FLT) {
-        if (fps_ < abi_arg_reg) {
-            auto param = planner_->AllocParam(type, var->GetVariableIdx(), 8, false, fps_);
-            params_.push_back(param);
-            fps_ += 1;
-            return;
-        }
-    } else {
-        if (ips_ < abi_arg_reg) {
-            auto param = planner_->AllocParam(type, var->GetVariableIdx(), 8, false, ips_);
-            params_.push_back(param);
-            ips_ += 1;
-            return;
-        }
+void RLProgress::RegisterBasicBlock(std::unique_ptr<RLBasicBlock> rlbb, bool tail_call) {
+    if (tail_call) {
+        rlbb->SetHasTailCall(true);
     }
-    auto param = planner_->AllocParam(type, var->GetVariableIdx(), 8, true, sps_);
-    params_.push_back(param);
-    sps_ += 1;
+    lbmap_[rlbb->GetLabelIdx()] = rlbb.get();
+    rlbbs_.push_back(std::move(rlbb));
 }
 
-void RLProgress::MeetCall() { has_call_ = true; }
-
-void RLProgress::MeetLibCall() { has_lib_call_ = true; }
-
-void RLProgress::MeetCallOther() { has_call_other_ = true; }
-
-bool RLProgress::HasCallFunc() { return has_call_; }
+void RLProgress::RegisterParams(ParamList &plst) { planner_->RegisterParams(plst); }
 
 RLBasicBlock *RLProgress::FindBlkById(size_t lbidx) { return lbmap_.at(lbidx); }

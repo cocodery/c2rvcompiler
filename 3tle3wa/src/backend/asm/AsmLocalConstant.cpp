@@ -2,8 +2,6 @@
 
 AsmLocalConstant::AsmLocalConstant(size_t idx, uint32_t values) : idx_(idx), values_(values), data_len_(4), align_(4) {}
 
-AsmLocalConstant::~AsmLocalConstant() {}
-
 void AsmLocalConstant::formatString(FILE *fp) {
     fprintf(fp,
             // alignment

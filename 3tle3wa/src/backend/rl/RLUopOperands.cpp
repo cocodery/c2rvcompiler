@@ -19,12 +19,11 @@ const VecVR UopLui::GetOperands() const { return VecVR{}; }
 
 VirtualRegister *UopLui::GetResult() const { return dst_; }
 
-const VecVR UopMv::GetOperands() const {
-    if (src_ != nullptr) {
-        return VecVR{src_};
-    }
-    return VecVR{};
-}
+const VecVR UopLi::GetOperands() const { return VecVR{}; }
+
+VirtualRegister *UopLi::GetResult() const { return dst_; }
+
+const VecVR UopMv::GetOperands() const { return VecVR{src_}; }
 
 VirtualRegister *UopMv::GetResult() const { return dst_; }
 
@@ -61,39 +60,58 @@ const VecVR UopLla::GetOperands() const { return VecVR{}; }
 
 VirtualRegister *UopLla::GetResult() const { return dst_; }
 
-const VecVR UopLoad::GetOperands() const { return VecVR{base_}; }
+const VecVR UopLoad::GetOperands() const {
+    if (base_ != nullptr) {
+        return VecVR{base_};
+    }
+    return VecVR{};
+}
 
 VirtualRegister *UopLoad::GetResult() const { return dst_; }
 
 const VecVR UopStore::GetOperands() const {
-    if (src_ != nullptr) {
-        return VecVR{src_, base_};
-    }
-    return VecVR{base_};
-}
-
-VirtualRegister *UopStore::GetResult() const { return nullptr; }
-
-const VecVR UopFLoad::GetOperands() const { return VecVR{base_}; }
-
-VirtualRegister *UopFLoad::GetResult() const { return dst_; }
-
-const VecVR UopFStore::GetOperands() const { return VecVR{src_, base_}; }
-
-VirtualRegister *UopFStore::GetResult() const { return nullptr; }
-
-const VecVR UopICmp::GetOperands() const {
     VecVR vec;
-    if (lhs_ != nullptr) {
-        vec.push_back(lhs_);
+    if (base_ != nullptr) {
+        vec.push_back(base_);
     }
-    if (rhs_ != nullptr) {
-        vec.push_back(rhs_);
+    if (src_ != nullptr) {
+        vec.push_back(src_);
     }
     return vec;
 }
 
-VirtualRegister *UopICmp::GetResult() const { return dst_; }
+VirtualRegister *UopStore::GetResult() const { return nullptr; }
+
+const VecVR UopFLoad::GetOperands() const {
+    if (base_ != nullptr) {
+        return VecVR{base_};
+    }
+    return VecVR{};
+}
+
+VirtualRegister *UopFLoad::GetResult() const { return dst_; }
+
+const VecVR UopFStore::GetOperands() const {
+    VecVR vec;
+    if (base_ != nullptr) {
+        vec.push_back(base_);
+    }
+    if (src_ != nullptr) {
+        vec.push_back(src_);
+    }
+    return vec;
+}
+
+VirtualRegister *UopFStore::GetResult() const { return nullptr; }
+
+const VecVR UopFLoadLB::GetOperands() const {
+    if (helper_ != nullptr) {
+        return VecVR{helper_};
+    }
+    return VecVR{};
+}
+
+VirtualRegister *UopFLoadLB::GetResult() const { return dst_; }
 
 const VecVR UopFCmp::GetOperands() const { return VecVR{lhs_, rhs_}; }
 
@@ -112,6 +130,19 @@ const VecVR UopIBin::GetOperands() const {
 
 VirtualRegister *UopIBin::GetResult() const { return dst_; }
 
+const VecVR UopIBin64::GetOperands() const {
+    VecVR vec;
+    if (lhs_ != nullptr) {
+        vec.push_back(lhs_);
+    }
+    if (rhs_ != nullptr) {
+        vec.push_back(rhs_);
+    }
+    return vec;
+}
+
+VirtualRegister *UopIBin64::GetResult() const { return dst_; }
+
 const VecVR UopIBinImm::GetOperands() const {
     if (lhs_ != nullptr) {
         return VecVR{lhs_};
@@ -120,6 +151,15 @@ const VecVR UopIBinImm::GetOperands() const {
 }
 
 VirtualRegister *UopIBinImm::GetResult() const { return dst_; }
+
+const VecVR UopIBinImm64::GetOperands() const {
+    if (lhs_ != nullptr) {
+        return VecVR{lhs_};
+    }
+    return VecVR{};
+}
+
+VirtualRegister *UopIBinImm64::GetResult() const { return dst_; }
 
 const VecVR UopFBin::GetOperands() const {
     VecVR vec;
@@ -133,3 +173,17 @@ const VecVR UopFBin::GetOperands() const {
 }
 
 VirtualRegister *UopFBin::GetResult() const { return dst_; }
+
+const VecVR UopFTri::GetOperands() const {
+    VecVR vec;
+    vec.push_back(lhs_);
+    vec.push_back(rhs_);
+    vec.push_back(ahs_);
+    return vec;
+}
+
+VirtualRegister *UopFTri::GetResult() const { return dst_; }
+
+const VecVR UopNop::GetOperands() const { return VecVR{}; }
+
+VirtualRegister *UopNop::GetResult() const { return nullptr; }

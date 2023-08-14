@@ -52,7 +52,7 @@ def build_run(args, exts, cc_arg, simcc_arg):
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mCompile Error\033[0m".format(basename))
             continue
 
-        cmd = [args.cc, args.sylib, name, '-o', runname]
+        cmd = [args.cc, '-o', runname, name, args.sylib]
         for a in cc_arg:
             cmd.append(a)
         # print(" ".join(cmd))

@@ -9,5 +9,5 @@
 
 class AsmLabelArray final : public Serializable {
    public:
-    AsmGlobalValue() = default;
+    AsmLabelArray() = default;
 };

@@ -5,45 +5,28 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
-class StackInfo final : public Weightable {
-    size_t sidx_;
+class VirtualRegister;
 
-    size_t stack_len_;
+class StackInfo final {
+    size_t stk_idx_;
+    size_t stk_len_;
+    size_t offset_;
 
-    int64_t offset_;
+    size_t param_offset_;
+    bool is_param_;
 
-    double succ_weight_;
-
-    bool from_alloca_;
-
-    bool param_;
+    VirtualRegister *belong_to_;
 
    public:
     StackInfo(size_t sidx, size_t slen);
 
-    void SetParam(int64_t off);
+    size_t GetStackIdx();
+    size_t GetStackLength();
+    size_t GetStackOff();
+    size_t GetParamStackOff();
 
-    void CalcuWeight();
-
-    void SuccWeight(double w);
+    void SetOff(size_t off);
+    void SetParamOff(size_t off);
 
     bool IsParam();
-
-    size_t GetSidx() const;
-
-    size_t GetSLen() const;
-
-    void SetOff(int64_t off);
-
-    void SetFromAlloca(bool from_alloca);
-
-    bool IsFromAlloca();
-
-    int64_t GetOff() const;
-
-    virtual bool operator>(const StackInfo &other) final;
-
-    virtual bool operator==(const StackInfo &other) final;
-
-    virtual bool operator<(const StackInfo &other) final;
 };

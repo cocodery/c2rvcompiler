@@ -25,7 +25,7 @@ class ICmpInst final : public BinaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class FCmpInst;
@@ -50,5 +50,5 @@ class FCmpInst final : public BinaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
