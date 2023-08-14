@@ -27,7 +27,7 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
-        LoopUnrolling::LoopUnrolling(func);
+        // LoopUnrolling::LoopUnrolling(func);
 
         SCCP::SCCP(func);
 
