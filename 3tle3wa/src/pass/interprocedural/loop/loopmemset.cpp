@@ -92,8 +92,8 @@ void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr
         if (level == array_dimension) {
             // loop->PrintStructure();
             // std::cout << loop->body_begin->tollvmIR() << std::endl;
-            //  MemsetArray(array, init_num);
-            // std::cout << "\n\n\n";
+            // MemsetArray(array, init_num);
+            // RemoveLoop(loop);
             level = 0;
             array = nullptr;
             return;
@@ -348,8 +348,18 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
     return true;
 }
 
-void RemoveLoop(Loop *loop) {
-    
+void LoopMemset::RemoveLoop(Loop *loop) {
+    auto &&parent = loop->parent;
+    loop->before_blk->RmvSuccessor(loop->cond_begin);
+    loop->loop_exit->RmvPredecessor(loop->cond_end);
+    JumpInst::CreatePtr(loop->loop_exit, loop->before_blk);
+    if (parent != nullptr) {
+        parent->sub_structures.remove(loop);
+    }
+    // remove all loop blocks
+    for (auto &&blk : loop->GetEntireStructure()) {
+        RemoveNode(blk);
+    }
 }
 
 void LoopMemset::MemsetArray(BaseValuePtr array, BaseValuePtr init_num) {}
