@@ -20,6 +20,8 @@ void FBinaryInst::TranslateTo(InternalTranslation &itx, InternalTranslationConte
 
 void FNegInst::TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) { itx.Translate(this, ctx); }
 
+void FAbsInst::TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) { itx.Translate(this, ctx); }
+
 // memory inst
 void AllocaInst::TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) { itx.Translate(this, ctx); }
 

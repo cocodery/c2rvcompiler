@@ -33,7 +33,8 @@ void RLProgress::DoToAsm(AsmProgress *apg) {
     for (auto &&rlbb : rlbbs_) {
         auto abb = std::make_unique<AsmBasicBlock>(rlbb->GetLabelIdx(), apg);
         rlbb->ToAsm(abb.get(), planner_.get(), last_calls);
-        apg->Push(std::move(abb), abb->IsRet());
+        bool is_ret = abb->IsRet();
+        apg->Push(std::move(abb), is_ret);
     }
 
     apg->DoOptimization();

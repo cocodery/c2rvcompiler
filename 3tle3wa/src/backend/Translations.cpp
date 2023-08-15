@@ -1561,6 +1561,26 @@ void InternalTranslation::Translate(FNegInst *ll, InternalTranslationContext &ct
     ctx.cur_blk->PushUop(uop);
 }
 
+void InternalTranslation::Translate(FAbsInst *ll, InternalTranslationContext &ctx) {
+    auto uop = new UopFBin;
+
+    auto res = ll->GetResult();
+    auto operand = ll->GetOprand();
+
+    auto srcopd = dynamic_cast<Variable *>(operand.get());
+    Assert(srcopd != nullptr, "should be fold");
+
+    auto dst = ctx.planner->AllocVReg(VREG_TYPE::FLT, res->GetVariableIdx());
+    auto src = ctx.planner->GetVReg(srcopd->GetVariableIdx());
+
+    uop->SetDst(dst);
+    uop->SetLhs(src);
+    uop->SetRhs(nullptr);
+    uop->SetKind(FBIN_KIND::ABS);
+
+    ctx.cur_blk->PushUop(uop);
+}
+
 void InternalTranslation::Translate(PhiInst *ll, InternalTranslationContext &ctx) {
     auto res = ll->GetResult();
     VirtualRegister *mux, *recv;
@@ -1624,6 +1644,8 @@ void InternalTranslation::dephi(InternalTranslationContext &ctx) {
             }
 
             rlbb->RecoverUops();
+            ctx.lui_map.clear();
+            ctx.fimm_map.clear();
         }
     }
 }

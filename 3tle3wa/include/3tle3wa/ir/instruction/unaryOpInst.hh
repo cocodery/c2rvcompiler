@@ -40,4 +40,6 @@ class FAbsInst final : public UnaryInstruction {
     bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
 
     std::string tollvmIR() final override;
+
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
