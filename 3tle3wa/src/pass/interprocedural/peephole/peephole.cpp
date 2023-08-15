@@ -18,6 +18,8 @@
 #include "3tle3wa/ir/instruction/unaryOpInst.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/type/scalarType.hh"
+#include "3tle3wa/ir/value/variable.hh"
 
 void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
     for (auto &&node : func->GetSequentialNodes()) {
@@ -155,6 +157,37 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
                             }
                         }
                     }
+                }
+            } else if (inst->IsTwoOprandInst()) {
+                auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+                if (bin_inst->IsICmpInst()) {
+                    auto &&icmp_inst = std::static_pointer_cast<ICmpInst>(bin_inst);
+                    auto &&lhs = icmp_inst->GetLHS();
+                    auto &&rhs = icmp_inst->GetRHS();
+
+                    auto &&zero = (lhs->GetBaseType()->IntType())
+                                      ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                      : ConstantAllocator::FindConstantPtr(static_cast<bool>(0));
+
+                    assert(!(lhs->IsConstant() && rhs->IsConstant()));
+                    if (lhs->IsVariable() && rhs->IsConstant() && rhs != zero) {  // lhs-variable rhs-constant
+                        auto &&constant = std::static_pointer_cast<Constant>(rhs);
+
+                        auto &&result = Variable::CreatePtr(type_int_L, nullptr);
+                        auto &&sub_inst = IBinaryInst::CreatePtr(result, OP_SUB, lhs, constant, node);
+                        result->SetParent(sub_inst);
+                        lhs->InsertUser(sub_inst);
+
+                        lhs->RemoveUser(icmp_inst);
+
+                        icmp_inst->SetLHS(result);
+                        icmp_inst->SetRHS(zero);
+                        result->InsertUser(icmp_inst);
+
+                        inst_list.insert(iter, sub_inst);
+                    }
+                } else if (bin_inst->IsFBinaryInst()) {
+                    auto &&fbin_inst = std::static_pointer_cast<FBinaryInst>(bin_inst);
                 }
             }
             ++iter;
