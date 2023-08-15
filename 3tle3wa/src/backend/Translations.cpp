@@ -1644,6 +1644,8 @@ void InternalTranslation::dephi(InternalTranslationContext &ctx) {
             }
 
             rlbb->RecoverUops();
+            ctx.lui_map.clear();
+            ctx.fimm_map.clear();
         }
     }
 }
