@@ -64,6 +64,8 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
+        LoopMemset::LoopMemset(func);
+
         LoopUnrolling::LoopUnrolling(func);
 
         SCCP::SCCP(func);
