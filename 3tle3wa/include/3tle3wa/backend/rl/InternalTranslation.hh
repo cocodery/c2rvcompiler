@@ -33,6 +33,7 @@ class FCmpInst;
 class IBinaryInst;
 class FBinaryInst;
 class FNegInst;
+class FAbsInst;
 
 // memory inst
 class AllocaInst;
@@ -112,6 +113,7 @@ class InternalTranslation final : public Serializable {
     void Translate(IBinaryInst *ll, InternalTranslationContext &ctx);
     void Translate(FBinaryInst *ll, InternalTranslationContext &ctx);
     void Translate(FNegInst *ll, InternalTranslationContext &ctx);
+    void Translate(FAbsInst *ll, InternalTranslationContext &ctx);
 
     void Translate(AllocaInst *ll, InternalTranslationContext &ctx);
     void Translate(StoreInst *ll, InternalTranslationContext &ctx);
