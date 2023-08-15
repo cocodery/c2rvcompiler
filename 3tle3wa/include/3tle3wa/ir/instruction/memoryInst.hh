@@ -32,7 +32,7 @@ class AllocaInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class StoreInst;
@@ -62,7 +62,7 @@ class StoreInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class LoadInst;
@@ -81,7 +81,7 @@ class LoadInst final : public UnaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 class GetElementPtrInst;
@@ -115,7 +115,7 @@ class GetElementPtrInst final : public Instruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };
 
 std::pair<GlobalValue *, bool> AddrFromGlobal(BaseValue *addr);

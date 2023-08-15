@@ -57,6 +57,9 @@ class Instruction : public Translatable {
     bool IsCallInst() const;
     bool IsPhiInst() const;
 
+    bool IsFNegInst() const;
+    bool IsFAbsInst() const;
+
     bool IsValueNumberInst() const;
 
     bool IsCriticalOperation() const;

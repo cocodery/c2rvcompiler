@@ -10,7 +10,7 @@
 class AsmBasicBlock;
 class AsmGlobalValue;
 
-class AsmProgress : public Serializable {
+class AsmProgress final : public Serializable {
     char *label_;
     size_t label_len_;
 
@@ -26,10 +26,9 @@ class AsmProgress : public Serializable {
 
    public:
     AsmProgress(const std::string &name);
+    ~AsmProgress();
 
-    virtual ~AsmProgress();
-
-    void Push(std::unique_ptr<AsmBasicBlock> &ablk, bool is_ret = false);
+    void Push(std::unique_ptr<AsmBasicBlock> ablk, bool is_ret = false);
 
     AsmBasicBlock *CreateEntryBlock();
 
@@ -41,7 +40,7 @@ class AsmProgress : public Serializable {
 
     const char *Label() const;
 
-    void ArchSchedule();
+    void DoASchedule();
 
     void DoOptimization();
 };

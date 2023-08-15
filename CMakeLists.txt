@@ -35,7 +35,7 @@ add_compile_options(-std=c++17)
 add_compile_options(-O2)
 
 # 用于调试
-add_compile_options(-g)
+# add_compile_options(-g)
 add_compile_options(-Wall -Wextra)
 
 # 用于内存检测

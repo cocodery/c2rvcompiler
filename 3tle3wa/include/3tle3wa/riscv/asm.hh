@@ -22,16 +22,17 @@ class Instruction : public AsmInstruction {
     int64_t imm_{};
 
    public:
-    Instruction(uint64_t rd = riscv::zero, uint64_t rs = riscv::zero, uint64_t rt = riscv::zero, int64_t imm = 0);
+    const std::vector<size_t> GetOperands() const;
+    size_t GetResult() const;
 
-    virtual Transaction ToTrx() = 0;
+    Instruction(uint64_t rd = riscv::zero, uint64_t rs = riscv::zero, uint64_t rt = riscv::zero, int64_t imm = 0);
 };
 
-#define RVINST(name, ...)             \
-    class name : public Instruction { \
-       public:                        \
-        name(__VA_ARGS__);            \
-        Transaction ToTrx();          \
+#define RVINST(name, ...)                \
+    class name : public Instruction {    \
+       public:                           \
+        name(__VA_ARGS__);               \
+        SCHED_TYPE GetSchedType() const; \
     }
 
 //

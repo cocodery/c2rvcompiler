@@ -8,7 +8,7 @@
 
 #include "3tle3wa/backend/Interface.hh"
 
-class AsmGlobalValue : public Serializable {
+class AsmGlobalValue final : public Serializable {
     char *label_{nullptr};
     size_t label_len_{0};
 
@@ -26,8 +26,7 @@ class AsmGlobalValue : public Serializable {
 
    public:
     AsmGlobalValue(const std::string &name, size_t len, bool uninit, size_t reserve);
-
-    virtual ~AsmGlobalValue();
+    ~AsmGlobalValue();
 
     void Push(uint32_t value);
 

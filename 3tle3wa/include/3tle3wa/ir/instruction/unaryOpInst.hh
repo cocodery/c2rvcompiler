@@ -24,5 +24,22 @@ class FNegInst final : public UnaryInstruction {
 
     std::string tollvmIR() final override;
 
-    void TranslateTo(InternalTranslation &itx) final override;
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
+};
+
+class FAbsInst;
+using FAbsInstPtr = std::shared_ptr<FAbsInst>;
+
+class FAbsInst final : public UnaryInstruction {
+   public:
+    FAbsInst(VariablePtr, BaseValuePtr, CfgNodePtr);
+    ~FAbsInst() = default;
+
+    static FAbsInstPtr CreatePtr(VariablePtr, BaseValuePtr, CfgNodePtr);
+
+    bool ReplaceSRC(BaseValuePtr, BaseValuePtr) final override;
+
+    std::string tollvmIR() final override;
+
+    void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx) final override;
 };

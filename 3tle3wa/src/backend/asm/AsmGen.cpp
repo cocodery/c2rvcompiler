@@ -39,12 +39,14 @@ void AsmGen::formatString(FILE *fp) {
 
     fprintf(fp, "%s", libfstl);
 
+    fprintf(fp, "%s", libcrvc);
+
     // compiler tag
     fprintf(fp, "\t.ident\t\"c2rv: " VERSION "\"\n");
 }
 
-void AsmGen::PushAsmGlobalValue(std::unique_ptr<AsmGlobalValue> &agv) { gv_storage_.push_back(std::move(agv)); }
+void AsmGen::PushAsmGlobalValue(std::unique_ptr<AsmGlobalValue> agv) { gv_storage_.push_back(std::move(agv)); }
 
-void AsmGen::PushAsmLocalConstant(std::unique_ptr<AsmLocalConstant> &alc) { lc_storage_.push_back(std::move(alc)); }
+void AsmGen::PushAsmLocalConstant(std::unique_ptr<AsmLocalConstant> alc) { lc_storage_.push_back(std::move(alc)); }
 
-void AsmGen::PushAsmProgress(std::unique_ptr<AsmProgress> &ap) { pg_storage_.push_back(std::move(ap)); }
+void AsmGen::PushAsmProgress(std::unique_ptr<AsmProgress> ap) { pg_storage_.push_back(std::move(ap)); }

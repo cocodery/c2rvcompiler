@@ -38,6 +38,9 @@ bool Instruction::IsGepInst() const { return opcode == Gep; }
 bool Instruction::IsCallInst() const { return opcode == Call; }
 bool Instruction::IsPhiInst() const { return opcode == Phi; }
 
+bool Instruction::IsFNegInst() const { return opcode == FNeg; }
+bool Instruction::IsFAbsInst() const { return opcode == FAbs; }
+
 bool Instruction::IsCriticalOperation() const {
     return IsStoreInst() || IsCallInst() || IsReturnInst() || IsJumpInst() || IsBranchInst();
 }

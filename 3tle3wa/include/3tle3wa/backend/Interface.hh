@@ -6,6 +6,7 @@
 #include "3tle3wa/utils/logs.hh"
 
 class InternalTranslation;
+struct InternalTranslationContext;
 
 class Serializable {
    private:
@@ -28,21 +29,7 @@ class Serializable {
     ~Serializable();
 };
 
-class Weightable {
-   protected:
-    double weight_{};
-
-   public:
-    virtual double Weight() final;
-
-    //  virtual bool operator>(const Weightable &other);
-
-    //  virtual bool operator==(const Weightable &other);
-
-    //  virtual bool operator<(const Weightable &other);
-};
-
 class Translatable {
    public:
-    virtual void TranslateTo(InternalTranslation &itx);
+    virtual void TranslateTo(InternalTranslation &itx, InternalTranslationContext &ctx);
 };

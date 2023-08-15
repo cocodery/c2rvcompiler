@@ -50,7 +50,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional performance final_performance # 
+MODE 			?= functional hidden_functional # functional hidden_functional performance final_performance
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -280,10 +280,10 @@ asmpk: $(OUTPUT_ASM)
 	mkdir -p $(BUILD_DIR)/starfive
 	mv $^ $(BUILD_DIR)/starfive/
 	rm $^
-# cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
-# cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
-# cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))
-# cd $(BUILD_DIR)
-# tar -zcvf starry.tar.gz starfive
-# cp starry.tar.gz /mnt/d/code
-# rm -rf starfive
+	cp $(OUTPUT_IN) $(OUTPUT_OUT) $(BUILD_DIR)/starfive/
+	cp $(SYLIB_C) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_C))
+	cp $(SYLIB_H) $(BUILD_DIR)/starfive/$(notdir $(SYLIB_H))
+	cd $(BUILD_DIR)
+	tar -zcvf starry.tar.gz starfive
+	cp starry.tar.gz /mnt/d/code
+	rm -rf starfive

@@ -1,5 +1,7 @@
 #include "3tle3wa/ir/funcTable.hh"
 
+#include <cstddef>
+
 #include "3tle3wa/ir/function/function.hh"
 
 FunctionTable::FunctionTable() {
@@ -41,7 +43,7 @@ FunctionTable::FunctionTable() {
     // 10 - _sysy_starttime
     // 11 - _sysy_stoptime
     // 12 - llvm.memset.p0i8.i64
-    LibFuncPtr lib_func[18];
+    LibFuncPtr lib_func[19];
     lib_func[0] = SYSYLibFunction::CreatePtr(ret_type[1], "getint", param_list[0], true);
     lib_func[1] = SYSYLibFunction::CreatePtr(ret_type[1], "getch", param_list[0], true);
     lib_func[2] = SYSYLibFunction::CreatePtr(ret_type[2], "getfloat", param_list[0], true);
@@ -61,7 +63,10 @@ FunctionTable::FunctionTable() {
     lib_func[15] = SYSYLibFunction::CreatePtr(ret_type[0], "__crvc_spinlock_lock", param_list[0], false);
     lib_func[16] = SYSYLibFunction::CreatePtr(ret_type[0], "__crvc_spinlock_unlock", param_list[0], false);
 
-    lib_func[17] = LLVMLibFunction::CreatePtr("memset", 3, ret_type[0], "llvm.memset.p0i8.i64", param_list[7], false);
+    lib_func[17] = SYSYLibFunction::CreatePtr(ret_type[2], "llvm.fabs.f32", param_list[2], false);
+    lib_func[17]->InsertWhoCall(nullptr);  // for print fabs-function in llvm-IR-text
+
+    lib_func[18] = LLVMLibFunction::CreatePtr("memset", 3, ret_type[0], "llvm.memset.p0i8.i64", param_list[7], false);
 
     for (auto &&func_ptr : lib_func) {
         libraryFuncTable.push_back(func_ptr);
