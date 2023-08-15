@@ -348,4 +348,8 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
     return true;
 }
 
+void RemoveLoop(Loop *loop) {
+    
+}
+
 void LoopMemset::MemsetArray(BaseValuePtr array, BaseValuePtr init_num) {}

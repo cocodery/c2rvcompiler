@@ -23,4 +23,5 @@ bool CheckLoopStep(Loop *);
 void LoopTreeTraversal(Loop *, BaseValuePtr &, BaseValuePtr &, int &);
 void LoopMemset(NormalFuncPtr);
 void MemsetArray(BaseValuePtr, BaseValuePtr);
+void RemoveLoop(Loop *);
 }  // namespace LoopMemset
