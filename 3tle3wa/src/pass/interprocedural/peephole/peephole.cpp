@@ -1,5 +1,7 @@
 #include "3tle3wa/pass/interprocedural/peephole/peephole.hh"
 
+#include <cassert>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <unordered_map>
@@ -10,6 +12,7 @@
 #include "3tle3wa/ir/instruction/compareInst.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 #include "3tle3wa/ir/instruction/unaryOpInst.hh"
@@ -104,6 +107,50 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
                                             continue;
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (inst->IsGepInst()) {  // remove redundant gep-inst
+                auto &&gep2 = std::static_pointer_cast<GetElementPtrInst>(inst);
+                auto &&base_addr2 = gep2->GetBaseAddr();
+                auto &&off_list2 = gep2->GetOffList();
+                if (off_list2.size() == 1 && base_addr2->GetParent() && base_addr2->GetParent()->IsGepInst()) {
+                    auto &&gep1 = std::static_pointer_cast<GetElementPtrInst>(base_addr2->GetParent());
+                    auto &&base_addr1 = gep1->GetBaseAddr();
+                    auto &&off_list1 = gep1->GetOffList();
+                    if (off_list1.size() == 2) {
+                        auto &&real_off1 = off_list1.back();
+                        auto &&real_off2 = off_list2.back();
+
+                        if (real_off1->IsConstant()) {
+                            auto &&zero = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
+
+                            auto &&constant1 = std::static_pointer_cast<Constant>(real_off1);
+                            if (real_off1 == zero) {
+                                // replace base-addr
+                                gep2->SetBaseAddr(base_addr1);
+                                base_addr2->RemoveUser(gep2);
+                                base_addr1->InsertUser(gep2);
+                                base_addr1->RemoveUser(gep1);
+                                // no need to change gep2->off_list
+                            } else {
+                                if (real_off2->IsConstant()) {
+                                    auto &&constant2 = std::static_pointer_cast<Constant>(real_off2);
+                                    // replace base-addr
+                                    gep2->SetBaseAddr(base_addr1);
+                                    base_addr2->RemoveUser(gep2);
+                                    base_addr1->InsertUser(gep2);
+                                    base_addr1->RemoveUser(gep1);
+                                    // calculate new offset
+                                    int32_t off_int1 = std::get<int32_t>(constant1->GetValue());
+                                    int32_t off_int2 = std::get<int32_t>(constant2->GetValue());
+                                    auto &&new_real_off2 =
+                                        ConstantAllocator::FindConstantPtr(static_cast<int32_t>(off_int1 + off_int2));
+                                    // set new offset-list
+                                    auto &&off_list = OffsetList(1, new_real_off2);
+                                    gep2->SetOffList(off_list);
                                 }
                             }
                         }

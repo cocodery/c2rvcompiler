@@ -5,6 +5,7 @@
 #include "3tle3wa/ir/instruction/typeconvert.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
 
 class AllocaInst;
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
@@ -104,8 +105,13 @@ class GetElementPtrInst final : public Instruction {
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
     BaseTypePtr GetStoreType() const;
+    void SetStoreType(BaseTypePtr);
+
     BaseValuePtr GetBaseAddr() const;
+    void SetBaseAddr(BaseValuePtr);
+
     const OffsetList &GetOffList() const;
+    void SetOffList(OffsetList &);
 
     void RemoveResParent() final override;
 

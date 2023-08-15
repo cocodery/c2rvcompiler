@@ -36,6 +36,8 @@ void Optimization::DoOptimization() {
 
         PeepHole::PeepHoleOpt(func);
 
+        DCE::EliminateUselessCode(func);
+
         GVN::DVNT(func, comp_unit.getGlbTable());
 
         InstComb::InstCombine(func);

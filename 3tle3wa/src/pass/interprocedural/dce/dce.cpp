@@ -103,7 +103,7 @@ void DCE::EliminateUselessCode(NormalFuncPtr func) {
     };
 
     Mark();
-    EliminateRedundantStore();
+    // EliminateRedundantStore();
     Sweep();
 }
 
