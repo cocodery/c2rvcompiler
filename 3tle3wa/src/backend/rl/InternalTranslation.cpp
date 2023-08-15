@@ -29,12 +29,12 @@ void InternalTranslation::DoTranslation() {
                                       .lui_map{},
                                       .fimm_map{},
                                       .phi_vec{},
-                                      .cur_cfg{nullptr},
-                                      .nxt_cfg{nullptr},
-                                      .cur_blk{nullptr},
-                                      .planner{nullptr},
-                                      .meet_call{false},
-                                      .meet_tail{false}};
+                                      .cur_cfg = nullptr,
+                                      .nxt_cfg = nullptr,
+                                      .cur_blk = nullptr,
+                                      .planner = nullptr,
+                                      .meet_call = false,
+                                      .meet_tail = false};
 
     auto planner = std::make_unique<RLPlanner>(fptr_->GetVarIdx());
 

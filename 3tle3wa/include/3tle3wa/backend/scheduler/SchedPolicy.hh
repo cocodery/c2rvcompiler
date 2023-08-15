@@ -13,6 +13,8 @@ class SchedPolicy {
    public:
     SchedPolicy() : view_() {}
 
+    virtual ~SchedPolicy() = default;
+
     virtual void Push(SchedItem *item) = 0;
     virtual void Sched() = 0;
 
