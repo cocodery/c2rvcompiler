@@ -8,6 +8,14 @@
 
 const char *libcrvc = R"(
 memset:
+	slli	a1, a1, 56
+	srli	a1, a1, 56
+	slli	a3, a1, 8
+	or		a1, a3, a1
+	slli	a3, a1, 16
+	or		a1, a3, a1
+	slli	a3, a1, 32
+	or		a1, a3, a1
 .L.memset.entry64:
 	li	a3, 64
 .L.memset.try64:

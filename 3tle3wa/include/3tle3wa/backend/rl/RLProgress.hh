@@ -61,5 +61,7 @@ class RLProgress final : public Serializable {
     void DoAssignment();
     void DoToAsm(AsmProgress *apg);
 
+    void SetMergable(InterferenceGraph &ig);
+
     RLBasicBlock *FindBlkById(size_t lbidx);
 };

@@ -1,30 +1,75 @@
 #include "3tle3wa/pass/interprocedural/loop/loopmemset.hh"
 
-void LoopMemset::LoopMemset(NormalFuncPtr func) {
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <queue>
+#include <utility>
+
+#include "3tle3wa/backend/rl/RLGen.hh"
+#include "3tle3wa/ir/IR.hh"
+#include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
+#include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
+#include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/globalvalue.hh"
+#include "3tle3wa/ir/value/type/baseType.hh"
+#include "3tle3wa/ir/value/type/listType.hh"
+#include "3tle3wa/pass/analysis/structure/structure.hh"
+
+void LoopMemset::LoopMemset(NormalFuncPtr func, CompilationUnit &comp_unit) {
     BaseValuePtr array = nullptr;
     BaseValuePtr init_num = nullptr;
     auto structure = func->loops->sub_structures;
     int begin_level = 0;
-    LoopTreeTraversal(func->loops, array, init_num, begin_level);
+
+    std::string memset = "llvm.memset.p0i8.i64";
+    callee = comp_unit.GetFunction(memset);  // memeset
+
+    assert(!LoopTreeTraversal(func, func->loops, array, init_num, begin_level));
 }
 
 // post-order travel loop tree
-void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr &init_num, int &level) {
+bool LoopMemset::LoopTreeTraversal(NormalFuncPtr func, Loop *loop, BaseValuePtr &array, BaseValuePtr &init_num,
+                                   int &level) {
     auto &&sub_loops = loop->sub_structures;
     if (sub_loops.size() > 0) {
         for (auto &&iter = sub_loops.begin(); iter != sub_loops.end();) {
             auto &&sub_loop = static_cast<Loop *>(*iter);
-            LoopTreeTraversal(sub_loop, array, init_num, level);
-            ++iter;
+            if (LoopTreeTraversal(func, sub_loop, array, init_num, level)) {
+                for (auto &&node : sub_loop->GetEntireStructure()) {
+                    RemoveNode(node);
+                }
+                std::queue<Loop *> queue;
+                std::list<Loop *> list;
+                queue.push(sub_loop);
+                while (!queue.empty()) {
+                    auto &&front = queue.front();
+                    queue.pop();
+                    for (auto &&sub : front->sub_structures) {
+                        queue.push(static_cast<Loop *>(sub));
+                    }
+                }
+                for (auto &&del_loop : list) {
+                    StructureAnalysis::RmvLoopInNode2Loop(del_loop);
+                }
+                iter = sub_loops.erase(iter);
+            } else {
+                ++iter;
+            }
         }
     } else if (sub_loops.size() == 0) {
         if (loop->before_blk == nullptr) {
-            return;
+            return false;
         }
         // if isArrayAssignment is true, level++
         auto array_and_init = GetArrayInit(loop);
         if (array_and_init.first == nullptr) {
-            return;
+            return false;
         } else {
             level++;
             array = array_and_init.first;
@@ -32,18 +77,18 @@ void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr
         }
     }
     if (loop->before_blk == nullptr) {
-        return;
+        return false;
     }
 
     if (array == nullptr) {
-        return;
+        return false;
     } else {
         // judge if loopbody equals entire subloop structure
         if (sub_loops.size() != 0) {
             if (sub_loops.size() > 1) {
                 level = 0;
                 array = nullptr;
-                return;
+                return false;
             }
             auto &&sub_loop = static_cast<Loop *>(sub_loops.front());
             std::set<CfgNodePtr> loop_body_set;
@@ -59,12 +104,12 @@ void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr
             if (loop_body_set != entire_sub_loop_set) {
                 level = 0;
                 array = nullptr;
-                return;
+                return false;
             }
             if (sub_loop->before_blk->GetInstList().size() > 3 || sub_loop->loop_exit->GetInstList().size() > 3) {
                 level = 0;
                 array = nullptr;
-                return;
+                return false;
             }
         }
 
@@ -72,12 +117,12 @@ void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr
         if (CheckLoopStep(loop) == false) {
             level = 0;
             array = nullptr;
-            return;
+            return false;
         }
 
         // judge if level is array dimension and if loop time equals upper of this dimension
-        // true:memset
-        // false:return
+        // true  : memset
+        // false : return
         int array_dimension;
         auto &&list = std::static_pointer_cast<ListType>(array->GetBaseType());
         array_dimension = list->GetArrDims().size();
@@ -86,46 +131,84 @@ void LoopMemset::LoopTreeTraversal(Loop *loop, BaseValuePtr &array, BaseValuePtr
         if (dimension_upper != loop_time) {
             level = 0;
             array = nullptr;
-            return;
+            return false;
         }
 
         if (level == array_dimension) {
-            // loop->PrintStructure();
-            // std::cout << loop->body_begin->tollvmIR() << std::endl;
-            // MemsetArray(array, init_num);
-            // RemoveLoop(loop);
+            loop->before_blk->RemoveLastInst();
+
+            BaseTypePtr &&base_type = nullptr;
+            if (array->IsGlobalValue()) {
+                auto &&glb_value = std::static_pointer_cast<GlobalValue>(array);
+                base_type = glb_value->GetInitValue()->GetBaseType();
+            } else if (array->IsVariable()) {
+                assert(array->GetParent()->IsAllocaInst());
+                auto &&alloca_inst = std::static_pointer_cast<AllocaInst>(array->GetParent());
+                base_type = alloca_inst->GetAllocaType();
+            } else {
+                assert(false);
+            }
+            assert(base_type->IsArray());
+            auto &&list_type = std::static_pointer_cast<ListType>(base_type);
+
+            BaseValuePtr start_addr = GetElementPtrInst::DoGetPointer(
+                base_type, array, OffsetList(2, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))),
+                loop->before_blk);
+            BaseValuePtr i8_addr = BitCastInst::DoBitCast(start_addr, loop->before_blk);
+
+            func->InsertCallWho(callee.get());
+            callee->InsertWhoCall(func.get());
+
+            BaseValuePtr init_value = nullptr;
+            if (init_num == ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) {
+                init_value = ConstantAllocator::FindConstantPtr(static_cast<char>(0));
+            } else if (init_num == ConstantAllocator::FindConstantPtr(static_cast<int32_t>(-1))) {
+                init_value = ConstantAllocator::FindConstantPtr(static_cast<char>(-1));
+            } else if (init_num == ConstantAllocator::FindConstantPtr(static_cast<float>(0))) {
+                init_value = ConstantAllocator::FindConstantPtr(static_cast<char>(0));
+            } else {
+                assert(false);
+            }
+
+            ParamList param_list = ParamList();
+            param_list.push_back(i8_addr);
+            param_list.push_back(init_value);
+            param_list.push_back(ConstantAllocator::FindConstantPtr(
+                static_cast<int64_t>(static_cast<int64_t>(list_type->GetCapacity() * 4))));
+            param_list.push_back(ConstantAllocator::FindConstantPtr(static_cast<bool>(0)));
+
+            auto &&call_ret_value =
+                CallInst::DoCallFunction(callee->GetReturnType(), callee, param_list, loop->before_blk);
+
+            loop->before_blk->InsertInstBack(JumpInst::CreatePtr(loop->loop_exit, loop->before_blk));
+
             level = 0;
             array = nullptr;
-            return;
+            return true;
         } else {
             level++;
-            return;
+            return false;
         }
-        return;
+        return false;
     }
 }
 
-ArrayAndInit LoopMemset::GetArrayInit(Loop *loop) {
-    ArrayAndInit result;
+std::pair<BaseValuePtr, BaseValuePtr> LoopMemset::GetArrayInit(Loop *loop) {
+    auto &&result = std::make_pair(nullptr, nullptr);
     int store_num = 0;
-    result.first = nullptr;
-    result.second = nullptr;
     auto &&sub_loops = loop->sub_structures;
     auto &&loop_body = loop->body_begin;
     auto inst_list = loop_body->GetInstList();
     inst_list.pop_back();
     GepInstPtr gep_inst = nullptr;
     StoreInstPtr store_inst = nullptr;
-    if (sub_loops.size() != 0) {
-        // not the deepest loop
+    if (sub_loops.size() != 0) {  // not the deepest loop
         return result;
     }
-    if (loop->IsSimpleLoop() == false) {
-        // not simple loop
+    if (loop->IsSimpleLoop() == false) {  // not simple loop
         return result;
     }
-    if (loop->GetLoopBodyBlks().size() != 1) {
-        // loop body size more than 1
+    if (loop->GetLoopBodyBlks().size() != 1) {  // loop body size more than 1
         return result;
     }
     for (auto &&inst : loop_body->GetInstList()) {
@@ -135,19 +218,20 @@ ArrayAndInit LoopMemset::GetArrayInit(Loop *loop) {
             inst_list.remove(inst);
         }
     }
-    if (store_num != 1) {
-        // store_num != 1
+    if (store_num != 1) {  // store_num != 1
         return result;
     }
     auto &&store_addr = store_inst->GetStoreAddr();
     auto &&store_value = store_inst->GetStoreValue();
-    if (store_value->IsConstant() == false) {
-        // store value is not constant
+    if (store_value->IsConstant() == false) {  // store value is not constant
+        return result;
+    } else if (store_value != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)) &&
+               store_value != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(-1)) &&
+               store_value != ConstantAllocator::FindConstantPtr(static_cast<float>(0))) {
         return result;
     }
     auto &&addr_parent = store_addr->GetParent();
-    if (addr_parent->IsGepInst() == false) {
-        // not array
+    if (addr_parent->IsGepInst() == false) {  // not array
         return result;
     }
     gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr_parent);
@@ -176,8 +260,7 @@ ArrayAndInit LoopMemset::GetArrayInit(Loop *loop) {
             bool in_body_blk = FindInst(operand_parent, loop_body);
             bool in_cond_blk = FindInst(operand_parent, loop->cond_begin);
             bool in_before_blk = FindInst(operand_parent, loop->before_blk);
-            if ((in_body_blk || in_cond_blk || in_before_blk) == false) {
-                // defined out loop
+            if ((in_body_blk || in_cond_blk || in_before_blk) == false) {  // defined out loop
                 return result;
             }
             if (in_body_blk) {
@@ -208,19 +291,12 @@ ArrayAndInit LoopMemset::GetArrayInit(Loop *loop) {
             }
         }
     }
-
-    result.first = base_addr;
-    result.second = store_value;
-    return result;
+    return std::make_pair(base_addr, store_value);
 }
 
 bool LoopMemset::FindInst(InstPtr inst, CfgNodePtr cfgNode) {
     auto &&inst_list = cfgNode->GetInstList();
-    if (std::find(inst_list.begin(), inst_list.end(), inst) == inst_list.end()) {
-        return false;
-    } else {
-        return true;
-    }
+    return (std::find(inst_list.begin(), inst_list.end(), inst) != inst_list.end());
 }
 
 bool LoopMemset::CheckLoopStep(Loop *loop) {
@@ -231,29 +307,22 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
         return false;
     }
     auto branch_inst = std::static_pointer_cast<BranchInst>(branch);
-    auto cmp_inst = branch_inst->GetCondition()->GetParent();
-    if (cmp_inst == nullptr) {
+    auto bin_inst = std::static_pointer_cast<BinaryInstruction>(branch_inst->GetCondition()->GetParent());
+    if (bin_inst->IsICmpInst() == false) {
         return false;
     }
-    auto opcode = cmp_inst->GetOpCode();
-    if (opcode < OP_LTH) {
-        return false;
-    }
-    int const_check = LoopUnrolling::ConstCheck(cmp_inst);
+    int const_check = LoopUnrolling::ConstCheck(bin_inst);
     if (const_check == 0) {
         return false;
     }
-    auto operands_of_cmp_vector = LoopUnrolling::InstOperandsInVector(cmp_inst);
+    auto operands_of_cmp_vector = LoopUnrolling::InstOperandsInVector(bin_inst);
     auto key = operands_of_cmp_vector.at(2 - const_check);
     auto cmp_value = operands_of_cmp_vector.at(const_check - 1);
     if (cmp_value->IsConstant() == false || cmp_value->GetBaseType()->IntType() == false) {
         return false;
     }
     auto key_parent = key->GetParent();
-    if (key_parent == nullptr) {
-        return false;
-    }
-    if (key_parent->IsPhiInst() == false) {
+    if (key_parent == nullptr || key_parent->IsPhiInst() == false) {
         return false;
     }
 
@@ -274,10 +343,10 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
     if (std::find(loop_blks.begin(), loop_blks.end(), source_blk1) != loop_blks.end()) {
         value_defined_in_loop = source_value1;
         phi_part_defined_in_loop = source_value1->GetParent();
-        auto const_init_val = std::static_pointer_cast<Constant>(source_value2);
-        if (const_init_val == nullptr) {
+        if (source_value2->IsConstant() == false) {
             return false;
         }
+        auto &&const_init_val = std::static_pointer_cast<Constant>(source_value2);
         if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
             !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
             return false;
@@ -286,10 +355,10 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
     } else if (std::find(loop_blks.begin(), loop_blks.end(), source_blk2) != loop_blks.end()) {
         value_defined_in_loop = source_value2;
         phi_part_defined_in_loop = source_value2->GetParent();
-        auto const_init_val = std::static_pointer_cast<Constant>(source_value1);
-        if (const_init_val == nullptr) {
+        if (source_value1->IsConstant() == false) {
             return false;
         }
+        auto const_init_val = std::static_pointer_cast<Constant>(source_value1);
         if (!std::holds_alternative<int32_t>(const_init_val->GetValue()) &&
             !std::holds_alternative<int64_t>(const_init_val->GetValue())) {
             return false;
@@ -299,8 +368,7 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
         return false;
     }
 
-    if (init != 0) {
-        // not init from 0
+    if (init != 0) {  // not init from 0
         return false;
     }
 
@@ -347,19 +415,3 @@ bool LoopMemset::CheckLoopStep(Loop *loop) {
     }
     return true;
 }
-
-void LoopMemset::RemoveLoop(Loop *loop) {
-    auto &&parent = loop->parent;
-    loop->before_blk->RmvSuccessor(loop->cond_begin);
-    loop->loop_exit->RmvPredecessor(loop->cond_end);
-    JumpInst::CreatePtr(loop->loop_exit, loop->before_blk);
-    if (parent != nullptr) {
-        parent->sub_structures.remove(loop);
-    }
-    // remove all loop blocks
-    for (auto &&blk : loop->GetEntireStructure()) {
-        RemoveNode(blk);
-    }
-}
-
-void LoopMemset::MemsetArray(BaseValuePtr array, BaseValuePtr init_num) {}

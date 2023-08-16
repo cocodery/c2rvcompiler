@@ -19,11 +19,11 @@ class CallInst final : public Instruction {
 
     bool tail_call;
 
-    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
-
    public:
     CallInst(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
     ~CallInst() = default;
+
+    static CallInstPtr CreatePtr(ScalarTypePtr, VariablePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 
     static BaseValuePtr DoCallFunction(ScalarTypePtr, BaseFuncPtr, ParamList &, CfgNodePtr);
 

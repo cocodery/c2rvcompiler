@@ -3,7 +3,7 @@
 #include "3tle3wa/backend/asm/AsmAbi.hh"
 #include "3tle3wa/backend/rl/RLVirtualRegister.hh"
 
-InterferenceGraph::InterferenceGraph(RLPlanner *planner) : nodes_(), planner_(planner) {}
+InterferenceGraph::InterferenceGraph(RLPlanner *planner) : nodes_(), planner_(planner), mv_pairs_() {}
 
 void InterferenceGraph::RegisterIGNode(VirtualRegister *ref) {
     auto idx = ref->GetVRIdx();
@@ -15,6 +15,17 @@ void InterferenceGraph::Connect(size_t first, size_t second) {
     nodes_.at(second)->ConnectTo(first);
 }
 
+void InterferenceGraph::Mergable(size_t first, size_t second) {
+    if (not nodes_.count(first) or not nodes_.count(second)) {
+        return;
+    }
+
+    auto l = std::min(first, second);
+    auto r = std::max(second, first);
+
+    mv_pairs_.insert(std::make_pair(l, r));
+}
+
 InterferenceGraph::IGNode::IGNode(size_t idx, VirtualRegister *ref) : idx_(idx), color_(-1), ref_(ref), another_() {
     if (ref->IsParam() and not ref->IsOnStk()) {
         SetColor(ref->GetRealRegIdx());
@@ -23,15 +34,25 @@ InterferenceGraph::IGNode::IGNode(size_t idx, VirtualRegister *ref) : idx_(idx),
 
 void InterferenceGraph::IGNode::ConnectTo(size_t another) { another_.insert(another); }
 
+void InterferenceGraph::IGNode::CanMergeWith(IGNode *another) { merges_.insert(another); }
+
 size_t InterferenceGraph::IGNode::GetDegree() const { return another_.size(); }
 
 size_t InterferenceGraph::IGNode::GetColor() const { return color_; }
+
+const std::unordered_set<size_t> &InterferenceGraph::IGNode::GetAnothers() const { return another_; }
 
 VirtualRegister *InterferenceGraph::IGNode::GetRef() const { return ref_; }
 
 void InterferenceGraph::IGNode::SetColor(size_t color) {
     color_ = color;
     ref_->SetRealRegIdx(color);
+
+    for (auto &&node : merges_) {
+        if (not node->GetRef()->IsAllocated()) {
+            node->SetColor(color);
+        }
+    }
 }
 
 size_t InterferenceGraph::IGNode::PreferWhichArg() {
@@ -78,7 +99,7 @@ bool InterferenceGraph::IGNode::operator<(const IGNode &other) const {
         return ref_->Weight() < other.ref_->Weight();
     }
 
-    return not (GetDegree() < other.GetDegree());
+    return not(GetDegree() < other.GetDegree());
 }
 
 bool InterferenceGraph::IGNode::operator>(const IGNode &other) const {
@@ -90,5 +111,5 @@ bool InterferenceGraph::IGNode::operator>(const IGNode &other) const {
         return ref_->Weight() > other.ref_->Weight();
     }
 
-    return not (GetDegree() > other.GetDegree());
+    return not(GetDegree() > other.GetDegree());
 }

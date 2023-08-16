@@ -52,13 +52,27 @@ def build_run(args, exts, cc_arg, simcc_arg):
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mCompile Error\033[0m".format(basename))
             continue
 
-        cmd = [args.cc, '-o', runname, name, args.sylib]
+        cmd = [args.cc]
+        if args.asm :
+            cmd.append(name)
+            cmd.append(args.sylib)
+        elif args.llvmir:
+            cmd.append(args.sylib)
+            cmd.append(name)
+        else:
+            print("bad type")
+            continue
+
         for a in cc_arg:
             cmd.append(a)
+
+        cmd.append('-o')
+        cmd.append(runname)
         # print(" ".join(cmd))
 
         with open(logname, 'a') as logfile:
-            resp = subprocess.run(cmd, stdout=logfile)
+            resp = subprocess.run(["pwd"], stdout=logfile)
+            resp = subprocess.run(cmd, stdout=logfile, stderr=logfile)
 
         if resp.returncode != 0:
             print("\033[1;31mFAIL:\033[0m {}\t\033[1;31mAssemble Error\033[0m".format(basename))
@@ -142,7 +156,7 @@ if __name__ == '__main__':
     if args.llvmir:
         exts = {
             'name': 'll',
-            'run': 'o.ll'
+            'run': 'run.ll'
         }
 
         cc_arg = ['-S']
