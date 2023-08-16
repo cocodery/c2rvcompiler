@@ -37,6 +37,11 @@ class NormalFunction final : public BaseFunction {
    public:
     Loop *loops;
     Branch_ *branch;
+    struct SEtype {
+        bool call_se_func;
+        bool mod_param_arr;
+        bool mod_glb_value;
+    } se_type;
 
     NormalFunction(ScalarTypePtr, std::string &, ParamList &, bool);
     ~NormalFunction() = default;

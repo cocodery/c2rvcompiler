@@ -21,7 +21,10 @@
 //===-----------------------------------------------------------===//
 
 NormalFunction::NormalFunction(ScalarTypePtr _type, std::string &_name, ParamList &_list, bool _effect)
-    : BaseFunction(_type, _name, _list, _effect), loops(nullptr), branch(nullptr) {}
+    : BaseFunction(_type, _name, _list, _effect),
+      loops(nullptr),
+      branch(nullptr),
+      se_type(SEtype{false, false, false}) {}
 
 bool NormalFunction::IsLibFunction() const { return false; }
 

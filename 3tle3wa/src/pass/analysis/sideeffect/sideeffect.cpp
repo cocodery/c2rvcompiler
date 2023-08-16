@@ -1,10 +1,13 @@
 #include "3tle3wa/pass/analysis/sideeffect/sideeffect.hh"
 
 void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr func) {
+    cout << func->GetFuncName() << endl;
+
     bool side_effect = false;
     for (auto &&callee : func->GetCallWho()) {
         if (callee->GetSideEffect()) {
             side_effect = true;
+            func->se_type.call_se_func = true;
         }
     }
     for (auto &&[_, value] : comp_unit.getGlbTable().GetNameValueMap()) {
@@ -13,6 +16,7 @@ void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr fu
             auto &&definers = glb_value->GetDefineIn();
             if (definers.find(func.get()) != definers.end()) {
                 side_effect = true;
+                func->se_type.mod_glb_value = true;
             }
         }
     }
@@ -27,6 +31,7 @@ void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr fu
                 for (auto &&user : front->GetUserList()) {
                     if (user->IsStoreInst()) {
                         side_effect = true;
+                        func->se_type.mod_param_arr = true;
                     }
                     if (user->GetResult() != nullptr) {
                         queue.push(user->GetResult());
@@ -35,7 +40,6 @@ void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr fu
             }
         }
     }
-    side_effect = false;
 
     func->SetSideEffect(side_effect);
     return;
