@@ -13,7 +13,7 @@ void RLPlanner::CalculateWeights() {
 
 void VirtualRegister::CaculateWeight() {
     double base = 1.0;
-    weight_ = (base * use_times_) / (ival_mgr_.SegNum() + std::sqrt(ival_mgr_.LiveSize()));
+    weight_ = (base * use_times_) / (ival_mgr_.SegNum() + std::log(ival_mgr_.LiveSize() + 1));
 }
 
 double VirtualRegister::Weight() {

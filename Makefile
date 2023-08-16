@@ -23,6 +23,7 @@ LLI 			:= lli
 FORMATTER		:= clang-format
 CLANG			:= $(shell which clang)
 CLANGXX			:= $(shell which clang++)
+LLI_CMD			:= $(LLI)
 
 
 # rv toolchain
@@ -50,7 +51,7 @@ ANTLR_SRC		:= $(shell find antlr -name '*.cpp' -or -name '*.h')
 PROJECT_SRC		:= $(shell find 3tle3wa -name '*.cpp' -or -name '*.hh')
 ALL_SRC			:= ${ANTLR_SRC} ${PROJECT_SRC}
 
-MODE 			?= functional hidden_functional # functional hidden_functional performance final_performance
+MODE 			?= performance final_performance # functional hidden_functional performance final_performance
 SMODE			?= hidden_functional
 
 CPLER_TEST_DIR	:= compiler2022
@@ -80,7 +81,7 @@ $(SYLIB_LL): $(SYLIB_C) $(SYLIB_H)
 	@$(CLANG) -emit-llvm -S $(SYLIB_C) -I $(SYLIB_H) -o $@
 
 $(PYLL_TARGETS): $(PYLL)/%:$(TEST_DIR)/% $(SYLIB_LL)
-	@$(PY) $(PYTEST) -l -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(LLI)" -s $(SYLIB_LL) -x $(LLLD)
+	@$(PY) $(PYTEST) -l -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(LLI_CMD)" -s $(SYLIB_LL) -x $(LLLD)
 
 $(PYASM_TARGETS): $(PYASM)/%:$(TEST_DIR)/%
 	@$(PY) $(PYTEST) -a -c $(BINARY) -d $(BUILD_DIR)/$(CPLER_TEST_DIR)/$(notdir $@) $(sort $(shell find $< -name "*.sy")) -m "$(SIM_CMD)" -s $(SYLIB_C) -x $(RVCC_linux)
