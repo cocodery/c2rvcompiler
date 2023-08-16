@@ -18,6 +18,8 @@
 #include "3tle3wa/ir/instruction/unaryOpInst.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/constarray.hh"
+#include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/scalarType.hh"
 #include "3tle3wa/ir/value/variable.hh"
 
@@ -158,36 +160,28 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
                         }
                     }
                 }
-            } else if (inst->IsTwoOprandInst()) {
-                auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
-                if (bin_inst->IsICmpInst()) {
-                    auto &&icmp_inst = std::static_pointer_cast<ICmpInst>(bin_inst);
-                    auto &&lhs = icmp_inst->GetLHS();
-                    auto &&rhs = icmp_inst->GetRHS();
+            } else if (inst->IsLoadInst()) {
+                auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+                if (load_inst->GetOprand()->IsVariable()) {  // load-addr, variable or global-value
+                    auto &&load_addr = std::static_pointer_cast<Variable>(load_inst->GetOprand());
+                    if (load_addr->GetParent() && load_addr->GetParent()->IsGepInst()) {
+                        auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(load_addr->GetParent());
 
-                    auto &&zero = (lhs->GetBaseType()->IntType())
-                                      ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
-                                      : ConstantAllocator::FindConstantPtr(static_cast<bool>(0));
+                        auto &&base_addr = gep_inst->GetBaseAddr();
+                        auto &&offset = gep_inst->GetOffList().back();
+                        if (base_addr->IsGlobalValue() && offset->IsConstant()) {
+                            auto &&glb_value = std::static_pointer_cast<GlobalValue>(base_addr);
 
-                    assert(!(lhs->IsConstant() && rhs->IsConstant()));
-                    if (lhs->IsVariable() && rhs->IsConstant() && rhs != zero) {  // lhs-variable rhs-constant
-                        auto &&constant = std::static_pointer_cast<Constant>(rhs);
-
-                        auto &&result = Variable::CreatePtr(type_int_L, nullptr);
-                        auto &&sub_inst = IBinaryInst::CreatePtr(result, OP_SUB, lhs, constant, node);
-                        result->SetParent(sub_inst);
-                        lhs->InsertUser(sub_inst);
-
-                        lhs->RemoveUser(icmp_inst);
-
-                        icmp_inst->SetLHS(result);
-                        icmp_inst->SetRHS(zero);
-                        result->InsertUser(icmp_inst);
-
-                        inst_list.insert(iter, sub_inst);
+                            auto &&init_value = glb_value->GetInitValue();
+                            if (init_value->GetBaseType()->IsImMutable() && init_value->IsConstArray()) {
+                                const auto &&const_arr = std::static_pointer_cast<ConstArray>(init_value);
+                                auto &&init_arr = const_arr->GetConstArr();
+                                auto &&load_value =
+                                    init_arr[std::get<int32_t>(std::static_pointer_cast<Constant>(offset)->GetValue())];
+                                ReplaceSRC(load_inst->GetResult(), load_value);
+                            }
+                        }
                     }
-                } else if (bin_inst->IsFBinaryInst()) {
-                    auto &&fbin_inst = std::static_pointer_cast<FBinaryInst>(bin_inst);
                 }
             }
             ++iter;
