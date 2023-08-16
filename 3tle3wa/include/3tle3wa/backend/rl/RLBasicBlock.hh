@@ -86,4 +86,6 @@ class RLBasicBlock final : public Serializable {
 
     void ToAsm(AsmBasicBlock *abb, RLPlanner *plan, const std::unordered_set<size_t> &last_call);
     void GetCallMapInfo(std::unordered_map<size_t, UopCall *> &call_map, std::unordered_set<size_t> &last_call);
+    void SetMergable(InterferenceGraph &ig);
+
 };

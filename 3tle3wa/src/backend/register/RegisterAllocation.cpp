@@ -22,9 +22,10 @@
 
 void RLPlanner::UseRealRegister(size_t rridx) { used_real_regs_.insert(rridx); }
 
+bool RLProgress::registerAllocation() { return planner_->GraphAllocation(); }
+
 bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::set<size_t> &args,
                                     std::set<size_t> &callers, std::set<size_t> &callees) {
-    
     auto &&intfer = node->InterferWith(nodes_);
     std::set<size_t> candidates;
 
@@ -44,10 +45,14 @@ bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::se
                             std::inserter(candidates, candidates.end()));
     }
 
-    if (not candidates.empty()) {
+    auto Color = [&candidates, &node, this] {
         auto color = *candidates.begin();
         node->SetColor(color);
         planner_->UseRealRegister(color);
+    };
+
+    if (not candidates.empty()) {
+        Color();
         return true;
     }
 
@@ -55,9 +60,7 @@ bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::se
                         std::inserter(candidates, candidates.end()));
 
     if (not candidates.empty()) {
-        auto color = *candidates.begin();
-        node->SetColor(color);
-        planner_->UseRealRegister(color);
+        Color();
         return true;
     }
 
@@ -211,6 +214,12 @@ bool RLPlanner::GraphAllocation() {
         std::push_heap(frpq.begin(), frpq.end(), std::greater<rpack>());
     }
 
+    // belong_to_->SetMergable(ig4i);
+    // belong_to_->SetMergable(ig4f);
+
+    // ig4i.TryMerge(abi_info.i.nm_save + abi_info.i.nm_tmp + abi_info.i.nm_arg);
+    // ig4f.TryMerge(abi_info.f.nm_save + abi_info.f.nm_tmp + abi_info.f.nm_arg);
+
     bool spill = false;
 
     spill = ig4i.KempeOptimistic(abi_reg_info.i.arg, abi_reg_info.i.caller_save, abi_reg_info.i.callee_save) || spill;
@@ -219,7 +228,72 @@ bool RLPlanner::GraphAllocation() {
     return spill;
 }
 
-bool RLProgress::registerAllocation() { return planner_->GraphAllocation(); }
+void RLProgress::SetMergable(InterferenceGraph &ig) {
+    for (auto &&rlbb : rlbbs_) {
+        rlbb->SetMergable(ig);
+    }
+}
+
+void RLBasicBlock::SetMergable(InterferenceGraph &ig) {
+    for (auto &&uop : uops_view_) {
+        if (auto i = dynamic_cast<UopMv *>(uop); i != nullptr) {
+            ig.Mergable(i->GetResult()->GetVRIdx(), i->GetOperands().at(0)->GetVRIdx());
+        }
+    }
+}
+
+void InterferenceGraph::TryMerge(size_t mxclr) {
+    auto merge = [this, mxclr](const std::pair<size_t, size_t> &p) {
+        auto &&[l, r] = p;
+
+        auto &&lnode = nodes_.at(l);
+        auto &&rnode = nodes_.at(r);
+
+        if (nodes_.at(l)->GetAnothers().count(r)) {
+            return;
+        }
+
+        auto &&lset = lnode->GetAnothers();
+        auto &&rset = rnode->GetAnothers();
+
+        bool can_George_merge = false;
+        bool can_merge = true;
+
+        can_merge = true;
+        for (auto &&v : lset) {
+            if (not rset.count(v) or nodes_.at(v)->GetDegree() >= mxclr) {
+                can_merge = false;
+                break;
+            }
+        }
+
+        can_George_merge = can_George_merge or can_merge;
+
+        if (can_George_merge) {
+            lnode->CanMergeWith(rnode.get());
+            rnode->CanMergeWith(lnode.get());
+            return;
+        }
+
+        can_merge = true;
+        for (auto &&v : rset) {
+            if (not lset.count(v) or nodes_.at(v)->GetDegree() >= mxclr) {
+                can_merge = false;
+                break;
+            }
+        }
+
+        can_George_merge = can_George_merge or can_merge;
+
+        if (can_George_merge) {
+            lnode->CanMergeWith(rnode.get());
+            rnode->CanMergeWith(lnode.get());
+            return;
+        }
+    };
+
+    std::for_each(mv_pairs_.begin(), mv_pairs_.end(), merge);
+}
 
 void RLPlanner::GenerateStackInfo() {
     // ra
