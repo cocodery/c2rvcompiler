@@ -1,8 +1,6 @@
 #include "3tle3wa/pass/analysis/sideeffect/sideeffect.hh"
 
 void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr func) {
-    cout << func->GetFuncName() << endl;
-
     bool side_effect = false;
     for (auto &&callee : func->GetCallWho()) {
         if (callee->GetSideEffect()) {

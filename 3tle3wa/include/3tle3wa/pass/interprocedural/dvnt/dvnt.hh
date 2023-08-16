@@ -38,17 +38,18 @@ struct GepVNExprHasher {
 
 typedef std::unordered_map<GepVNExpr, BaseValuePtr, GepVNExprHasher> GepVNTable;
 
-struct LoadVNExpr {
-    BaseValue *load_addr;
+struct MemoryVNExpr {
+    BaseValue *base_addr;
+    BaseValue *offset;
 
-    bool operator==(const LoadVNExpr &) const;
+    bool operator==(const MemoryVNExpr &) const;
 };
 
-struct LoadVNExprHasher {
-    size_t operator()(const LoadVNExpr &) const;
+struct MemoryVNExprHasher {
+    size_t operator()(const MemoryVNExpr &) const;
 };
 
-typedef std::unordered_map<LoadVNExpr, BaseValuePtr, LoadVNExprHasher> LoadVNTable;
+typedef std::unordered_map<MemoryVNExpr, BaseValuePtr, MemoryVNExprHasher> MemoryVNTable;
 
 struct UnaryVNExpr {
     OpCode opcode;
@@ -66,7 +67,7 @@ typedef std::unordered_map<UnaryVNExpr, BaseValuePtr, UnaryVNExprHasher> UnaryVN
 struct VNScope {
     BinVNTable bin_map;      // GVN
     GepVNTable gep_map;      // GVN
-    LoadVNTable load_map;    // LVN
+    MemoryVNTable mem_map;   // LVN
     UnaryVNTable unary_map;  // GVN
 
     VNScope *outer;
@@ -90,6 +91,6 @@ bool IsPhiOprandSame(InstPtr);
 
 void AdjustPhiInst(CfgNodePtr, PhiInstPtr);
 
-void DoDVNT(CfgNodePtr, VNScope *);
+void DoDVNT(CfgNodePtr, VNScope *, SymbolTable &);
 void DVNT(NormalFuncPtr, SymbolTable &);
 }  // namespace GVN

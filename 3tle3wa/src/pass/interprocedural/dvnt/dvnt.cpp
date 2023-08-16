@@ -1,11 +1,15 @@
 #include "3tle3wa/pass/interprocedural/dvnt/dvnt.hh"
 
 #include <cassert>
+#include <functional>
 #include <memory>
 
+#include "3tle3wa/ir/function/function.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/globalvalue.hh"
 
 bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
     if (opcode != e.opcode) {
@@ -34,9 +38,17 @@ size_t GVN::GepVNExprHasher::operator()(const GepVNExpr &e) const {
     return ((std::hash<void *>()(e.base_addr) >> e.off_size) & (std::hash<void *>()(e.last_off) << e.off_size));
 }
 
-bool GVN::LoadVNExpr::operator==(const LoadVNExpr &e) const { return (load_addr == e.load_addr); }
+bool GVN::MemoryVNExpr::operator==(const MemoryVNExpr &e) const {
+    return (base_addr == e.base_addr) && (offset == e.offset);
+}
 
-size_t GVN::LoadVNExprHasher::operator()(const LoadVNExpr &e) const { return (std::hash<void *>()(e.load_addr)); }
+size_t GVN::MemoryVNExprHasher::operator()(const MemoryVNExpr &e) const {
+    if (e.offset == nullptr) {
+        return std::hash<void *>()(e.base_addr);
+    } else {
+        return std::hash<void *>()(e.base_addr) & std::hash<void *>()(e.offset);
+    }
+}
 
 bool GVN::UnaryVNExpr::operator==(const UnaryVNExpr &e) const { return (opcode == e.opcode) && (oprand == e.oprand); }
 
@@ -65,14 +77,19 @@ BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
                 return iter->gep_map[expr];
             }
         }
-        // } else if (inst->IsLoadInst()) {
-        //     auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        //     auto &&load_addr = load_inst->GetOprand();
-
-        //     LoadVNExpr expr{load_addr.get()};
-        //     if (this->load_map.count(expr)) {
-        //         return this->load_map[expr];
-        //     }
+    } else if (inst->IsLoadInst()) {
+        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        auto &&addr = load_inst->GetOprand();
+        MemoryVNExpr expr;
+        if (addr->GetParent() && addr->GetParent()->IsGepInst()) {  // addr from array
+            auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
+            expr = {gep_inst->GetBaseAddr().get(), gep_inst->GetOffList().back().get()};
+        } else {  // addr from scalar, in SSA only global-addr
+            expr = {addr.get(), nullptr};
+        }
+        if (this->mem_map.count(expr)) {
+            return this->mem_map[expr];
+        }
     } else if (inst->IsOneOprandInst()) {
         auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
 
@@ -96,11 +113,17 @@ void GVN::VNScope::Set(InstPtr inst) {
         auto off_list = gep_inst->GetOffList();
         GepVNExpr expr{off_list.size(), gep_inst->GetBaseAddr().get(), off_list.back().get()};
         gep_map[expr] = inst->GetResult();
-        // } else if (inst->IsLoadInst()) {
-        //     auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        //     auto &&load_addr = load_inst->GetOprand();
-        //     LoadVNExpr expr{load_addr.get()};
-        //     load_map[expr] = inst->GetResult();
+    } else if (inst->IsLoadInst()) {
+        auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
+        auto &&addr = load_inst->GetOprand();
+        MemoryVNExpr expr;
+        if (addr->GetParent() && addr->GetParent()->IsGepInst()) {  // addr from array
+            auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
+            expr = {gep_inst->GetBaseAddr().get(), gep_inst->GetOffList().back().get()};
+        } else {  // addr from scalar, in SSA only global-addr
+            expr = {addr.get(), nullptr};
+        }
+        mem_map[expr] = inst->GetResult();
     } else if (inst->IsOneOprandInst()) {
         auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
         UnaryVNExpr expr{unary_inst->GetOpCode(), unary_inst->GetOprand().get()};
@@ -162,7 +185,7 @@ void GVN::AdjustPhiInst(CfgNodePtr node, PhiInstPtr inst) {
     }
 }
 
-void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
+void GVN::DoDVNT(CfgNodePtr node, VNScope *outer, SymbolTable &glb_table) {
     VNScope Scope = VNScope(outer);
     auto &&inst_list = node->GetInstList();
 
@@ -215,7 +238,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
         }
 
         auto &&result = inst->GetResult();
-        if (inst->IsTwoOprandInst() || inst->IsGepInst() || (inst->IsOneOprandInst() && !inst->IsLoadInst())) {
+        if (inst->IsTwoOprandInst() || inst->IsGepInst() || inst->IsOneOprandInst()) {
             if (auto &&res = Scope.Get(inst)) {
                 VN[result] = res;
 
@@ -226,23 +249,109 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
                 VN[result] = result;
                 Scope.Set(inst);
             }
-            // } else if (inst->IsStoreInst()) {
-            //     auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
-            //     auto &&store_addr = store_inst->GetStoreAddr();
-            //     auto &&store_value = store_inst->GetStoreValue();
-            //     LoadVNExpr load_expr{store_addr.get()};
+        } else if (inst->IsStoreInst()) {
+            auto &&store_inst = std::static_pointer_cast<StoreInst>(inst);
+            auto &&addr = store_inst->GetStoreAddr();
+            auto &&value = store_inst->GetStoreValue();
 
-            //     Scope.load_map[load_expr] = store_value;
-            // } else {
-            //     if (result != nullptr) {
-            //         VN[result] = result;
-            //     }
-            //     if (inst->IsCallInst()) {
-            //         if (auto &&callee = static_cast<CallInst *>(inst.get())->GetCalleeFunc();
-            //         callee->GetSideEffect()) {
-            //             Scope.load_map.clear();
-            //         }
-            //     }
+            if (addr->GetParent() && addr->GetParent()->IsGepInst()) {
+                auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
+                auto &&base_addr = gep_inst->GetBaseAddr().get();
+                auto &&offset = gep_inst->GetOffList().back().get();
+                // unknown offset, clear all relative expr
+                // for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                //     auto &&[k, v] = (*iter);
+                //     if (k.base_addr == base_addr) {
+                //         iter = Scope.mem_map.erase(iter);
+                //     } else {
+                //         ++iter;
+                //     }
+                // }
+                Scope.mem_map.clear();
+                // set new expr
+                // Scope.mem_map[MemoryVNExpr{base_addr, offset}] = value;
+            } else {
+                Scope.mem_map[MemoryVNExpr{addr.get(), nullptr}] = value;
+            }
+        } else {
+            if (result != nullptr) {
+                VN[result] = result;
+            }
+            if (inst->IsCallInst()) {
+                auto &&call_inst = std::static_pointer_cast<CallInst>(inst);
+                auto &&callee = call_inst->GetCalleeFunc();
+                if (callee->GetSideEffect()) {
+                    Scope.mem_map.clear();
+                }
+                // if (callee->GetSideEffect()) {
+                //     if (callee->IsLibFunction()) {  // bu guan le, zhi jie bao li qing kong ba
+                //         Scope.mem_map.clear();
+                //     } else {
+                //         auto &&normal_func = std::static_pointer_cast<NormalFunction>(callee);
+                //         if (normal_func->se_type.call_se_func) {  // bu guan le, zhi jie bao li qing kong ba
+                //             Scope.mem_map.clear();
+                //         } else if (normal_func->se_type.mod_glb_value) {  // callee modify some global-value
+                //             for (auto &&[_, value] : glb_table.GetNameValueMap()) {
+                //                 if (auto &&glb_value = std::dynamic_pointer_cast<GlobalValue>(value)) {
+                //                     auto &&definers = glb_value->GetDefineIn();
+                //                     if (definers.find(callee.get()) != definers.end()) {
+                //                         for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                //                             auto &&[k, v] = (*iter);
+                //                             if (k.base_addr == glb_value.get()) {
+                //                                 iter = Scope.mem_map.erase(iter);
+                //                             } else {
+                //                                 ++iter;
+                //                             }
+                //                         }
+                //                     }
+                //                 }
+                //             }
+
+                //         } else if (normal_func->se_type.mod_param_arr) {  // callee modify param-array
+                //             auto &&rparam_list = call_inst->GetParamList();
+                //             auto &&fparam_list = callee->GetParamList();
+
+                //             for (size_t idx = 0, size = rparam_list.size(); idx < size; ++idx) {
+                //                 auto &&param = fparam_list[idx];
+                //                 if (param->IsVariable() && param->GetBaseType()->IsPointer()) {
+                //                     auto &&parameter = std::static_pointer_cast<Variable>(param);
+
+                //                     bool arr_mod = false;
+                //                     std::queue<VariablePtr> queue;
+                //                     queue.push(parameter);
+                //                     while (!queue.empty()) {
+                //                         auto &&front = queue.front();
+                //                         queue.pop();
+                //                         for (auto &&user : front->GetUserList()) {
+                //                             if (user->IsStoreInst()) {
+                //                                 arr_mod = true;
+                //                             }
+                //                             if (user->GetResult() != nullptr) {
+                //                                 queue.push(user->GetResult());
+                //                             }
+                //                         }
+                //                     }
+                //                     if (arr_mod == true) {
+                //                         auto &&rparam = rparam_list[idx];
+                //                         if (rparam->GetParent() && rparam->GetParent()->IsGepInst()) {
+                //                             rparam = std::static_pointer_cast<GetElementPtrInst>(rparam->GetParent())
+                //                                          ->GetBaseAddr();
+                //                         }
+                //                         for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                //                             auto &&[k, v] = (*iter);
+                //                             if (k.base_addr == rparam.get()) {
+                //                                 iter = Scope.mem_map.erase(iter);
+                //                             } else {
+                //                                 ++iter;
+                //                             }
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
+            }
         }
         ++iter;
     }
@@ -255,7 +364,7 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer) {
     }
 
     for (auto child : node->GetDominateChildren()) {
-        DoDVNT(child, &Scope);
+        DoDVNT(child, &Scope, glb_table);
     }
 }
 
@@ -274,6 +383,6 @@ void GVN::DVNT(NormalFuncPtr func, SymbolTable &glb_table) {
         VN[param] = param;
     }
 
-    DoDVNT(func->GetEntryNode(), nullptr);
+    DoDVNT(func->GetEntryNode(), nullptr, glb_table);
     VN.clear();
 }
