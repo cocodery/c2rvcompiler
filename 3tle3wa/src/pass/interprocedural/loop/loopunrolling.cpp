@@ -49,18 +49,18 @@ bool LoopUnrolling::ExpandLoop(NormalFuncPtr func, Loop *loop) {
         }
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
-        // if (loop_blks.size() > 1) {
-        //     return false;
-        // }
+        auto loop_time = LoopTime(loop);
+        if (loop_time <= 0 || loop_time > 100) {
+            return false;
+        }
         if (loop->sub_structures.size() != 0) {
             return false;
         }
-        auto loop_time = LoopTime(loop);
-        if (loop_time == 0 || loop_time > 100) {
-            return false;
+        if (loop->GetLoopBodyBlks().size() == 1) {
+            FullyExpand(func, loop_time, loop);
+        } else {
+            FullyExpand_Multi_Blks(func, loop_time, loop);
         }
-        // FullyExpand(func, loop_time, loop);
-        FullyExpand_Multi_Blks(func, loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);
@@ -737,10 +737,9 @@ void LoopUnrolling::FullyExpand_Multi_Blks(NormalFuncPtr func, int loop_time, Lo
     // AddPhiInst();
 
     // remove all loop blocks
-    for (auto &&blk : loop_blks) {
+    for (auto &&blk : loop->GetEntireStructure()) {
         RemoveNode(blk);
     }
-    RemoveNode(cond_begin);
 
     before_blk->RmvSuccessor(cond_begin);
     loop_exit->RmvPredecessor(cond_begin);
