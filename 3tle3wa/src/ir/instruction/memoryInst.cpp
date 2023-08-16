@@ -234,8 +234,13 @@ VariablePtr GetElementPtrInst::DoGetPointer(BaseTypePtr _type, BaseValuePtr _add
 }
 
 BaseTypePtr GetElementPtrInst::GetStoreType() const { return store_type; }
+void GetElementPtrInst::SetStoreType(BaseTypePtr _type) { store_type = _type; }
+
 BaseValuePtr GetElementPtrInst::GetBaseAddr() const { return base_addr; }
+void GetElementPtrInst::SetBaseAddr(BaseValuePtr _addr) { base_addr = _addr; }
+
 const OffsetList &GetElementPtrInst::GetOffList() const { return offset_list; }
+void GetElementPtrInst::SetOffList(OffsetList &_off_list) { offset_list = _off_list; }
 
 void GetElementPtrInst::RemoveResParent() { result->SetParent(nullptr); }
 

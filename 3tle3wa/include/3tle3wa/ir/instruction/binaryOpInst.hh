@@ -7,12 +7,11 @@ class IBinaryInst;
 using IBinaryInstPtr = std::shared_ptr<IBinaryInst>;
 
 class IBinaryInst final : public BinaryInstruction {
-   private:
-    static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
-
    public:
     IBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~IBinaryInst() = default;
+
+    static IBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool IsIBinaryInst() const final override;
 
@@ -31,12 +30,11 @@ class FBinaryInst;
 using FBinaryInstPtr = std::shared_ptr<FBinaryInst>;
 
 class FBinaryInst final : public BinaryInstruction {
-   private:
-    static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
-
    public:
     FBinaryInst(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
     ~FBinaryInst() = default;
+
+    static FBinaryInstPtr CreatePtr(VariablePtr, OpCode, BaseValuePtr, BaseValuePtr, CfgNodePtr);
 
     bool IsFBinaryInst() const final override;
 

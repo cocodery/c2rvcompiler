@@ -1,5 +1,7 @@
 #include "3tle3wa/pass/interprocedural/peephole/peephole.hh"
 
+#include <cassert>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <unordered_map>
@@ -10,11 +12,14 @@
 #include "3tle3wa/ir/instruction/compareInst.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 #include "3tle3wa/ir/instruction/unaryOpInst.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
+#include "3tle3wa/ir/value/type/scalarType.hh"
+#include "3tle3wa/ir/value/variable.hh"
 
 void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
     for (auto &&node : func->GetSequentialNodes()) {
@@ -108,6 +113,81 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
                             }
                         }
                     }
+                }
+            } else if (inst->IsGepInst()) {  // remove redundant gep-inst
+                auto &&gep2 = std::static_pointer_cast<GetElementPtrInst>(inst);
+                auto &&base_addr2 = gep2->GetBaseAddr();
+                auto &&off_list2 = gep2->GetOffList();
+                if (off_list2.size() == 1 && base_addr2->GetParent() && base_addr2->GetParent()->IsGepInst()) {
+                    auto &&gep1 = std::static_pointer_cast<GetElementPtrInst>(base_addr2->GetParent());
+                    auto &&base_addr1 = gep1->GetBaseAddr();
+                    auto &&off_list1 = gep1->GetOffList();
+                    if (off_list1.size() == 2) {
+                        auto &&real_off1 = off_list1.back();
+                        auto &&real_off2 = off_list2.back();
+
+                        if (real_off1->IsConstant()) {
+                            auto &&zero = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
+
+                            auto &&constant1 = std::static_pointer_cast<Constant>(real_off1);
+                            if (real_off1 == zero) {
+                                // replace base-addr
+                                gep2->SetBaseAddr(base_addr1);
+                                base_addr2->RemoveUser(gep2);
+                                base_addr1->InsertUser(gep2);
+                                base_addr1->RemoveUser(gep1);
+                                // no need to change gep2->off_list
+                            } else {
+                                if (real_off2->IsConstant()) {
+                                    auto &&constant2 = std::static_pointer_cast<Constant>(real_off2);
+                                    // replace base-addr
+                                    gep2->SetBaseAddr(base_addr1);
+                                    base_addr2->RemoveUser(gep2);
+                                    base_addr1->InsertUser(gep2);
+                                    base_addr1->RemoveUser(gep1);
+                                    // calculate new offset
+                                    int32_t off_int1 = std::get<int32_t>(constant1->GetValue());
+                                    int32_t off_int2 = std::get<int32_t>(constant2->GetValue());
+                                    auto &&new_real_off2 =
+                                        ConstantAllocator::FindConstantPtr(static_cast<int32_t>(off_int1 + off_int2));
+                                    // set new offset-list
+                                    auto &&off_list = OffsetList(1, new_real_off2);
+                                    gep2->SetOffList(off_list);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (inst->IsTwoOprandInst()) {
+                auto &&bin_inst = std::static_pointer_cast<BinaryInstruction>(inst);
+                if (bin_inst->IsICmpInst()) {
+                    auto &&icmp_inst = std::static_pointer_cast<ICmpInst>(bin_inst);
+                    auto &&lhs = icmp_inst->GetLHS();
+                    auto &&rhs = icmp_inst->GetRHS();
+
+                    auto &&zero = (lhs->GetBaseType()->IntType())
+                                      ? ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))
+                                      : ConstantAllocator::FindConstantPtr(static_cast<bool>(0));
+
+                    assert(!(lhs->IsConstant() && rhs->IsConstant()));
+                    if (lhs->IsVariable() && rhs->IsConstant() && rhs != zero) {  // lhs-variable rhs-constant
+                        auto &&constant = std::static_pointer_cast<Constant>(rhs);
+
+                        auto &&result = Variable::CreatePtr(type_int_L, nullptr);
+                        auto &&sub_inst = IBinaryInst::CreatePtr(result, OP_SUB, lhs, constant, node);
+                        result->SetParent(sub_inst);
+                        lhs->InsertUser(sub_inst);
+
+                        lhs->RemoveUser(icmp_inst);
+
+                        icmp_inst->SetLHS(result);
+                        icmp_inst->SetRHS(zero);
+                        result->InsertUser(icmp_inst);
+
+                        inst_list.insert(iter, sub_inst);
+                    }
+                } else if (bin_inst->IsFBinaryInst()) {
+                    auto &&fbin_inst = std::static_pointer_cast<FBinaryInst>(bin_inst);
                 }
             }
             ++iter;
