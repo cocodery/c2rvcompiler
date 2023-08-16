@@ -67,7 +67,9 @@ void ConstantAllocator::InitConstantAllocator() {
     constant_allocator[static_cast<bool>(0)] = Constant::CreatePtr(static_cast<bool>(0));
     constant_allocator[static_cast<bool>(1)] = Constant::CreatePtr(static_cast<bool>(1));
     constant_allocator[static_cast<char>(0)] = Constant::CreatePtr(static_cast<char>(0));
+    constant_allocator[static_cast<char>(-1)] = Constant::CreatePtr(static_cast<char>(-1));
     constant_allocator[static_cast<int32_t>(0)] = Constant::CreatePtr(static_cast<int32_t>(0));
+    constant_allocator[static_cast<int32_t>(-1)] = Constant::CreatePtr(static_cast<int32_t>(-1));
     constant_allocator[static_cast<float>(0)] = Constant::CreatePtr(static_cast<float>(0));
 }
 
