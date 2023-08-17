@@ -10,6 +10,7 @@
 #include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/variable.hh"
 
@@ -41,15 +42,15 @@ size_t GVN::GepVNExprHasher::operator()(const GepVNExpr &e) const {
 }
 
 bool GVN::MemoryVNExpr::operator==(const MemoryVNExpr &e) const {
-    return (base_addr == e.base_addr) && (offset == e.offset);
+    return (base_addr == e.base_addr) && (offsets == e.offsets);
 }
 
 size_t GVN::MemoryVNExprHasher::operator()(const MemoryVNExpr &e) const {
-    if (e.offset == nullptr) {
-        return std::hash<void *>()(e.base_addr);
-    } else {
-        return std::hash<void *>()(e.base_addr) & std::hash<void *>()(e.offset);
+    auto hash = std::hash<void *>()(e.base_addr);
+    for (auto &&iter = e.offsets.begin(); iter != e.offsets.end(); ++iter) {
+        hash &= std::hash<void *>()(*iter);
     }
+    return hash;
 }
 
 bool GVN::UnaryVNExpr::operator==(const UnaryVNExpr &e) const { return (opcode == e.opcode) && (oprand == e.oprand); }
@@ -81,14 +82,15 @@ BaseValuePtr GVN::VNScope::Get(InstPtr inst) {
         }
     } else if (inst->IsLoadInst()) {
         auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        auto &&addr = load_inst->GetOprand();
-        MemoryVNExpr expr;
-        if (addr->GetParent() && addr->GetParent()->IsGepInst()) {  // addr from array
-            auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
-            expr = {gep_inst->GetBaseAddr().get(), gep_inst->GetOffList().back().get()};
-        } else {  // addr from scalar, in SSA only global-addr
-            expr = {addr.get(), nullptr};
+        auto base_addr = load_inst->GetOprand().get();
+
+        std::list<BaseValue *> offsets;
+        while (base_addr->GetParent() && base_addr->GetParent()->IsGepInst()) {
+            auto gep_inst = static_cast<GetElementPtrInst *>(base_addr->GetParent().get());
+            base_addr = gep_inst->GetBaseAddr().get();
+            offsets.push_front(gep_inst->GetOffList().back().get());
         }
+        MemoryVNExpr expr{base_addr, offsets};
         if (this->mem_map.count(expr)) {
             return this->mem_map[expr];
         }
@@ -117,14 +119,15 @@ void GVN::VNScope::Set(InstPtr inst) {
         gep_map[expr] = inst->GetResult();
     } else if (inst->IsLoadInst()) {
         auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
-        auto &&addr = load_inst->GetOprand();
-        MemoryVNExpr expr;
-        if (addr->GetParent() && addr->GetParent()->IsGepInst()) {  // addr from array
-            auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
-            expr = {gep_inst->GetBaseAddr().get(), gep_inst->GetOffList().back().get()};
-        } else {  // addr from scalar, in SSA only global-addr
-            expr = {addr.get(), nullptr};
+        auto base_addr = load_inst->GetOprand().get();
+
+        std::list<BaseValue *> offsets;
+        while (base_addr->GetParent() && base_addr->GetParent()->IsGepInst()) {
+            auto gep_inst = static_cast<GetElementPtrInst *>(base_addr->GetParent().get());
+            base_addr = gep_inst->GetBaseAddr().get();
+            offsets.push_front(gep_inst->GetOffList().back().get());
         }
+        MemoryVNExpr expr{base_addr, offsets};
         mem_map[expr] = inst->GetResult();
     } else if (inst->IsOneOprandInst()) {
         auto &&unary_inst = std::static_pointer_cast<UnaryInstruction>(inst);
@@ -256,24 +259,25 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer, SymbolTable &glb_table) {
             auto &&addr = store_inst->GetStoreAddr();
             auto &&value = store_inst->GetStoreValue();
 
+            std::list<BaseValue *> offsets;
             if (addr->GetParent() && addr->GetParent()->IsGepInst()) {
                 auto &&gep_inst = std::static_pointer_cast<GetElementPtrInst>(addr->GetParent());
-                auto &&base_addr = gep_inst->GetBaseAddr().get();
-                auto &&offset = gep_inst->GetOffList().back().get();
-                // unknown offset, clear all relative expr
-                // for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
-                //     auto &&[k, v] = (*iter);
-                //     if (k.base_addr == base_addr) {
-                //         iter = Scope.mem_map.erase(iter);
-                //     } else {
-                //         ++iter;
-                //     }
-                // }
-                Scope.mem_map.clear();
-                // set new expr
-                // Scope.mem_map[MemoryVNExpr{base_addr, offset}] = value;
+                BaseValue *base_addr = gep_inst->GetBaseAddr().get();
+                // unknown offsets, clear all relative expr
+                while (base_addr->GetParent() && base_addr->GetParent()->IsGepInst()) {
+                    auto gep_inst = static_cast<GetElementPtrInst *>(base_addr->GetParent().get());
+                    base_addr = gep_inst->GetBaseAddr().get();
+                }
+                for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                    auto &&[k, v] = (*iter);
+                    if (k.base_addr == base_addr) {
+                        iter = Scope.mem_map.erase(iter);
+                    } else {
+                        ++iter;
+                    }
+                }
             } else {
-                Scope.mem_map[MemoryVNExpr{addr.get(), nullptr}] = value;
+                Scope.mem_map[MemoryVNExpr{addr.get(), offsets}] = value;
             }
         } else {
             if (result != nullptr) {
@@ -334,7 +338,19 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer, SymbolTable &glb_table) {
                                         }
                                     }
                                     if (arr_mod == true) {
-                                        Scope.mem_map.clear();
+                                        auto rparam = rparam_list[idx].get();
+                                        while (rparam->GetParent() && rparam->GetParent()->IsGepInst()) {
+                                            auto gep_inst = static_cast<GetElementPtrInst *>(rparam->GetParent().get());
+                                            rparam = gep_inst->GetBaseAddr().get();
+                                        }
+                                        for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                                            auto &&[k, v] = (*iter);
+                                            if (k.base_addr == rparam) {
+                                                iter = Scope.mem_map.erase(iter);
+                                            } else {
+                                                ++iter;
+                                            }
+                                        }
                                     }
                                 }
                             }

@@ -40,7 +40,7 @@ typedef std::unordered_map<GepVNExpr, BaseValuePtr, GepVNExprHasher> GepVNTable;
 
 struct MemoryVNExpr {
     BaseValue *base_addr;
-    BaseValue *offset;
+    std::list<BaseValue *> offsets;
 
     bool operator==(const MemoryVNExpr &) const;
 };
