@@ -48,38 +48,38 @@ void AsmBasicBlock::ArchSchedule() {
         }
     } while (0);
 
-    // do /* schedule */ {
-    //     SchedMachine mach(std::make_unique<SchedSiFiveU74>());
+    do /* schedule */ {
+        SchedMachine mach(std::make_unique<SchedSiFiveU74>());
 
-    //     for (auto &&inst : insts_) {
-    //         auto item = std::make_unique<AsmSchedItem>();
-    //         item->inst = inst.get();
-    //         item->type = inst->GetSchedType();
+        for (auto &&inst : insts_) {
+            auto item = std::make_unique<AsmSchedItem>();
+            item->inst = inst.get();
+            item->type = inst->GetSchedType();
 
-    //         item->memop = (item->type == SCHED_TYPE::LOAD) or (item->type == SCHED_TYPE::STORE);
+            item->memop = (item->type == SCHED_TYPE::LOAD) or (item->type == SCHED_TYPE::STORE);
 
-    //         if (auto res = inst->GetResult(); res != 0) {
-    //             item->writes.push_back(res);
-    //         }
+            if (auto res = inst->GetResult(); res != 0) {
+                item->writes.push_back(res);
+            }
 
-    //         if (auto opds = inst->GetOperands(); not opds.empty()) {
-    //             for (auto &&opd : opds) {
-    //                 item->reads.push_back(opd);
-    //             }
-    //         }
+            if (auto opds = inst->GetOperands(); not opds.empty()) {
+                for (auto &&opd : opds) {
+                    item->reads.push_back(opd);
+                }
+            }
 
-    //         mach.Push(std::move(item));
-    //     }
+            mach.Push(std::move(item));
+        }
 
-    //     insts_view_.clear();
+        insts_view_.clear();
 
-    //     mach.Sched();
+        mach.Sched();
 
-    //     auto sifiveu74 = dynamic_cast<SchedSiFiveU74 *>(mach.Policy());
+        auto sifiveu74 = dynamic_cast<SchedSiFiveU74 *>(mach.Policy());
 
-    //     for (auto &&item : sifiveu74->View()) {
-    //         auto asmitem = dynamic_cast<AsmSchedItem *>(item);
-    //         insts_view_.push_back(asmitem->inst);
-    //     }
-    // } while (0);
+        for (auto &&item : sifiveu74->View()) {
+            auto asmitem = dynamic_cast<AsmSchedItem *>(item);
+            insts_view_.push_back(asmitem->inst);
+        }
+    } while (0);
 }

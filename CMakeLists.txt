@@ -32,10 +32,10 @@ find_package(antlr4-runtime REQUIRED)
 # 设置编译参数
 # 官方参数 m 在后面链接
 add_compile_options(-std=c++17)
-add_compile_options(-O2)
+# add_compile_options(-O2)
 
 # 用于调试
-# add_compile_options(-g)
+add_compile_options(-g)
 add_compile_options(-Wall -Wextra)
 
 # 用于内存检测
