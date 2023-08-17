@@ -1,5 +1,9 @@
 #include "3tle3wa/pass/analysis/sideeffect/sideeffect.hh"
 
+#include <unordered_map>
+
+#include "3tle3wa/ir/value/variable.hh"
+
 void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr func) {
     bool side_effect = false;
     for (auto &&callee : func->GetCallWho()) {
@@ -19,20 +23,25 @@ void SideEffect::SideEffectAnalysis(CompilationUnit &comp_unit, NormalFuncPtr fu
         }
     }
     for (auto &&param : func->GetParamList()) {
-        if (param->IsVariable() && param->GetBaseType()->IsPointer()) {
+        if (param->IsVariable() && param->GetBaseType()->IsPointer()) {  // pointer parameter
             auto &&parameter = std::static_pointer_cast<Variable>(param);
+
             std::queue<VariablePtr> queue;
+            std::unordered_map<Variable *, bool> visit;
             queue.push(parameter);
             while (!queue.empty()) {
                 auto &&front = queue.front();
                 queue.pop();
-                for (auto &&user : front->GetUserList()) {
-                    if (user->IsStoreInst()) {
-                        side_effect = true;
-                        func->se_type.mod_param_arr = true;
-                    }
-                    if (user->GetResult() != nullptr) {
-                        queue.push(user->GetResult());
+                if (visit[front.get()] == false) {
+                    visit[front.get()] = true;
+                    for (auto &&user : front->GetUserList()) {
+                        if (user->IsStoreInst()) {
+                            side_effect = true;
+                            func->se_type.mod_param_arr = true;
+                        }
+                        if (user->IsGepInst()) {
+                            queue.push(user->GetResult());
+                        }
                     }
                 }
             }

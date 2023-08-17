@@ -3,6 +3,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 
 #include "3tle3wa/ir/function/function.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
@@ -10,6 +11,7 @@
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 #include "3tle3wa/ir/value/globalvalue.hh"
+#include "3tle3wa/ir/value/variable.hh"
 
 bool GVN::BinVNExpr::operator==(const BinVNExpr &e) const {
     if (opcode != e.opcode) {
@@ -281,76 +283,64 @@ void GVN::DoDVNT(CfgNodePtr node, VNScope *outer, SymbolTable &glb_table) {
                 auto &&call_inst = std::static_pointer_cast<CallInst>(inst);
                 auto &&callee = call_inst->GetCalleeFunc();
                 if (callee->GetSideEffect()) {
-                    Scope.mem_map.clear();
+                    if (callee->IsLibFunction()) {
+                        Scope.mem_map.clear();
+                    } else {
+                        auto &&normal_func = std::static_pointer_cast<NormalFunction>(callee);
+                        if (normal_func->se_type.call_se_func) {  // bu guan le, zhi jie bao li qing kong ba
+                            Scope.mem_map.clear();
+                        } else if (normal_func->se_type.mod_glb_value) {  // callee modify some global-value
+                            for (auto &&[_, value] : glb_table.GetNameValueMap()) {
+                                if (auto &&glb_value = std::dynamic_pointer_cast<GlobalValue>(value)) {
+                                    auto &&definers = glb_value->GetDefineIn();
+                                    if (definers.find(callee.get()) != definers.end()) {
+                                        for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
+                                            auto &&[k, v] = (*iter);
+                                            if (k.base_addr == glb_value.get()) {
+                                                iter = Scope.mem_map.erase(iter);
+                                            } else {
+                                                ++iter;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (normal_func->se_type.mod_param_arr) {  // callee modify param-array
+                            auto &&rparam_list = call_inst->GetParamList();
+                            auto &&fparam_list = callee->GetParamList();
+
+                            for (size_t idx = 0, size = rparam_list.size(); idx < size; ++idx) {
+                                auto &&fparam = fparam_list[idx];
+                                if (fparam->IsVariable() && fparam->GetBaseType()->IsPointer()) {
+                                    auto &&parameter = std::static_pointer_cast<Variable>(fparam);
+
+                                    bool arr_mod = false;
+                                    std::queue<VariablePtr> queue;
+                                    std::unordered_map<Variable *, bool> visit;
+                                    queue.push(parameter);
+                                    while (!queue.empty()) {
+                                        auto &&front = queue.front();
+                                        queue.pop();
+                                        if (visit[front.get()] == false) {
+                                            visit[front.get()] = true;
+                                            for (auto &&user : front->GetUserList()) {
+                                                if (user->IsStoreInst()) {
+                                                    arr_mod = true;
+                                                }
+                                                if (user->IsGepInst()) {
+                                                    queue.push(user->GetResult());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (arr_mod == true) {
+                                        Scope.mem_map.clear();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                // if (callee->GetSideEffect()) {
-                //     if (callee->IsLibFunction()) {  // bu guan le, zhi jie bao li qing kong ba
-                //         Scope.mem_map.clear();
-                //     } else {
-                //         auto &&normal_func = std::static_pointer_cast<NormalFunction>(callee);
-                //         if (normal_func->se_type.call_se_func) {  // bu guan le, zhi jie bao li qing kong ba
-                //             Scope.mem_map.clear();
-                //         } else if (normal_func->se_type.mod_glb_value) {  // callee modify some global-value
-                //             for (auto &&[_, value] : glb_table.GetNameValueMap()) {
-                //                 if (auto &&glb_value = std::dynamic_pointer_cast<GlobalValue>(value)) {
-                //                     auto &&definers = glb_value->GetDefineIn();
-                //                     if (definers.find(callee.get()) != definers.end()) {
-                //                         for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
-                //                             auto &&[k, v] = (*iter);
-                //                             if (k.base_addr == glb_value.get()) {
-                //                                 iter = Scope.mem_map.erase(iter);
-                //                             } else {
-                //                                 ++iter;
-                //                             }
-                //                         }
-                //                     }
-                //                 }
-                //             }
-
-                //         } else if (normal_func->se_type.mod_param_arr) {  // callee modify param-array
-                //             auto &&rparam_list = call_inst->GetParamList();
-                //             auto &&fparam_list = callee->GetParamList();
-
-                //             for (size_t idx = 0, size = rparam_list.size(); idx < size; ++idx) {
-                //                 auto &&param = fparam_list[idx];
-                //                 if (param->IsVariable() && param->GetBaseType()->IsPointer()) {
-                //                     auto &&parameter = std::static_pointer_cast<Variable>(param);
-
-                //                     bool arr_mod = false;
-                //                     std::queue<VariablePtr> queue;
-                //                     queue.push(parameter);
-                //                     while (!queue.empty()) {
-                //                         auto &&front = queue.front();
-                //                         queue.pop();
-                //                         for (auto &&user : front->GetUserList()) {
-                //                             if (user->IsStoreInst()) {
-                //                                 arr_mod = true;
-                //                             }
-                //                             if (user->GetResult() != nullptr) {
-                //                                 queue.push(user->GetResult());
-                //                             }
-                //                         }
-                //                     }
-                //                     if (arr_mod == true) {
-                //                         auto &&rparam = rparam_list[idx];
-                //                         if (rparam->GetParent() && rparam->GetParent()->IsGepInst()) {
-                //                             rparam = std::static_pointer_cast<GetElementPtrInst>(rparam->GetParent())
-                //                                          ->GetBaseAddr();
-                //                         }
-                //                         for (auto &&iter = Scope.mem_map.begin(); iter != Scope.mem_map.end();) {
-                //                             auto &&[k, v] = (*iter);
-                //                             if (k.base_addr == rparam.get()) {
-                //                                 iter = Scope.mem_map.erase(iter);
-                //                             } else {
-                //                                 ++iter;
-                //                             }
-                //                         }
-                //                     }
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
             }
         }
         ++iter;
