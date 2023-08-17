@@ -36,7 +36,7 @@ ScalarTypePtr CallInst::GetRetType() const { return ret_type; }
 BaseFuncPtr CallInst::GetCalleeFunc() const { return callee_func; }
 ParamList &CallInst::GetParamList() { return rparam_list; }
 
-void CallInst::SetTailCall(bool _tail_call) { tail_call = _tail_call; }
+void CallInst::SetTailCall() { tail_call = true; }
 bool CallInst::GetTailCall() const { return tail_call; }
 
 void CallInst::RemoveResParent() {
@@ -81,8 +81,9 @@ std::string CallInst::tollvmIR() {
             ss << ", " << rparam_list[idx]->GetBaseType()->tollvmIR() << ' ' << rparam_list[idx]->tollvmIR();
         }
     }
-    ss << ")";
-    ss << "; Inst_" << GetInstIdx() << " from Block_";
+    ss << "); ";
+    if (tail_call) ss << "tail-call, ";
+    ss << "Inst_" << GetInstIdx() << " from Block_";
     if (parent == nullptr) {
         ss << "None";
     } else {

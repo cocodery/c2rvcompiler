@@ -48,6 +48,8 @@ void Optimization::DoOptimization() {
 
         DCE::DCE(func);
 
+        TailCall::TailCallAnalysis(func);
+
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());
 

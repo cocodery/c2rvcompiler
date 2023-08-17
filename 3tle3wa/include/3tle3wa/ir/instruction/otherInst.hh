@@ -31,7 +31,7 @@ class CallInst final : public Instruction {
     BaseFuncPtr GetCalleeFunc() const;
     ParamList &GetParamList();
 
-    void SetTailCall(bool);
+    void SetTailCall();
     bool GetTailCall() const;
 
     void RemoveResParent() final override;
