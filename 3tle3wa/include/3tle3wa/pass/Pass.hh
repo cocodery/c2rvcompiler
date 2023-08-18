@@ -12,6 +12,7 @@
 #include "3tle3wa/pass/interprocedural/loop/loopmemset.hh"
 #include "3tle3wa/pass/interprocedural/loop/loopunrolling.hh"
 #include "3tle3wa/pass/interprocedural/peephole/peephole.hh"
+#include "3tle3wa/pass/interprocedural/rec2loop/rec2loop.hh"
 #include "3tle3wa/pass/interprocedural/sccp/sccp.hh"
 #include "3tle3wa/pass/interprocedural/ssa/ssa.hh"
 #include "3tle3wa/pass/intraprocedural/edp/edp.hh"
