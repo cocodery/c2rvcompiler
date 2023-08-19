@@ -208,12 +208,7 @@ void SchedSiFiveU74::Sched() {
 
     // issue the first instruction for initialzation
     if (not aovfree_.empty()) {
-        auto one = aovfree_.front();
-
-        std::pop_heap(aovfree_.begin(), aovfree_.end());
-        aovfree_.pop_back();
-
-        view_.push_back(one.node->self);
+        auto &&one = aovfree_.front();
         one.node->issued = true;
 
         auto type = one.node->self->type;
@@ -222,17 +217,11 @@ void SchedSiFiveU74::Sched() {
         auto resv = Reservation{.type = type, .avail_time = overhead_map.at(type) + now, .node = one.node};
         rsvtbl.push(std::move(resv));
 
-        for (auto &&post : one.node->post) {
-            post->prev.erase(one.node);
-
-            if (post->prev.empty() and not post->issued) {
-                aovfree_.push_back(Wrapper{.node = post});
-                std::push_heap(aovfree_.begin(), aovfree_.end());
-            }
-        }
+        std::pop_heap(aovfree_.begin(), aovfree_.end());
+        aovfree_.pop_back();
     }
 
-    while (not aovfree_.empty()) {
+    while (not aovfree_.empty() or not rsvtbl.empty()) {
         AOVNode *choice = nullptr;
 
         for (auto &&wrap : aovfree_) {
@@ -251,7 +240,6 @@ void SchedSiFiveU74::Sched() {
             auto &&rsv = rsvtbl.top();
             now = rsv.avail_time;
         } else {
-            view_.push_back(choice->self);
             choice->issued = true;
 
             auto type = choice->self->type;
@@ -274,6 +262,10 @@ void SchedSiFiveU74::Sched() {
             now = rsv.avail_time;
             am_.busy.at(rsv.type) = false;
             rsvtbl.pop();
+
+            view_.push_back(cur->self);
+            cur->issued = true;
+            cur->finished = true;
 
             for (auto &&post : cur->post) {
                 post->prev.erase(cur);

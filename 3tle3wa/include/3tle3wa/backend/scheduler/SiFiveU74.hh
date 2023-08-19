@@ -19,6 +19,7 @@ class SchedSiFiveU74 final : public SchedPolicy {
         std::unordered_set<AOVNode *> prev{};
 
         bool issued{false};
+        bool finished{false};
     };
 
     struct Wrapper {
