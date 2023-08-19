@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <utility>
 #include <variant>
 
 #include "3tle3wa/ir/IR.hh"
@@ -10,15 +11,16 @@
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/use.hh"
 #include "3tle3wa/pass/analysis/structure/structure.hh"
+#include "3tle3wa/pass/interprocedural/loop/loopmemset.hh"
 
 typedef std::vector<BaseValuePtr> Operands;
 namespace LoopUnrolling {
-
 constexpr size_t MAX_UNROLL_TIME = 3;
 
 static std::set<BaseValuePtr> phi_results;
 static std::set<BaseValuePtr> loop_variants;
 static std::set<InstPtr> phi_to_update;
+static std::set<InstPtr> loop_step_inst;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_in_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_defined_out_loop;
 static std::unordered_map<BaseValuePtr, BaseValuePtr> phi_source_updated;
@@ -29,6 +31,7 @@ void LoopUnrolling(NormalFuncPtr);
 bool ExpandLoop(NormalFuncPtr, Loop *);
 void FullyExpand(NormalFuncPtr, int, Loop *);
 void FullyExpand_Multi_Blks(NormalFuncPtr, int, Loop *);
+void PartllyExpand(int, Loop *);
 int LoopTime(Loop *);
 int ConstCheck(InstPtr);
 void AddBranchInst(CfgNodePtr &, bool);
@@ -36,6 +39,8 @@ void AddJmpInst(CfgNodePtr &);
 void UpdatePhiInst(CfgNodePtr &);
 OpCode FlipComparisonOp(OpCode);
 Operands InstOperandsInVector(InstPtr);
+BaseValuePtr GetLoopEnd(Loop *);
+std::pair<BaseValuePtr, int> GetLoopInitAndStep(Loop *);
 BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &, bool);
 BaseValuePtr OperandUpdate(BaseValuePtr, bool);
 CfgNodePtr CfgNodeUpdate(const CfgNodePtr);
