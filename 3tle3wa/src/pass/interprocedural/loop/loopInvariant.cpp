@@ -11,6 +11,7 @@
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/memoryInst.hh"
 #include "3tle3wa/ir/value/use.hh"
 
 void LoopInvariant::LoopInvariant(NormalFuncPtr func) {
@@ -52,6 +53,7 @@ LoopInvariant::Invariants LoopInvariant::FindInvariant(Loop *loop) {
     CfgNodeList &&entire_loop = loop->GetEntireStructure();
 
     std::queue<InstPtr> variant;
+    auto tmp_visit = visit;
 
     for (auto &&node : entire_loop) {
         if (visit[node.get()] == false) {
@@ -88,5 +90,46 @@ LoopInvariant::Invariants LoopInvariant::FindInvariant(Loop *loop) {
         }
     }
 
+    for (auto &&node : entire_loop) {
+        if (tmp_visit[node.get()] == false) {
+            if (node->GetPredecessors().size() == 1 &&
+                (*node->GetPredecessors().begin())->GetSuccessors().size() != 1) {
+                Invariants ls_buffer;
+                bool invariant_load_store = true;  // for each node
+                auto &&inst_list = node->GetInstList();
+                for (auto &&inst : inst_list) {
+                    if (inst->IsStoreInst()) {
+                        auto store = static_cast<StoreInst *>(inst.get());
+                        auto &&addr = store->GetStoreAddr();
+                        auto &&value = store->GetStoreValue();
+
+                        if (addr->IsVariable() && addr->GetParent()->IsGepInst()) {
+                            auto gep = addr->GetParent().get();
+                            if (is_variant[gep]) {
+                                invariant_load_store = false;
+                                break;
+                            }
+                            if (value->IsVariable()) {
+                                auto definer = value->GetParent().get();
+                                if (is_variant[definer]) {
+                                    invariant_load_store = false;
+                                    break;
+                                } else {
+                                    ls_buffer.push_back(inst);
+                                }
+                            } else if (value->IsConstant()) {
+                                ls_buffer.push_back(inst);
+                            } else {
+                                assert(false);
+                            }
+                        }
+                    }
+                }
+                if (invariant_load_store) {
+                    invariants.insert(invariants.end(), ls_buffer.begin(), ls_buffer.end());
+                }
+            }
+        }
+    }
     return invariants;
 }

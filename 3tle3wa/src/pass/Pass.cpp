@@ -51,7 +51,7 @@ void Optimization::DoOptimization() {
 
         TailCall::TailCallAnalysis(func);
 
-        TailRec2Loop::DoTailRec2Loop(func, comp_unit.getGlbTable());
+        // TailRec2Loop::DoTailRec2Loop(func, comp_unit.getGlbTable());
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());
