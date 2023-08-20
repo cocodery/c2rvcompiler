@@ -11,8 +11,11 @@ static std::unordered_map<BaseValue *, BaseValuePtr> value_map;
 
 void DoRecursionOpt(NormalFuncPtr &, SymbolTable &);
 
-void DoTailRec2Loop(NormalFuncPtr &, SymbolTable &);
+void InitValueMap(SymbolTable &);
 
+void DoTailRec2Loop(NormalFuncPtr &, SymbolTable &);
 void TailRec2Loop(NormalFuncPtr &);
 BaseValuePtr InstCopy(Instruction *, CfgNodePtr &);
+
+void DoSimpleRecOpt(NormalFuncPtr &, SymbolTable &);
 }  // namespace RecursionOpt
