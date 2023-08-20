@@ -32,8 +32,6 @@ void HoistLocalArray::HoistLocalArray(NormalFuncPtr &func, SymbolTable &glb_tabl
         for (auto &&inst : node->GetInstList()) {
             // only consider alloca and initilize at same block
             if (inst->IsAllocaInst()) {
-                cout << inst->tollvmIR() << endl;
-
                 bool can_hoist = true;  // assume can hoist for each alloca
                 InstList inst_list;
 
@@ -97,7 +95,6 @@ void HoistLocalArray::HoistLocalArray(NormalFuncPtr &func, SymbolTable &glb_tabl
                 }
                 // analyisi gep in node
                 for (auto &&gep : gep_in_node) {
-                    cout << gep->tollvmIR() << endl;
                     auto &&off = gep->GetOffList().back();
                     if (off->IsVariable()) {
                         for (auto &&user : gep->GetResult()->GetUserList()) {

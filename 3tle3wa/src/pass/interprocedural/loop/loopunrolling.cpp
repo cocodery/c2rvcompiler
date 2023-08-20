@@ -49,9 +49,12 @@ bool LoopUnrolling::ExpandLoop(NormalFuncPtr func, Loop *loop) {
         }
         auto loop_cond = loop->GetCondBodyBlks();
         auto loop_blks = loop->GetLoopBodyBlks();
-        // if (loop_blks.size() > 1) {
-        //     return false;
-        // }
+        if (loop_blks.size() > 1) {
+            return false;
+        }
+        if (loop_blks.front()->GetInstCnt() > 10) {
+            return false;
+        }
         if (loop->sub_structures.size() != 0) {
             return false;
         }
@@ -59,8 +62,8 @@ bool LoopUnrolling::ExpandLoop(NormalFuncPtr func, Loop *loop) {
         if (loop_time == 0 || loop_time > 100) {
             return false;
         }
-        // FullyExpand(func, loop_time, loop);
-        FullyExpand_Multi_Blks(func, loop_time, loop);
+        FullyExpand(func, loop_time, loop);
+        // FullyExpand_Multi_Blks(func, loop_time, loop);
         return true;
     }
     assert(loop->parent == nullptr);

@@ -131,7 +131,7 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr &func) {
                             auto &&glb_value = std::static_pointer_cast<GlobalValue>(base_addr);
 
                             auto &&init_value = glb_value->GetInitValue();
-                            if (init_value->GetBaseType()->IsImMutable() && init_value->IsConstArray()) {
+                            if (glb_value->GetBaseType()->IsImMutable() && init_value->IsConstArray()) {
                                 const auto &&const_arr = std::static_pointer_cast<ConstArray>(init_value);
                                 auto &&init_arr = const_arr->GetConstArr();
                                 auto &&load_value =

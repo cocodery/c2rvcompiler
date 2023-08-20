@@ -23,17 +23,17 @@ void Optimization::DoOptimization() {
 
         LoopMemset::LoopMemset(func, comp_unit);
 
-        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
-
-        // LoopUnrolling::LoopUnrolling(func);
+        LoopUnrolling::LoopUnrolling(func);
 
         SCCP::SCCP(func);
 
         DCE::DCE(func);
 
+        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+
         HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
 
-        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
