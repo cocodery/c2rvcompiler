@@ -23,6 +23,7 @@
 #include "3tle3wa/ir/value/globalvalue.hh"
 #include "3tle3wa/ir/value/type/scalarType.hh"
 #include "3tle3wa/ir/value/variable.hh"
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
 
 void PeepHole::PeepHoleOpt(NormalFuncPtr &func) {
     for (auto &&node : func->GetSequentialNodes()) {
@@ -202,5 +203,94 @@ void PeepHole::PeepHole4Gep(NormalFuncPtr &func, SymbolTable &glb_table) {
         }
     };
 
+    auto GepInstCombine = [&func]() -> void {
+        for (auto &&node : func->GetSequentialNodes()) {
+            for (auto &&inst : node->GetInstList()) {
+                if (inst->IsGepInst()) {
+                    auto gep = std::static_pointer_cast<GetElementPtrInst>(inst);
+                    std::list<GepInstPtr> gep_list = std::list<GepInstPtr>(1, gep);
+                    while (gep->GetBaseAddr()->GetParent() && gep->GetBaseAddr()->GetParent()->IsGepInst()) {
+                        gep = std::static_pointer_cast<GetElementPtrInst>(gep->GetBaseAddr()->GetParent());
+                        gep_list.push_front(gep);
+                    }
+                    if (gep_list.front()->GetBaseAddr()->IsGlobalValue() ||               // global address
+                        gep_list.front()->GetBaseAddr()->GetBaseType()->IsParameter() ||  // parameter address
+                        gep_list.front()->GetBaseAddr()->GetParent()->IsAllocaInst())     // alloca address
+                    {
+                        auto &&front = gep_list.front();
+                        auto &&off_list = front->GetOffList();
+                        if (off_list.size() == 2 &&
+                            off_list.back() == ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) {
+                            gep_list.pop_front();
+                        }
+                    }
+                    if (gep_list.size() > 1) {  // at least 2 gep-inst
+                        for (auto &&iter = gep_list.begin(); iter != gep_list.end();) {
+                            auto &&gep = (*iter);
+                            auto &&off_list = gep->GetOffList();
+                            if (off_list.back() == ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) {
+                                ReplaceSRC(gep->GetResult(), gep->GetBaseAddr());
+                                RemoveInst(gep);
+                                iter = gep_list.erase(iter);
+                            } else {
+                                ++iter;
+                            }
+                        }
+                    }
+                    if (gep_list.size() > 1) {  // combine logic-sequential constant offset gep-inst
+                        bool all_constant = true;
+                        auto &&off_set = std::list<ConstantPtr>();
+                        for (auto &&gep : gep_list) {
+                            auto &&offset = gep->GetOffList().back();
+                            if (offset->IsConstant()) {
+                                off_set.push_back(std::static_pointer_cast<Constant>(offset));
+                            } else {
+                                all_constant = false;
+                            }
+                        }
+                        if (all_constant) {
+                            int32_t sum = 0;
+                            for (auto &&constant : off_set) {
+                                sum += std::get<int32_t>(constant->GetValue());
+                            }
+                            auto &&offset = ConstantAllocator::FindConstantPtr(sum);
+
+                            auto &&front = gep_list.front();
+                            auto &&back = gep_list.back();
+                            // new store-type
+                            back->SetStoreType(front->GetStoreType());
+                            // new base-addr
+                            auto &&ori_base_addr = back->GetBaseAddr();
+                            auto &&new_base_addr = front->GetBaseAddr();
+                            ori_base_addr->RemoveUser(back);
+                            new_base_addr->InsertUser(back);
+                            back->SetBaseAddr(new_base_addr);
+                            // new offset-list
+                            auto &&off_list = OffsetList(1, offset);
+                            if (front->GetOffList().size() == 2)
+                                off_list.push_front(ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
+                            back->SetOffList(off_list);
+                        }
+                    }
+                    if (gep_list.size() == 1) {
+                        auto &&gep = gep_list.front();
+                        auto &&off_list = gep->GetOffList();
+                        auto &&base_addr = gep->GetBaseAddr();
+                        if (off_list.size() == 1 &&  // gep a exist pointer
+                            (!base_addr->GetBaseType()->IsGlobal() &&
+                             base_addr->GetBaseType()->IsPointer()) &&  // avoid global-scalar pointer
+                            off_list.back() == ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) {
+                            ReplaceSRC(gep->GetResult(), base_addr);
+                            RemoveInst(gep);
+                            gep_list.clear();
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     PreLoadGlbAddr();
+    GepInstCombine();
+    DCE::EliminateUselessCode(func);
 }
