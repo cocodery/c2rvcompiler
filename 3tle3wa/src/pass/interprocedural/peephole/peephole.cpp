@@ -16,6 +16,7 @@
 #include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
 #include "3tle3wa/ir/instruction/unaryOpInst.hh"
+#include "3tle3wa/ir/symTable.hh"
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
 #include "3tle3wa/ir/value/constarray.hh"
@@ -23,7 +24,7 @@
 #include "3tle3wa/ir/value/type/scalarType.hh"
 #include "3tle3wa/ir/value/variable.hh"
 
-void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
+void PeepHole::PeepHoleOpt(NormalFuncPtr &func) {
     for (auto &&node : func->GetSequentialNodes()) {
         auto &&inst_list = node->GetInstList();
         for (auto &&iter = inst_list.begin(); iter != inst_list.end();) {
@@ -116,50 +117,6 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
                         }
                     }
                 }
-            } else if (inst->IsGepInst()) {  // remove redundant gep-inst
-                auto &&gep2 = std::static_pointer_cast<GetElementPtrInst>(inst);
-                auto &&base_addr2 = gep2->GetBaseAddr();
-                auto &&off_list2 = gep2->GetOffList();
-                if (off_list2.size() == 1 && base_addr2->GetParent() && base_addr2->GetParent()->IsGepInst()) {
-                    auto &&gep1 = std::static_pointer_cast<GetElementPtrInst>(base_addr2->GetParent());
-                    auto &&base_addr1 = gep1->GetBaseAddr();
-                    auto &&off_list1 = gep1->GetOffList();
-                    if (off_list1.size() == 2) {
-                        auto &&real_off1 = off_list1.back();
-                        auto &&real_off2 = off_list2.back();
-
-                        if (real_off1->IsConstant()) {
-                            auto &&zero = ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0));
-
-                            auto &&constant1 = std::static_pointer_cast<Constant>(real_off1);
-                            if (real_off1 == zero) {
-                                // replace base-addr
-                                gep2->SetBaseAddr(base_addr1);
-                                base_addr2->RemoveUser(gep2);
-                                base_addr1->InsertUser(gep2);
-                                base_addr1->RemoveUser(gep1);
-                                // no need to change gep2->off_list
-                            } else {
-                                if (real_off2->IsConstant()) {
-                                    auto &&constant2 = std::static_pointer_cast<Constant>(real_off2);
-                                    // replace base-addr
-                                    gep2->SetBaseAddr(base_addr1);
-                                    base_addr2->RemoveUser(gep2);
-                                    base_addr1->InsertUser(gep2);
-                                    base_addr1->RemoveUser(gep1);
-                                    // calculate new offset
-                                    int32_t off_int1 = std::get<int32_t>(constant1->GetValue());
-                                    int32_t off_int2 = std::get<int32_t>(constant2->GetValue());
-                                    auto &&new_real_off2 =
-                                        ConstantAllocator::FindConstantPtr(static_cast<int32_t>(off_int1 + off_int2));
-                                    // set new offset-list
-                                    auto &&off_list = OffsetList(1, new_real_off2);
-                                    gep2->SetOffList(off_list);
-                                }
-                            }
-                        }
-                    }
-                }
             } else if (inst->IsLoadInst()) {
                 auto &&load_inst = std::static_pointer_cast<LoadInst>(inst);
                 if (load_inst->GetOprand()->IsVariable()) {  // load-addr, variable or global-value
@@ -187,4 +144,63 @@ void PeepHole::PeepHoleOpt(NormalFuncPtr func) {
             ++iter;
         }
     }
+}
+
+void PeepHole::PeepHole4Gep(NormalFuncPtr &func, SymbolTable &glb_table) {
+    auto PreLoadGlbAddr = [&func, &glb_table]() -> void {
+        // insert glb-address getelementptr first
+        auto &&entry = func->GetEntryNode();
+        std::list<GepInstPtr> gep_list;
+
+        std::unordered_map<BaseValue *, BaseValuePtr> addr_map;
+        for (auto &&[_, value] : glb_table.GetNameValueMap()) {
+            auto &&base_type = value->GetBaseType();
+            if (base_type->IsScalar()) continue;
+
+            auto &&glb_value = std::static_pointer_cast<GlobalValue>(value);
+            const auto &used_in = glb_value->GetUsedIn();
+            const auto &define_in = glb_value->GetDefineIn();
+
+            if (used_in.find(func.get()) != used_in.end() || define_in.find(func.get()) != define_in.end()) {
+                auto store_type = glb_value->GetInitValue()->GetBaseType();
+                OffsetList off_list = OffsetList(2, ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
+                auto &&result = Variable::CreatePtr(base_type->IntType() ? type_int_ptr_L : type_float_ptr_L, nullptr);
+                auto &&gep = GetElementPtrInst::CreatePtr(result, store_type, glb_value, off_list, entry);
+                result->SetParent(gep);
+
+                addr_map[glb_value.get()] = result;
+
+                gep_list.push_back(gep);
+            }
+        }
+        // replace first
+        for (auto &&node : func->GetSequentialNodes()) {
+            for (auto &&inst : node->GetInstList()) {
+                if (inst->IsGepInst()) {
+                    auto gep = std::static_pointer_cast<GetElementPtrInst>(inst);
+                    if (gep->GetBaseAddr()->IsGlobalValue()) {  // avoid replace
+                        auto ori_base_addr = gep->GetBaseAddr();
+                        auto mapped_addr = addr_map[ori_base_addr.get()];
+                        if (mapped_addr != nullptr) {
+                            ori_base_addr->RemoveUser(gep);
+                            gep->SetBaseAddr(mapped_addr);
+                            mapped_addr->InsertUser(gep);
+                        }
+                    }
+                }
+            }
+        }
+        // fill in second
+        auto &&inst_list = entry->GetInstList();
+        for (auto &&iter = inst_list.begin();; ++iter) {
+            if ((*iter)->IsPhiInst() == false) {
+                for (auto &&gep : gep_list) {
+                    inst_list.insert(iter, gep);
+                }
+                break;
+            }
+        }
+    };
+
+    PreLoadGlbAddr();
 }

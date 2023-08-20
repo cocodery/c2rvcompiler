@@ -23,6 +23,8 @@ void Optimization::DoOptimization() {
 
         LoopMemset::LoopMemset(func, comp_unit);
 
+        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+
         // LoopUnrolling::LoopUnrolling(func);
 
         SCCP::SCCP(func);
