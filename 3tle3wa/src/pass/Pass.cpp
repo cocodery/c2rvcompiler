@@ -21,7 +21,7 @@ void Optimization::DoOptimization() {
 
         LoopInvariant::LoopInvariant(func);
 
-        // LoopMemset::LoopMemset(func, comp_unit);
+        LoopMemset::LoopMemset(func, comp_unit);
 
         // LoopUnrolling::LoopUnrolling(func);
 
