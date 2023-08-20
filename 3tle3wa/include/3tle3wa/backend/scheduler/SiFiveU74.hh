@@ -19,6 +19,7 @@ class SchedSiFiveU74 final : public SchedPolicy {
         std::unordered_set<AOVNode *> prev{};
 
         bool issued{false};
+        bool finished{false};
     };
 
     struct Wrapper {
@@ -33,13 +34,12 @@ class SchedSiFiveU74 final : public SchedPolicy {
     };
     struct AbstractMachine {
         std::unordered_map<SCHED_TYPE, bool> busy;
-        std::unordered_map<size_t, bool> rdy;
     };
 
     struct Reservation {
         SCHED_TYPE type;
         size_t avail_time;
-        size_t write;
+        AOVNode *node;
 
         bool operator<(const Reservation &other) const;
     };

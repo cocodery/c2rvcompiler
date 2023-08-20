@@ -45,14 +45,10 @@ bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::se
                             std::inserter(candidates, candidates.end()));
     }
 
-    auto Color = [&candidates, &node, this] {
+    if (not candidates.empty()) {
         auto color = *candidates.begin();
         node->SetColor(color);
         planner_->UseRealRegister(color);
-    };
-
-    if (not candidates.empty()) {
-        Color();
         return true;
     }
 
@@ -60,7 +56,9 @@ bool InterferenceGraph::allocaColor(IGNode *node, std::set<size_t> &all, std::se
                         std::inserter(candidates, candidates.end()));
 
     if (not candidates.empty()) {
-        Color();
+        auto color = *candidates.begin();
+        node->SetColor(color);
+        planner_->UseRealRegister(color);
         return true;
     }
 
@@ -213,12 +211,6 @@ bool RLPlanner::GraphAllocation() {
         frpq.push_back(rpack{.seg = seg});
         std::push_heap(frpq.begin(), frpq.end(), std::greater<rpack>());
     }
-
-    // belong_to_->SetMergable(ig4i);
-    // belong_to_->SetMergable(ig4f);
-
-    // ig4i.TryMerge(abi_info.i.nm_save + abi_info.i.nm_tmp + abi_info.i.nm_arg);
-    // ig4f.TryMerge(abi_info.f.nm_save + abi_info.f.nm_tmp + abi_info.f.nm_arg);
 
     bool spill = false;
 

@@ -48,11 +48,11 @@ void InterferenceGraph::IGNode::SetColor(size_t color) {
     color_ = color;
     ref_->SetRealRegIdx(color);
 
-    for (auto &&node : merges_) {
-        if (not node->GetRef()->IsAllocated()) {
-            node->SetColor(color);
-        }
-    }
+    // for (auto &&node : merges_) {
+    //     if (not node->GetRef()->IsAllocated()) {
+    //         node->SetColor(color);
+    //     }
+    // }
 }
 
 size_t InterferenceGraph::IGNode::PreferWhichArg() {
