@@ -96,11 +96,11 @@ class GetElementPtrInst final : public Instruction {
     BaseValuePtr base_addr;
     OffsetList offset_list;
 
-    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
-
    public:
     GetElementPtrInst(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
     ~GetElementPtrInst() = default;
+
+    static GepInstPtr CreatePtr(VariablePtr, BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
     static VariablePtr DoGetPointer(BaseTypePtr, BaseValuePtr, OffsetList, CfgNodePtr);
 
