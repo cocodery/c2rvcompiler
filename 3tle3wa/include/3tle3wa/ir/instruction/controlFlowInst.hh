@@ -18,6 +18,7 @@ class ReturnInst final : public Instruction {
 
     static RetInstPtr CreatePtr(ScalarTypePtr, BaseValuePtr, CfgNodePtr);
 
+    ScalarTypePtr GetRetType() const;
     BaseValuePtr GetRetValue() const;
 
     void RemoveResParent() final override;

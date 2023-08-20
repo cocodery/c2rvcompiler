@@ -1,13 +1,5 @@
 #include "3tle3wa/pass/Pass.hh"
 
-#include <memory>
-#include <queue>
-
-#include "3tle3wa/ir/value/globalvalue.hh"
-#include "3tle3wa/ir/value/variable.hh"
-#include "3tle3wa/pass/interprocedural/dce/dce.hh"
-#include "3tle3wa/pass/interprocedural/rec2loop/rec2loop.hh"
-
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
 void Optimization::DoOptimization() {
@@ -51,7 +43,7 @@ void Optimization::DoOptimization() {
 
         TailCall::TailCallAnalysis(func);
 
-        // TailRec2Loop::DoTailRec2Loop(func, comp_unit.getGlbTable());
+        RecursionOpt::DoTailRec2Loop(func, comp_unit.getGlbTable());
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());

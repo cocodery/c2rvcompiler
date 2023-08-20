@@ -56,6 +56,7 @@ class Instruction : public Translatable {
 
     bool IsCallInst() const;
     bool IsPhiInst() const;
+    bool IsBitCast() const;
 
     bool IsFNegInst() const;
     bool IsFAbsInst() const;

@@ -20,6 +20,7 @@ RetInstPtr ReturnInst::CreatePtr(ScalarTypePtr _type, BaseValuePtr _value, CfgNo
     return inst;
 }
 
+ScalarTypePtr ReturnInst::GetRetType() const { return ret_type; }
 BaseValuePtr ReturnInst::GetRetValue() const { return ret_value; }
 
 void ReturnInst::RemoveResParent() { return; }
