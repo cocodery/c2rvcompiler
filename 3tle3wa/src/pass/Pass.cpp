@@ -43,7 +43,7 @@ void Optimization::DoOptimization() {
 
         TailCall::TailCallAnalysis(func);
 
-        RecursionOpt::DoTailRec2Loop(func, comp_unit.getGlbTable());
+        RecursionOpt::DoRecursionOpt(func, comp_unit.getGlbTable());
 
         func->SetVarIdx(Variable::GetVarIdx());
         func->SetBlkIdx(BasicBlock::GetBlkIdx());

@@ -15,19 +15,7 @@
 #include "3tle3wa/ir/value/baseValue.hh"
 #include "3tle3wa/ir/value/constant.hh"
 
-void RecursionOpt::DoTailRec2Loop(NormalFuncPtr &func, SymbolTable &glb_table) {
-    assert(value_map.size() == 0);
-    for (auto &&[_, value] : glb_table.GetNameValueMap()) {
-        value_map[value.get()] = value;
-    }
-    for (auto &&[_, constant] : ConstantAllocator::GetConstantAllocator()) {
-        value_map[constant.get()] = constant;
-    }
-    TailRec2Loop(func);
-    value_map.clear();
-}
-
-void RecursionOpt::TailRec2Loop(NormalFuncPtr &func) {
+void RecursionOpt::DoRecursionOpt(NormalFuncPtr &func, SymbolTable &glb_table) {
     // check recursion
     if (func->GetRecursive() == false) return;
     // check no pointer parameter
@@ -52,7 +40,27 @@ void RecursionOpt::TailRec2Loop(NormalFuncPtr &func) {
             }
         }
     }
-    if (tail_recursion_cnt != 1) return;
+    if (tail_recursion_cnt) {
+        if (tail_recursion_cnt != 1) return;
+        DoTailRec2Loop(func, glb_table);
+    } else {
+    }
+}
+
+void RecursionOpt::DoTailRec2Loop(NormalFuncPtr &func, SymbolTable &glb_table) {
+    assert(value_map.size() == 0);
+    for (auto &&[_, value] : glb_table.GetNameValueMap()) {
+        value_map[value.get()] = value;
+    }
+    for (auto &&[_, constant] : ConstantAllocator::GetConstantAllocator()) {
+        value_map[constant.get()] = constant;
+    }
+    TailRec2Loop(func);
+    value_map.clear();
+}
+
+void RecursionOpt::TailRec2Loop(NormalFuncPtr &func) {
+    auto &&seq_nodes = func->GetSequentialNodes();
 
     auto ChkSimpleTailRecCall = [&seq_nodes]() -> bool {
         if (seq_nodes.size() != 4) return false;
