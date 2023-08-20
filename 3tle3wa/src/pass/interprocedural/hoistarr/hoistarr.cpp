@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <list>
 #include <memory>
 #include <ostream>
 #include <queue>
@@ -28,9 +29,11 @@ void HoistLocalArray::HoistLocalArray(NormalFuncPtr &func, SymbolTable &glb_tabl
         // assume a array which can hoist is
         // mannualy initialized after allcate
         // and no more assignment, each slot assign only one time
-        std::unordered_map<Instruction *, bool> visit;
         for (auto &&inst : node->GetInstList()) {
+            // only consider alloca and initilize at same block
             if (inst->IsAllocaInst()) {
+                cout << inst->tollvmIR() << endl;
+
                 bool can_hoist = true;  // assume can hoist for each alloca
                 InstList inst_list;
 
@@ -49,109 +52,104 @@ void HoistLocalArray::HoistLocalArray(NormalFuncPtr &func, SymbolTable &glb_tabl
                     const_array.push_back(zero);
                 }
 
-                // each offset store one time at most
-                // mannully store to constant offset
-                for (auto &&user1 : address->GetUserList()) {
-                    if (user1->IsGepInst()) {
-                        auto &&gep = std::static_pointer_cast<GetElementPtrInst>(user1);
-                        auto &&off = gep->GetOffList().back();
-                        // get all related gep
-                        std::list<GepInstPtr> gep_list;
-                        std::queue<GepInstPtr> queue;
+                // each offset store one time at most, mannully store to constant offset
+                // get all related gep
+                std::list<GepInstPtr> gep_in_node;
+                std::list<GepInstPtr> gep_out_node;
+                std::queue<GepInstPtr> queue;
+                for (auto &&user : address->GetUserList()) {
+                    if (user->IsGepInst()) {
+                        auto &&gep = std::static_pointer_cast<GetElementPtrInst>(user);
                         queue.push(gep);
-                        while (!queue.empty()) {
-                            gep_list.push_back(gep);
-                            for (auto &&user : gep->GetResult()->GetUserList()) {
-                                if (user->IsGepInst()) {
-                                    queue.push(std::static_pointer_cast<GetElementPtrInst>(user));
-                                }
-                            }
-                        }
-                        // check store out of `node`
-                        for (auto &&gep : gep_list) {
-                            for (auto &&user : gep->GetResult()->GetUserList()) {
-                                if (user->IsStoreInst() && user->GetParent() != node) {
-                                    can_hoist = false;
-                                }
-                            }
-                        }
-                        if (can_hoist == false) {
-                            break;
-                        }
-                        for (auto &&gep : gep_list) {
-                            for (auto &&user : gep->GetResult()->GetUserList()) {
-                                if (user->IsStoreInst()) {  // store to unknown offset
-                                    can_hoist = false;
-                                    break;
-                                } else if (user->IsCallInst()) {
-                                    auto &&callee = std::static_pointer_cast<CallInst>(user)->GetCalleeFunc();
-                                    if (callee->GetSideEffect()) {  // used by func with side-effect
-                                        can_hoist = false;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (off->IsVariable()) {
-                            for (auto &&user2 : gep->GetResult()->GetUserList()) {
-                                if (user2->IsStoreInst()) {  // store to unknown offset
-                                    can_hoist = false;
-                                    break;
-                                } else if (user2->IsCallInst()) {
-                                    auto &&callee = std::static_pointer_cast<CallInst>(user2)->GetCalleeFunc();
-                                    if (callee->GetSideEffect()) {  // used by func with side-effect
-                                        can_hoist = false;
-                                        break;
-                                    }
-                                }
-                            }
-                        } else if (off->IsConstant()) {
-                            size_t store_cnt = 0;
-                            StoreInstPtr store_inst = nullptr;
-                            int32_t offset = std::get<int32_t>(std::static_pointer_cast<Constant>(off)->GetValue());
-
-                            for (auto &&user2 : gep->GetResult()->GetUserList()) {
-                                if (user2->IsStoreInst()) {
-                                    store_inst = std::static_pointer_cast<StoreInst>(user2);
-                                    store_cnt += 1;
-                                } else if (user2->IsBitCast()) {
-                                    inst_list.push_back(user2);  // bitcast
-                                    assert(user2->GetResult()->GetUserList().size() == 1);
-                                    inst_list.push_back(*user2->GetResult()->GetUserList().begin());  // memset
-                                } else if (user2->IsCallInst()) {
-                                    auto &&callee = std::static_pointer_cast<CallInst>(user2)->GetCalleeFunc();
-                                    if (callee->GetSideEffect()) {  // used by func with side-effect
-                                        can_hoist = false;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (store_cnt > 1) {
-                                can_hoist = false;
-                            } else if (store_inst != nullptr) {
-                                if (store_inst->GetParent() != node) {
-                                    can_hoist = false;
-                                    break;
-                                }
-                                auto &&store_value = store_inst->GetStoreValue();
-                                if (store_value->IsVariable()) {
-                                    can_hoist = false;
-                                } else if (store_value->IsConstant()) {
-                                    inst_list.push_back(store_inst);
-                                    const_array[offset] = std::static_pointer_cast<Constant>(store_value);
-                                } else {
-                                    assert(false);
-                                }
-                            }
-                        } else {
-                            assert(false);
-                        }
-                        if (can_hoist == false) {
-                            break;
-                        }
                     } else {
                         assert(false);
+                    }
+                }
+                while (!queue.empty()) {
+                    auto &&front = queue.front();
+                    queue.pop();
+                    if (front->GetParent() == node) {
+                        gep_in_node.push_back(front);
+                    } else {
+                        gep_out_node.push_back(front);
+                    }
+                    for (auto &&user : front->GetResult()->GetUserList()) {
+                        if (user->IsGepInst()) {
+                            queue.push(std::static_pointer_cast<GetElementPtrInst>(user));
+                        }
+                    }
+                }
+                // analysis gep out node
+                for (auto &&gep : gep_out_node) {  // gep no in `node`
+                    for (auto &&user : gep->GetResult()->GetUserList()) {
+                        if (user->IsStoreInst()) {
+                            can_hoist = false;
+                        } else if (user->IsCallInst()) {
+                            auto &&callee = std::static_pointer_cast<CallInst>(user)->GetCalleeFunc();
+                            if (callee->GetSideEffect()) {
+                                can_hoist = false;
+                            }
+                        }
+                    }
+                }
+                if (can_hoist == false) {
+                    continue;  // check to next alloca
+                }
+                // analyisi gep in node
+                for (auto &&gep : gep_in_node) {
+                    cout << gep->tollvmIR() << endl;
+                    auto &&off = gep->GetOffList().back();
+                    if (off->IsVariable()) {
+                        for (auto &&user : gep->GetResult()->GetUserList()) {
+                            if (user->IsStoreInst()) {
+                                can_hoist = false;
+                            } else if (user->IsCallInst()) {
+                                auto &&callee = std::static_pointer_cast<CallInst>(user)->GetCalleeFunc();
+                                if (callee->GetSideEffect()) {
+                                    can_hoist = false;
+                                }
+                            }
+                        }
+                        if (can_hoist == false) break;
+                    } else if (off->IsConstant()) {
+                        size_t store_cnt = 0;
+                        StoreInstPtr store_inst = nullptr;
+                        int32_t offset = std::get<int32_t>(std::static_pointer_cast<Constant>(off)->GetValue());
+
+                        for (auto &&user : gep->GetResult()->GetUserList()) {
+                            if (user->IsStoreInst()) {
+                                store_inst = std::static_pointer_cast<StoreInst>(user);
+                                store_cnt += 1;
+                            } else if (user->IsBitCast()) {
+                                inst_list.push_back(user);  // bitcast
+                                assert(user->GetResult()->GetUserList().size() == 1);
+                                inst_list.push_back(*user->GetResult()->GetUserList().begin());  // memset
+                            } else if (user->IsCallInst()) {
+                                auto &&callee = std::static_pointer_cast<CallInst>(user)->GetCalleeFunc();
+                                if (callee->GetSideEffect()) {
+                                    can_hoist = false;
+                                }
+                            }
+                        }
+                        if (!can_hoist) break;
+                        if (store_cnt > 1) {
+                            can_hoist = false;
+                        } else if (store_inst != nullptr) {
+                            if (store_inst->GetParent() != node) {
+                                can_hoist = false;
+                                break;
+                            }
+                            auto &&store_value = store_inst->GetStoreValue();
+                            if (store_value->IsVariable()) {
+                                can_hoist = false;
+                            } else if (store_value->IsConstant()) {
+                                inst_list.push_back(store_inst);
+                                const_array[offset] = std::static_pointer_cast<Constant>(store_value);
+                            } else {
+                                assert(false);
+                            }
+                        }
+                        if (!can_hoist) break;
                     }
                 }
                 if (can_hoist) {

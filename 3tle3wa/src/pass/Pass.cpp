@@ -33,7 +33,7 @@ void Optimization::DoOptimization() {
 
         HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
 
-        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
