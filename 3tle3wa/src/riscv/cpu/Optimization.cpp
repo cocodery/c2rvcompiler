@@ -9,6 +9,7 @@
 #include "3tle3wa/backend/scheduler/FIFO.hh"
 #include "3tle3wa/backend/scheduler/SchedMachine.hh"
 #include "3tle3wa/backend/scheduler/SiFiveU74.hh"
+#include "3tle3wa/riscv/asm.hh"
 #include "3tle3wa/utils/logs.hh"
 
 void AsmProgress::DoOptimization() {
@@ -19,7 +20,92 @@ void AsmProgress::DoOptimization() {
     DoASchedule();
 }
 
-void AsmBasicBlock::Peepholes() {}
+void AsmBasicBlock::Peepholes() {
+    do {
+        // for now only focus on inst pair
+
+        auto nxt_it = insts_.begin();
+        auto cur_it = nxt_it++;
+
+        while (nxt_it != insts_.end()) {
+            auto cur = cur_it->get();
+            auto nxt = nxt_it->get();
+
+            auto rv_cur = dynamic_cast<riscv::Instruction *>(cur);
+            auto rv_nxt = dynamic_cast<riscv::Instruction *>(nxt);
+
+            if (rv_cur == nullptr or rv_nxt == nullptr) {
+                cur_it = nxt_it++;
+                continue;
+            }
+
+            bool cur_redundant = false;
+            bool nxt_redundant = false;
+
+            if (auto c = dynamic_cast<riscv::LD *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::LD *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRd() == n->GetRd();
+                    nxt_redundant = c->GetRd() == n->GetRd() and c->GetRs() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::SD *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRd() == n->GetRs() and c->GetRs() == n->GetRt() and c->GetImm() == n->GetImm();
+                }
+            } else if (auto c = dynamic_cast<riscv::SD *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::LD *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRs() == n->GetRd() and c->GetRt() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::SD *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRt() == n->GetRt() and c->GetImm() == n->GetImm();
+                    nxt_redundant = false;
+                }
+            } else if (auto c = dynamic_cast<riscv::LW *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::LW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRd() == n->GetRd();
+                    nxt_redundant = c->GetRd() == n->GetRd() and c->GetRs() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::SW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRd() == n->GetRs() and c->GetRs() == n->GetRt() and c->GetImm() == n->GetImm();
+                }
+            } else if (auto c = dynamic_cast<riscv::SW *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::LW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRs() == n->GetRd() and c->GetRt() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::SW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRt() == n->GetRt() and c->GetImm() == n->GetImm();
+                    nxt_redundant = false;
+                }
+            } else if (auto c = dynamic_cast<riscv::FLW *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::FLW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRd() == n->GetRd();
+                    nxt_redundant = c->GetRd() == n->GetRd() and c->GetRs() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::FSW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRd() == n->GetRs() and c->GetRs() == n->GetRt() and c->GetImm() == n->GetImm();
+                }
+            } else if (auto c = dynamic_cast<riscv::FSW *>(rv_cur); c != nullptr) {
+                if (auto n = dynamic_cast<riscv::FLW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = false;
+                    nxt_redundant = c->GetRs() == n->GetRd() and c->GetRt() == n->GetRs() and c->GetImm() == n->GetImm();
+                } else if (auto n = dynamic_cast<riscv::FSW *>(rv_nxt); n != nullptr) {
+                    cur_redundant = c->GetRt() == n->GetRt() and c->GetImm() == n->GetImm();
+                    nxt_redundant = false;
+                }
+            }
+
+            if (nxt_redundant) {
+                nxt_it = insts_.erase(nxt_it);
+                continue;
+            }
+
+            if (cur_redundant) {
+                cur_it = insts_.erase(cur_it);
+                continue;
+            }
+
+            cur_it = nxt_it++;
+        }
+    } while (0);
+}
 
 void AsmProgress::DoASchedule() {
     for (auto &&abb : ablks_) {
