@@ -197,7 +197,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
 
     CRVC_UNUSE auto HoistBranch = [](CRVC_UNUSE const CfgNodePtr &i, CRVC_UNUSE const CfgNodePtr &j) {};
 
-    auto AdjustOriAlloca = [&func, &NodeMap]() {
+    CRVC_UNUSE auto AdjustOriAlloca = [&func, &NodeMap]() {
         for (auto &&node : func->GetSequentialNodes()) {
             for (auto &&inst : node->GetInstList()) {
                 if (inst->IsPhiInst()) {
@@ -262,7 +262,7 @@ void DCE::EliminateUselessControlFlow(NormalFuncPtr func) {
             }
             ++iter;
         }
-        AdjustOriAlloca();
+        // AdjustOriAlloca();
         return changed;
     };
 

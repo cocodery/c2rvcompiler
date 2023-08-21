@@ -1,5 +1,7 @@
 #include "3tle3wa/pass/Pass.hh"
 
+#include "3tle3wa/pass/interprocedural/dce/dce.hh"
+
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
 void Optimization::DoOptimization() {
@@ -31,29 +33,29 @@ void Optimization::DoOptimization() {
 
         Inline::InlineOptFunc(func, comp_unit.getGlbTable());
 
-        // DCE::DCE(func);
+        DCE::DCE(func);
 
-        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
-        // HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
+        HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
 
-        // PeepHole::PeepHoleOpt(func);
+        PeepHole::PeepHoleOpt(func);
 
-        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
-        // GVN::DVNT(func, comp_unit.getGlbTable());
+        GVN::DVNT(func, comp_unit.getGlbTable());
 
-        // PeepHole::PeepHoleOpt(func);
+        PeepHole::PeepHoleOpt(func);
 
-        // DCE::DCE(func);
+        DCE::DCE(func);
 
-        // InstComb::InstCombine(func);
+        InstComb::InstCombine(func);
 
-        // GVN::DVNT(func, comp_unit.getGlbTable());
+        GVN::DVNT(func, comp_unit.getGlbTable());
 
-        // // SSA::SSADestruction(func);
+        SSA::SSADestruction(func);
 
-        // DCE::DCE(func);
+        DCE::DCE(func);
 
         TailCall::TailCallAnalysis(func);
 
