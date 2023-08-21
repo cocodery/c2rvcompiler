@@ -31,7 +31,7 @@ void Optimization::DoOptimization() {
 
         DCE::DCE(func);
 
-        Inline::InlineOptFunc(func, comp_unit.getGlbTable());
+        // Inline::InlineOptFunc(func, comp_unit.getGlbTable());
 
         DCE::DCE(func);
 

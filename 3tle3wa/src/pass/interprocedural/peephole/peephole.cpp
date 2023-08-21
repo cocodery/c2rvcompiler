@@ -239,19 +239,16 @@ void PeepHole::PeepHole4Gep(NormalFuncPtr &func, SymbolTable &glb_table) {
                     }
                     if (gep_list.size() > 1) {  // combine logic-sequential constant offset gep-inst
                         bool all_constant = true;
-                        auto &&off_set = std::list<ConstantPtr>();
+                        auto &&off_set = std::list<BaseValuePtr>();
                         for (auto &&gep : gep_list) {
                             auto &&offset = gep->GetOffList().back();
-                            if (offset->IsConstant()) {
-                                off_set.push_back(std::static_pointer_cast<Constant>(offset));
-                            } else {
-                                all_constant = false;
-                            }
+                            off_set.push_back(offset);
+                            all_constant = false;
                         }
                         if (all_constant) {
                             int32_t sum = 0;
                             for (auto &&constant : off_set) {
-                                sum += std::get<int32_t>(constant->GetValue());
+                                sum += std::get<int32_t>(std::static_pointer_cast<Constant>(constant)->GetValue());
                             }
                             auto &&offset = ConstantAllocator::FindConstantPtr(sum);
 
@@ -270,6 +267,37 @@ void PeepHole::PeepHole4Gep(NormalFuncPtr &func, SymbolTable &glb_table) {
                             if (front->GetOffList().size() == 2)
                                 off_list.push_front(ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
                             back->SetOffList(off_list);
+                        } else {
+                            bool can_flod = true;
+                            size_t var_cnt = 0;
+                            VariablePtr variable = nullptr;
+                            for (auto &&off : off_set) {
+                                if (off->IsConstant()) {
+                                    if (off != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) {
+                                        can_flod = false;
+                                    }
+                                } else if (off->IsVariable()) {
+                                    var_cnt += 1;
+                                    variable = std::static_pointer_cast<Variable>(off);
+                                }
+                            }
+                            if (can_flod && var_cnt == 1) {
+                                auto &&front = gep_list.front();
+                                auto &&back = gep_list.back();
+                                // new store-type
+                                back->SetStoreType(front->GetStoreType());
+                                // new base-addr
+                                auto &&ori_base_addr = back->GetBaseAddr();
+                                auto &&new_base_addr = front->GetBaseAddr();
+                                ori_base_addr->RemoveUser(back);
+                                new_base_addr->InsertUser(back);
+                                back->SetBaseAddr(new_base_addr);
+                                // new offset-list
+                                auto &&off_list = OffsetList(1, variable);
+                                if (front->GetOffList().size() == 2)
+                                    off_list.push_front(ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0)));
+                                back->SetOffList(off_list);
+                            }
                         }
                     }
                     if (gep_list.size() == 1) {
