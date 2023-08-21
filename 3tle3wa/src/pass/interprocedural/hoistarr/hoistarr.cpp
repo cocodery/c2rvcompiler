@@ -5,6 +5,7 @@
 #include <memory>
 #include <ostream>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <variant>
 
@@ -159,7 +160,8 @@ void HoistLocalArray::HoistLocalArray(NormalFuncPtr &func, SymbolTable &glb_tabl
                                                       GLOBAL, arr_dim);
                     auto &&const_arr = ConstArray::CreatePtr(list_type, const_array);
                     GlobalValuePtr glb_value = GlobalValue::CreatePtr(type, const_arr);
-                    std::string name = "array.hoist." + func->GetFuncName() + glb_value->tollvmIR();
+                    std::string name =
+                        ".array.hoist." + func->GetFuncName() + "." + std::to_string(alloca->GetInstIdx());
                     glb_table.InsertSymbol(name, glb_value);
                     glb_value->InsertUser(func.get());
 
