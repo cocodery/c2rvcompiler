@@ -3,6 +3,7 @@
 #include <set>
 #include <variant>
 
+#include "3tle3wa/backend/rl/RLGen.hh"
 #include "3tle3wa/ir/IR.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
@@ -39,4 +40,6 @@ Operands InstOperandsInVector(InstPtr);
 BaseValuePtr InstCopy(InstPtr &, CfgNodePtr &, bool);
 BaseValuePtr OperandUpdate(BaseValuePtr, bool);
 CfgNodePtr CfgNodeUpdate(const CfgNodePtr);
+
+void DynamicUnrolling(NormalFuncPtr &);
 }  // namespace LoopUnrolling

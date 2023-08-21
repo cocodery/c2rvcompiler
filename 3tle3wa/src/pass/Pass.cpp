@@ -1,6 +1,7 @@
 #include "3tle3wa/pass/Pass.hh"
 
 #include "3tle3wa/pass/interprocedural/dce/dce.hh"
+#include "3tle3wa/pass/interprocedural/loop/loopunrolling.hh"
 
 Optimization::Optimization(CompilationUnit &_comp_unit) : comp_unit(_comp_unit) {}
 
@@ -52,6 +53,8 @@ void Optimization::DoOptimization() {
         InstComb::InstCombine(func);
 
         GVN::DVNT(func, comp_unit.getGlbTable());
+
+        LoopUnrolling::DynamicUnrolling(func);
 
         // SSA::SSADestruction(func);
 

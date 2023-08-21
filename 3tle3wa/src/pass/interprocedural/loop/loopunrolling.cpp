@@ -2,13 +2,20 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <utility>
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/structure/loop.hh"
+#include "3tle3wa/ir/instruction/binaryOpInst.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
+#include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/opCode.hh"
 #include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/baseValue.hh"
+#include "3tle3wa/ir/value/constant.hh"
 
 size_t cur_unroll_time = 0;
 
@@ -795,4 +802,90 @@ void LoopUnrolling::AddBranchInst(CfgNodePtr &cond_begin, bool init_flag) {
         auto new_br = BranchInst::CreatePtr(new_cond, new_if_true, new_if_false, new_block);
         new_block->InsertInstBack(new_br);
     }
+}
+
+void LoopUnrolling::DynamicUnrolling(NormalFuncPtr &func) {
+    auto &&seq_nodes = func->GetSequentialNodes();
+    if (seq_nodes.size() != 4) return;
+
+    auto &&entry = func->GetEntryNode();
+    auto &&exit = func->GetExitNode();
+
+    if (entry->GetSuccessors().size() > 1 || exit->GetPredecessors().size() > 1) return;
+    // means this func is a simple loop
+    auto &&loop_cond = (*entry->GetSuccessors().begin());
+    assert(loop_cond->GetPredecessors().size() == 2 && loop_cond->GetSuccessors().size() == 2);
+    auto &&loop_body = (*loop_cond->GetSuccessors().begin() != exit) ? *loop_cond->GetSuccessors().begin()
+                                                                     : *(--loop_cond->GetSuccessors().end());
+    if (loop_body->GetInstCnt() > 4) return;
+
+    auto &&br = std::static_pointer_cast<BranchInst>(loop_cond->GetLastInst());
+    auto &&cmp = std::static_pointer_cast<BinaryInstruction>(br->GetCondition()->GetParent());
+    auto &&lhs = cmp->GetLHS();
+    auto &&rhs = cmp->GetRHS();
+
+    if (lhs->GetParent() && lhs->GetParent()->IsPhiInst()) {
+        BaseValuePtr loop_time = rhs;
+        if (rhs->IsConstant()) return;
+
+        auto &&phi = std::static_pointer_cast<PhiInst>(lhs->GetParent());  // conut
+        if (phi->GetDataList().size() != 2) return;
+
+        auto &&data_list = phi->GetDataList();
+        auto &&init = (data_list.front().second == entry) ? data_list.front().first : data_list.back().first;
+        if (init != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) return;
+
+        auto &&counter = (data_list.front().second == entry) ? data_list.back().first : data_list.front().first;
+        auto &&count_definer = counter->GetParent();
+        if (!(count_definer->GetOpCode() == OP_ADD || count_definer->GetOpCode() == OP_SUB)) return;
+
+        auto &&bin = std::static_pointer_cast<BinaryInstruction>(count_definer);
+        auto step = (bin->GetLHS() == phi->GetResult()) ? bin->GetRHS() : bin->GetLHS();
+        if (step != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(1))) return;
+
+        for (auto &&inst : loop_body->GetInstList()) {
+            if (inst == count_definer) continue;
+            if (inst->IsTwoOprandInst()) {
+                auto &&bin = std::static_pointer_cast<BinaryInstruction>(inst);
+                auto &&lhs = bin->GetLHS();
+                auto &&rhs = bin->GetRHS();
+                if (rhs->IsVariable()) continue;
+
+                auto &&lhs_definer = lhs->GetParent();
+                if (lhs_definer->IsPhiInst() == false) return;
+                auto &&phi = std::static_pointer_cast<PhiInst>(lhs_definer);
+                auto &&data_list = phi->GetDataList();
+                auto &&init = (data_list.front().second == entry) ? data_list.front().first : data_list.back().first;
+                if (init != ConstantAllocator::FindConstantPtr(static_cast<int32_t>(0))) return;
+
+                auto &&user = (*bin->GetResult()->GetUserList().begin());
+                if (user->IsTwoOprandInst() == false) return;
+
+                entry->RemoveLastInst();
+
+                if (rhs->GetBaseType()->IntType()) {
+                    auto &&bin = std::static_pointer_cast<BinaryInstruction>(user);
+                    auto &&rhs2 = bin->GetRHS();
+
+                    auto &&result0 = IBinaryInst::DoIBinOperate(OP_REM, loop_time, rhs2, entry);
+                    auto &&result1 = IBinaryInst::DoIBinOperate(OP_MUL, result0, rhs, entry);
+
+                    auto &&result2 = IBinaryInst::DoIBinOperate(OP_ADD, result1, rhs2, entry);
+                    auto &&result3 = IBinaryInst::DoIBinOperate(OP_REM, result2, rhs2, entry);
+
+                    ReplaceSRC(phi->GetResult(), result3);
+
+                    entry->InsertInstBack(JumpInst::CreatePtr(exit, entry));
+
+                    entry->RmvSuccessor(loop_cond);
+                    exit->RmvPredecessor(loop_cond);
+                } else {
+                    return;
+                }
+            }
+        }
+
+        assert(false);
+    }
+    return;
 }
