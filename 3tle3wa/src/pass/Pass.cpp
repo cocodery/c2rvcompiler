@@ -29,27 +29,31 @@ void Optimization::DoOptimization() {
 
         DCE::DCE(func);
 
-        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        Inline::InlineOptFunc(func, comp_unit.getGlbTable());
 
-        HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
+        // DCE::DCE(func);
 
-        PeepHole::PeepHoleOpt(func);
+        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
-        PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
+        // HoistLocalArray::HoistLocalArray(func, comp_unit.getGlbTable());
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // PeepHole::PeepHoleOpt(func);
 
-        PeepHole::PeepHoleOpt(func);
+        // PeepHole::PeepHole4Gep(func, comp_unit.getGlbTable());
 
-        DCE::DCE(func);
+        // GVN::DVNT(func, comp_unit.getGlbTable());
 
-        InstComb::InstCombine(func);
+        // PeepHole::PeepHoleOpt(func);
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // DCE::DCE(func);
 
-        // SSA::SSADestruction(func);
+        // InstComb::InstCombine(func);
 
-        DCE::DCE(func);
+        // GVN::DVNT(func, comp_unit.getGlbTable());
+
+        // // SSA::SSADestruction(func);
+
+        // DCE::DCE(func);
 
         TailCall::TailCallAnalysis(func);
 

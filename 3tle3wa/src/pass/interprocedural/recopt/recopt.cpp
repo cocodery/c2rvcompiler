@@ -2,10 +2,12 @@
 
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/function.hh"
 #include "3tle3wa/ir/function/structure/loop.hh"
 #include "3tle3wa/ir/instruction/binaryOpInst.hh"
 #include "3tle3wa/ir/instruction/compareInst.hh"
@@ -571,6 +573,10 @@ void RecursionOpt::DoSimpleRecOpt(NormalFuncPtr &func, SymbolTable &glb_table) {
             }
             func->SetEntryNode(new_entry);
             func->SetExitNode(new_exit);
+
+            func->SetRecursive(false);
+            func->RemoveCallWho(func.get());
+            func->RemoveWhoCall(func.get());
         }
     }
     value_map.clear();

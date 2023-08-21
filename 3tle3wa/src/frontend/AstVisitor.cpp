@@ -762,7 +762,7 @@ std::any AstVisitor::visitUnary2(SysYParser::Unary2Context *ctx) {
         cur_block = block_inline;
 
         auto &&[ret_value, ret_block] =
-            Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func), rparam_list,
+            Inline::Inline(cur_func, std::static_pointer_cast<NormalFunction>(callee_func).get(), rparam_list,
                            comp_unit.getGlbTable().GetNameValueMap(), cur_block, in_loop, out_loop_block);
         call_ret_value = ret_value;
         cur_block = ret_block;

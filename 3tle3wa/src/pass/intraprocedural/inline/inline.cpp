@@ -1,9 +1,14 @@
 #include "3tle3wa/pass/intraprocedural/inline/inline.hh"
 
+#include <memory>
+
 #include "3tle3wa/ir/function/basicblock.hh"
 #include "3tle3wa/ir/function/cfgNode.hh"
+#include "3tle3wa/ir/function/function.hh"
 #include "3tle3wa/ir/instruction/controlFlowInst.hh"
 #include "3tle3wa/ir/instruction/instruction.hh"
+#include "3tle3wa/ir/instruction/otherInst.hh"
+#include "3tle3wa/ir/value/variable.hh"
 #include "3tle3wa/utils/logs.hh"
 
 BaseValuePtr Inline::InstCopy(InstPtr &inst_, CfgNodePtr &parent) {
@@ -64,7 +69,7 @@ BaseValuePtr Inline::InstCopy(InstPtr &inst_, CfgNodePtr &parent) {
     return result;
 }
 
-std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, NormalFuncPtr callee, ParamList &param_list,
+std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, NormalFunction *callee, ParamList &param_list,
                                                    NameValueMap &glb_table, CfgNodePtr &cur_block, bool in_loop,
                                                    CfgNodePtr &out_loop_block) {
     assert(value_map.empty() && block_map.empty());
@@ -126,6 +131,15 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, Normal
                     inst->SetParent(cur_block);
                 }
                 value_map[inst_->GetResult()] = result;
+            } else if (inst_->IsPhiInst()) {
+                auto phi_inst_ = std::static_pointer_cast<PhiInst>(inst_);
+                auto &&inst = PhiInst::CreatePtr(phi_inst_->GetResult()->GetBaseType(), cur_block);
+                value_map[inst_->GetResult()] = inst->GetResult();
+                for (auto &&[value, block] : phi_inst_->GetDataList()) {
+                    auto &&new_value = value_map[value];
+                    auto &&new_block = block_map[block];
+                    PhiInst::InsertPhiData(inst, new_value, new_block);
+                }
             } else {  // insert inst->copy to cur_block
                 value_map[inst_->GetResult()] = InstCopy(inst_, cur_block);
             }
@@ -146,4 +160,88 @@ std::pair<BaseValuePtr, CfgNodePtr> Inline::Inline(NormalFuncPtr &caller, Normal
     block_map.clear();
 
     return {ret_value, ret_block};
+}
+
+void Inline::InlineOptFunc(NormalFuncPtr &func, SymbolTable &glb_table) {
+    for (auto &&callee : func->GetCallWho()) {
+        if (callee->IsLibFunction() == false) {
+            auto callee_func = static_cast<NormalFunction *>(callee);
+            CfgNodeList call_nodes;
+            for (auto &&node : func->GetSequentialNodes()) {
+                for (auto &&inst : node->GetInstList()) {
+                    if (inst->IsCallInst()) {
+                        auto &&call_inst = std::static_pointer_cast<CallInst>(inst);
+                        if (call_inst->GetCalleeFunc().get() == callee_func && callee_func->GetRecursive() == false) {
+                            call_nodes.push_back(node);
+                        }
+                    }
+                }
+            }
+            for (auto &&node : call_nodes) {
+                // split call node
+                CallInstPtr call = nullptr;
+                CfgNodePtr upper_node = func->CreateCfgNode();
+                upper_node->blk_attr = node->blk_attr;
+                if (upper_node->blk_attr.ChkOneOfBlkType(BlkAttr::Entry)) func->SetEntryNode(upper_node);
+                if (upper_node->blk_attr.ChkOneOfBlkType(BlkAttr::Continue, BlkAttr::Break, BlkAttr::GoReturn,
+                                                         BlkAttr::InlineGR, BlkAttr::Exit)) {
+                    upper_node->blk_attr.ClrBlkTypes(BlkAttr::Continue, BlkAttr::Break, BlkAttr::GoReturn,
+                                                     BlkAttr::InlineGR, BlkAttr::Exit);
+                }
+
+                auto &&inst_list = node->GetInstList();
+                auto &&iter = inst_list.begin();
+                for (; iter != inst_list.end(); ++iter) {
+                    auto &&inst = (*iter);
+                    if (inst->IsCallInst()) {
+                        auto &&call_inst = std::static_pointer_cast<CallInst>(inst);
+                        if (call_inst->GetCalleeFunc().get() != callee_func) {
+                            upper_node->InsertInstBack(inst);
+                        } else {
+                            call = call_inst;
+                            break;
+                        }
+                    } else {
+                        upper_node->InsertInstBack(inst);
+                    }
+                }
+                CfgNodePtr inline_block = func->CreateCfgNode(BlkAttr::Normal);
+                upper_node->InsertInstBack(JumpInst::CreatePtr(inline_block, upper_node));
+                for (auto &&inst : upper_node->GetInstList()) {
+                    inst->SetParent(upper_node);
+                }
+
+                CfgNodePtr out_loop_block = nullptr;
+                auto &&[ret_value, ret_block] =
+                    Inline(func, callee_func, call->GetParamList(), glb_table.GetNameValueMap(), inline_block, false,
+                           out_loop_block);
+                ReplaceSRC(call->GetResult(), ret_value);
+
+                inline_block = ret_block;
+
+                inline_block->blk_attr = node->blk_attr;
+                if (inline_block->blk_attr.ChkOneOfBlkType(BlkAttr::Exit)) func->SetExitNode(inline_block);
+                if (inline_block->blk_attr.ChkOneOfBlkType(BlkAttr::Entry)) {
+                    inline_block->blk_attr.ClrBlkTypes(BlkAttr::Entry);
+                }
+
+                for (++iter; iter != inst_list.end(); ++iter) {
+                    auto &&inst = (*iter);
+                    inline_block->InsertInstBack(inst);
+                }
+
+                for (auto &&pred : node->GetPredecessors()) {
+                    upper_node->AddPredecessor(pred);
+                    pred->AddSuccessor(upper_node);
+                    pred->GetLastInst()->ReplaceTarget(node, upper_node);
+                }
+                for (auto &&succ : node->GetSuccessors()) {
+                    inline_block->AddSuccessor(succ);
+                    succ->AddPredecessor(inline_block);
+                }
+                RemoveNode(node);
+            }
+        }
+    }
+    return;
 }
