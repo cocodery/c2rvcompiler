@@ -53,7 +53,7 @@ void Optimization::DoOptimization() {
 
         GVN::DVNT(func, comp_unit.getGlbTable());
 
-        SSA::SSADestruction(func);
+        // SSA::SSADestruction(func);
 
         DCE::DCE(func);
 
