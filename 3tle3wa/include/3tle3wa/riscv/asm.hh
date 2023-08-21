@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstddef>
 
 #include "3tle3wa/backend/asm/AsmInstruction.hh"
 #include "3tle3wa/riscv/spec.hh"
@@ -24,6 +25,10 @@ class Instruction : public AsmInstruction {
    public:
     const std::vector<size_t> GetOperands() const;
     size_t GetResult() const;
+    int64_t GetImm() const;
+    size_t GetRs() const;
+    size_t GetRt() const;
+    size_t GetRd() const;
 
     Instruction(uint64_t rd = riscv::zero, uint64_t rs = riscv::zero, uint64_t rt = riscv::zero, int64_t imm = 0);
 };

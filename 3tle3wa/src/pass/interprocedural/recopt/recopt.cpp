@@ -50,6 +50,10 @@ void RecursionOpt::DoRecursionOpt(NormalFuncPtr &func, SymbolTable &glb_table) {
     }
     if (tail_recursion_cnt) {  // tail recursion call
         if (tail_recursion_cnt != 1) return;
+
+        // improve not significant
+        return;
+
         DoTailRec2Loop(func, glb_table);
     } else {  // non tail recursion call
         DoSimpleRecOpt(func, glb_table);
