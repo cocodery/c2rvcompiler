@@ -30,19 +30,19 @@ void Optimization::DoOptimization() {
 
         LoopMemset::LoopMemset(func, comp_unit);
 
-        // LoopUnrolling::LoopUnrolling(func);
+        LoopUnrolling::LoopUnrolling(func);
 
-        SCCP::SCCP(func);
+        // SCCP::SCCP(func);
 
-        DCE::DCE(func);
+        // DCE::DCE(func);
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // GVN::DVNT(func, comp_unit.getGlbTable());
 
-        PeepHole::PeepHoleOpt(func);
+        // PeepHole::PeepHoleOpt(func);
 
-        InstComb::InstCombine(func);
+        // InstComb::InstCombine(func);
 
-        GVN::DVNT(func, comp_unit.getGlbTable());
+        // GVN::DVNT(func, comp_unit.getGlbTable());
 
         // SSA::SSADestruction(func);
 

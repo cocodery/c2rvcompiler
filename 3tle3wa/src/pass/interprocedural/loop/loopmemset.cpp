@@ -22,6 +22,7 @@
 #include "3tle3wa/pass/analysis/structure/structure.hh"
 
 void LoopMemset::LoopMemset(NormalFuncPtr func, CompilationUnit &comp_unit) {
+    func->loops->PrintStructure();
     BaseValuePtr array = nullptr;
     BaseValuePtr init_num = nullptr;
     auto structure = func->loops->sub_structures;

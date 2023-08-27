@@ -1069,6 +1069,7 @@ void LoopUnrolling::PartllyExpand(int expand_time, Loop *loop) {
     }
     // ENDS
 
+    phi_results.clear();
     // copy insts for expand loop
     bool init_flag = false;
     CfgNodePtr new_entry = nullptr;
